@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* Reset styles */
+    body, table, td, a { text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100% !important;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: #ffffff;
+      color: #0f172a;
+    }
+
+    .wrapper {
+      width: 100%;
+      table-layout: fixed;
+      background-color: #ffffff;
+      padding: 40px 0;
+    }
+
+    .main-content {
+      max-width: 540px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 32px;
+      border: 1px solid #f1f5f9;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.03);
+      overflow: hidden;
+    }
+
+    .header {
+      padding: 50px 40px 20px;
+      text-align: center;
+    }
+
+    .logo-img {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+    }
+
+    .content-body {
+      padding: 0 50px 40px;
+      text-align: center;
+    }
+
+    .security-badge {
+      display: inline-block;
+      background: #ef4444;
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 100px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 16px;
+    }
+
+    h2 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    p {
+      font-size: 15px;
+      line-height: 1.6;
+      color: #64748b;
+      margin-bottom: 24px;
+    }
+
+    /* Bloc Alerte Minimaliste Glass */
+    .alert-container {
+      margin: 32px 0;
+      padding: 32px;
+      background: rgba(254, 242, 242, 0.6);
+      border-radius: 24px;
+      border: 1px solid rgba(239, 68, 68, 0.1);
+      text-align: left;
+    }
+
+    .info-row {
+      margin-bottom: 12px;
+    }
+
+    .info-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .info-value {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .instructions-box {
+      text-align: left;
+      background: #f8fafc;
+      border-radius: 20px;
+      padding: 24px;
+      margin: 32px 0;
+    }
+
+    .instruction-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e293b;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .instruction-text {
+      font-size: 13px;
+      color: #475569;
+      line-height: 1.5;
+    }
+
+    .divider {
+      height: 1px;
+      background: radial-gradient(circle, #e2e8f0 0%, transparent 100%);
+      margin: 40px 0 30px;
+    }
+
+    .footer {
+      text-align: center;
+      padding-bottom: 40px;
+    }
+
+    .footer-text {
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+
+    @media screen and (max-width: 600px) {
+      .main-content { border-radius: 0; border: none; box-shadow: none; }
+      .content-body { padding: 0 25px 30px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="main-content">
+      <div class="header">
+        <img src="https://ik.imagekit.io/lnjhwnjj6s/file.enc" alt="PipoLink Security" class="logo-img">
+      </div>
+
+      <div class="content-body">
+        <div class="security-badge">Sécurité</div>
+        <h2>Alerte de sécurité</h2>
+        <p>Bonjour,<br>Nous vous informons qu'une action importante a été réalisée sur votre compte PipoLink.</p>
+        
+        <div class="alert-container">
+          <div class="info-row">
+            <span class="info-label">Action effectuée</span>
+            <div class="info-value">{{action}}</div>
+          </div>
+          <div class="info-row" style="margin-bottom: 0;">
+            <span class="info-label">Date et Heure</span>
+            <div class="info-value">{{date}}</div>
+          </div>
+        </div>
+
+        <div class="instructions-box">
+          <span class="instruction-title">Que devez-vous faire ?</span>
+          <p class="instruction-text" style="margin-bottom: 12px;">
+            • <strong>Si vous êtes à l'origine de cette action :</strong> Vous pouvez ignorer cet e-mail en toute sécurité.
+          </p>
+          <p class="instruction-text" style="margin: 0;">
+            • <strong>Dans le cas contraire :</strong> Veuillez réinitialiser votre mot de passe immédiatement depuis l'application et contacter notre support client.
+          </p>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <p style="font-size: 13px; color: #94a3b8; margin-bottom: 0;">
+          L'équipe de sécurité <strong>PipoLink</strong>
+        </p>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p class="footer-text">
+        &copy; 2024 PipoLink Security Team.<br>
+        Notification automatique • Ne pas répondre à cet e-mail.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,18 @@
+export const ROUTES = {
+  authPhone: '/auth/phone',
+  authUsername: '/auth/username',
+  authQr: '/auth/qr',
+  home: '/(tabs)',
+  conversations: '/(tabs)',
+  ai: '/(tabs)/ai',
+  library: '/(tabs)/library',
+  settings: '/(tabs)/settings',
+  chat: '/chat/[id]',
+  devices: '/devices',
+  deviceScan: '/devices/scan',
+  changelog: '/updates/changelog',
+  uploadFile: '/modal/upload-file',
+  uploadDocument: '/modal/upload-document',
+  deviceConfirm: '/modal/device-confirm',
+  updateAvailable: '/modal/update-available',
+} as const;

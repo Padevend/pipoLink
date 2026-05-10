@@ -1,0 +1,488 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "PipoLink API Documentation",
+    "description": "API chiffrée, temps réel et offline-first pour la plateforme étudiante PipoLink.\n\n### Authentification\n\nL'API utilise l'authentification JWT (JSON Web Token). Pour les routes protégées, vous devez inclure le token dans le header `Authorization: Bearer <token>`.\n\n### Messagerie E2E\n\nLe contenu des messages est chiffré de bout en bout (E2E) par le client. Le backend ne stocke et ne relaie que des ciphertexts opaques (`cipherText`) accompagnés de leur vecteur d'initialisation (`iv`).\n\n### Temps Réel (Websocket)\n\nLe serveur expose un endpoint Websocket sur `/ws`.\n- Authentification obligatoire via l'event `auth.init` après connexion.\n- Support du multi-appareil avec synchronisation des évènements.\n- Queue offline pour les évènements manqués.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "PipoLink Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Serveur de développement"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "ApiResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "message": { "type": "string" },
+          "data": { "type": "object", "nullable": true },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "timestamp": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "error": { "type": "string", "description": "Code d'erreur machine (ex: UNAUTHORIZED)" },
+          "message": { "type": "string", "description": "Message lisible par l'utilisateur" },
+          "details": { "type": "object", "nullable": true },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "timestamp": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "email": { "type": "string", "format": "email" },
+          "username": { "type": "string", "nullable": true },
+          "role": { "type": "string", "enum": ["student", "staff", "admin"] },
+          "is_active": { "type": "boolean" },
+          "is_configured": { "type": "boolean" }
+        }
+      },
+      "UserProfile": {
+        "type": "object",
+        "properties": {
+          "firstname": { "type": "string" },
+          "lastname": { "type": "string" },
+          "phone": { "type": "string", "nullable": true },
+          "gender": { "type": "string", "nullable": true },
+          "niveau": { "type": "string", "nullable": true },
+          "filiere": { "type": "string", "nullable": true },
+          "bio": { "type": "string", "nullable": true },
+          "avatarUrl": { "type": "string", "nullable": true }
+        }
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "chat_id": { "type": "string", "format": "uuid" },
+          "sender_id": { "type": "string", "format": "uuid" },
+          "cipherText": { "type": "string", "description": "Contenu chiffré AES-GCM (base64)" },
+          "iv": { "type": "string", "description": "Vecteur d'initialisation" },
+          "status": { "type": "string", "enum": ["send", "delivered", "read"] },
+          "type": { "type": "string", "enum": ["TEXT", "IMAGE", "DOCUMENT", "SYSTEM"] },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Document": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "title": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "niveau": { "type": "string", "nullable": true },
+          "filiere": { "type": "string", "nullable": true },
+          "ue": { "type": "string", "nullable": true },
+          "type": { "type": "string", "enum": ["COURS", "TD", "TP", "CC", "EXAMEN", "RESUME", "AUTRE"] },
+          "fileUrl": { "type": "string" },
+          "fileSize": { "type": "integer" },
+          "moderationStatus": { "type": "string", "enum": ["PENDING", "APPROVED", "REJECTED"] },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Inscription",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string", "minLength": 8 }
+                }
+              },
+              "example": {
+                "email": "student@example.com",
+                "password": "Password123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Compte créé",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/verify-otp": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Vérifier le code OTP",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "code", "purpose"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "code": { "type": "string", "minLength": 6, "maxLength": 6 },
+                  "purpose": { "type": "string", "enum": ["EMAIL_VERIFY", "PASSWORD_RESET"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Vérification réussie",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Connexion",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Connecté",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me": {
+      "get": {
+        "tags": ["User"],
+        "summary": "Récupérer mon profil",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Profil récupéré",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/User" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["User"],
+        "summary": "Mettre à jour mon profil",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserProfile" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Profil mis à jour" }
+        }
+      }
+    },
+    "/messaging": {
+      "get": {
+        "tags": ["Messaging"],
+        "summary": "Lister les conversations",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": { "type": "object" }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Messaging"],
+        "summary": "Créer une conversation",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "memberIds": { "type": "array", "items": { "type": "string", "format": "uuid" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Créée" }
+        }
+      }
+    },
+    "/messaging/{id}/messages": {
+      "get": {
+        "tags": ["Messaging"],
+        "summary": "Lister les messages d'une conversation",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 30 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Messages récupérés",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Message" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Messaging"],
+        "summary": "Envoyer un message (REST fallback)",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["content", "iv"],
+                "properties": {
+                  "content": { "type": "string" },
+                  "iv": { "type": "string" },
+                  "type": { "type": "string", "enum": ["TEXT", "IMAGE", "DOCUMENT"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Envoyé" }
+        }
+      }
+    },
+    "/library/documents": {
+      "get": {
+        "tags": ["Library"],
+        "summary": "Lister les documents",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "folderId", "in": "query", "schema": { "type": "string", "format": "uuid" } },
+          { "name": "type", "in": "query", "schema": { "type": "string" } },
+          { "name": "niveau", "in": "query", "schema": { "type": "string" } },
+          { "name": "year", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste de documents",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Document" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Library"],
+        "summary": "Uploader un document",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": { "type": "string", "format": "binary" },
+                  "payload": {
+                    "type": "string",
+                    "description": "JSON string contenant les métadonnées (title, folderId, etc.)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Uploadé" }
+        }
+      }
+    },
+    "/ai/chat": {
+      "post": {
+        "tags": ["AI"],
+        "summary": "Chat avec l'IA",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["message"],
+                "properties": {
+                  "message": { "type": "string" },
+                  "sessionId": { "type": "string", "format": "uuid" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Réponse de l'IA" }
+        }
+      }
+    }
+  },
+  "x-websocket": {
+    "endpoint": "/ws",
+    "auth": "Event 'auth.init' avec token JWT",
+    "events": {
+      "client_to_server": [
+        {
+          "event": "auth.init",
+          "payload": {
+            "token": "string",
+            "deviceId": "uuid?",
+            "clientId": "string?",
+            "lastEventId": "string?"
+          },
+          "description": "Initialise la connexion et authentifie le client."
+        },
+        {
+          "event": "message.send",
+          "payload": {
+            "conversationId": "uuid",
+            "content": "string (E2E ciphertext)",
+            "iv": "string",
+            "type": "TEXT | IMAGE | DOCUMENT"
+          },
+          "description": "Envoie un message en temps réel."
+        },
+        {
+          "event": "message.read",
+          "payload": {
+            "conversationId": "uuid"
+          },
+          "description": "Marque les messages comme lus."
+        },
+        {
+          "event": "typing.started",
+          "payload": { "conversationId": "uuid" },
+          "description": "Indique que l'utilisateur écrit."
+        }
+      ],
+      "server_to_client": [
+        {
+          "event": "message.created",
+          "payload": { "conversationId": "uuid", "message": "MessageObject" },
+          "description": "Notifie d'un nouveau message entrant."
+        },
+        {
+          "event": "notification.created",
+          "payload": { "title": "string", "body": "string", "type": "string", "data": "object" },
+          "description": "Notifie d'une nouvelle notification push-like."
+        },
+        {
+          "event": "presence.updated",
+          "payload": { "userId": "uuid", "status": "online | offline | away" },
+          "description": "Notifie du changement de statut d'un membre."
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,16 @@
+src/app/(tabs)/index.tsx(30,40): error TS2345: Argument of type '"/search"' is not assignable to parameter of type '"/auth/register" | "/auth/verify-otp" | "/auth/login" | "/auth/forgot-password" | "/auth/reset-password" | "/devices" | "/(tabs)" | "/(tabs)/ai" | "/(tabs)/library" | "/(tabs)/settings" | ... 102 more ... | { ...; }'.
+src/app/(tabs)/index.tsx(36,40): error TS2345: Argument of type '"/messaging/new"' is not assignable to parameter of type '"/auth/register" | "/auth/verify-otp" | "/auth/login" | "/auth/forgot-password" | "/auth/reset-password" | "/devices" | "/(tabs)" | "/(tabs)/ai" | "/(tabs)/library" | "/(tabs)/settings" | ... 102 more ... | { ...; }'.
+src/app/devices/index.tsx(29,39): error TS2322: Type 'Device' is not assignable to type 'DeviceModel'.
+  Types of property 'platform' are incompatible.
+    Type 'string' is not assignable to type '"ios" | "android" | "web" | "desktop"'.
+src/app/devices/scan.tsx(7,10): error TS2305: Module '"@/shared/api/devices"' has no exported member 'linkDevice'.
+src/app/devices/scan.tsx(21,36): error TS2345: Argument of type 'string' is not assignable to parameter of type 'void'.
+src/app/updates/changelog.tsx(18,19): error TS2339: Property 'changelog' does not exist on type 'UpdateMetadata'.
+src/app/updates/changelog.tsx(18,34): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/features/auth/hooks/use-login-phone.ts(3,10): error TS2305: Module '"@/shared/api/auth"' has no exported member 'requestOtp'.
+src/features/auth/hooks/use-login-username.ts(13,33): error TS2554: Expected 1 arguments, but got 2.
+src/features/messaging/components/chat-view.tsx(16,28): error TS2339: Property 'fetchNextPage' does not exist on type 'UseQueryResult<PaginatedResponse<Message>, Error>'.
+src/features/messaging/components/chat-view.tsx(16,43): error TS2339: Property 'hasNextPage' does not exist on type 'UseQueryResult<PaginatedResponse<Message>, Error>'.
+src/features/messaging/components/chat-view.tsx(22,18): error TS2551: Property 'pages' does not exist on type 'PaginatedResponse<Message>'. Did you mean 'page'?
+src/features/messaging/components/chat-view.tsx(22,32): error TS7006: Parameter 'page' implicitly has an 'any' type.
+src/processes/update-manager/index.ts(1,10): error TS2305: Module '"@/shared/api/updates"' has no exported member 'checkUpdate'.

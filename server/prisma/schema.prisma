@@ -1,0 +1,320 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @db.Uuid @default(uuid())
+  email         String?   @unique
+  password      String
+  username      String?
+  matricule     String?
+  public_key    String?
+  role          String    @default("student")
+  is_active     Boolean   @default(false)
+  is_excluded   Boolean   @default(false)
+  is_configured Boolean   @default(false)
+  createdAt     DateTime  @default(now()) @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @db.Timestamptz
+
+  profile       UserProfile?
+  subscription  Subscription?
+  devices       Device[]
+  refreshTokens RefreshToken[]
+  auditLogs     AuditLog[]
+  qrTokens      QrToken[]
+  messages      Message[]
+  memberships   ConversationMember[]
+  otps          Otp[]
+  documents     Document[]     @relation("UserDocuments")
+  aiSessions    AiSession[]
+  payments      Payment[]
+  notifications Notification[]
+  announcements Announcement[]
+
+  @@map("users")
+}
+
+model UserProfile {
+  id          String   @id @db.Uuid @default(uuid())
+  user_id     String   @unique @db.Uuid
+  firstname   String
+  lastname    String
+  phone       String?
+  gender      String?
+  niveau      String?
+  filiere     String?
+  bio         String?
+  avatarUrl   String?
+
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+model QrToken {
+  id        String   @id @db.Uuid @default(uuid())
+  user_id   String   @db.Uuid
+  token     String   @unique
+  expiresAt DateTime @db.Timestamptz
+  usedAt    DateTime? @db.Timestamptz
+  createdAt DateTime @db.Timestamptz @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@map("qr_tokens")
+}
+
+model Device {
+  id           String    @id @db.Uuid @default(uuid())
+  user_id      String    @db.Uuid
+  name         String
+  platform     String
+  fingerprint  String
+  isPrimary    Boolean   @default(false)
+  revokedAt    DateTime? @db.Timestamptz
+  lastActiveAt DateTime  @default(now()) @db.Timestamptz
+  createdAt    DateTime  @default(now()) @db.Timestamptz
+
+  user         User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  tokens       RefreshToken[]
+
+  @@map("devices")
+}
+
+model RefreshToken {
+  id        String    @id @db.Uuid @default(uuid())
+  user_id   String    @db.Uuid
+  device_id String?   @db.Uuid
+  tokenHash String    @unique
+  revokedAt DateTime? @db.Timestamptz
+  expiresAt DateTime  @db.Timestamptz
+  createdAt DateTime  @default(now()) @db.Timestamptz
+
+  user      User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  device    Device?   @relation(fields: [device_id], references: [id], onDelete: SetNull)
+
+  @@map("refresh_tokens")
+}
+
+model AuditLog {
+  id        String   @id @db.Uuid @default(uuid())
+  user_id   String   @db.Uuid
+  action    String
+  targetId  String?
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  user      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("audit_logs")
+}
+
+model Chat {
+  id         String   @id @db.Uuid @default(uuid())
+  created_at DateTime @default(now()) @db.Timestamptz
+  updatedAt  DateTime @updatedAt @db.Timestamptz
+
+  messages   Message[]
+  members    ConversationMember[]
+
+  @@map("chats")
+}
+
+model ConversationMember {
+  id              String   @id @db.Uuid @default(uuid())
+  user_id         String   @db.Uuid
+  conversation_id String   @db.Uuid
+  lastReadAt      DateTime? @db.Timestamptz
+
+  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  conversation    Chat     @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, conversation_id])
+  @@map("conversation_members")
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  DOCUMENT
+  SYSTEM
+}
+
+model Message {
+  id         String      @id @db.Uuid @default(uuid())
+  chat_id    String      @db.Uuid
+  sender_id  String      @db.Uuid
+  cipherText String
+  iv         String
+  status     String      @default("send")
+  type       MessageType @default(TEXT)
+  editedAt   DateTime?   @db.Timestamptz
+  deletedAt  DateTime?   @db.Timestamptz
+  created_at DateTime    @default(now()) @db.Timestamptz
+
+  chat       Chat        @relation(fields: [chat_id], references: [id], onDelete: Cascade)
+  sender     User        @relation(fields: [sender_id], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+model Subscription {
+  id               String   @id @db.Uuid @default(uuid())
+  user_id          String   @unique @db.Uuid
+  plan             String   @default("free")
+  status           String   @default("active")
+  currentPeriodEnd DateTime? @db.Timestamptz
+  createdAt        DateTime @default(now()) @db.Timestamptz
+  updatedAt        DateTime @updatedAt @db.Timestamptz
+
+  user             User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  payments         Payment[]
+
+  @@map("subscriptions")
+}
+
+model Folder {
+  id        String   @id @db.Uuid @default(uuid())
+  name      String
+  owner_id  String   @db.Uuid
+  parent_id String?  @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  @@map("folders")
+}
+
+model Document {
+  id               String   @id @db.Uuid @default(uuid())
+  title            String
+  description      String?
+  niveau           String?
+  filiere          String?
+  ue               String?
+  type             String   @default("AUTRE")
+  year             Int?
+  fileUrl          String
+  fileName         String
+  fileSize         Int
+  mimeType         String
+  isPublic         Boolean  @default(true)
+  moderationStatus String   @default("PENDING")
+  rejectionReason  String?
+  downloadCount    Int      @default(0)
+  folder_id        String?  @db.Uuid
+  uploaded_by_id   String   @db.Uuid
+  createdAt        DateTime @default(now()) @db.Timestamptz
+
+  uploadedBy       User     @relation("UserDocuments", fields: [uploaded_by_id], references: [id], onDelete: Cascade)
+  tags             Tag[]    @relation("DocumentTags")
+
+  @@map("documents")
+}
+
+model Tag {
+  id        String     @id @db.Uuid @default(uuid())
+  name      String     @unique
+  documents Document[] @relation("DocumentTags")
+
+  @@map("tags")
+}
+
+model Download {
+  id          String   @id @db.Uuid @default(uuid())
+  document_id String   @db.Uuid
+  user_id     String?  @db.Uuid
+  createdAt   DateTime @default(now()) @db.Timestamptz
+
+  @@map("downloads")
+}
+
+model Otp {
+  id        String    @id @db.Uuid @default(uuid())
+  user_id   String    @db.Uuid
+  code      String
+  purpose   String
+  attempts  Int       @default(0)
+  expiresAt DateTime  @db.Timestamptz
+  usedAt    DateTime? @db.Timestamptz
+  createdAt DateTime  @default(now()) @db.Timestamptz
+
+  user      User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("otps")
+}
+
+model AiSession {
+  id        String      @id @db.Uuid @default(uuid())
+  user_id   String      @db.Uuid
+  title     String
+  createdAt DateTime    @default(now()) @db.Timestamptz
+  updatedAt DateTime    @updatedAt @db.Timestamptz
+
+  user      User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  messages  AiMessage[]
+
+  @@map("ai_sessions")
+}
+
+model AiMessage {
+  id         String    @id @db.Uuid @default(uuid())
+  session_id String    @db.Uuid
+  role       String
+  content    String
+  createdAt  DateTime  @default(now()) @db.Timestamptz
+
+  session    AiSession @relation(fields: [session_id], references: [id], onDelete: Cascade)
+
+  @@map("ai_messages")
+}
+
+model Payment {
+  id              String   @id @db.Uuid @default(uuid())
+  user_id         String   @db.Uuid
+  subscription_id String   @db.Uuid
+  amount          Float
+  currency        String   @default("XAF")
+  status          String   @default("PENDING")
+  provider        String
+  providerRef     String?
+  paidAt          DateTime? @db.Timestamptz
+  expiresAt       DateTime @db.Timestamptz
+  createdAt       DateTime @default(now()) @db.Timestamptz
+
+  user            User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  subscription    Subscription @relation(fields: [subscription_id], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+model Notification {
+  id        String   @id @db.Uuid @default(uuid())
+  user_id   String   @db.Uuid
+  title     String
+  body      String
+  type      String
+  data      Json?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  user      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model Announcement {
+  id        String   @id @db.Uuid @default(uuid())
+  title     String
+  content   String
+  author_id String   @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  author    User     @relation(fields: [author_id], references: [id], onDelete: Cascade)
+
+  @@map("announcements")
+}
