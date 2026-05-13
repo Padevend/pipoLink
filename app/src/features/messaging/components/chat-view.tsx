@@ -62,7 +62,11 @@ export function ChatView({ conversationId }: ChatViewProps) {
                   'text-base',
                   isMe ? 'text-white' : 'text-text-primary-light dark:text-text-primary-dark'
                 )}>
-                  {item.cipherText}
+                  {'decryptFailed' in item && item.decryptFailed
+                    ? 'Message illisible — clé manquante ou corrompue.'
+                    : 'decryptedContent' in item && item.decryptedContent != null
+                      ? item.decryptedContent
+                      : item.cipherText}
                 </Text>
               </View>
               <Text className={cn(

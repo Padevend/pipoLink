@@ -1,22 +1,21 @@
-import React from 'react';
-import { View, Text, SafeAreaView, ScrollView, Pressable, Switch } from 'react-native';
 import { useAuth } from '@/providers';
 import { useTheme } from '@/shared/hooks/use-theme';
 import { Avatar } from '@/shared/ui/avatar';
 import { Card } from '@/shared/ui/card';
 import { cn } from '@/shared/utils/cn';
-import { 
-  User, 
-  Bell, 
-  Shield, 
-  Moon, 
-  LogOut, 
-  ChevronRight, 
-  Smartphone, 
-  CreditCard,
-  CircleHelp
-} from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import {
+  Bell,
+  ChevronRight,
+  CircleHelp,
+  CreditCard,
+  LogOut,
+  Moon,
+  Shield,
+  User
+} from 'lucide-react-native';
+import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
   const { user, logout } = useAuth();

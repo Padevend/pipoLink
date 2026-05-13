@@ -22,8 +22,16 @@ export class UserController {
   async completeOnboarding(c: HttpContext) {
     const userId = c.get("userId") as string;
     const payload = await c.validateUsing(onboardingValidator);
-    await this.service.completeOnboarding(userId, payload);
-    return ApiResponse.success(c, null, "Profil complété.");
+    const result = await this.service.completeOnboarding(userId, payload as any);
+    return ApiResponse.success(c, result, "Profil et appareil configurés.");
+  }
+
+  async devicePublicKeys(c: HttpContext) {
+    const requesterId = c.get("userId") as string;
+    const userIdParam = c.req.param("userId")!;
+    const targetUserId = userIdParam === "me" ? requesterId : userIdParam;
+    const keys = await this.service.listDevicePublicKeys(targetUserId);
+    return ApiResponse.success(c, keys, "Clés publiques.");
   }
 
   async uploadAvatar(c: HttpContext) {

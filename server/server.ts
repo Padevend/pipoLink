@@ -3,6 +3,7 @@ import { createRouter } from "./start/kernel.js";
 import { env } from "./config/envManager.js";
 import { prisma } from "./config/database.js";
 import { initWebSocket } from "./src/modules/websocket/index.js";
+import { startKeyRotationJob } from "./app/jobs/key-rotation.job.js";
 
 /**
  * Point d'entrée du serveur.
@@ -23,6 +24,7 @@ async function bootstrap() {
   });
 
   initWebSocket(server);
+  startKeyRotationJob();
 }
 
 bootstrap().catch((err) => {

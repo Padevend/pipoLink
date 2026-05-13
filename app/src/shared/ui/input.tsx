@@ -1,18 +1,16 @@
-import React, { useState } from 'react';
-import { 
-  TextInput, 
-  View, 
-  Text, 
-  type TextInputProps,
-  Pressable 
-} from 'react-native';
-import { LucideIcon } from 'lucide-react-native';
 import { cn } from '@/shared/utils/cn';
-import Animated, { 
-  useAnimatedStyle, 
-  interpolateColor, 
-  useSharedValue, 
-  withTiming 
+import { LucideIcon } from 'lucide-react-native';
+import { useState } from 'react';
+import {
+  Pressable,
+  Text,
+  TextInput,
+  View,
+  type TextInputProps
+} from 'react-native';
+import Animated, {
+  useSharedValue,
+  withTiming
 } from 'react-native-reanimated';
 
 export interface InputProps extends TextInputProps {
@@ -51,22 +49,6 @@ export function Input({
     onBlur?.(e);
   };
 
-  const animatedStyle = useAnimatedStyle(() => {
-    const borderColor = interpolateColor(
-      focusAnim.value,
-      [0, 1],
-      [
-        error ? '#EF4444' : '#E5E7EB',
-        '#FF7A00'
-      ]
-    );
-
-    return {
-      borderColor,
-      borderWidth: 1.5,
-    };
-  });
-
   return (
     <View className={cn('w-full gap-2', containerClassName)}>
       {label && (
@@ -76,7 +58,6 @@ export function Input({
       )}
       
       <Animated.View 
-        style={animatedStyle}
         className={cn(
           'h-14 w-full flex-row items-center rounded-2xl bg-surface-light dark:bg-surface-dark px-4',
           error && 'bg-error/5'

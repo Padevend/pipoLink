@@ -1,7 +1,6 @@
-import React from 'react';
-import { Tabs } from 'expo-router';
-import { MessageCircle, BrainCircuit, Library, Settings } from 'lucide-react-native';
 import { useTheme } from '@/shared/hooks/use-theme';
+import { Tabs } from 'expo-router';
+import { BrainCircuit, Library, MessageCircle, Settings } from 'lucide-react-native';
 
 
 export default function TabsLayout() {

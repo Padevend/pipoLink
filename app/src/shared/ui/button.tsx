@@ -4,7 +4,6 @@ import Animated, {
   useAnimatedStyle, 
   useSharedValue, 
   withSpring,
-  interpolate 
 } from 'react-native-reanimated';
 import { cn } from '@/shared/utils/cn';
 

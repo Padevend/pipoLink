@@ -1,26 +1,27 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { useKeyExchange } from '@/features/encryption/hooks/use-key-exchange';
+import { ensureChatKeyForChat } from '@/features/messaging/lib/ensure-chat-key';
+import { encryptMessage } from '@/shared/crypto/message';
 import { messagingApi } from '@/shared/api/messaging';
-import { encryptMessage } from '@/shared/crypto/encrypt';
 
 export function useSendMessage(conversationId: string) {
-  const { sessionKey } = useKeyExchange(conversationId);
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: { content: string; type: 'text' | 'image' | 'document'; attachmentUrl?: string; attachmentName?: string; attachmentSize?: number }) => {
-      const encrypted = await encryptMessage(input.content, sessionKey);
-      return messagingApi.sendMessage(
-        conversationId,
-        {
-          content: encrypted.ciphertext,
-          type: input.type,
-          iv: encrypted.iv,
-          // Note: attachment fields are missing in api type, passing them as unknown for now
-          ...(input as any)
-        }
-      );
+    mutationFn: async (input: {
+      content: string;
+      type: 'text' | 'image' | 'document';
+      attachmentUrl?: string;
+      attachmentName?: string;
+      attachmentSize?: number;
+    }) => {
+      const chatKey = await ensureChatKeyForChat(conversationId);
+      const encrypted = await encryptMessage(input.content, chatKey);
+      return messagingApi.sendMessage(conversationId, {
+        content: encrypted.cipherText,
+        iv: encrypted.iv,
+        type: input.type === 'text' ? 'TEXT' : input.type === 'image' ? 'IMAGE' : 'DOCUMENT',
+      });
     },
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: ['messages', conversationId] });

@@ -3,11 +3,19 @@ import { Loader } from '@/shared/ui/loader';
 import { Redirect } from 'expo-router';
 
 export default function Index(): JSX.Element {
-  const { isLoading, isLoggedIn } = useAuth();
+  const { isLoading, isLoggedIn, user } = useAuth();
 
   if (isLoading) {
     return <Loader />;
   }
 
-  return <Redirect href={isLoggedIn ? "/(tabs)" : "/auth/login"} />;
+  if (isLoggedIn && user && !user.is_configured) {
+    return <Redirect href={'/auth/onboarding' as any} />;
+  }
+
+  if (isLoggedIn && user?.is_configured) {
+    return <Redirect href="/(tabs)" />;
+  }
+
+  return <Redirect href="/auth/login" />;
 }

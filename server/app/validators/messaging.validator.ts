@@ -6,14 +6,49 @@ import vine from "@vinejs/vine";
  */
 export const sendMessageValidator = vine.compile(
   vine.object({
-    content:    vine.string().minLength(1),          // ciphertext AES-GCM (base64)
-    iv:         vine.string().minLength(1),           // vecteur d'initialisation
-    type:       vine.enum(["TEXT", "IMAGE", "DOCUMENT"]).optional(),
+    content: vine.string().minLength(1),
+    iv:      vine.string().minLength(1),
+    type:    vine.enum(["TEXT", "IMAGE", "DOCUMENT", "MIXED", "SYSTEM"]).optional(),
+    attachments: vine
+      .array(
+        vine.object({
+          fileUrl:   vine.string(),
+          iv:        vine.string(),
+          fileName:  vine.string(),
+          fileSize:  vine.number(),
+          mimeType:  vine.string(),
+        }),
+      )
+      .optional(),
   })
 );
 
-export const createConversationValidator = vine.compile(
+export const createChatValidator = vine.compile(
   vine.object({
-    memberIds: vine.array(vine.string().uuid()).minLength(1),
+    name:           vine.string().maxLength(200).optional(),
+    type:           vine.enum(["private", "group"]),
+    memberUserIds:  vine.array(vine.string().uuid()).minLength(1),
+    encryptedKeys:  vine
+      .array(
+        vine.object({
+          deviceId:     vine.string().uuid(),
+          encryptedKey: vine.string().minLength(1),
+        }),
+      )
+      .minLength(1),
+  })
+);
+
+export const addChatMemberValidator = vine.compile(
+  vine.object({
+    userId:        vine.string().uuid(),
+    encryptedKeys: vine
+      .array(
+        vine.object({
+          deviceId:     vine.string().uuid(),
+          encryptedKey: vine.string().minLength(1),
+        }),
+      )
+      .minLength(1),
   })
 );

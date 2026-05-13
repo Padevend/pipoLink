@@ -1,11 +1,18 @@
-import React from 'react';
-import { View, Text, ScrollView, SafeAreaView, Pressable } from 'react-native';
 import { RegisterForm } from '@/features/auth/components/register-form';
-import { ChevronLeft } from 'lucide-react-native';
+import { useTheme } from '@/shared/hooks/use-theme';
 import { useRouter } from 'expo-router';
+import { ChevronLeft } from 'lucide-react-native';
+import { useEffect } from 'react';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const theme = useTheme()
+
+  useEffect(()=>{
+    theme.setMode('dark')
+  }, [theme])
 
   return (
     <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark">
@@ -14,7 +21,7 @@ export default function RegisterScreen() {
           onPress={() => router.back()}
           className="w-10 h-10 items-center justify-center rounded-full bg-surface-light dark:bg-surface-dark"
         >
-          <ChevronLeft size={24} color="#111827" />
+          <ChevronLeft size={24} color={theme.mode == "dark" ? "#dbdbdb48" : "#111827"} />
         </Pressable>
       </View>
       
@@ -33,14 +40,6 @@ export default function RegisterScreen() {
           </View>
 
           <RegisterForm />
-          
-          <View className="mt-8 px-6">
-            <Text className="text-center text-xs text-text-secondary-light dark:text-text-secondary-dark leading-5">
-              By creating an account, you agree to our{' '}
-              <Text className="text-primary font-bold">Terms of Service</Text> and{' '}
-              <Text className="text-primary font-bold">Privacy Policy</Text>.
-            </Text>
-          </View>
         </View>
       </ScrollView>
     </SafeAreaView>

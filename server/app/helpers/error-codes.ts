@@ -42,6 +42,9 @@ export const ErrorCode = {
   VALIDATION_ERROR:      "VALIDATION_ERROR",
   RATE_LIMITED:          "RATE_LIMITED",
   INTERNAL_ERROR:        "INTERNAL_ERROR",
+  ONBOARDING_REQUIRED:   "ONBOARDING_REQUIRED",
+  INVALID_DEVICE_KEY:    "INVALID_DEVICE_KEY",
+  DEVICE_KEY_REQUIRED:   "DEVICE_KEY_REQUIRED",
 } as const;
 
 export type ErrorCodeType = typeof ErrorCode[keyof typeof ErrorCode];

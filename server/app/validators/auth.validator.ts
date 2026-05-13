@@ -17,8 +17,11 @@ export const registerValidator = vine.compile(
  */
 export const loginValidator = vine.compile(
   vine.object({
-    email:    vine.string().email(),
-    password: vine.string().minLength(1),
+    email:              vine.string().email(),
+    password:           vine.string().minLength(1),
+    deviceFingerprint:  vine.string().minLength(4).maxLength(200).optional(),
+    deviceName:         vine.string().maxLength(120).optional(),
+    devicePlatform:     vine.string().maxLength(40).optional(),
   })
 );
 

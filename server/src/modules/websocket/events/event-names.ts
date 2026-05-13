@@ -25,6 +25,7 @@ export const WsEventName = {
   DocumentUpdated: "document.updated",
   DeviceLinked: "device.linked",
   DeviceRevoked: "device.revoked",
+  KeyRotationRequired: "key.rotation_required",
   SubscriptionUpdated: "subscription.updated",
   AiResponseCreated: "ai.response.created",
   PresenceUpdated: "presence.updated",

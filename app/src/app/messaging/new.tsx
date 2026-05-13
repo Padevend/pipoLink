@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text, SafeAreaView } from 'react-native';
 import { Header } from '@/shared/ui/header';
+import { Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function NewMessageScreen() {
   return (

@@ -41,7 +41,7 @@ export default function UploadFileModal() {
         type: file.mimeType || 'application/octet-stream',
       });
       
-      await messagingApi.uploadFile(conversationId, formData);
+      await messagingApi.uploadAttachment(conversationId, formData);
       showToast({ type: 'success', message: 'File shared successfully!' });
       router.back();
     } catch (e: any) {

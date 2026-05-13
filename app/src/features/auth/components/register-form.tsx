@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, Pressable } from 'react-native';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 import { useAuth } from '@/providers';
+import { useToast } from '@/shared/hooks/use-toast';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { useRouter } from 'expo-router';
-import { useToast } from '@/shared/hooks/use-toast';
+import { Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
+import { useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
 
 export function RegisterForm() {
   const { register } = useAuth();
@@ -55,7 +55,7 @@ export function RegisterForm() {
 
   return (
     <View className="w-full gap-6">
-      <View className="gap-4">
+      <View className="gap-6">
         <Input
           label="Email Address"
           placeholder="student@university.edu"

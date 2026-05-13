@@ -1,4 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+
+import { useCreateChat } from '@/features/messaging/hooks/use-create-chat';
 import { messagingApi } from '@/shared/api/messaging';
 
 export const conversationKeys = {
@@ -14,13 +16,15 @@ export const useConversations = () => {
   });
 };
 
+/** Création de chat privé — enveloppe `useCreateChat`. */
 export const useCreateConversation = () => {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: (memberIds: string[]) => messagingApi.createConversation(memberIds),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: conversationKeys.list() });
-    },
-  });
+  const m = useCreateChat();
+  return {
+    ...m,
+    mutate: (memberIds: string[]) => m.mutate({ type: 'private', name: null, memberUserIds: memberIds }),
+    mutateAsync: (memberIds: string[]) =>
+      m.mutateAsync({ type: 'private', name: null, memberUserIds: memberIds }),
+  };
 };
+
+export { useCreateChat } from '@/features/messaging/hooks/use-create-chat';

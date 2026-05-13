@@ -1,9 +1,10 @@
 import { HttpContext } from "../../config/app.js";
 import { MessagingService } from "../services/messaging.service.js";
 import { ApiResponse } from "../helpers/api-response.js";
-import { sendMessageValidator, createConversationValidator } from "../validators/messaging.validator.js";
+import { sendMessageValidator, createChatValidator, addChatMemberValidator } from "../validators/messaging.validator.js";
 import { NotificationService } from "../services/notification.service.js";
 import { FileService } from "../services/file.service.js";
+import { ErrorCode } from "../helpers/error-codes.js";
 import { RealtimeBus } from "../../src/modules/websocket/gateway/realtime-bus.js";
 import { WsEventName } from "../../src/modules/websocket/events/event-names.js";
 
@@ -18,20 +19,48 @@ export class MessagingController {
     return ApiResponse.success(c, conversations, "Conversations récupérées.");
   }
 
-  async createConversation(c: HttpContext) {
+  async createChat(c: HttpContext) {
     const userId = c.get("userId") as string;
-    const payload = await c.validateUsing(createConversationValidator);
-    const conversation = await this.service.createConversation(userId, payload.memberIds);
+    const payload = await c.validateUsing(createChatValidator);
+    const conversation = await this.service.createChat(userId, {
+      name:           payload.name ?? null,
+      type:           payload.type,
+      memberUserIds:  payload.memberUserIds,
+      encryptedKeys:  payload.encryptedKeys,
+    });
     for (const member of conversation.members) {
       RealtimeBus.addUserToConversationRoom(member.user_id, conversation.id);
       RealtimeBus.emit(WsEventName.ConversationCreated, { conversation }, { userId: member.user_id });
     }
-    return ApiResponse.success(c, conversation, "Conversation creee.", 201);
+    return ApiResponse.success(c, conversation, "Conversation créée.", 201);
+  }
+
+  async addMember(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const chatId = c.req.param("id")!;
+    const payload = await c.validateUsing(addChatMemberValidator);
+    const conversation = await this.service.addMember(userId, chatId, payload);
+    const members = await this.service.getConversationMembers(chatId);
+    for (const m of members) {
+      RealtimeBus.emit(WsEventName.ConversationUpdated, { conversationId: chatId, conversation }, { userId: m.user_id });
+    }
+    return ApiResponse.success(c, conversation, "Membre ajouté.", 201);
+  }
+
+  async myEncryptedChatKey(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const chatId = c.req.param("id")!;
+    const deviceId = c.req.query("deviceId");
+    if (!deviceId) {
+      return ApiResponse.error(c, ErrorCode.VALIDATION_ERROR, "deviceId requis.", 400);
+    }
+    const result = await this.service.getMyEncryptedChatKey(userId, chatId, deviceId);
+    return ApiResponse.success(c, result, "Clé chiffrée.");
   }
 
   async getMessages(c: HttpContext) {
     const userId = c.get("userId") as string;
-    const conversationId = c.req.param("id");
+    const conversationId = c.req.param("id")!;
     const page = parseInt(c.req.query("page") || "1", 10);
     const limit = parseInt(c.req.query("limit") || "30", 10);
     const result = await this.service.getMessages(userId, conversationId, page, limit);
@@ -40,7 +69,7 @@ export class MessagingController {
 
   async sendMessage(c: HttpContext) {
     const userId = c.get("userId") as string;
-    const conversationId = c.req.param("id");
+    const conversationId = c.req.param("id")!;
     const payload = await c.validateUsing(sendMessageValidator);
     const message = await this.service.sendMessage(userId, conversationId, payload);
     const members = await this.service.getConversationMembers(conversationId);
@@ -83,9 +112,13 @@ export class MessagingController {
     return ApiResponse.error(c, "VALIDATION_ERROR", "Fichier invalide.", 400);
   }
 
+  async uploadAttachment(c: HttpContext) {
+    return this.uploadFile(c);
+  }
+
   async markAsRead(c: HttpContext) {
     const userId = c.get("userId") as string;
-    const conversationId = c.req.param("id");
+    const conversationId = c.req.param("id")!;
     await this.service.markAsRead(userId, conversationId);
     RealtimeBus.emit(WsEventName.MessageRead, { conversationId, userId }, { conversationId });
     return ApiResponse.success(c, null, "Messages marqués comme lus.");

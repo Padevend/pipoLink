@@ -9,10 +9,19 @@ interface AuthContextValue {
   user: User | null;
   isLoading: boolean;
   isLoggedIn: boolean;
-  login: (payload: { email: string; password: string }) => Promise<void>;
+  login: (payload: {
+    email: string;
+    password: string;
+    deviceFingerprint?: string;
+    deviceName?: string;
+    devicePlatform?: string;
+  }) => Promise<void>;
   register: (payload: { email: string; password: string }) => Promise<void>;
   verifyOtp: (payload: { email: string; code: string; purpose: 'EMAIL_VERIFY' | 'PASSWORD_RESET' }) => Promise<void>;
-  signInWithTokens: (tokens: { accessToken: string; refreshToken: string; expiresAt: number }, user: User) => Promise<void>;
+  signInWithTokens: (
+    tokens: { accessToken: string; refreshToken: string; expiresAt: number; deviceId?: string | null },
+    user: User,
+  ) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -31,11 +40,17 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const saveAuthData = async (tokens: { accessToken: string; refreshToken: string; expiresAt: number }, userData: User) => {
+  const saveAuthData = async (
+    tokens: { accessToken: string; refreshToken: string; expiresAt: number; deviceId?: string | null },
+    userData: User,
+  ) => {
     await SecureStore.setItemAsync('auth_token', tokens.accessToken);
     await SecureStore.setItemAsync('refresh_token', tokens.refreshToken);
     await SecureStore.setItemAsync('expires_at', String(tokens.expiresAt));
     await SecureStore.setItemAsync('user_data', JSON.stringify(userData));
+    if (tokens.deviceId) {
+      await SecureStore.setItemAsync('device_id', tokens.deviceId);
+    }
     setUser(userData);
   };
 
@@ -44,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
     await SecureStore.deleteItemAsync('refresh_token');
     await SecureStore.deleteItemAsync('expires_at');
     await SecureStore.deleteItemAsync('user_data');
+    await SecureStore.deleteItemAsync('device_id').catch(() => {});
     setUser(null);
   };
 
@@ -80,11 +96,19 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
   const value = useMemo<AuthContextValue>(() => ({
     user,
     isLoading,
-    isLoggedIn: Boolean(user),
+    isLoggedIn: !!user,
     
     login: async (payload) => {
-      const { accessToken, refreshToken, expiresAt, user: userData } = await authApi.login(payload);
-      await saveAuthData({ accessToken, refreshToken, expiresAt }, userData);
+      const result = await authApi.login(payload);
+      await saveAuthData(
+        {
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
+          expiresAt: result.expiresAt,
+          deviceId: result.deviceId,
+        },
+        result.user,
+      );
     },
     
     register: async (payload) => {
@@ -93,13 +117,23 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
     
     verifyOtp: async (payload) => {
       const data = await authApi.verifyOtp(payload);
-      console.log(data);
       if (data) {
-        await saveAuthData({ accessToken: data.accessToken, refreshToken: data.refreshToken, expiresAt: data.expiresAt }, data.user);
+        await saveAuthData(
+          {
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken,
+            expiresAt: data.expiresAt,
+            deviceId: (data as { deviceId?: string }).deviceId,
+          },
+          data.user,
+        );
       }
     },
     
-    signInWithTokens: async (tokens: { accessToken: string; refreshToken: string; expiresAt: number }, userData: User) => {
+    signInWithTokens: async (
+      tokens: { accessToken: string; refreshToken: string; expiresAt: number; deviceId?: string | null },
+      userData: User,
+    ) => {
       await saveAuthData(tokens, userData);
     },
     

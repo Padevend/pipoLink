@@ -1,9 +1,12 @@
+import crypto from "node:crypto";
+
 import { prisma } from "../../config/database.js";
 import { hash }   from "../../config/hash.js";
 import { OtpService } from "./otp.service.js";
 import { MailerService } from "./mailer.service.js";
 import { ErrorCode } from "../helpers/error-codes.js";
 import { DateTime } from "luxon";
+import { verifyDeviceKeyAttestation } from "../helpers/device-crypto.js";
 
 export class AuthService {
   private otp    = new OtpService();
@@ -39,7 +42,8 @@ export class AuthService {
 
     if (payload.purpose === "EMAIL_VERIFY") {
       await prisma.user.update({ where: { id: user.id }, data: { is_active: true } });
-      return await this._generateTokens(user);
+      const tokens = await this._generateTokens(user);
+      return { ...tokens, requiresOnboarding: !user.is_configured };
     }
     return null;
   }
@@ -50,7 +54,13 @@ export class AuthService {
     await this.otp.sendOtp(user.id, user.email!, payload.purpose);
   }
 
-  async login(payload: { email: string; password: string }) {
+  async login(payload: {
+    email: string;
+    password: string;
+    deviceFingerprint?: string;
+    deviceName?: string;
+    devicePlatform?: string;
+  }) {
     const user = await prisma.user.findUnique({ where: { email: payload.email } });
     if (!user) throw { code: ErrorCode.INVALID_CREDENTIALS, status: 401, message: "Email ou mot de passe incorrect." };
 
@@ -60,9 +70,41 @@ export class AuthService {
     if (!user.is_active) throw { code: ErrorCode.ACCOUNT_NOT_VERIFIED, status: 403, message: "Veuillez vérifier votre email avant de vous connecter." };
     if (user.is_excluded) throw { code: ErrorCode.ACCOUNT_INACTIVE, status: 403, message: "Votre compte a été suspendu." };
 
+    let deviceId: string | undefined;
+    let requiresKeySetup = false;
+
+    if (payload.deviceFingerprint) {
+      let device = await prisma.device.findFirst({
+        where: { user_id: user.id, fingerprint: payload.deviceFingerprint, revokedAt: null },
+      });
+
+      if (!device && user.is_configured) {
+        device = await prisma.device.create({
+          data: {
+            user_id:     user.id,
+            name:        payload.deviceName ?? "Appareil",
+            platform:    payload.devicePlatform ?? "unknown",
+            fingerprint: payload.deviceFingerprint,
+            isPrimary:   false,
+          },
+        });
+        requiresKeySetup = true;
+      }
+
+      if (device) {
+        deviceId = device.id;
+        if (!device.public_key) requiresKeySetup = true;
+      }
+    }
+
     await prisma.auditLog.create({ data: { user_id: user.id, action: "LOGIN" } });
 
-    return await this._generateTokens(user);
+    const tokens = await this._generateTokens(user, deviceId);
+    return {
+      ...tokens,
+      requiresOnboarding: !user.is_configured,
+      requiresKeySetup,
+    };
   }
 
   async refreshTokens(refreshToken: string) {
@@ -137,35 +179,92 @@ export class AuthService {
     return { token, expiresAt };
   }
 
-  async verifyQrToken(payload: { token: string; deviceName: string; platform: string; fingerprint: string }) {
+  async verifyQrToken(payload: {
+    token: string;
+    deviceName: string;
+    platform: string;
+    fingerprint: string;
+    newDevice?: { publicKey: string; keySignature: string };
+    chatKeyBundle?: { chatId: string; encryptedKey: string }[];
+  }) {
     const record = await prisma.qrToken.findUnique({ where: { token: payload.token } });
     if (!record || record.usedAt || new Date() > record.expiresAt) {
       throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Token QR invalide ou expiré." };
     }
     await prisma.qrToken.update({ where: { id: record.id }, data: { usedAt: new Date() } });
 
+    if (payload.chatKeyBundle?.length) {
+      if (!payload.newDevice?.publicKey || !payload.newDevice?.keySignature) {
+        throw { code: ErrorCode.VALIDATION_ERROR, status: 400, message: "newDevice requis avec le lot de clés de chat." };
+      }
+      const attested = await verifyDeviceKeyAttestation(
+        payload.newDevice.publicKey,
+        payload.newDevice.keySignature,
+      );
+      if (!attested) {
+        throw { code: ErrorCode.INVALID_DEVICE_KEY, status: 400, message: "Signature du nouvel appareil invalide." };
+      }
+      const chatIds = [...new Set(payload.chatKeyBundle.map((b) => b.chatId))];
+      for (const chatId of chatIds) {
+        const member = await prisma.conversationMember.findFirst({
+          where: { conversation_id: chatId, user_id: record.user_id },
+        });
+        if (!member) {
+          throw { code: ErrorCode.FORBIDDEN, status: 403, message: "Chat non autorisé dans le lot de clés." };
+        }
+      }
+    } else if (payload.newDevice?.publicKey) {
+      const attested = await verifyDeviceKeyAttestation(
+        payload.newDevice.publicKey,
+        payload.newDevice.keySignature ?? "",
+      );
+      if (!attested) {
+        throw { code: ErrorCode.INVALID_DEVICE_KEY, status: 400, message: "Signature du nouvel appareil invalide." };
+      }
+    }
+
     const existingCount = await prisma.device.count({ where: { user_id: record.user_id, revokedAt: null } });
+    const now = new Date();
+    const expires = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+
     const device = await prisma.device.create({
       data: {
-        user_id:     record.user_id,
-        name:        payload.deviceName,
-        platform:    payload.platform,
-        fingerprint: payload.fingerprint,
-        isPrimary:   existingCount === 0,
+        user_id:       record.user_id,
+        name:          payload.deviceName,
+        platform:      payload.platform,
+        fingerprint:   payload.fingerprint,
+        isPrimary:     existingCount === 0,
+        public_key:    payload.newDevice?.publicKey ?? null,
+        key_signature: payload.newDevice?.keySignature ?? null,
+        keyCreatedAt:  payload.newDevice?.publicKey ? now : null,
+        keyExpiresAt:  payload.newDevice?.publicKey ? expires : null,
       },
     });
+
+    if (payload.chatKeyBundle?.length) {
+      await prisma.chatMemberKey.createMany({
+        data: payload.chatKeyBundle.map((row) => ({
+          id:                 crypto.randomUUID(),
+          chat_id:            row.chatId,
+          device_id:          device.id,
+          encrypted_chat_key: row.encryptedKey,
+        })),
+        skipDuplicates: true,
+      });
+    }
 
     await prisma.auditLog.create({ data: { user_id: record.user_id, action: "DEVICE_LINKED" } });
     const user = await prisma.user.findUniqueOrThrow({ where: { id: record.user_id } });
     const tokens = await this._generateTokens(user, device.id);
-    return { ...tokens, device: { id: device.id, name: device.name, platform: device.platform } };
+    return { ...tokens, device: { id: device.id, name: device.name, platform: device.platform }, user: { id: user.id, email: user.email, username: user.username, role: user.role } };
   }
 
   private async _generateTokens(user: any, deviceId?: string) {
     const accessToken = await hash.jwt.encode({
-      sub:      user.id,
-      deviceId: deviceId ?? null,
-      role:     user.role,
+      sub:             user.id,
+      deviceId:        deviceId ?? null,
+      role:            user.role,
+      is_configured:   user.is_configured,
     });
     const rawRefreshToken = hash.generateRandomString(64);
     const tokenHash       = await hash.sha512(rawRefreshToken);

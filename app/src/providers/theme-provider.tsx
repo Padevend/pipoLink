@@ -1,6 +1,6 @@
+import { useColorScheme as useNativeWindColorScheme } from 'nativewind';
 import { createContext, type ReactNode, useEffect, useMemo, useState } from 'react';
 import { useColorScheme as useDeviceColorScheme } from 'react-native';
-import { useColorScheme as useNativeWindColorScheme } from 'nativewind';
 
 import { DARK, LIGHT, type ThemeColors } from '@/shared/constants/colors';
 import { getJson, setJson } from '@/shared/storage/async-storage';
@@ -21,7 +21,7 @@ const STORAGE_KEY = 'theme_mode';
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const deviceScheme = useDeviceColorScheme();
   const { setColorScheme: setNWColorScheme } = useNativeWindColorScheme();
-  const [mode, setModeState] = useState<ThemeMode>('system');
+  const [mode, setModeState] = useState<ThemeMode>('dark');
 
   useEffect(() => {
     const loadTheme = async () => {

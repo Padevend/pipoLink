@@ -80,8 +80,16 @@ export class AuthController {
   }
 
   async verifyQr(c: HttpContext) {
-    const { token, deviceName, platform, fingerprint } = await c.req.json();
-    const result = await this.service.verifyQrToken({ token, deviceName, platform, fingerprint });
+    const body = await c.req.json();
+    const { token, deviceName, platform, fingerprint, newDevice, chatKeyBundle } = body;
+    const result = await this.service.verifyQrToken({
+      token,
+      deviceName,
+      platform,
+      fingerprint,
+      newDevice,
+      chatKeyBundle,
+    });
     if (result.device?.id) {
       RealtimeBus.emit(WsEventName.DeviceLinked, result.device, { userId: result.user.id });
     }

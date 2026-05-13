@@ -27,7 +27,7 @@ export class AiController {
   async getSession(c: HttpContext) {
     const userId = c.get("userId") as string;
     const sessionId = c.req.param("id");
-    const session = await this.service.getSession(userId, sessionId);
+    const session = await this.service.getSession(userId, sessionId as string);
     return ApiResponse.success(c, session, "Session récupérée.");
   }
 

@@ -1,8 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: [
-    "./src/**/*.{js,jsx,ts,tsx}",
-  ],
+  content: ["./src/**/*.{js,jsx,ts,tsx}"],
   presets: [require("nativewind/preset")],
   darkMode: "class",
   theme: {
@@ -10,11 +8,11 @@ module.exports = {
       colors: {
         primary: "#FF7A00",
         background: {
-          light: "#F7F8FA",
-          dark: "#0F172A",
+          light: "#FFF",
+          dark: "#040914",
         },
         surface: {
-          light: "#FFFFFF",
+          light: "#f3f2f2",
           dark: "#1E293B",
         },
         border: {
@@ -35,7 +33,7 @@ module.exports = {
           muted: {
             light: "#FFF0E0",
             dark: "#2D1A00",
-          }
+          },
         },
         success: "#22C55E",
         error: "#EF4444",
@@ -43,9 +41,9 @@ module.exports = {
         info: "#3B82F6",
       },
       borderRadius: {
-        '2xl': '1.25rem',
-        '3xl': '1.5rem',
-        '4xl': '2rem',
+        "2xl": "1.25rem",
+        "3xl": "1.5rem",
+        "4xl": "2rem",
       },
     },
   },

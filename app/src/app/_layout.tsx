@@ -33,6 +33,8 @@ export default function RootLayout(): JSX.Element {
                     <Stack.Screen name="chat/[id]" />
                     <Stack.Screen name="devices/index" />
                     <Stack.Screen name="devices/scan" />
+                    <Stack.Screen name="devices/add" />
+                    <Stack.Screen name="devices/key-recovery" />
                     <Stack.Screen name="updates/changelog" />
                     <Stack.Screen name="modal/upload-file" options={{ presentation: 'modal' }} />
                     <Stack.Screen name="modal/upload-document" options={{ presentation: 'modal' }} />

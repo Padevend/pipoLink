@@ -1,10 +1,10 @@
-import React from 'react';
-import { View, Text, SafeAreaView, Pressable } from 'react-native';
 import { ConversationList } from '@/features/messaging/components/conversation-list';
-import { Search, Plus } from 'lucide-react-native';
 import { useAuth } from '@/providers/auth-provider';
 import { Avatar } from '@/shared/ui/avatar';
 import { useRouter } from 'expo-router';
+import { Plus, Search } from 'lucide-react-native';
+import { Pressable, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const { user } = useAuth();

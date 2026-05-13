@@ -11,7 +11,12 @@ export async function handleConversationCreate(ctx: HandlerContext, payload: unk
   if (!state?.userId) throw { code: "UNAUTHORIZED", status: 401, message: "Authentification requise." };
 
   const data = await validatePayload(conversationCreateValidator, payload);
-  const conversation = await messaging.createConversation(state.userId, data.memberIds);
+  const conversation = await messaging.createChat(state.userId, {
+    name:           data.name ?? null,
+    type:           data.type,
+    memberUserIds:  data.memberUserIds,
+    encryptedKeys:  data.encryptedKeys,
+  });
 
   for (const member of conversation.members) {
     ctx.gateway.addUserToConversationRoom(member.user_id, conversation.id);

@@ -23,14 +23,35 @@ export const authApi = {
   /**
    * Verify OTP code
    */
-  verifyOtp: (payload: { email: string; code: string; purpose: 'EMAIL_VERIFY' | 'PASSWORD_RESET' }) => 
-    api.post<{ accessToken: string; refreshToken: string; expiresAt: number; user: User }>('/auth/verify-otp', payload),
+  verifyOtp: (payload: { email: string; code: string; purpose: 'EMAIL_VERIFY' | 'PASSWORD_RESET' }) =>
+    api.post<{
+      accessToken: string;
+      refreshToken: string;
+      expiresAt: number;
+      user: User;
+      deviceId?: string | null;
+      requiresOnboarding?: boolean;
+    }>('/auth/verify-otp', payload),
 
   /**
    * Login with email and password
    */
-  login: (payload: { email: string; password: string }) => 
-    api.post<{ accessToken: string; refreshToken: string; expiresAt: number; user: User; deviceId: string }>('/auth/login', payload),
+  login: (payload: {
+    email: string;
+    password: string;
+    deviceFingerprint?: string;
+    deviceName?: string;
+    devicePlatform?: string;
+  }) =>
+    api.post<{
+      accessToken: string;
+      refreshToken: string;
+      expiresAt: number;
+      user: User;
+      deviceId?: string | null;
+      requiresOnboarding?: boolean;
+      requiresKeySetup?: boolean;
+    }>('/auth/login', payload),
 
   /**
    * Refresh token

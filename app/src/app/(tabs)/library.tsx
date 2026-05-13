@@ -5,7 +5,8 @@ import { Skeleton } from '@/shared/ui/skeleton';
 import { cn } from '@/shared/utils/cn';
 import { BookOpen, Search, Upload } from 'lucide-react-native';
 import { useState } from 'react';
-import { FlatList, Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
+import { FlatList, Pressable, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const CATEGORIES = ['All', 'Courses', 'Exams', 'TD/TP', 'Summaries'];
 const TYPES_MAP: Record<string, string> = {

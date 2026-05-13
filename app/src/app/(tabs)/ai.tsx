@@ -1,11 +1,11 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, SafeAreaView, ScrollView, KeyboardAvoidingView, Platform, FlatList } from 'react-native';
-import { useAiHistory, useAiChat } from '@/entities/ai/hooks';
-import { Input } from '@/shared/ui/input';
+import { useAiChat, useAiHistory } from '@/entities/ai/hooks';
 import { Button } from '@/shared/ui/button';
-import { Sparkles, Send, BrainCircuit, History } from 'lucide-react-native';
+import { Input } from '@/shared/ui/input';
 import { cn } from '@/shared/utils/cn';
-import { Skeleton } from '@/shared/ui/skeleton';
+import { BrainCircuit, History, Send, Sparkles } from 'lucide-react-native';
+import { useRef, useState } from 'react';
+import { FlatList, KeyboardAvoidingView, Platform, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function AiScreen() {
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
@@ -24,6 +24,7 @@ export default function AiScreen() {
         message: msg, 
         sessionId 
       });
+      
       if (!sessionId) setSessionId(result.session.id);
     } catch (e) {
       // Error handled by mutation or toast

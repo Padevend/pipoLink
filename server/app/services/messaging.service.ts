@@ -1,69 +1,231 @@
+import crypto from "node:crypto";
+
 import { prisma } from "../../config/database.js";
 import { ErrorCode } from "../helpers/error-codes.js";
 
+export type CreateChatPayload = {
+  name: string | null;
+  type: "private" | "group";
+  memberUserIds: string[];
+  encryptedKeys: { deviceId: string; encryptedKey: string }[];
+};
+
+export type AddMemberPayload = {
+  userId: string;
+  encryptedKeys: { deviceId: string; encryptedKey: string }[];
+};
+
 /**
- * Service de messagerie.
- * Le contenu des messages est chiffré côté client (E2E).
- * Le backend stocke et relaie les ciphertexts sans les déchiffrer.
+ * Service de messagerie E2E : ciphertexts et clés de chat chiffrées par appareil.
  */
 export class MessagingService {
+  async createChat(creatorId: string, payload: CreateChatPayload) {
+    const uniqueMembers = Array.from(new Set([creatorId, ...payload.memberUserIds]));
 
-  /**
-   * Crée une nouvelle conversation privée entre membres.
-   */
-  async createConversation(userId: string, memberIds: string[]) {
-    const uniqueMembers = Array.from(new Set([userId, ...memberIds]));
+    if (payload.type === "private" && uniqueMembers.length !== 2) {
+      throw { code: ErrorCode.VALIDATION_ERROR, status: 400, message: "Un chat privé doit avoir exactement 2 membres." };
+    }
+    if (payload.type === "group" && (!payload.name || !payload.name.trim())) {
+      throw { code: ErrorCode.VALIDATION_ERROR, status: 400, message: "Un groupe doit avoir un nom." };
+    }
 
-    const chat = await prisma.chat.create({
-      data: {
-        members: {
-          create: uniqueMembers.map((id) => ({ user_id: id })),
-        },
-      },
-      include: { members: true },
+    const deviceIds = payload.encryptedKeys.map((e) => e.deviceId);
+    const devices = await prisma.device.findMany({
+      where: { id: { in: deviceIds }, revokedAt: null },
+      select: { id: true, user_id: true, public_key: true },
     });
+    const deviceById = new Map(devices.map((d) => [d.id, d]));
 
-    return chat;
+    for (const row of payload.encryptedKeys) {
+      const d = deviceById.get(row.deviceId);
+      if (!d?.public_key) {
+        throw { code: ErrorCode.VALIDATION_ERROR, status: 400, message: "Appareil ou clé publique invalide." };
+      }
+      if (!uniqueMembers.includes(d.user_id)) {
+        throw { code: ErrorCode.FORBIDDEN, status: 403, message: "Un appareil ne correspond pas aux membres du chat." };
+      }
+    }
+
+    for (const uid of uniqueMembers) {
+      const userDevices = await prisma.device.findMany({
+        where: { user_id: uid, revokedAt: null, public_key: { not: null } },
+        select: { id: true },
+      });
+      for (const d of userDevices) {
+        if (!payload.encryptedKeys.some((e) => e.deviceId === d.id)) {
+          throw {
+            code:    ErrorCode.VALIDATION_ERROR,
+            status:  400,
+            message: `Clé de chat manquante pour l'appareil ${d.id} (utilisateur ${uid}).`,
+          };
+        }
+      }
+    }
+
+    return await prisma.$transaction(async (trx) => {
+      const chat = await trx.chat.create({
+        data: {
+          type:          payload.type,
+          name:          payload.type === "group" ? payload.name!.trim() : null,
+          created_by_id: creatorId,
+          members: {
+            create: uniqueMembers.map((uid) => ({
+              user_id: uid,
+              role:    uid === creatorId ? "admin" : "member",
+            })),
+          },
+        },
+      });
+
+      await trx.chatMemberKey.createMany({
+        data: payload.encryptedKeys.map((e) => ({
+          id:                 crypto.randomUUID(),
+          chat_id:            chat.id,
+          device_id:          e.deviceId,
+          encrypted_chat_key: e.encryptedKey,
+        })),
+      });
+
+      return trx.chat.findUniqueOrThrow({
+        where: { id: chat.id },
+        include: {
+          members: {
+            include: {
+              user: {
+                select: {
+                  id:       true,
+                  username: true,
+                  profile:  { select: { firstname: true, lastname: true, avatarUrl: true } },
+                },
+              },
+            },
+          },
+        },
+      });
+    });
   }
 
-  /**
-   * Liste les conversations d'un utilisateur avec le dernier message.
-   * Trie par date de dernier message décroissante.
-   *
-   * @param userId - Identifiant de l'utilisateur
-   * @returns      - Tableau de conversations avec métadonnées
-   */
+  async addMember(adminUserId: string, chatId: string, payload: AddMemberPayload) {
+    await this._assertAdmin(adminUserId, chatId);
+
+    const memberExists = await prisma.conversationMember.findFirst({
+      where: { conversation_id: chatId, user_id: payload.userId },
+    });
+    if (memberExists) {
+      throw { code: ErrorCode.CONFLICT, status: 409, message: "Cet utilisateur est déjà membre du chat." };
+    }
+
+    const devices = await prisma.device.findMany({
+      where: { id: { in: payload.encryptedKeys.map((e) => e.deviceId) }, user_id: payload.userId, revokedAt: null },
+      select: { id: true, public_key: true },
+    });
+    if (devices.length !== payload.encryptedKeys.length) {
+      throw { code: ErrorCode.VALIDATION_ERROR, status: 400, message: "Appareils invalides pour ce membre." };
+    }
+
+    const allUserDevices = await prisma.device.findMany({
+      where: { user_id: payload.userId, revokedAt: null, public_key: { not: null } },
+      select: { id: true },
+    });
+    for (const d of allUserDevices) {
+      if (!payload.encryptedKeys.some((e) => e.deviceId === d.id)) {
+        throw { code: ErrorCode.VALIDATION_ERROR, status: 400, message: "Tous les appareils du membre doivent recevoir une clé." };
+      }
+    }
+
+    await prisma.$transaction(async (trx) => {
+      await trx.conversationMember.create({
+        data: {
+          id:               crypto.randomUUID(),
+          user_id:          payload.userId,
+          conversation_id:  chatId,
+          role:             "member",
+        },
+      });
+      await trx.chatMemberKey.createMany({
+        data: payload.encryptedKeys.map((e) => ({
+          id:                 crypto.randomUUID(),
+          chat_id:            chatId,
+          device_id:          e.deviceId,
+          encrypted_chat_key: e.encryptedKey,
+        })),
+      });
+    });
+
+    return prisma.chat.findUniqueOrThrow({
+      where: { id: chatId },
+      include: {
+        members: {
+          include: {
+            user: {
+              select: {
+                id:       true,
+                username: true,
+                profile:  { select: { firstname: true, lastname: true, avatarUrl: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  async getMyEncryptedChatKey(userId: string, chatId: string, deviceId: string) {
+    await this._assertMember(userId, chatId);
+
+    const device = await prisma.device.findFirst({
+      where: { id: deviceId, user_id: userId, revokedAt: null },
+    });
+    if (!device) throw { code: ErrorCode.FORBIDDEN, status: 403, message: "Appareil non autorisé." };
+
+    const row = await prisma.chatMemberKey.findFirst({
+      where: { chat_id: chatId, device_id: deviceId },
+    });
+    if (!row) throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Clé chiffrée introuvable pour cet appareil." };
+
+    return { encryptedChatKey: row.encrypted_chat_key };
+  }
+
   async listConversations(userId: string) {
     const members = await prisma.conversationMember.findMany({
       where:   { user_id: userId },
-      include: { conversation: true },
+      include: {
+        conversation: {
+          include: {
+            members: {
+              include: {
+                user: {
+                  select: {
+                    id:       true,
+                    username: true,
+                    profile:  { select: { firstname: true, lastname: true, avatarUrl: true } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
       orderBy: { conversation: { updatedAt: "desc" } },
     });
 
-    return members.map(m => m.conversation);
+    return members.map((m) => m.conversation);
   }
 
-  /**
-   * Récupère les messages d'une conversation avec pagination.
-   * Vérifie que l'utilisateur est membre de la conversation.
-   *
-   * @param userId         - Identifiant de l'utilisateur
-   * @param conversationId - Identifiant de la conversation
-   * @param page           - Numéro de page (défaut 1)
-   * @param limit          - Taille de page (défaut 30)
-   * @returns              - { messages, total }
-   */
   async getMessages(userId: string, conversationId: string, page = 1, limit = 30) {
     await this._assertMember(userId, conversationId);
 
-    const skip  = (page - 1) * limit;
+    const skip = (page - 1) * limit;
     const [messages, total] = await Promise.all([
       prisma.message.findMany({
         where:   { chat_id: conversationId, deletedAt: null },
         skip,
         take:    limit,
         orderBy: { created_at: "desc" },
-        include: { sender: { select: { id: true, username: true } } },
+        include: {
+          sender:      { select: { id: true, username: true } },
+          attachments: true,
+        },
       }),
       prisma.message.count({ where: { chat_id: conversationId, deletedAt: null } }),
     ]);
@@ -71,37 +233,46 @@ export class MessagingService {
     return { messages, total };
   }
 
-  /**
-   * Envoie un message chiffré dans une conversation.
-   * Le champ `cipherText` est le contenu chiffré AES-GCM côté client.
-   *
-   * @param userId         - Identifiant de l'expéditeur
-   * @param conversationId - Identifiant de la conversation
-   * @param payload        - { content (= cipherText), iv, type }
-   * @returns              - Message créé
-   */
-  async sendMessage(userId: string, conversationId: string, payload: { content: string; iv: string; type?: string }) {
+  async sendMessage(
+    userId: string,
+    conversationId: string,
+    payload: {
+      content: string;
+      iv: string;
+      type?: string;
+      attachments?: { fileUrl: string; iv: string; fileName: string; fileSize: number; mimeType: string }[];
+    },
+  ) {
     await this._assertMember(userId, conversationId);
 
     const message = await prisma.message.create({
       data: {
+        id:         crypto.randomUUID(),
         chat_id:    conversationId,
         sender_id:  userId,
         cipherText: payload.content,
         iv:         payload.iv,
         status:     "send",
         type:       (payload.type ?? "TEXT") as any,
+        attachments: {
+          create: (payload.attachments ?? []).map((a) => ({
+            id:         crypto.randomUUID(),
+            file_url:   a.fileUrl,
+            iv:         a.iv,
+            file_name:  a.fileName,
+            file_size:  a.fileSize,
+            mime_type:  a.mimeType,
+          })),
+        },
       },
+      include: { attachments: true },
     });
 
-    await prisma.chat.update({ where: { id: conversationId }, data: { created_at: new Date() } });
+    await prisma.chat.update({ where: { id: conversationId }, data: { updatedAt: new Date() } });
 
     return message;
   }
 
-  /**
-   * Met a jour un message existant (edite par l'expediteur).
-   */
   async updateMessage(userId: string, messageId: string, content: string, iv: string) {
     const message = await prisma.message.findUnique({ where: { id: messageId } });
     if (!message) throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Message introuvable." };
@@ -113,9 +284,6 @@ export class MessagingService {
     });
   }
 
-  /**
-   * Supprime un message (soft delete).
-   */
   async deleteMessage(userId: string, messageId: string) {
     const message = await prisma.message.findUnique({ where: { id: messageId } });
     if (!message) throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Message introuvable." };
@@ -127,9 +295,6 @@ export class MessagingService {
     });
   }
 
-  /**
-   * Marque un message comme delivre.
-   */
   async setDelivered(userId: string, messageId: string) {
     const message = await prisma.message.findUnique({ where: { id: messageId } });
     if (!message) throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Message introuvable." };
@@ -143,13 +308,6 @@ export class MessagingService {
     });
   }
 
-  /**
-   * Marque les messages d'une conversation comme lus.
-   * Met à jour lastReadAt du membre dans la conversation.
-   *
-   * @param userId         - Identifiant de l'utilisateur
-   * @param conversationId - Identifiant de la conversation
-   */
   async markAsRead(userId: string, conversationId: string) {
     await prisma.conversationMember.updateMany({
       where: { user_id: userId, conversation_id: conversationId },
@@ -157,9 +315,6 @@ export class MessagingService {
     });
   }
 
-  /**
-   * Retourne les membres d'une conversation.
-   */
   async getConversationMembers(conversationId: string) {
     return await prisma.conversationMember.findMany({
       where: { conversation_id: conversationId },
@@ -167,9 +322,6 @@ export class MessagingService {
     });
   }
 
-  /**
-   * Retourne un resume de message pour les mises a jour de conversation.
-   */
   async getMessageSummary(messageId: string) {
     return await prisma.message.findUnique({
       where: { id: messageId },
@@ -177,9 +329,6 @@ export class MessagingService {
     });
   }
 
-  /**
-   * Compte les messages non lus pour un utilisateur dans une conversation.
-   */
   async getUnreadCount(userId: string, conversationId: string) {
     const membership = await prisma.conversationMember.findFirst({
       where: { user_id: userId, conversation_id: conversationId },
@@ -189,24 +338,27 @@ export class MessagingService {
     const since = membership.lastReadAt ?? new Date(0);
     return await prisma.message.count({
       where: {
-        chat_id: conversationId,
-        sender_id: { not: userId },
+        chat_id:    conversationId,
+        sender_id:  { not: userId },
         created_at: { gt: since },
-        deletedAt: null,
+        deletedAt:  null,
       },
     });
   }
 
-  // ── Méthodes privées ──────────────────────────────────────────────────────
-
-  /**
-   * Vérifie qu'un utilisateur est membre d'une conversation.
-   * Lance une erreur FORBIDDEN s'il ne l'est pas.
-   */
   private async _assertMember(userId: string, conversationId: string) {
     const member = await prisma.conversationMember.findFirst({
       where: { user_id: userId, conversation_id: conversationId },
     });
     if (!member) throw { code: ErrorCode.FORBIDDEN, status: 403, message: "Accès refusé à cette conversation." };
+  }
+
+  private async _assertAdmin(userId: string, conversationId: string) {
+    const member = await prisma.conversationMember.findFirst({
+      where: { user_id: userId, conversation_id: conversationId },
+    });
+    if (!member || member.role !== "admin") {
+      throw { code: ErrorCode.FORBIDDEN, status: 403, message: "Seuls les administrateurs du chat peuvent effectuer cette action." };
+    }
   }
 }
