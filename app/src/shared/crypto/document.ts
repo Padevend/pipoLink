@@ -1,9 +1,15 @@
-import nacl from 'tweetnacl';
 import naclUtil from 'tweetnacl-util';
 
 import { isAesGcmAvailable } from '@/shared/crypto/aes-gcm';
+import { CRYPTO_GCM_STRICT } from '@/shared/crypto/policy';
 
 const GCM_TAG_BITS = 128;
+
+function assertGcmAvailable(): void {
+  if (CRYPTO_GCM_STRICT && !isAesGcmAvailable()) {
+    throw new Error('AES-256-GCM requis sur cet appareil (agent.md §3).');
+  }
+}
 
 async function gcmEncryptBuffer(buf: Uint8Array, key32: Uint8Array): Promise<{ encryptedBuffer: Uint8Array; iv: string }> {
   const subtle = globalThis.crypto!.subtle;
@@ -18,12 +24,8 @@ export async function encryptFile(
   fileBuffer: Uint8Array,
   chatKey: Uint8Array,
 ): Promise<{ encryptedBuffer: Uint8Array; iv: string }> {
-  if (isAesGcmAvailable()) {
-    return gcmEncryptBuffer(fileBuffer, chatKey);
-  }
-  const iv = nacl.randomBytes(24);
-  const encrypted = nacl.secretbox(fileBuffer, iv, chatKey);
-  return { encryptedBuffer: encrypted, iv: naclUtil.encodeBase64(iv) };
+  assertGcmAvailable();
+  return gcmEncryptBuffer(fileBuffer, chatKey);
 }
 
 export async function decryptFile(
@@ -33,14 +35,12 @@ export async function decryptFile(
 ): Promise<Uint8Array | null> {
   try {
     const nonce = naclUtil.decodeBase64(iv);
-    if (nonce.length === 12 && isAesGcmAvailable()) {
-      const subtle = globalThis.crypto!.subtle;
-      const cryptoKey = await subtle.importKey('raw', chatKey as BufferSource, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
-      return new Uint8Array(
-        await subtle.decrypt({ name: 'AES-GCM', iv: nonce, tagLength: GCM_TAG_BITS }, cryptoKey, encryptedBuffer),
-      );
-    }
-    return nacl.secretbox.open(encryptedBuffer, nonce, chatKey);
+    if (nonce.length !== 12 || !isAesGcmAvailable()) return null;
+    const subtle = globalThis.crypto!.subtle;
+    const cryptoKey = await subtle.importKey('raw', chatKey as BufferSource, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    return new Uint8Array(
+      await subtle.decrypt({ name: 'AES-GCM', iv: nonce, tagLength: GCM_TAG_BITS }, cryptoKey, encryptedBuffer),
+    );
   } catch {
     return null;
   }

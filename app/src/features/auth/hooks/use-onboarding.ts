@@ -20,6 +20,7 @@ export function useOnboarding() {
       niveau?: string;
       filiere?: string;
     }) => {
+      
       let fingerprint = await SecureStore.getItemAsync('device_fingerprint');
       if (!fingerprint) {
         fingerprint = generateUUID();

@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, SafeAreaView, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { OTPVerify } from '@/features/auth/components/otp-verify';
 import { ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function VerifyOtpScreen() {
   const router = useRouter();

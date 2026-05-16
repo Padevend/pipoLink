@@ -1,14 +1,18 @@
 import { useAuth } from '@/providers';
+import { authApi } from '@/shared/api/auth';
 import { useToast } from '@/shared/hooks/use-toast';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
+import { generateUUID } from '@/shared/utils/uuid';
 import { useRouter } from 'expo-router';
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
+import * as SecureStore from 'expo-secure-store';
+import { Eye, EyeOff, Lock, Mail, QrCode, Smartphone } from 'lucide-react-native';
+import { Platform } from 'react-native';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 export function LoginForm() {
-  const { login } = useAuth();
+  const { signInWithTokens } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
 
@@ -35,11 +39,42 @@ export function LoginForm() {
 
     setIsLoading(true);
     try {
-      await login({ email, password });
+      let fingerprint = await SecureStore.getItemAsync('device_fingerprint');
+      if (!fingerprint) {
+        fingerprint = generateUUID();
+        await SecureStore.setItemAsync('device_fingerprint', fingerprint);
+      }
+
+      const result = await authApi.login({
+        email,
+        password,
+        deviceFingerprint: fingerprint,
+        deviceName: `${Platform.OS} device`,
+        devicePlatform: Platform.OS,
+      });
+
+      await signInWithTokens(
+        {
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
+          expiresAt: typeof result.expiresAt === 'number' ? result.expiresAt : new Date(result.expiresAt).getTime(),
+          deviceId: result.deviceId,
+        },
+        result.user,
+      );
+
       showToast({ type: 'success', message: 'Welcome back!' });
-      router.replace('/(tabs)');
-    } catch (e: any) {
-      showToast({ type: 'error', message: e.message || 'Login failed' });
+
+      if (result.requiresOnboarding) {
+        router.replace('/auth/onboarding' as any);
+      } else if (result.requiresKeySetup) {
+        router.replace('/devices/add' as any);
+      } else {
+        router.replace('/(tabs)');
+      }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Login failed';
+      showToast({ type: 'error', message: msg });
     } finally {
       setIsLoading(false);
     }
@@ -99,6 +134,28 @@ export function LoginForm() {
           <Pressable onPress={() => router.push('/auth/register')}>
             <Text className="font-bold text-primary">Create Account</Text>
           </Pressable>
+        </View>
+
+        <View className="gap-3 border-t border-slate-100 pt-6 dark:border-slate-800">
+          <Text className="text-center text-xs font-bold uppercase tracking-widest text-slate-400">
+            Appareils liés
+          </Text>
+          <Button
+            label="Configurer comme appareil secondaire"
+            variant="outline"
+            size="lg"
+            leftIcon={<Smartphone size={18} color="#FF7A00" />}
+            onPress={() => router.push('/devices/add' as any)}
+            className="rounded-2xl"
+          />
+          <Button
+            label="Scanner un QR (appareil principal)"
+            variant="ghost"
+            size="lg"
+            leftIcon={<QrCode size={18} color="#14B8A6" />}
+            onPress={() => router.push('/devices/scan' as any)}
+            className="rounded-2xl"
+          />
         </View>
       </View>
     </View>

@@ -1,3 +1,6 @@
+import { installTweetNaclPrng } from '@/shared/crypto/prng';
+installTweetNaclPrng();
+
 import "@/styles/global.css";
 import 'react-native-reanimated';
 
@@ -40,6 +43,7 @@ export default function RootLayout(): JSX.Element {
                     <Stack.Screen name="modal/upload-document" options={{ presentation: 'modal' }} />
                     <Stack.Screen name="modal/device-confirm" options={{ presentation: 'modal' }} />
                     <Stack.Screen name="modal/update-available" options={{ presentation: 'modal' }} />
+                    <Stack.Screen name="settings/device-qr" />
                   </Stack>
                 </WebSocketProvider>
               </ToastProvider>

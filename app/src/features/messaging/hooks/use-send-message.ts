@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-
 import { ensureChatKeyForChat } from '@/features/messaging/lib/ensure-chat-key';
 import { encryptMessage } from '@/shared/crypto/message';
 import { messagingApi } from '@/shared/api/messaging';
+import { localDb } from '@/shared/storage/local-db';
+import { generateUUID } from '@/shared/utils/uuid';
 
 export function useSendMessage(conversationId: string) {
   const queryClient = useQueryClient();
@@ -15,6 +16,30 @@ export function useSendMessage(conversationId: string) {
       attachmentName?: string;
       attachmentSize?: number;
     }) => {
+      let online = true;
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const NetInfo = require('@react-native-community/netinfo').default as {
+          fetch: () => Promise<{ isConnected: boolean | null; isInternetReachable: boolean | null }>;
+        };
+        const net = await NetInfo.fetch();
+        online = net.isConnected === true && net.isInternetReachable !== false;
+      } catch {
+        online = true;
+      }
+
+      if (!online) {
+        const id = generateUUID();
+        localDb.queuePendingMessage({
+          id,
+          conversation_id: conversationId,
+          content_plain: input.content,
+          message_type: input.type,
+          created_at: new Date().toISOString(),
+        });
+        return { queued: true, id } as { queued: boolean; id: string };
+      }
+
       const chatKey = await ensureChatKeyForChat(conversationId);
       const encrypted = await encryptMessage(input.content, chatKey);
       return messagingApi.sendMessage(conversationId, {

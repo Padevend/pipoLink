@@ -29,7 +29,7 @@ export function useLinkDevice() {
         key.fill(0);
       }
 
-      return devicesApi.verifyQr({
+      const res = await devicesApi.verifyQr({
         token: payload.token,
         deviceName: payload.deviceName,
         platform: payload.platform,
@@ -37,6 +37,7 @@ export function useLinkDevice() {
         newDevice: { publicKey: payload.publicKey, keySignature: payload.keySignature },
         chatKeyBundle,
       });
+      return { deviceId: res.device.id, deviceName: res.device.name };
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['devices'] });

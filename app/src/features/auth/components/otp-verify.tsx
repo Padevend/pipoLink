@@ -47,7 +47,7 @@ export function OTPVerify() {
           purpose: (purpose as any) || 'EMAIL_VERIFY' 
         });
         showToast({ type: 'success', message: 'Identity verified!' });
-        router.replace('/(tabs)');
+        router.replace('/auth/onboarding');
       }
     } catch (e: any) {
       console.log(e)

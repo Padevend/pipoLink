@@ -21,6 +21,7 @@ class WebSocketManager {
     if (this.socket || this.status === 'connecting') return;
 
     const token = await SecureStore.getItemAsync('auth_token');
+    const deviceId = (await SecureStore.getItemAsync('device_id')) ?? 'mobile-app';
     if (!token) return;
 
     this.status = 'connecting';
@@ -33,7 +34,7 @@ class WebSocketManager {
       // Initial auth handshake
       this.send(WS_EVENTS.AUTH_INIT, {
         token,
-        deviceId: 'mobile-app',
+        deviceId,
       });
       
       emitter.emit('status.change', 'connected');

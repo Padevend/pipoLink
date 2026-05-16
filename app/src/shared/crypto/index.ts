@@ -1,3 +1,4 @@
+export { installTweetNaclPrng } from '@/shared/crypto/prng';
 export {
   generateIdentityKeys,
   getPublicKey,

@@ -94,4 +94,18 @@ export const authApi = {
    */
   generateQr: () => 
     api.get<{ token: string; expiresAt: string }>('/auth/qr/generate'),
+
+  /** Nouvel appareil : récupère les jetons une fois l'appareil principal validé le QR. */
+  pollQrLink: (token: string) =>
+    api.get<{
+      status: 'pending' | 'completed';
+      tokens?: {
+        accessToken: string;
+        refreshToken: string;
+        expiresAt: number;
+        deviceId: string | null;
+        user: User;
+        device: { id: string; name: string; platform: string };
+      };
+    }>('/auth/qr/poll', { params: { token } }),
 };

@@ -1,6 +1,6 @@
 import { ConversationList } from '@/features/messaging/components/conversation-list';
 import { useAuth } from '@/providers/auth-provider';
-import { Avatar } from '@/shared/ui/avatar';
+import { AppLogo } from '@/shared/ui/app-logo';
 import { useRouter } from 'expo-router';
 import { Plus, Search } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
@@ -15,14 +15,15 @@ export default function HomeScreen() {
       {/* Header */}
       <View className="px-6 py-4 flex-row items-center justify-between">
         <View className="flex-row items-center gap-3">
-          <Avatar 
-            name={user?.username || 'User'} 
-            uri={null} 
-            size="sm" 
-          />
-          <Text className="text-xl font-black text-text-primary-light dark:text-text-primary-dark tracking-tight">
-            Messages
-          </Text>
+          <AppLogo size="sm" />
+          <View>
+            <Text className="text-xl font-black text-text-primary-light dark:text-text-primary-dark tracking-tight">
+              Messages
+            </Text>
+            <Text className="text-[10px] font-bold text-text-secondary-light dark:text-text-secondary-dark">
+              {user?.username ?? 'PipoLink'}
+            </Text>
+          </View>
         </View>
         
         <View className="flex-row items-center gap-2">

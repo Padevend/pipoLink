@@ -1,4 +1,5 @@
 import { LoginForm } from '@/features/auth/components/login-form';
+import { AppLogo } from '@/shared/ui/app-logo';
 import { StatusBar } from 'expo-status-bar';
 import { ImageBackground, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 
@@ -30,14 +31,12 @@ export default function LoginScreen() {
           >
             <View className="flex-1 justify-end">
               <View className="items-start mb-10 px-8">
-                <View className="w-16 h-16 bg-primary rounded-[20px] items-center justify-center shadow-2xl shadow-primary/50 mb-6">
-                  <Text className="text-white text-3xl font-black italic">P</Text>
-                </View>
+                <AppLogo size="lg" showWordmark className="mb-6 items-start" />
                 <Text className="text-4xl font-bold text-white tracking-tight">
-                  Welcome back
+                  Bon retour
                 </Text>
                 <Text className="text-slate-300 mt-2 text-lg font-medium">
-                  Log in to your academic workspace.
+                  Votre espace académique sécurisé.
                 </Text>
               </View>
 

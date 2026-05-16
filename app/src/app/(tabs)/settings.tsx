@@ -11,6 +11,7 @@ import {
   CreditCard,
   LogOut,
   Moon,
+  QrCode,
   Shield,
   User
 } from 'lucide-react-native';
@@ -105,6 +106,13 @@ export default function SettingsScreen() {
               label="Linked Devices" 
               value="Manage your active sessions" 
               onPress={() => router.push('/devices')}
+            />
+            <View className="h-[1px] bg-border-light dark:bg-border-dark mx-4" />
+            <SettingItem
+              icon={QrCode}
+              label="Afficher mon QR"
+              value="Lier un appareil secondaire"
+              onPress={() => router.push('/settings/device-qr' as any)}
             />
             <View className="h-[1px] bg-border-light dark:bg-border-dark mx-4" />
             <SettingItem icon={CreditCard} label="Subscription" value="Pipo Premium" />

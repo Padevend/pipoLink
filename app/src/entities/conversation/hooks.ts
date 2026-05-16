@@ -12,7 +12,19 @@ export const conversationKeys = {
 export const useConversations = () => {
   return useQuery({
     queryKey: conversationKeys.list(),
-    queryFn: () => messagingApi.getConversations(),
+    queryFn: async () => {
+      try {
+        const remote = await messagingApi.getConversations();
+        const { localDb } = await import('@/shared/storage/local-db');
+        localDb.upsertConversations(remote);
+        return remote;
+      } catch {
+        const { localDb } = await import('@/shared/storage/local-db');
+        const cached = localDb.getConversations();
+        if (cached.length) return cached;
+        throw new Error('Hors ligne — aucune conversation en cache.');
+      }
+    },
   });
 };
 

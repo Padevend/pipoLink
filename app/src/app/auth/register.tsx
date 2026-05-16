@@ -10,10 +10,6 @@ export default function RegisterScreen() {
   const router = useRouter();
   const theme = useTheme()
 
-  useEffect(()=>{
-    theme.setMode('dark')
-  }, [theme])
-
   return (
     <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark">
       <View className="flex-row items-center px-4 py-2">

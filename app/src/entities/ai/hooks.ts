@@ -10,14 +10,34 @@ export const aiKeys = {
 export const useAiSessions = () => {
   return useQuery({
     queryKey: aiKeys.sessions(),
-    queryFn: () => aiApi.getSessions(),
+    queryFn: async () => {
+      try {
+        const remote = await aiApi.getSessions();
+        const { localDb } = await import('@/shared/storage/local-db');
+        localDb.upsertAiSessions(remote);
+        return remote;
+      } catch {
+        const { localDb } = await import('@/shared/storage/local-db');
+        return localDb.getAiSessions();
+      }
+    },
   });
 };
 
 export const useAiHistory = (sessionId: string) => {
   return useQuery({
     queryKey: aiKeys.history(sessionId),
-    queryFn: () => aiApi.getSessionHistory(sessionId),
+    queryFn: async () => {
+      try {
+        const remote = await aiApi.getSessionHistory(sessionId);
+        const { localDb } = await import('@/shared/storage/local-db');
+        localDb.upsertAiMessages(sessionId, remote);
+        return remote;
+      } catch {
+        const { localDb } = await import('@/shared/storage/local-db');
+        return localDb.getAiMessages(sessionId);
+      }
+    },
     enabled: !!sessionId,
   });
 };

@@ -4,21 +4,22 @@ export function useNetwork(): { isOnline: boolean } {
   const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
-    const update = (): void => {
-      setIsOnline(typeof navigator === 'undefined' ? true : navigator.onLine);
-    };
-
-    update();
-    if (typeof window !== 'undefined') {
-      window.addEventListener('online', update);
-      window.addEventListener('offline', update);
-      return () => {
-        window.removeEventListener('online', update);
-        window.removeEventListener('offline', update);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const NetInfo = require('@react-native-community/netinfo').default as {
+        addEventListener: (cb: (s: { isConnected: boolean | null; isInternetReachable: boolean | null }) => void) => () => void;
+        fetch: () => Promise<{ isConnected: boolean | null; isInternetReachable: boolean | null }>;
       };
+      const unsub = NetInfo.addEventListener((state) => {
+        setIsOnline(state.isConnected === true && state.isInternetReachable !== false);
+      });
+      void NetInfo.fetch().then((state) => {
+        setIsOnline(state.isConnected === true && state.isInternetReachable !== false);
+      });
+      return unsub;
+    } catch {
+      return undefined;
     }
-
-    return undefined;
   }, []);
 
   return { isOnline };

@@ -1,7 +1,10 @@
 import nacl from 'tweetnacl';
 import naclUtil from 'tweetnacl-util';
 
+import { installTweetNaclPrng } from '@/shared/crypto/prng';
 import { getSecureItem, setSecureItem } from '@/shared/storage/secure-storage';
+
+installTweetNaclPrng();
 
 const SK_BOX = 'identity_private_key';
 const SK_SIGN = 'identity_signing_private_key';
