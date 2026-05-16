@@ -17,4 +17,5 @@ AuthRouter
   .post("/forgot-password", callAction(AuthController, "forgotPassword"))
   .post("/reset-password", callAction(AuthController, "resetPassword"))
   .get("/qr/generate", authMiddleware, callAction(AuthController, "generateQr"))
+  .get("/qr/poll", callAction(AuthController, "pollQrLink"))
   .post("/qr/verify", callAction(AuthController, "verifyQr"));

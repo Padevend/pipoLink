@@ -93,6 +93,16 @@ export class AuthController {
     if (result.device?.id) {
       RealtimeBus.emit(WsEventName.DeviceLinked, result.device, { userId: result.user.id });
     }
-    return ApiResponse.success(c, result, "Appareil lié avec succès.", 201);
+    const { accessToken: _a, refreshToken: _r, ...safe } = result;
+    return ApiResponse.success(c, safe, "Appareil lié avec succès.", 201);
+  }
+
+  async pollQrLink(c: HttpContext) {
+    const token = c.req.query("token");
+    if (!token) {
+      return ApiResponse.error(c, "VALIDATION_ERROR", "token requis.", 400);
+    }
+    const result = this.service.pollQrLink(token);
+    return ApiResponse.success(c, result, result.status === "completed" ? "Liaison terminée." : "En attente.");
   }
 }

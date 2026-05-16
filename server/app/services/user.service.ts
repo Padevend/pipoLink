@@ -53,7 +53,7 @@ export class UserService {
     const now = new Date();
     const keyExpiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
 
-    const { deviceName, devicePlatform, deviceFingerprint, devicePublicKey, deviceKeySignature, ...profile } = payload;
+    const { deviceName, devicePlatform, deviceFingerprint, devicePublicKey, deviceKeySignature, username, ...profile } = payload;
 
     const result = await prisma.$transaction(async (trx) => {
       await trx.userProfile.upsert({
@@ -93,7 +93,7 @@ export class UserService {
             },
           });
 
-      await trx.user.update({ where: { id: userId }, data: { is_configured: true } });
+      await trx.user.update({ where: { id: userId }, data: { is_configured: true, username } });
 
       const user = await trx.user.findUniqueOrThrow({
         where: { id: userId },

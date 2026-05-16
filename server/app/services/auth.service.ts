@@ -7,6 +7,7 @@ import { MailerService } from "./mailer.service.js";
 import { ErrorCode } from "../helpers/error-codes.js";
 import { DateTime } from "luxon";
 import { verifyDeviceKeyAttestation } from "../helpers/device-crypto.js";
+import { consumeQrLinkResult, storeQrLinkResult } from "../helpers/qr-link-pending.js";
 
 export class AuthService {
   private otp    = new OtpService();
@@ -256,7 +257,26 @@ export class AuthService {
     await prisma.auditLog.create({ data: { user_id: record.user_id, action: "DEVICE_LINKED" } });
     const user = await prisma.user.findUniqueOrThrow({ where: { id: record.user_id } });
     const tokens = await this._generateTokens(user, device.id);
-    return { ...tokens, device: { id: device.id, name: device.name, platform: device.platform }, user: { id: user.id, email: user.email, username: user.username, role: user.role } };
+    const expiresAtMs = tokens.expiresAt instanceof Date ? tokens.expiresAt.getTime() : Number(tokens.expiresAt);
+    const linkResult = {
+      accessToken:  tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      expiresAt:    expiresAtMs,
+      deviceId:     device.id,
+      user:         { id: user.id, email: user.email, username: user.username, role: user.role },
+      device:       { id: device.id, name: device.name, platform: device.platform },
+    };
+    storeQrLinkResult(payload.token, linkResult);
+    return linkResult;
+  }
+
+  /** Phase 4 workflow 7 : le nouvel appareil récupère ses jetons après validation par l'appareil principal. */
+  pollQrLink(token: string) {
+    const result = consumeQrLinkResult(token);
+    if (!result) {
+      return { status: "pending" as const };
+    }
+    return { status: "completed" as const, tokens: result };
   }
 
   private async _generateTokens(user: any, deviceId?: string) {
