@@ -2,6 +2,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 
 import { ensureChatKeyForChat } from '@/features/messaging/lib/ensure-chat-key';
 import { messagingApi } from '@/shared/api/messaging';
+import { sortMessagesAsc } from '@/shared/api/normalize-message';
 import { decryptMessage } from '@/shared/crypto/message';
 import type { Message, PaginatedResponse } from '@/shared/api/types';
 
@@ -41,8 +42,10 @@ export function useMessages(conversationId: string) {
         chatKey = null;
       }
 
+      const sorted = sortMessagesAsc(raw.items);
+
       const items: DecryptedMessage[] = await Promise.all(
-        raw.items.map(async (m) => {
+        sorted.map(async (m) => {
           if (!chatKey) {
             return { ...m, decryptedContent: null, decryptFailed: true };
           }

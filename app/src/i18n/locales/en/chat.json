@@ -1,0 +1,15 @@
+{
+  "messages": "Messages",
+  "newChat": "New chat",
+  "newGroup": "New group",
+  "newPrivateChat": "Private chat",
+  "searchUsers": "Search by name, username or student ID",
+  "startConversation": "Start conversation",
+  "groupName": "Group name",
+  "groupNamePlaceholder": "e.g. L3 Info — TD",
+  "selectMembers": "Select members",
+  "createGroup": "Create group",
+  "noUsers": "No users found",
+  "groupCreated": "Group created",
+  "chatCreated": "Conversation started"
+}

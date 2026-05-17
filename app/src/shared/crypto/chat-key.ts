@@ -2,6 +2,7 @@ import nacl from 'tweetnacl';
 import naclUtil from 'tweetnacl-util';
 
 import { getIdentityPrivateKeyBytes } from '@/shared/crypto/keys';
+import { registerCachedChatId } from '@/shared/crypto/reset-device';
 import { getSecureItem, setSecureItem } from '@/shared/storage/secure-storage';
 
 export function generateChatKey(): Uint8Array {
@@ -37,6 +38,7 @@ export async function decryptChatKey(encryptedChatKey: string): Promise<Uint8Arr
 
 export async function cacheChatKey(chatId: string, key: Uint8Array): Promise<void> {
   await setSecureItem(`chat_key_${chatId}`, naclUtil.encodeBase64(key));
+  await registerCachedChatId(chatId);
 }
 
 export async function getCachedChatKey(chatId: string): Promise<Uint8Array | null> {

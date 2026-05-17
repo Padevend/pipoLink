@@ -1,51 +1,74 @@
+import { useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import { Plus, Search } from 'lucide-react-native';
+
 import { ConversationList } from '@/features/messaging/components/conversation-list';
 import { useAuth } from '@/providers/auth-provider';
 import { AppLogo } from '@/shared/ui/app-logo';
-import { useRouter } from 'expo-router';
-import { Plus, Search } from 'lucide-react-native';
-import { Pressable, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ActionMenu } from '@/shared/ui/action-menu';
 
 export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
+  const { t } = useTranslation('chat');
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark">
-      {/* Header */}
-      <View className="px-6 py-4 flex-row items-center justify-between">
+      <View className="flex-row items-center justify-between px-6 py-4">
         <View className="flex-row items-center gap-3">
           <AppLogo size="sm" />
           <View>
             <Text className="text-xl font-black text-text-primary-light dark:text-text-primary-dark tracking-tight">
-              Messages
+              {t('messages')}
             </Text>
             <Text className="text-[10px] font-bold text-text-secondary-light dark:text-text-secondary-dark">
               {user?.username ?? 'PipoLink'}
             </Text>
           </View>
         </View>
-        
+
         <View className="flex-row items-center gap-2">
-          <Pressable 
+          <Pressable
             onPress={() => router.push('/search')}
-            className="w-10 h-10 items-center justify-center rounded-full bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark"
+            className="h-10 w-10 items-center justify-center rounded-full border border-border-light bg-surface-light dark:border-border-dark dark:bg-surface-dark"
           >
             <Search size={20} color="#6B7280" />
           </Pressable>
-          <Pressable 
-            onPress={() => router.push('/messaging/new')}
-            className="w-10 h-10 items-center justify-center rounded-full bg-primary"
+          <Pressable
+            onPress={() => setMenuOpen(true)}
+            className="h-10 w-10 items-center justify-center rounded-full bg-primary"
           >
             <Plus size={20} color="#FFFFFF" />
           </Pressable>
         </View>
       </View>
 
-      {/* Content */}
       <View className="flex-1">
         <ConversationList />
       </View>
+
+      <ActionMenu
+        visible={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        items={[
+          {
+            id: 'private',
+            label: t('newPrivateChat'),
+            subtitle: t('searchUsers'),
+            onPress: () => router.push('/messaging/new' as any),
+          },
+          {
+            id: 'group',
+            label: t('newGroup'),
+            subtitle: t('selectMembers'),
+            onPress: () => router.push('/messaging/new-group' as any),
+          },
+        ]}
+      />
     </SafeAreaView>
   );
 }

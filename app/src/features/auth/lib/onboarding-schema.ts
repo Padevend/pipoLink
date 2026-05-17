@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import type { GenderId } from '@/shared/ui/gender-picker';
+
 export const NIVEAUX = ['1', '2', '3', '4', '5'] as const;
 
 export const onboardingSchema = z.object({
@@ -14,12 +16,20 @@ export const onboardingSchema = z.object({
     .string()
     .optional()
     .refine((v) => !v || /^\+\d{8,15}$/.test(v.replace(/\s/g, '')), 'Numéro invalide'),
+  gender: z.enum(['M', 'F', 'OTHER']).optional(),
   niveau: z.enum(NIVEAUX).optional(),
   filiere: z
     .string()
     .trim()
     .optional()
     .refine((v) => !v || v.length >= 2, 'Filière trop courte'),
+  bio: z
+    .string()
+    .trim()
+    .max(500, 'Bio trop longue (500 caractères max.)')
+    .optional(),
 });
 
-export type OnboardingFormValues = z.infer<typeof onboardingSchema>;
+export type OnboardingFormValues = z.infer<typeof onboardingSchema> & {
+  gender?: GenderId;
+};

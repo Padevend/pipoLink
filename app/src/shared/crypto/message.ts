@@ -5,7 +5,7 @@ import { CRYPTO_GCM_STRICT } from '@/shared/crypto/policy';
 
 function assertGcmAvailable(): void {
   if (CRYPTO_GCM_STRICT && !isAesGcmAvailable()) {
-    throw new Error('AES-256-GCM requis sur cet appareil (agent.md §3).');
+    throw new Error('AES-256-GCM requis sur cet appareil.');
   }
 }
 

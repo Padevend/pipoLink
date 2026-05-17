@@ -21,7 +21,7 @@ const STORAGE_KEY = 'theme_mode';
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const deviceScheme = useDeviceColorScheme();
   const { setColorScheme: setNWColorScheme } = useNativeWindColorScheme();
-  const [mode, setModeState] = useState<ThemeMode>('dark');
+  const [mode, setModeState] = useState<ThemeMode>('system');
 
   useEffect(() => {
     const loadTheme = async () => {

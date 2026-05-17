@@ -1,82 +1,129 @@
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { router } from 'expo-router';
-import { useCameraPermissions, CameraView } from 'expo-camera';
 import { useCallback, useRef, useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useApproveByCode } from '@/features/devices/hooks/use-approve-by-code';
 import { useLinkDevice } from '@/features/devices/hooks/use-link-device';
 import { parseDeviceQrPayload, verifyDeviceQrPayloadSignature } from '@/features/devices/lib/verify-qr-payload';
 import { useToast } from '@/shared/hooks/use-toast';
 import { Button } from '@/shared/ui/button';
 import { Header } from '@/shared/ui/header';
+import { cn } from '@/shared/utils/cn';
+
+type Tab = 'scan' | 'code';
 
 export default function DeviceScanScreen() {
+  const [tab, setTab] = useState<Tab>('scan');
   const [permission, requestPermission] = useCameraPermissions();
-  const [token, setToken] = useState('');
+  const [shortCode, setShortCode] = useState('');
   const [scanned, setScanned] = useState(false);
   const linkMutation = useLinkDevice();
+  const codeMutation = useApproveByCode();
   const { showToast } = useToast();
   const linkingRef = useRef(false);
 
-  const handleLink = useCallback(async (raw: string): Promise<void> => {
-    const trimmed = raw.trim();
-    if (!trimmed || linkingRef.current) return;
+  const handleLinkQr = useCallback(
+    async (raw: string): Promise<void> => {
+      const trimmed = raw.trim();
+      if (!trimmed || linkingRef.current) return;
 
-    const parsed = parseDeviceQrPayload(trimmed);
-    if (!parsed) {
-      showToast({ type: 'error', message: 'QR invalide : format JSON attendu.' });
-      return;
-    }
-    if (!verifyDeviceQrPayloadSignature(parsed)) {
-      showToast({ type: 'error', message: 'QR invalide : signature incorrecte.' });
-      return;
-    }
+      const parsed = parseDeviceQrPayload(trimmed);
+      if (!parsed) {
+        showToast({ type: 'error', message: 'QR invalide.' });
+        return;
+      }
+      if (!verifyDeviceQrPayloadSignature(parsed)) {
+        showToast({ type: 'error', message: 'Signature invalide.' });
+        return;
+      }
 
-    linkingRef.current = true;
+      linkingRef.current = true;
+      try {
+        await linkMutation.mutateAsync(parsed);
+        showToast({ type: 'success', message: 'Appareil secondaire approuvé.' });
+        router.replace('/devices' as any);
+      } catch (e: unknown) {
+        showToast({ type: 'error', message: e instanceof Error ? e.message : 'Échec de l\'approbation.' });
+        setScanned(false);
+        linkingRef.current = false;
+      }
+    },
+    [linkMutation, showToast],
+  );
+
+  const handleApproveCode = async () => {
     try {
-      await linkMutation.mutateAsync(parsed);
-      showToast({ type: 'success', message: 'Appareil lié. Les clés de chat ont été redistribuées.' });
+      await codeMutation.mutateAsync(shortCode);
+      showToast({ type: 'success', message: 'Appareil associé via le code.' });
       router.replace('/devices' as any);
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Échec de la liaison.';
-      showToast({ type: 'error', message: msg });
-      setScanned(false);
-      linkingRef.current = false;
+      showToast({ type: 'error', message: e instanceof Error ? e.message : 'Code invalide ou expiré.' });
     }
-  }, [linkMutation, showToast]);
+  };
 
   return (
-    <View className="flex-1 bg-slate-50 dark:bg-slate-950">
-      <Header title="Scanner QR" subtitle="Ajout d’un appareil (appareil principal)" />
+    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark">
+      <Header title="Approuver un appareil" subtitle="Appareil principal uniquement" />
+      <View className="flex-row gap-2 px-4 pb-2">
+        <Button
+          label="Scanner QR"
+          variant={tab === 'scan' ? 'primary' : 'outline'}
+          size="sm"
+          className="flex-1"
+          onPress={() => setTab('scan')}
+        />
+        <Button
+          label="Code manuel"
+          variant={tab === 'code' ? 'primary' : 'outline'}
+          size="sm"
+          className="flex-1"
+          onPress={() => setTab('code')}
+        />
+      </View>
+
       <View className="flex-1 gap-4 p-4">
-        {!permission?.granted ? (
-          <Button label="Autoriser la caméra" onPress={() => void requestPermission()} />
+        {tab === 'scan' ? (
+          <>
+            {!permission?.granted ? (
+              <Button label="Autoriser la caméra" onPress={() => void requestPermission()} />
+            ) : (
+              <View className="flex-1 overflow-hidden rounded-3xl bg-black">
+                <CameraView
+                  style={{ flex: 1 }}
+                  barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+                  onBarcodeScanned={(event) => {
+                    if (event.data && !scanned && !linkMutation.isPending) {
+                      setScanned(true);
+                      void handleLinkQr(event.data);
+                    }
+                  }}
+                />
+              </View>
+            )}
+          </>
         ) : (
-          <View className="flex-1 overflow-hidden rounded-3xl bg-black">
-            <CameraView
-              style={{ flex: 1 }}
-              barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
-              onBarcodeScanned={(event) => {
-                if (event.data && !scanned && !linkMutation.isPending) {
-                  setScanned(true);
-                  setToken(event.data);
-                  void handleLink(event.data);
-                }
-              }}
+          <View className={cn('flex-1 rounded-3xl bg-surface-light p-6 dark:bg-surface-dark')}>
+            <Text className="mb-2 text-sm text-text-secondary-light dark:text-text-secondary-dark">
+              Saisissez le code affiché sur l&apos;appareil secondaire
+            </Text>
+            <TextInput
+              value={shortCode}
+              onChangeText={(t) => setShortCode(t.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))}
+              placeholder="ABC123"
+              autoCapitalize="characters"
+              className="mb-4 rounded-2xl border border-border-light bg-white px-4 py-4 text-center text-2xl font-black tracking-widest dark:border-border-dark dark:bg-slate-900 dark:text-white"
+            />
+            <Button
+              label="Approuver l'appareil"
+              loading={codeMutation.isPending}
+              disabled={shortCode.length < 4}
+              onPress={() => void handleApproveCode()}
             />
           </View>
         )}
-        <View className="rounded-3xl bg-white p-4 dark:bg-slate-900">
-          <Text className="mb-2 text-sm text-slate-500">Coller le JSON du nouvel appareil</Text>
-          <TextInput
-            value={token}
-            onChangeText={setToken}
-            placeholder="JSON du QR"
-            multiline
-            className="min-h-[80px] rounded-2xl border border-slate-200 px-4 py-3 text-slate-900 dark:border-slate-700 dark:text-white"
-          />
-          <Button label="Lier l’appareil" loading={linkMutation.isPending} onPress={() => void handleLink(token)} />
-        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }

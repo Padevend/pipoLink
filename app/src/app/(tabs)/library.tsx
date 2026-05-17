@@ -3,8 +3,9 @@ import { DocumentCard } from '@/entities/document/ui/document-card';
 import { Input } from '@/shared/ui/input';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { cn } from '@/shared/utils/cn';
+import { router } from 'expo-router';
 import { BookOpen, Search, Upload } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FlatList, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -19,11 +20,15 @@ const TYPES_MAP: Record<string, string> = {
 export default function LibraryScreen() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [search, setSearch] = useState('');
-  
   const { data: documents, isLoading } = useDocuments({
     type: TYPES_MAP[activeCategory] as any,
     search: search || undefined
   });
+
+  useEffect(()=>{
+    console.log("loadind status", isLoading)
+    console.log(documents)
+  }, [documents, isLoading])
 
   return (
     <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark">
@@ -38,7 +43,7 @@ export default function LibraryScreen() {
               Academic Resources
             </Text>
           </View>
-          <Pressable className="w-12 h-12 bg-primary rounded-2xl items-center justify-center shadow-lg shadow-primary/30">
+          <Pressable onPress={()=> router.push("/modal/upload-document")} className="w-12 h-12 bg-primary rounded-2xl items-center justify-center shadow-lg shadow-primary/30">
             <Upload size={24} color="#FFFFFF" />
           </Pressable>
         </View>
@@ -83,7 +88,7 @@ export default function LibraryScreen() {
         {isLoading ? (
           <View className="gap-4">
             {[1, 2, 3, 4].map(i => (
-              <Skeleton height={4} key={i} className="w-full h-24 rounded-3xl" />
+              <Skeleton height={4} key={i} className="w-full h-24 py-9 rounded-3xl" />
             ))}
           </View>
         ) : (

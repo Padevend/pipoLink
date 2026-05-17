@@ -1,3 +1,4 @@
+import { prepareDeviceForNewAccount } from '@/features/auth/lib/prepare-new-account-device';
 import { useAuth } from '@/providers';
 import { useToast } from '@/shared/hooks/use-toast';
 import { Button } from '@/shared/ui/button';
@@ -40,6 +41,7 @@ export function RegisterForm() {
     
     setIsLoading(true);
     try {
+      await prepareDeviceForNewAccount();
       await register({ email, password });
       showToast({ type: 'success', message: 'Registration successful! Please verify your email.' });
       router.push({

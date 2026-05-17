@@ -2,7 +2,7 @@ import nacl from 'tweetnacl';
 import naclUtil from 'tweetnacl-util';
 
 import { installTweetNaclPrng } from '@/shared/crypto/prng';
-import { getSecureItem, setSecureItem } from '@/shared/storage/secure-storage';
+import { getSecureItem, removeSecureItem, setSecureItem } from '@/shared/storage/secure-storage';
 
 installTweetNaclPrng();
 
@@ -17,15 +17,26 @@ function packKeySignature(signingPublicKey: Uint8Array, detachedSig: Uint8Array)
   return naclUtil.encodeBase64(packed);
 }
 
+/** Supprime les clés d'identité locales (nouveau compte / réinitialisation). */
+export async function clearIdentityKeys(): Promise<void> {
+  await removeSecureItem(SK_BOX).catch(() => undefined);
+  await removeSecureItem(SK_SIGN).catch(() => undefined);
+  await removeSecureItem(PK_BOX).catch(() => undefined);
+}
+
 /**
  * Génère ou recharge les clés d'identité (X25519 box + Ed25519 sign).
  * La clé privée box ne quitte jamais le SecureStore.
  */
-export async function generateIdentityKeys(): Promise<{ publicKey: string; signature: string }> {
+export async function generateIdentityKeys(options?: { forceNew?: boolean }): Promise<{ publicKey: string; signature: string }> {
+  if (options?.forceNew) {
+    await clearIdentityKeys();
+  }
+
   const existingPk = await getSecureItem(PK_BOX);
   const existingSk = await getSecureItem(SK_BOX);
   const existingSign = await getSecureItem(SK_SIGN);
-  if (existingPk && existingSk && existingSign) {
+  if (!options?.forceNew && existingPk && existingSk && existingSign) {
     const boxPub = naclUtil.decodeBase64(existingPk);
     const signSecret = naclUtil.decodeBase64(existingSign);
     const sig = nacl.sign.detached(boxPub, signSecret);

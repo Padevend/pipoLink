@@ -6,7 +6,8 @@ import { cn } from '@/shared/utils/cn';
 import { formatRelativeDate } from '@/shared/lib/date';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BRAND } from '@/shared/config/brand';
-import { MessageSquarePlus, Send, Sparkles } from 'lucide-react-native';
+import * as DocumentPicker from 'expo-document-picker';
+import { MessageSquarePlus, Paperclip, Send, Sparkles, X } from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,14 +19,27 @@ export default function AiScreen() {
   const { data: history, isLoading: historyLoading } = useAiHistory(sessionId || '');
   const chatMutation = useAiChat();
   const [text, setText] = useState('');
+  const [attachment, setAttachment] = useState<{ name: string; uri: string } | null>(null);
   const flatListRef = useRef<FlatList>(null);
 
   const showHistory = view === 'history';
 
+  const pickDocument = async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ['application/pdf', 'text/*', 'application/*'],
+      copyToCacheDirectory: true,
+    });
+    if (!result.canceled && result.assets[0]) {
+      setAttachment({ name: result.assets[0].name, uri: result.assets[0].uri });
+    }
+  };
+
   const handleSend = async () => {
-    if (!text.trim()) return;
-    const msg = text.trim();
+    if (!text.trim() && !attachment) return;
+    const prefix = attachment ? `[Document: ${attachment.name}]\n` : '';
+    const msg = `${prefix}${text.trim()}`.trim();
     setText('');
+    setAttachment(null);
     try {
       const result = await chatMutation.mutateAsync({ message: msg, sessionId });
       if (!sessionId) setSessionId(result.session.id);
@@ -163,7 +177,21 @@ export default function AiScreen() {
         )}
 
         <View className="border-t border-border-light bg-surface-light px-4 py-4 dark:border-border-dark dark:bg-surface-dark">
+          {attachment ? (
+            <View className="mb-2 flex-row items-center gap-2 rounded-xl bg-primary/10 px-3 py-2">
+              <Paperclip size={16} color={BRAND.primary} />
+              <Text className="flex-1 text-sm font-medium text-text-primary-light dark:text-text-primary-dark" numberOfLines={1}>
+                {attachment.name}
+              </Text>
+              <Pressable onPress={() => setAttachment(null)}>
+                <X size={18} color="#6B7280" />
+              </Pressable>
+            </View>
+          ) : null}
           <View className="flex-row items-end gap-2">
+            <Pressable onPress={() => void pickDocument()} className="mb-1 h-11 w-11 items-center justify-center rounded-2xl bg-surface-light dark:bg-slate-800">
+              <Paperclip size={20} color="#64748B" />
+            </Pressable>
             <View className="flex-1">
               <Input
                 placeholder="Votre question…"
@@ -180,7 +208,7 @@ export default function AiScreen() {
               leftIcon={<Send size={22} color="#FFFFFF" />}
               onPress={() => void handleSend()}
               loading={chatMutation.isPending}
-              disabled={!text.trim()}
+              disabled={!text.trim() && !attachment}
               className="h-12 w-12 rounded-2xl"
             />
           </View>

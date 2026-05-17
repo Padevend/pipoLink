@@ -1,0 +1,15 @@
+{
+  "messages": "Messages",
+  "newChat": "Nouveau chat",
+  "newGroup": "Nouveau groupe",
+  "newPrivateChat": "Échange privé",
+  "searchUsers": "Rechercher par nom, pseudo ou matricule",
+  "startConversation": "Démarrer la conversation",
+  "groupName": "Nom du groupe",
+  "groupNamePlaceholder": "Ex. L3 Info — TD",
+  "selectMembers": "Sélectionner les membres",
+  "createGroup": "Créer le groupe",
+  "noUsers": "Aucun utilisateur trouvé",
+  "groupCreated": "Groupe créé",
+  "chatCreated": "Conversation démarrée"
+}

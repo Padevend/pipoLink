@@ -1,5 +1,4 @@
-import { ensureChatKeyForChat } from '@/features/messaging/lib/ensure-chat-key';
-import { encryptMessage } from '@/shared/crypto/message';
+import { sendMessageToServer } from '@/features/messaging/lib/send-message-pipeline';
 import { aiApi } from '@/shared/api/ai';
 import { messagingApi } from '@/shared/api/messaging';
 import { queryClient } from '@/providers/query-provider';
@@ -53,12 +52,9 @@ export async function flushPendingMessages(): Promise<void> {
   for (const row of pending) {
     if (row.retry_count > 5) continue;
     try {
-      const chatKey = await ensureChatKeyForChat(row.conversation_id);
-      const encrypted = await encryptMessage(row.content_plain, chatKey);
-      await messagingApi.sendMessage(row.conversation_id, {
-        content: encrypted.cipherText,
-        iv: encrypted.iv,
-        type: row.message_type === 'text' ? 'TEXT' : 'TEXT',
+      await sendMessageToServer(row.conversation_id, {
+        content: row.content_plain,
+        type: row.message_type === 'document' ? 'document' : 'text',
       });
       localDb.removePendingMessage(row.id);
       void queryClient.invalidateQueries({ queryKey: ['messages', row.conversation_id] });

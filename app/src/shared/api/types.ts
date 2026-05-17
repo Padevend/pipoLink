@@ -67,12 +67,21 @@ export interface UserProfile {
 /**
  * Message types
  */
-export type MessageType = 'TEXT' | 'IMAGE' | 'DOCUMENT' | 'SYSTEM';
+export type MessageType = 'TEXT' | 'IMAGE' | 'DOCUMENT' | 'MIXED' | 'SYSTEM';
 
 /**
  * Message status
  */
 export type MessageStatus = 'send' | 'delivered' | 'read';
+
+export interface MessageAttachment {
+  id: string;
+  fileUrl: string;
+  iv: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+}
 
 /**
  * Message object (E2E encrypted content)
@@ -86,6 +95,7 @@ export interface Message {
   status: MessageStatus;
   type: MessageType;
   created_at: string;
+  attachments?: MessageAttachment[];
 }
 
 /**

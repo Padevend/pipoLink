@@ -1,75 +1,72 @@
-import { api } from './client';
-import { Document, DocumentType, PaginatedResponse } from './types';
+import { api, requestPaginated } from './client';
+import { Document, DocumentType } from './types';
 
-export interface Folder {
-  id: string;
+export type PickedLibraryFile = {
+  uri: string;
   name: string;
-  parentId: string | null;
-  createdAt: string;
+  mimeType?: string;
+  size?: number;
+};
+
+function toUploadFile(file: PickedLibraryFile): { uri: string; name: string; type: string } {
+  return {
+    uri: file.uri,
+    name: file.name,
+    type: file.mimeType ?? 'application/octet-stream',
+  };
 }
 
 export const libraryApi = {
-  /**
-   * List documents with filters
-   */
-  getDocuments: (params?: { 
-    folderId?: string; 
-    type?: DocumentType; 
-    niveau?: string; 
+  getDocuments: (params?: {
+    filiere?: string;
+    niveau?: string;
+    ue?: string;
+    type?: DocumentType;
     year?: number;
     search?: string;
-  }) => 
-    api.get<PaginatedResponse<Document>>('/library/documents', { params }),
+  }) => {
+    return requestPaginated<Document>('/library/documents', { params })
+  },
 
-  /**
-   * Get document by ID
-   */
-  getDocument: (id: string) => 
-    api.get<Document>(`/library/documents/${id}`),
+  getDocument: (id: string) => api.get<Document>(`/library/documents/${id}`),
 
-  /**
-   * Get document download URL
-   */
-  downloadDocument: (id: string) => 
-    api.get<{ fileUrl: string }>(`/library/documents/${id}/download`),
+  downloadDocument: (id: string) => api.get<{ fileUrl: string }>(`/library/documents/${id}/download`),
 
-  /**
-   * Upload a document
-   */
-  uploadDocument: (file: any, metadata: { title: string; folderId?: string; type: DocumentType }) => {
+  uploadDocument: async (
+    file: PickedLibraryFile,
+    metadata: {
+      title: string;
+      type: DocumentType;
+      filiere: string;
+      niveau: string;
+      ue: string;
+      description?: string;
+    },
+  ) => {
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('payload', JSON.stringify(metadata));
+    // @ts-expect-error React Native FormData file blob
+    formData.append('file', toUploadFile(file));
+    formData.append(
+      'payload',
+      JSON.stringify({
+        title: metadata.title,
+        type: metadata.type,
+        filiere: metadata.filiere,
+        niveau: metadata.niveau,
+        ue: metadata.ue,
+        description: metadata.description,
+      }),
+    );
     return api.upload<Document>('/library/documents', formData);
   },
 
-  /**
-   * List folders
-   */
-  getFolders: (parentId?: string) => 
-    api.get<Folder[]>('/library/folders', { params: { parentId } }),
+  deleteDocument: (id: string) => api.delete<void>(`/library/documents/${id}`),
 
-  /**
-   * Create a folder
-   */
-  createFolder: (name: string, parentId?: string) => 
-    api.post<Folder>('/library/folders', { name, parentId }),
-
-  /**
-   * Delete a document
-   */
-  deleteDocument: (id: string) => 
-    api.delete<void>(`/library/documents/${id}`),
-
-  /**
-   * Update a document metadata
-   */
-  updateDocument: (id: string, metadata: Partial<Document>) => 
+  updateDocument: (id: string, metadata: Partial<Document>) =>
     api.put<Document>(`/library/documents/${id}`, metadata),
 
-  /**
-   * Moderate a document
-   */
-  moderateDocument: (id: string, payload: { decision: 'APPROVED' | 'REJECTED'; rejectionReason?: string }) => 
-    api.post<void>(`/library/documents/${id}/moderate`, payload),
+  moderateDocument: (
+    id: string,
+    payload: { decision: 'APPROVED' | 'REJECTED'; rejectionReason?: string },
+  ) => api.post<void>(`/library/documents/${id}/moderate`, payload),
 };

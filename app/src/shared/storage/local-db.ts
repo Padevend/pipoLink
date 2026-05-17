@@ -1,5 +1,7 @@
 import { db } from '@/shared/storage/sqlite';
 import type { Conversation } from '@/shared/api/messaging';
+import { normalizeConversation } from '@/shared/api/normalize-conversation';
+import { normalizeMessage } from '@/shared/api/normalize-message';
 import type { Message } from '@/shared/api/types';
 import type { AiChatMessage, AiSession } from '@/shared/api/ai';
 
@@ -14,13 +16,14 @@ export type PendingMessageRow = {
 
 export const localDb = {
   upsertConversations(items: Conversation[]): void {
-    for (const c of items) {
+    for (const raw of items) {
+      const c = normalizeConversation(raw);
       db.runSync(
         `INSERT OR REPLACE INTO conversations (id, name, last_message, unread_count, updated_at, payload_json)
          VALUES (?, ?, ?, ?, ?, ?)`,
         [
           c.id,
-          c.name ?? c.members.map((m) => m.username).join(', '),
+          c.name ? c.name : c.members.map((m) => m.username).join(', ') || 'Conversation',
           c.lastMessage?.cipherText?.slice(0, 80) ?? '',
           c.unreadCount,
           c.updatedAt,
@@ -34,15 +37,17 @@ export const localDb = {
     const rows = db.getAllSync<{ payload_json: string }>(
       'SELECT payload_json FROM conversations ORDER BY updated_at DESC',
     );
-    return rows.map((r) => JSON.parse(r.payload_json) as Conversation);
+    return rows.map((r) => normalizeConversation(JSON.parse(r.payload_json) as Conversation));
   },
 
   upsertMessages(conversationId: string, items: Message[]): void {
-    for (const m of items) {
+    for (const raw of items) {
+      const m = normalizeMessage({ ...raw, chat_id: raw.chat_id || conversationId });
+      const attachmentsJson = JSON.stringify(m.attachments ?? []);
       db.runSync(
         `INSERT OR REPLACE INTO messages
-         (id, conversation_id, content_encrypted, sender_id, created_at, status, iv, message_type)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+         (id, conversation_id, content_encrypted, sender_id, created_at, status, iv, message_type, attachments_json, payload_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           m.id,
           conversationId,
@@ -52,36 +57,19 @@ export const localDb = {
           m.status,
           m.iv,
           m.type,
+          attachmentsJson,
+          JSON.stringify(m),
         ],
       );
     }
   },
 
-  getMessages(conversationId: string, limit = 50): Message[] {
-    const rows = db.getAllSync<{
-      id: string;
-      conversation_id: string;
-      content_encrypted: string;
-      sender_id: string;
-      created_at: string;
-      status: string;
-      iv: string;
-      message_type: string;
-    }>(
-      `SELECT id, conversation_id, content_encrypted, sender_id, created_at, status, iv, message_type
-       FROM messages WHERE conversation_id = ? ORDER BY created_at ASC LIMIT ?`,
+  getMessages(conversationId: string, limit = 200): Message[] {
+    const rows = db.getAllSync<{ payload_json: string }>(
+      `SELECT payload_json FROM messages WHERE conversation_id = ? ORDER BY datetime(created_at) ASC LIMIT ?`,
       [conversationId, limit],
     );
-    return rows.map((r) => ({
-      id: r.id,
-      chat_id: r.conversation_id,
-      cipherText: r.content_encrypted,
-      sender_id: r.sender_id,
-      created_at: r.created_at,
-      status: r.status as Message['status'],
-      iv: r.iv,
-      type: r.message_type as Message['type'],
-    }));
+    return rows.map((r) => normalizeMessage(JSON.parse(r.payload_json) as Message));
   },
 
   queuePendingMessage(row: Omit<PendingMessageRow, 'retry_count'>): void {

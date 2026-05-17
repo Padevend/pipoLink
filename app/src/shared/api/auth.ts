@@ -2,27 +2,19 @@ import { api } from './client';
 import { User } from './types';
 
 export const authApi = {
-  /**
-   * Request OTP
-   */
   requestOtp: (phone: string) =>
     api.post<void>('/auth/request-otp', { phone }),
 
-  /**
-   * Resend OTP
-   */
   resendOtp: (payload: { email: string; purpose: 'EMAIL_VERIFY' | 'PASSWORD_RESET' }) =>
     api.post<void>('/auth/resend-otp', payload),
 
-  /**
-   * Register a new user
-   */
-  register: (payload: { email: string; password: string }) => 
+  register: (payload: { email: string; password: string }) =>
     api.post<{ userId: string }>('/auth/register', payload),
 
-  /**
-   * Verify OTP code
-   */
+  /** Révoque la liaison DB d'un appareil avant création d'un nouveau compte. */
+  detachDeviceByFingerprint: (fingerprint: string) =>
+    api.post<{ detached: boolean; deviceId?: string }>('/auth/device/detach', { fingerprint }),
+
   verifyOtp: (payload: { email: string; code: string; purpose: 'EMAIL_VERIFY' | 'PASSWORD_RESET' }) =>
     api.post<{
       accessToken: string;
@@ -33,15 +25,13 @@ export const authApi = {
       requiresOnboarding?: boolean;
     }>('/auth/verify-otp', payload),
 
-  /**
-   * Login with email and password
-   */
   login: (payload: {
     email: string;
     password: string;
     deviceFingerprint?: string;
     deviceName?: string;
     devicePlatform?: string;
+    loginMode?: 'primary' | 'device';
   }) =>
     api.post<{
       accessToken: string;
@@ -53,49 +43,55 @@ export const authApi = {
       requiresKeySetup?: boolean;
     }>('/auth/login', payload),
 
-  /**
-   * Refresh token
-   */
-  refresh: (payload: { refreshToken: string }) => 
-    api.post<{ accessToken: string; refreshToken: string; expiresAt: number; user: User; deviceId: string }>('/auth/refresh', payload),
+  refresh: (payload: { refreshToken: string }) =>
+    api.post<{ accessToken: string; refreshToken: string; expiresAt: number; user: User; deviceId: string }>(
+      '/auth/refresh',
+      payload,
+    ),
 
-  /**
-   * Logout current device
-   */
-  logout: (payload: { refreshToken: string }) => 
-    api.post<void>('/auth/logout', payload),
+  logout: (payload: { refreshToken: string }) => api.post<void>('/auth/logout', payload),
 
-  /**
-   * Logout all devices
-   */
-  logoutAll: () => 
-    api.post<void>('/auth/logout-all'),
+  logoutAll: () => api.post<void>('/auth/logout-all'),
 
-  /**
-   * Change password
-   */
-  changePassword: (payload: { currentPassword: string; newPassword: string }) => 
+  changePassword: (payload: { currentPassword: string; newPassword: string }) =>
     api.post<void>('/auth/change-password', payload),
 
-  /**
-   * Request password reset
-   */
-  forgotPassword: (payload: { email: string }) => 
-    api.post<void>('/auth/forgot-password', payload),
+  forgotPassword: (payload: { email: string }) => api.post<void>('/auth/forgot-password', payload),
 
-  /**
-   * Reset password with OTP
-   */
-  resetPassword: (payload: { email: string; code: string; newPassword: string }) => 
+  resetPassword: (payload: { email: string; code: string; newPassword: string }) =>
     api.post<void>('/auth/reset-password', payload),
 
   /**
-   * Generate QR code token
+   * Appareil secondaire : démarre l'appairage sans jeton d'accès.
    */
-  generateQr: () => 
-    api.get<{ token: string; expiresAt: string }>('/auth/qr/generate'),
+  initiatePairing: (payload: {
+    deviceName: string;
+    platform: string;
+    fingerprint: string;
+    publicKey: string;
+    keySignature: string;
+  }) =>
+    api.post<{ token: string; shortCode: string; expiresAt: string }>('/auth/qr/initiate', payload),
 
-  /** Nouvel appareil : récupère les jetons une fois l'appareil principal validé le QR. */
+  previewPairing: (params: { token?: string; shortCode?: string }) =>
+    api.get<{
+      token: string;
+      shortCode: string;
+      deviceName: string;
+      platform: string;
+      publicKey: string;
+      expiresAt: string;
+    }>('/auth/qr/preview', { params }),
+
+  /** Appareil principal : approuve après scan QR ou saisie du code. */
+  approvePairing: (payload: {
+    token?: string;
+    shortCode?: string;
+    chatKeyBundle?: { chatId: string; encryptedKey: string }[];
+  }) =>
+    api.post<{ device: { id: string; name: string; platform: string } }>('/auth/qr/approve', payload),
+
+  /** Appareil secondaire : récupère les jetons une fois l'appareil principal approuvé. */
   pollQrLink: (token: string) =>
     api.get<{
       status: 'pending' | 'completed';

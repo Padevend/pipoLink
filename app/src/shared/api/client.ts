@@ -1,7 +1,13 @@
 import * as SecureStore from 'expo-secure-store';
-import { ApiResponse, ErrorResponse } from './types';
+import { ApiResponse, ErrorResponse, PaginatedResponse } from './types';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://10.93.241.86:3000';
+function envUrl(key: 'EXPO_PUBLIC_API_URL' | 'EXPO_PUBLIC_WS_URL', fallback: string): string {
+  const raw = process.env[key];
+  const value = typeof raw === 'string' ? raw.trim() : '';
+  return value || fallback;
+}
+
+const API_BASE_URL = envUrl('EXPO_PUBLIC_API_URL', 'http://10.0.2.2:3000');
 
 export class ApiError extends Error {
   constructor(
@@ -78,6 +84,72 @@ export async function request<T>(endpoint: string, options: RequestOptions = {})
 
   const apiResponse = data as ApiResponse<T>;
   return apiResponse.data !== undefined ? apiResponse.data : (data as unknown as T);
+}
+
+interface PaginatedApiBody<T> {
+  success?: boolean;
+  data?: T[];
+  meta?: {
+    page?: number;
+    limit?: number;
+    total?: number;
+    totalPages?: number;
+    hasNext?: boolean;
+    hasPrev?: boolean;
+  };
+}
+
+export async function requestPaginated<T>(
+  endpoint: string,
+  options: RequestOptions = {},
+): Promise<PaginatedResponse<T>> {
+  const { params, headers, ...rest } = options;
+
+  let url = `${API_BASE_URL}${endpoint}`;
+  if (params) {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) query.append(key, String(value));
+    });
+    const queryString = query.toString();
+    if (queryString) url += `?${queryString}`;
+  }
+
+  const token = await getAuthToken();
+  const response = await fetch(url, {
+    ...rest,
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...headers,
+    },
+  });
+
+  const body = (await response.json()) as PaginatedApiBody<T> & ErrorResponse;
+  if (!response.ok) {
+    throw new ApiError(
+      response.status,
+      body.error || 'UNKNOWN_ERROR',
+      body.message || 'An unexpected error occurred',
+      body.details,
+    );
+  }
+
+  const page = body.meta?.page ?? 1;
+  const limit = body.meta?.limit ?? 30;
+  const total = body.meta?.total ?? body.data?.length ?? 0;
+  const totalPages = body.meta?.totalPages ?? Math.max(1, Math.ceil(total / limit));
+
+  return {
+    items: body.data ?? [],
+    total,
+    page,
+    limit,
+    totalPages,
+    hasNextPage: body.meta?.hasNext ?? page < totalPages,
+    hasPreviousPage: body.meta?.hasPrev ?? page > 1,
+  };
 }
 
 export const api = {

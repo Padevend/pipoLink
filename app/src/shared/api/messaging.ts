@@ -1,4 +1,6 @@
-import { api } from './client';
+import { api, requestPaginated } from './client';
+import { normalizeConversation, type RawConversation } from './normalize-conversation';
+import { normalizeMessage, type RawMessage } from './normalize-message';
 import { Message, PaginatedResponse } from './types';
 
 export interface Conversation {
@@ -13,7 +15,10 @@ export interface Conversation {
 }
 
 export const messagingApi = {
-  getConversations: () => api.get<Conversation[]>('/messaging'),
+  getConversations: async (): Promise<Conversation[]> => {
+    const raw = await api.get<RawConversation[]>('/messaging');
+    return (raw ?? []).map(normalizeConversation);
+  },
 
   createChat: (body: {
     name?: string | null;
@@ -32,8 +37,18 @@ export const messagingApi = {
       params: { deviceId },
     }),
 
-  getMessages: (conversationId: string, params?: { page?: number; limit?: number }) =>
-    api.get<PaginatedResponse<Message>>(`/messaging/${conversationId}/messages`, { params }),
+  getMessages: async (
+    conversationId: string,
+    params?: { page?: number; limit?: number },
+  ): Promise<PaginatedResponse<Message>> => {
+    const page = await requestPaginated<RawMessage>(`/messaging/${conversationId}/messages`, {
+      params,
+    });
+    return {
+      ...page,
+      items: page.items.map(normalizeMessage),
+    };
+  },
 
   sendMessage: (
     conversationId: string,
@@ -43,7 +58,7 @@ export const messagingApi = {
       type?: string;
       attachments?: { fileUrl: string; iv: string; fileName: string; fileSize: number; mimeType: string }[];
     },
-  ) => api.post<Message>(`/messaging/${conversationId}/messages`, payload),
+  ) => api.post<RawMessage>(`/messaging/${conversationId}/messages`, payload).then(normalizeMessage),
 
   uploadFile: (conversationId: string, formData: FormData) =>
     api.upload<{ url: string; size: number; fileName: string; mimeType: string }>(

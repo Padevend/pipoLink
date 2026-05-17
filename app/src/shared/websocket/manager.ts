@@ -2,7 +2,11 @@ import * as SecureStore from 'expo-secure-store';
 import { emitter } from './emitter';
 import { WS_EVENTS, WsEvent } from '../constants/ws-events';
 
-const WS_BASE_URL = process.env.EXPO_PUBLIC_WS_URL ?? 'ws://localhost:3000/ws';
+function wsBaseUrl(): string {
+  const raw = process.env.EXPO_PUBLIC_WS_URL;
+  const value = typeof raw === 'string' ? raw.trim() : '';
+  return value || 'ws://10.0.2.2:3000/ws';
+}
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
 
@@ -25,7 +29,7 @@ class WebSocketManager {
     if (!token) return;
 
     this.status = 'connecting';
-    this.socket = new WebSocket(WS_BASE_URL);
+    this.socket = new WebSocket(wsBaseUrl());
 
     this.socket.onopen = () => {
       this.status = 'connected';

@@ -1,15 +1,30 @@
 import { Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import Constants from 'expo-constants';
 
+import { AppLogo } from '@/shared/ui/app-logo';
+import { Card } from '@/shared/ui/card';
 import { Header } from '@/shared/ui/header';
 
 export default function AboutScreen(): JSX.Element {
+  const { t } = useTranslation('settings');
+  const version = Constants.expoConfig?.version ?? '1.0.0';
+
   return (
-    <View className="flex-1 bg-slate-50 px-4 py-6 dark:bg-slate-950">
-      <Header title="À propos" subtitle="PipoLink" />
-      <View className="rounded-3xl bg-white p-4 dark:bg-slate-900">
-        <Text className="text-slate-900 dark:text-white">Version 1.0.0</Text>
-        <Text className="mt-2 text-slate-500 dark:text-slate-400">Application mobile sécurisée, offline-first et temps réel.</Text>
+    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark">
+      <Header title={t('about')} showBack />
+      <View className="items-center px-4 py-8">
+        <AppLogo size="lg" showWordmark />
+        <Card className="mt-8 w-full p-5">
+          <Text className="text-base font-bold text-text-primary-light dark:text-text-primary-dark">
+            {t('version', { version })}
+          </Text>
+          <Text className="mt-3 text-sm leading-6 text-text-secondary-light dark:text-text-secondary-dark">
+            PipoLink is a secure, offline-first academic messaging platform with end-to-end encryption and multi-device support.
+          </Text>
+        </Card>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }

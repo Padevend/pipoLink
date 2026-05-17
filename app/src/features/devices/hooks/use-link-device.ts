@@ -1,24 +1,24 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import type { DeviceQrPayloadV1 } from '@/features/devices/lib/verify-qr-payload';
-import { verifyDeviceQrPayloadSignature } from '@/features/devices/lib/verify-qr-payload';
+import type { DeviceQrPayload } from '@/features/devices/lib/verify-qr-payload';
+import { getPayloadToken, verifyDeviceQrPayloadSignature } from '@/features/devices/lib/verify-qr-payload';
 import { ensureChatKeyForChat } from '@/features/messaging/lib/ensure-chat-key';
 import { encryptChatKeyForDevice } from '@/shared/crypto/chat-key';
-import { devicesApi } from '@/shared/api/devices';
+import { authApi } from '@/shared/api/auth';
+import { messagingApi } from '@/shared/api/messaging';
 
 /**
- * Côté **appareil principal** : scan du QR du nouvel appareil, redistribution des clés AES (agent.md §10).
+ * Appareil principal : approuve l'appairage (scan QR).
  */
 export function useLinkDevice() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload: DeviceQrPayloadV1) => {
+    mutationFn: async (payload: DeviceQrPayload) => {
       if (!verifyDeviceQrPayloadSignature(payload)) {
         throw new Error('QR Code invalide : signature incorrecte.');
       }
 
-      const { messagingApi } = await import('@/shared/api/messaging');
       const chats = await messagingApi.getConversations();
       const chatKeyBundle: { chatId: string; encryptedKey: string }[] = [];
 
@@ -29,12 +29,8 @@ export function useLinkDevice() {
         key.fill(0);
       }
 
-      const res = await devicesApi.verifyQr({
-        token: payload.token,
-        deviceName: payload.deviceName,
-        platform: payload.platform,
-        fingerprint: payload.fingerprint,
-        newDevice: { publicKey: payload.publicKey, keySignature: payload.keySignature },
+      const res = await authApi.approvePairing({
+        token: getPayloadToken(payload),
         chatKeyBundle,
       });
       return { deviceId: res.device.id, deviceName: res.device.name };

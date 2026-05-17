@@ -1,7 +1,7 @@
-import React from 'react';
+import { cn } from '@/shared/utils/cn';
 import { Image } from 'expo-image';
 import { Text, View } from 'react-native';
-import { cn } from '@/shared/utils/cn';
+import { getStaticUri } from '../lib/static';
 
 export interface AvatarProps {
   uri?: string | null;
@@ -43,7 +43,7 @@ export function Avatar({
     >
       {uri ? (
         <Image 
-          source={{ uri }} 
+          source={{ uri: getStaticUri(uri) }} 
           contentFit="cover"
           transition={200}
           style={{ width: dimension, height: dimension }}

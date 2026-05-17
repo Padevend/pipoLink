@@ -82,6 +82,14 @@ async function migrateSqliteColumns(): Promise<void> {
   if (!convCols.some((c) => c.name === 'payload_json')) {
     await db.execAsync(`ALTER TABLE conversations ADD COLUMN payload_json TEXT NOT NULL DEFAULT '{}'`);
   }
+
+  const msgCols = db.getAllSync<{ name: string }>('PRAGMA table_info(messages)');
+  if (!msgCols.some((c) => c.name === 'attachments_json')) {
+    await db.execAsync(`ALTER TABLE messages ADD COLUMN attachments_json TEXT NOT NULL DEFAULT '[]'`);
+  }
+  if (!msgCols.some((c) => c.name === 'payload_json')) {
+    await db.execAsync(`ALTER TABLE messages ADD COLUMN payload_json TEXT NOT NULL DEFAULT '{}'`);
+  }
 }
 
 export { db };

@@ -4,7 +4,7 @@ import { BrainCircuit, Library, MessageCircle, Settings } from 'lucide-react-nat
 
 
 export default function TabsLayout() {
-  const { colors, colorScheme } = useTheme();
+  const { colorScheme } = useTheme();
 
   return (
     <Tabs
@@ -16,7 +16,7 @@ export default function TabsLayout() {
           backgroundColor: colorScheme === 'dark' ? '#0F172A' : '#FFFFFF',
           borderTopColor: colorScheme === 'dark' ? '#1E293B' : '#E2E8F0',
           elevation: 0,
-          height: 70,
+          height: 75,
           paddingBottom: 8,
           paddingTop: 8,
         },
