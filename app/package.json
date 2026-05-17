@@ -25,7 +25,7 @@
     "expo-av": "^16.0.8",
     "expo-camera": "^55.0.18",
     "expo-constants": "~18.0.13",
-
+    "expo-crypto": "~15.0.8",
     "@noble/ciphers": "^1.2.1",
     "expo-document-picker": "^55.0.13",
     "expo-file-system": "^55.0.19",

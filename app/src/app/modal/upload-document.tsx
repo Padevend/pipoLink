@@ -81,7 +81,7 @@ export default function UploadDocumentModal() {
       const message =
         e instanceof Error
           ? e.message
-          : 'Échec de l’upload — vérifiez la connexion au serveur.';
+          : 'Échec de l’upload — vérifiez votre connexion.';
       showToast({ type: 'error', message });
     }
   };
@@ -161,9 +161,6 @@ export default function UploadDocumentModal() {
 
           <AcademicPathPicker value={path ?? {}} onChange={handlePathChange} />
 
-          <Text className="text-xs text-text-secondary-light dark:text-text-secondary-dark">
-            Le fichier sera automatiquement classé dans le dossier correspondant à votre filière, niveau et UE.
-          </Text>
 
           <Button
             label="Publier"

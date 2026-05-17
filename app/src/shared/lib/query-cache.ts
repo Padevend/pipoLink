@@ -6,7 +6,7 @@ import type { Document, PaginatedResponse } from '@/shared/api/types';
 import { mergeUserProfile, normalizeUser, type UserWithProfile } from '@/shared/api/normalize-user';
 import type { UserProfile } from '@/shared/api/types';
 import { userKeys } from '@/entities/user/hooks';
-import { documentKeys } from '@/entities/document/hooks';
+import { documentKeys } from '@/entities/document/library-keys';
 import { conversationKeys } from '@/entities/conversation/hooks';
 
 export function setCurrentUser(queryClient: QueryClient, user: UserWithProfile): void {

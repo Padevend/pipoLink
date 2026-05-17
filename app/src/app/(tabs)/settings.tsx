@@ -116,7 +116,7 @@ export default function SettingsScreen() {
               <View className="flex-1">
                 <Text className="text-base font-bold text-text-primary-light dark:text-text-primary-dark">{t('darkMode')}</Text>
               </View>
-              <Switch value={colorScheme === 'dark'} onValueChange={(v) => setMode(v ? 'dark' : 'light')} trackColor={{ true: '#FF7A00' }} />
+              <Switch value={colorScheme === 'dark'} onValueChange={(v) => setMode(v ? 'dark' : 'light')} trackColor={{ true: '#FFFFFF' }} />
             </View>
             <View className="mx-4 h-px bg-border-light dark:bg-border-dark" />
             <SettingItem icon={Bell} label={t('notifications')} value={t('notificationsDesc')} onPress={() => router.push('/settings/notifications' as any)} />
@@ -127,8 +127,6 @@ export default function SettingsScreen() {
           </Text>
           <Card className="mb-12">
             <SettingItem icon={Info} label={t('about')} value={t('aboutDesc')} onPress={() => router.push('/settings/about' as any)} />
-            <View className="mx-4 h-px bg-border-light dark:bg-border-dark" />
-            <SettingItem icon={CircleHelp} label="Help center" onPress={() => router.push('/settings/about' as any)} />
             <View className="mx-4 h-px bg-border-light dark:bg-border-dark" />
             <SettingItem icon={LogOut} label={t('logout')} destructive showChevron={false} onPress={() => void handleLogout()} />
           </Card>

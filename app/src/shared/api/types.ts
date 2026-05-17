@@ -108,6 +108,13 @@ export type DocumentType = 'COURS' | 'TD' | 'TP' | 'CC' | 'EXAMEN' | 'RESUME' | 
  */
 export type ModerationStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
+export interface DocumentUploader {
+  id: string;
+  username: string | null;
+  displayName: string;
+  avatarUrl: string | null;
+}
+
 /**
  * Library Document
  */
@@ -120,9 +127,29 @@ export interface Document {
   ue: string | null;
   type: DocumentType;
   fileUrl: string;
+  fileName: string;
   fileSize: number;
+  mimeType: string;
+  downloadCount: number;
   moderationStatus: ModerationStatus;
+  folderId: string | null;
+  uploadedById: string;
+  uploadedBy: DocumentUploader;
   createdAt: string;
+}
+
+export interface LibraryFolder {
+  id: string;
+  name: string;
+  parentId: string | null;
+  subfolderCount: number;
+  documentCount: number;
+}
+
+export interface LibraryBrowseResult {
+  folders: LibraryFolder[];
+  documents: Document[];
+  currentFolderId: string | null;
 }
 
 /**

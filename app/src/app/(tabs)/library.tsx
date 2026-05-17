@@ -1,118 +1,158 @@
-import { useDocuments } from '@/entities/document/hooks';
-import { DocumentCard } from '@/entities/document/ui/document-card';
+import { useLibraryBrowse, useLibrarySearch } from '@/entities/document/hooks';
+import {
+  ExplorerBreadcrumb,
+  type BreadcrumbItem,
+} from '@/features/library/components/explorer-breadcrumb';
+import { ExplorerFileRow } from '@/features/library/components/explorer-file-row';
+import { ExplorerFolderRow } from '@/features/library/components/explorer-folder-row';
 import { Input } from '@/shared/ui/input';
 import { Skeleton } from '@/shared/ui/skeleton';
-import { cn } from '@/shared/utils/cn';
-import { router } from 'expo-router';
-import { BookOpen, Search, Upload } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
-import { FlatList, Pressable, ScrollView, Text, View } from 'react-native';
+import type { Document, LibraryFolder } from '@/shared/api/types';
+import { useRouter } from 'expo-router';
+import { FolderOpen, Search, Upload, User } from 'lucide-react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const CATEGORIES = ['All', 'Courses', 'Exams', 'TD/TP', 'Summaries'];
-const TYPES_MAP: Record<string, string> = {
-  'Courses': 'COURS',
-  'Exams': 'EXAMEN',
-  'TD/TP': 'TD',
-  'Summaries': 'RESUME'
-};
+const ROOT_CRUMB: BreadcrumbItem = { id: null, name: 'Bibliothèque' };
+
+type ExplorerRow =
+  | { kind: 'folder'; item: LibraryFolder }
+  | { kind: 'file'; item: Document };
+
+function useDebouncedValue<T>(value: T, delayMs: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delayMs);
+    return () => clearTimeout(t);
+  }, [value, delayMs]);
+  return debounced;
+}
 
 export default function LibraryScreen() {
-  const [activeCategory, setActiveCategory] = useState('All');
+  const router = useRouter();
+  const [trail, setTrail] = useState<BreadcrumbItem[]>([ROOT_CRUMB]);
   const [search, setSearch] = useState('');
-  const { data: documents, isLoading } = useDocuments({
-    type: TYPES_MAP[activeCategory] as any,
-    search: search || undefined
-  });
+  const debouncedSearch = useDebouncedValue(search.trim(), 350);
 
-  useEffect(()=>{
-    console.log("loadind status", isLoading)
-    console.log(documents)
-  }, [documents, isLoading])
+  const parentId = trail[trail.length - 1]?.id ?? null;
+  const isSearching = debouncedSearch.length >= 2;
+
+  const browseQuery = useLibraryBrowse(parentId);
+  const searchQuery = useLibrarySearch(debouncedSearch);
+
+  const isLoading = isSearching ? searchQuery.isLoading : browseQuery.isLoading;
+  const isFetching = isSearching ? searchQuery.isFetching : browseQuery.isFetching;
+
+  const rows: ExplorerRow[] = useMemo(() => {
+    if (isSearching) {
+      return (searchQuery.data ?? []).map((item) => ({ kind: 'file' as const, item }));
+    }
+    const data = browseQuery.data;
+    if (!data) return [];
+    return [
+      ...data.folders.map((item) => ({ kind: 'folder' as const, item })),
+      ...data.documents.map((item) => ({ kind: 'file' as const, item })),
+    ];
+  }, [isSearching, searchQuery.data, browseQuery.data]);
+
+  const openFolder = useCallback((folder: LibraryFolder) => {
+    setSearch('');
+    setTrail((prev) => [...prev, { id: folder.id, name: folder.name }]);
+  }, []);
+
+  const navigateBreadcrumb = useCallback((index: number) => {
+    setTrail((prev) => prev.slice(0, index + 1));
+  }, []);
+
+  const openDocument = useCallback(
+    (id: string) => {
+      router.push({ pathname: '/library/document/[id]', params: { id } } as never);
+    },
+    [router],
+  );
+
+  const renderItem = useCallback(
+    ({ item }: { item: ExplorerRow }) => {
+      if (item.kind === 'folder') {
+        return <ExplorerFolderRow folder={item.item} onPress={() => openFolder(item.item)} />;
+      }
+      return (
+        <ExplorerFileRow document={item.item} onPress={() => openDocument(item.item.id)} />
+      );
+    },
+    [openDocument, openFolder],
+  );
 
   return (
     <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark">
-      {/* Header */}
-      <View className="px-6 py-4">
-        <View className="flex-row items-center justify-between mb-6">
-          <View>
-            <Text className="text-2xl font-black text-text-primary-light dark:text-text-primary-dark tracking-tight">
-              Library
+      <View className="px-5 pb-2 pt-4">
+        <View className="mb-4 flex-row items-center justify-between">
+          <View className="flex-1 pr-3">
+            <Text className="text-2xl font-black tracking-tight text-text-primary-light dark:text-text-primary-dark">
+              Bibliothèque
             </Text>
-            <Text className="text-text-secondary-light dark:text-text-secondary-dark font-medium">
-              Academic Resources
+            <Text className="font-medium text-text-secondary-light dark:text-text-secondary-dark">
+              Filière · Niveau · UE
             </Text>
           </View>
-          <Pressable onPress={()=> router.push("/modal/upload-document")} className="w-12 h-12 bg-primary rounded-2xl items-center justify-center shadow-lg shadow-primary/30">
-            <Upload size={24} color="#FFFFFF" />
+          <Pressable
+            onPress={() => router.push('/library/my-documents' as never)}
+            className="mr-2 h-11 w-11 items-center justify-center rounded-2xl border border-border-light bg-surface-light dark:border-border-dark dark:bg-surface-dark"
+          >
+            <User size={20} color="#64748B" />
+          </Pressable>
+          <Pressable
+            onPress={() => router.push('/modal/upload-document')}
+            className="h-11 w-11 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/30"
+          >
+            <Upload size={22} color="#FFFFFF" />
           </Pressable>
         </View>
 
-        <Input 
-          placeholder="Search documents, courses, teachers..."
+        <Input
+          placeholder="Rechercher un document, une UE…"
           value={search}
           onChangeText={setSearch}
           leftIcon={Search}
-          containerClassName="mb-6"
+          containerClassName="mb-3"
         />
 
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 12 }}
-        >
-          {CATEGORIES.map((cat) => (
-            <Pressable
-              key={cat}
-              onPress={() => setActiveCategory(cat)}
-              className={cn(
-                'px-6 py-2.5 rounded-2xl border',
-                activeCategory === cat
-                  ? 'bg-primary border-primary'
-                  : 'bg-surface-light dark:bg-surface-dark border-border-light dark:border-border-dark'
-              )}
-            >
-              <Text className={cn(
-                'font-bold text-sm',
-                activeCategory === cat ? 'text-white' : 'text-text-secondary-light dark:text-text-secondary-dark'
-              )}>
-                {cat}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
+        {!isSearching && trail.length > 1 ? (
+          <ExplorerBreadcrumb items={trail} onNavigate={navigateBreadcrumb} />
+        ) : null}
       </View>
 
-      {/* Document List */}
-      <View className="flex-1 px-6">
+      <View className="flex-1 px-5">
         {isLoading ? (
-          <View className="gap-4">
-            {[1, 2, 3, 4].map(i => (
-              <Skeleton height={4} key={i} className="w-full h-24 py-9 rounded-3xl" />
+          <View className="gap-2">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Skeleton key={i} className="h-[68px] w-full rounded-2xl" />
             ))}
           </View>
         ) : (
           <FlatList
-            data={documents?.items}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <DocumentCard 
-                document={item} 
-                onPress={() => {}} 
-              />
-            )}
+            data={rows}
+            keyExtractor={(row) => `${row.kind}-${row.item.id}`}
+            renderItem={renderItem}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 40 }}
             ListHeaderComponent={
-              <Text className="text-sm font-bold text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-widest mb-4">
-                Recent Uploads
-              </Text>
+              isFetching && !isLoading ? (
+                <View className="mb-2 items-center py-1">
+                  <ActivityIndicator size="small" color="#FF7A00" />
+                </View>
+              ) : null
             }
             ListEmptyComponent={
-              <View className="items-center justify-center py-20 gap-4">
-                <BookOpen size={48} color="#94A3B8" />
-                <Text className="text-lg font-bold text-text-secondary-light dark:text-text-secondary-dark">
-                  No documents found
+              <View className="items-center justify-center gap-3 py-24">
+                <FolderOpen size={48} color="#94A3B8" />
+                <Text className="text-center text-base font-semibold text-text-secondary-light dark:text-text-secondary-dark">
+                  {isSearching
+                    ? 'Aucun document trouvé.'
+                    : parentId
+                      ? 'Ce dossier est vide.'
+                      : 'Choisissez une filière pour commencer.'}
                 </Text>
               </View>
             }

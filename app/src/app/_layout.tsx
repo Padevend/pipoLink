@@ -69,6 +69,8 @@ export default function RootLayout(): JSX.Element {
                     <Stack.Screen name="messaging/new-group" />
                     <Stack.Screen name="announcements/index" />
                     <Stack.Screen name="announcements/new" />
+                    <Stack.Screen name="library/document/[id]" />
+                    <Stack.Screen name="library/my-documents" />
                   </Stack>
                 </WebSocketProvider>
               </ToastProvider>

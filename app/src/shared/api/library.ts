@@ -1,5 +1,5 @@
 import { api, requestPaginated } from './client';
-import { Document, DocumentType } from './types';
+import type { Document, DocumentType, LibraryBrowseResult } from './types';
 
 export type PickedLibraryFile = {
   uri: string;
@@ -10,13 +10,21 @@ export type PickedLibraryFile = {
 
 function toUploadFile(file: PickedLibraryFile): { uri: string; name: string; type: string } {
   return {
-    uri: file.uri,
+    uri:  file.uri,
     name: file.name,
     type: file.mimeType ?? 'application/octet-stream',
   };
 }
 
 export const libraryApi = {
+  browse: (parentId?: string | null) =>
+    api.get<LibraryBrowseResult>('/library/browse', {
+      params: parentId ? { parentId } : undefined,
+    }),
+
+  searchDocuments: (q: string) =>
+    api.get<Document[]>('/library/documents/search', { params: { q } }),
+
   getDocuments: (params?: {
     filiere?: string;
     niveau?: string;
@@ -24,13 +32,15 @@ export const libraryApi = {
     type?: DocumentType;
     year?: number;
     search?: string;
-  }) => {
-    return requestPaginated<Document>('/library/documents', { params })
-  },
+  }) => requestPaginated<Document>('/library/documents', { params }),
+
+  getMyDocuments: (params?: { page?: number; limit?: number }) =>
+    requestPaginated<Document>('/library/documents/mine', { params }),
 
   getDocument: (id: string) => api.get<Document>(`/library/documents/${id}`),
 
-  downloadDocument: (id: string) => api.get<{ fileUrl: string }>(`/library/documents/${id}/download`),
+  downloadDocument: (id: string) =>
+    api.get<{ fileUrl: string; downloadCount: number }>(`/library/documents/${id}/download`),
 
   uploadDocument: async (
     file: PickedLibraryFile,
@@ -49,11 +59,11 @@ export const libraryApi = {
     formData.append(
       'payload',
       JSON.stringify({
-        title: metadata.title,
-        type: metadata.type,
-        filiere: metadata.filiere,
-        niveau: metadata.niveau,
-        ue: metadata.ue,
+        title:       metadata.title,
+        type:        metadata.type,
+        filiere:     metadata.filiere,
+        niveau:      metadata.niveau,
+        ue:          metadata.ue,
         description: metadata.description,
       }),
     );
