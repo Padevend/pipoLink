@@ -23,13 +23,45 @@ export class DeviceService {
   }
 
   /**
-   * Révoque un appareil spécifique.
-   * - Interdit la révocation de l'appareil principal
-   * - Révoque les refresh tokens associés
-   * - Envoie un email d'alerte sécurité
-   *
-   * @param userId   - Identifiant de l'utilisateur
-   * @param deviceId - Identifiant de l'appareil à révoquer
+   * Détache un appareil de son compte (révocation + suppression des clés de chat).
+   * Utilisé avant création d'un nouveau compte sur le même appareil physique.
+   */
+  async detachDeviceByFingerprint(fingerprint: string) {
+    const device = await prisma.device.findFirst({
+      where: { fingerprint, revokedAt: null },
+    });
+    if (!device) return { detached: false as const };
+
+    await prisma.$transaction(async (trx) => {
+      await trx.chatMemberKey.deleteMany({ where: { device_id: device.id } });
+      await trx.refreshToken.updateMany({
+        where: { device_id: device.id, revokedAt: null },
+        data:  { revokedAt: new Date() },
+      });
+      await trx.device.update({
+        where: { id: device.id },
+        data: {
+          revokedAt:     new Date(),
+          public_key:    null,
+          key_signature: null,
+          keyCreatedAt:  null,
+          keyExpiresAt:  null,
+        },
+      });
+      await trx.auditLog.create({
+        data: {
+          user_id:  device.user_id,
+          action:   "DEVICE_DETACHED_FOR_REUSE",
+          targetId: device.id,
+        },
+      });
+    });
+
+    return { detached: true as const, deviceId: device.id };
+  }
+
+  /**
+   * Révoque un appareil secondaire (l'appareil principal ne peut pas être révoqué).
    */
   async revokeDevice(userId: string, deviceId: string) {
     const device = await prisma.device.findFirst({ where: { id: deviceId, user_id: userId } });

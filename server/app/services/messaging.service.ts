@@ -209,7 +209,43 @@ export class MessagingService {
       orderBy: { conversation: { updatedAt: "desc" } },
     });
 
-    return members.map((m) => m.conversation);
+    return Promise.all(
+      members.map(async (m) => {
+        const chat = m.conversation;
+        const [lastMessage, unreadCount] = await Promise.all([
+          prisma.message.findFirst({
+            where:   { chat_id: chat.id, deletedAt: null },
+            orderBy: { created_at: "desc" },
+          }),
+          this.getUnreadCount(userId, chat.id),
+        ]);
+
+        return {
+          id:          chat.id,
+          type:        chat.type,
+          name:        chat.name,
+          updatedAt:   chat.updatedAt,
+          unreadCount,
+          lastMessage: lastMessage
+            ? {
+                id:         lastMessage.id,
+                chat_id:    lastMessage.chat_id,
+                cipherText: lastMessage.cipherText,
+                sender_id:  lastMessage.sender_id,
+                created_at: lastMessage.created_at,
+                status:     lastMessage.status,
+                iv:         lastMessage.iv,
+                type:       lastMessage.type,
+              }
+            : undefined,
+          members: chat.members.map((cm) => ({
+            id:        cm.user.id,
+            username:  cm.user.username,
+            avatarUrl: cm.user.profile?.avatarUrl ?? undefined,
+          })),
+        };
+      }),
+    );
   }
 
   async getMessages(userId: string, conversationId: string, page = 1, limit = 30) {
@@ -230,7 +266,45 @@ export class MessagingService {
       prisma.message.count({ where: { chat_id: conversationId, deletedAt: null } }),
     ]);
 
-    return { messages, total };
+    return { messages: messages.map((m) => this._formatMessage(m)), total };
+  }
+
+  private _formatMessage(m: {
+    id: string;
+    chat_id: string;
+    sender_id: string;
+    cipherText: string;
+    iv: string;
+    status: string;
+    type: string;
+    created_at: Date;
+    attachments?: {
+      id: string;
+      file_url: string;
+      iv: string;
+      file_name: string;
+      file_size: number;
+      mime_type: string;
+    }[];
+  }) {
+    return {
+      id:         m.id,
+      chat_id:    m.chat_id,
+      sender_id:  m.sender_id,
+      cipherText: m.cipherText,
+      iv:         m.iv,
+      status:     m.status,
+      type:       m.type,
+      created_at: m.created_at,
+      attachments: (m.attachments ?? []).map((a) => ({
+        id:       a.id,
+        fileUrl:  a.file_url,
+        iv:       a.iv,
+        fileName: a.file_name,
+        fileSize: a.file_size,
+        mimeType: a.mime_type,
+      })),
+    };
   }
 
   async sendMessage(
@@ -270,7 +344,7 @@ export class MessagingService {
 
     await prisma.chat.update({ where: { id: conversationId }, data: { updatedAt: new Date() } });
 
-    return message;
+    return this._formatMessage(message);
   }
 
   async updateMessage(userId: string, messageId: string, content: string, iv: string) {

@@ -69,6 +69,21 @@ export class FileService {
     return { url: `/storage/documents/${fileName}`, size: buffer.length };
   }
 
+  /**
+   * Stocke une pièce jointe de message déjà chiffrée côté client (blob binaire).
+   */
+  async storeMessageAttachment(buffer: Buffer): Promise<{ url: string; size: number }> {
+    this._validateSize(buffer.length, env.get("MAX_FILE_SIZE_MB") * 1024 * 1024);
+
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.enc`;
+    const dir      = this._ensureDir("message-attachments");
+    const filePath = path.join(dir, fileName);
+
+    fs.writeFileSync(filePath, buffer);
+
+    return { url: `/storage/message-attachments/${fileName}`, size: buffer.length };
+  }
+
   // ── Méthodes privées ──────────────────────────────────────────────────────
 
   /**

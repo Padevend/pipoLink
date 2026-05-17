@@ -1,3 +1,4 @@
+import { Context } from "hono";
 import { HttpContext } from "../../config/app.js";
 
 /**
@@ -13,7 +14,7 @@ export class ApiResponse {
    * @param message - Message lisible
    * @param status  - Code HTTP (défaut 200)
    */
-  static success(c: HttpContext, data: unknown, message: string, status = 200) {
+  static success(c: HttpContext , data: unknown, message: string, status = 200) {
     return c.json({
       success: true,
       message,

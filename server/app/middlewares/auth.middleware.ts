@@ -2,6 +2,8 @@ import { Context, Next } from "hono";
 import { hash } from "../../config/hash.js";
 import { ApiResponse } from "../helpers/api-response.js";
 import { ErrorCode } from "../helpers/error-codes.js";
+import { HttpContext } from "../../config/app.js";
+import { prisma } from "../../config/database.js";
 
 /**
  * Middleware d'authentification JWT.
@@ -14,14 +16,14 @@ export async function authMiddleware(c: Context, next: Next) {
   const authorization = c.req.header("Authorization");
 
   if (!authorization || !authorization.startsWith("Bearer ")) {
-    return ApiResponse.error(c, ErrorCode.UNAUTHORIZED, "Token d'authentification requis.", 401);
+    return ApiResponse.error(c as HttpContext, ErrorCode.UNAUTHORIZED, "Token d'authentification requis.", 401);
   }
 
   const token = authorization.replace("Bearer ", "");
 
   try {
     const payload = await hash.jwt.decode(token);
-
+    
     c.set("userId",   payload.payload.sub);
     c.set("role",     payload.payload.role);
     c.set("deviceId", payload.payload.deviceId);
@@ -29,6 +31,6 @@ export async function authMiddleware(c: Context, next: Next) {
 
     await next();
   } catch {
-    return ApiResponse.error(c, ErrorCode.UNAUTHORIZED, "Token invalide ou expiré.", 401);
+    return ApiResponse.error(c as HttpContext, ErrorCode.UNAUTHORIZED, "Token invalide ou expiré.", 401);
   }
 }

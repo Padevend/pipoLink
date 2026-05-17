@@ -7,6 +7,7 @@ export const AuthRouter = new Hono();
 
 AuthRouter
   .post("/register", callAction(AuthController, "register"))
+  .post("/device/detach", callAction(AuthController, "detachDeviceByFingerprint"))
   .post("/verify-otp", callAction(AuthController, "verifyOtp"))
   .post("/resend-otp", callAction(AuthController, "resendOtp"))
   .post("/login", callAction(AuthController, "login"))
@@ -16,6 +17,7 @@ AuthRouter
   .post("/change-password", authMiddleware, callAction(AuthController, "changePassword"))
   .post("/forgot-password", callAction(AuthController, "forgotPassword"))
   .post("/reset-password", callAction(AuthController, "resetPassword"))
-  .get("/qr/generate", authMiddleware, callAction(AuthController, "generateQr"))
+  .post("/qr/initiate", callAction(AuthController, "initiatePairing"))
   .get("/qr/poll", callAction(AuthController, "pollQrLink"))
-  .post("/qr/verify", callAction(AuthController, "verifyQr"));
+  .get("/qr/preview", authMiddleware, callAction(AuthController, "previewPairing"))
+  .post("/qr/approve", authMiddleware, callAction(AuthController, "approvePairing"));

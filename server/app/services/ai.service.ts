@@ -78,7 +78,7 @@ export class AiService {
   }
 
   private async _callProvider(_message: string): Promise<string> {
-    await new Promise((r) => setTimeout(r, 1200));
+    //await new Promise((r) => setTimeout(r, 1200));
     return "Cette fonctionnalité sera bientôt disponible. Restez connecté pour les prochaines mises à jour de PipoLink ! 🚀";
   }
 }

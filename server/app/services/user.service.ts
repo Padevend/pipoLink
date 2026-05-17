@@ -2,6 +2,8 @@ import { prisma } from "../../config/database.js";
 import { FileService } from "./file.service.js";
 import { ErrorCode } from "../helpers/error-codes.js";
 import { verifyDeviceKeyAttestation } from "../helpers/device-crypto.js";
+import { AuthService } from "./auth.service.js";
+import { DeviceService } from "./device.service.js";
 
 export type OnboardingPayload = {
   firstname: string;
@@ -12,6 +14,7 @@ export type OnboardingPayload = {
   matricule?: string;
   niveau?: string;
   filiere?: string;
+  bio?: string;
   deviceName: string;
   devicePlatform: string;
   deviceFingerprint: string;
@@ -21,6 +24,8 @@ export type OnboardingPayload = {
 
 export class UserService {
   private fileService = new FileService();
+  private authService = new AuthService();
+  private deviceService = new DeviceService();
 
   async getMe(userId: string) {
     return await prisma.user.findUnique({
@@ -47,7 +52,7 @@ export class UserService {
       },
     });
     if (otherUserDevice) {
-      throw { code: ErrorCode.CONFLICT, status: 409, message: "Cet appareil est déjà enregistré sur un autre compte." };
+      await this.deviceService.detachDeviceByFingerprint(payload.deviceFingerprint);
     }
 
     const now = new Date();
@@ -100,10 +105,59 @@ export class UserService {
         include: { profile: true, devices: { where: { revokedAt: null } } },
       });
 
-      return { user, device };
+      const tokens = await this.authService._generateTokens(user, device.id);
+      const expiresAtMs = tokens.expiresAt instanceof Date ? tokens.expiresAt.getTime() : Number(tokens.expiresAt);
+
+      return {
+        user,
+        device,
+        tokens: {
+          accessToken:  tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          expiresAt:    expiresAtMs,
+        },
+      };
     });
 
     return result;
+  }
+
+  async searchUsers(requesterId: string, query: string) {
+    const q = query.trim();
+    if (q.length < 1) return [];
+
+    return prisma.user.findMany({
+      where: {
+        id:            { not: requesterId },
+        is_active:     true,
+        is_configured: true,
+        is_excluded:   false,
+        OR: [
+          { username:  { contains: q, mode: "insensitive" } },
+          { matricule: { contains: q, mode: "insensitive" } },
+          { email:     { contains: q, mode: "insensitive" } },
+          { profile:   { firstname: { contains: q, mode: "insensitive" } } },
+          { profile:   { lastname:  { contains: q, mode: "insensitive" } } },
+        ],
+      },
+      select: {
+        id:        true,
+        username:  true,
+        matricule: true,
+        email:     true,
+        profile:   {
+          select: {
+            firstname: true,
+            lastname:  true,
+            avatarUrl: true,
+            niveau:    true,
+            filiere:   true,
+          },
+        },
+      },
+      take:    40,
+      orderBy: { username: "asc" },
+    });
   }
 
   async listDevicePublicKeys(targetUserId: string) {
@@ -115,10 +169,14 @@ export class UserService {
   }
 
   async updateProfile(userId: string, payload: Record<string, any>) {
+    const { username, ...profile } = payload;
+    if (username !== undefined) {
+      await prisma.user.update({ where: { id: userId }, data: { username } });
+    }
     await prisma.userProfile.upsert({
       where: { user_id: userId },
-      update: payload,
-      create: { user_id: userId, firstname: "", lastname: "", ...payload },
+      update: profile,
+      create: { user_id: userId, firstname: profile.firstname ?? "", lastname: profile.lastname ?? "", ...profile },
     });
   }
 

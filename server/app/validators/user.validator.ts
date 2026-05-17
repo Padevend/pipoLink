@@ -10,6 +10,7 @@ export const onboardingValidator = vine.compile(
     matricule:            vine.string().optional(),
     niveau:               vine.string().optional(),
     filiere:              vine.string().optional(),
+    bio:                  vine.string().maxLength(500).optional(),
     deviceName:           vine.string().minLength(1).maxLength(120),
     devicePlatform:       vine.string().minLength(1).maxLength(40),
     deviceFingerprint:    vine.string().minLength(4).maxLength(200),
@@ -24,6 +25,9 @@ export const updateProfileValidator = vine.compile(
     lastname:  vine.string().minLength(2).optional(),
     username:  vine.string().minLength(3).optional(),
     phone:     vine.string().optional(),
+    gender:    vine.enum(["M", "F", "OTHER"]).optional(),
+    niveau:    vine.string().optional(),
+    filiere:   vine.string().optional(),
     bio:       vine.string().maxLength(500).optional(),
   })
 );

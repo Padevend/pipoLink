@@ -20,7 +20,7 @@ export class FolderController {
   }
 
   async show(c: HttpContext) {
-    const folder = await this.service.getFolder(c.req.param("id"));
+    const folder = await this.service.getFolder(c.req.param("id") || "");
     return ApiResponse.success(c, folder, "Dossier récupéré.");
   }
 
@@ -32,7 +32,7 @@ export class FolderController {
   }
 
   async remove(c: HttpContext) {
-    await this.service.deleteFolder(c.req.param("id"));
+    await this.service.deleteFolder(c.req.param("id") || "");
     return ApiResponse.success(c, null, "Dossier supprimé.");
   }
 }

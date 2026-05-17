@@ -22,6 +22,33 @@ export const loginValidator = vine.compile(
     deviceFingerprint:  vine.string().minLength(4).maxLength(200).optional(),
     deviceName:         vine.string().maxLength(120).optional(),
     devicePlatform:     vine.string().maxLength(40).optional(),
+    /** primary = connexion appareil principal ; device = connexion appareil déjà associé */
+    loginMode:          vine.enum(["primary", "device"]).optional(),
+  })
+);
+
+export const initiatePairingValidator = vine.compile(
+  vine.object({
+    deviceName:    vine.string().minLength(1).maxLength(120),
+    platform:      vine.string().minLength(1).maxLength(40),
+    fingerprint:   vine.string().minLength(4).maxLength(200),
+    publicKey:     vine.string().minLength(32),
+    keySignature:  vine.string().minLength(32),
+  })
+);
+
+export const approvePairingValidator = vine.compile(
+  vine.object({
+    token:     vine.string().minLength(8).optional(),
+    shortCode: vine.string().minLength(4).maxLength(8).optional(),
+    chatKeyBundle: vine
+      .array(
+        vine.object({
+          chatId:       vine.string().uuid(),
+          encryptedKey: vine.string().minLength(1),
+        }),
+      )
+      .optional(),
   })
 );
 

@@ -1,28 +1,27 @@
-import { prisma }       from "../../config/database.js";
-import { FileService }  from "./file.service.js";
-import { ErrorCode }    from "../helpers/error-codes.js";
+import { prisma } from "../../config/database.js";
+import { ErrorCode } from "../helpers/error-codes.js";
+import { FileService } from "./file.service.js";
+import { FolderResolverService } from "./folder-resolver.service.js";
 
 /**
  * Service de gestion de la bibliothèque académique.
  */
 export class LibraryService {
   private fileService = new FileService();
+  private folderResolver = new FolderResolverService();
 
   /**
-   * Liste les documents d'un dossier avec filtres et pagination.
-   * N'affiche que les documents APPROVED aux rôles non-admin.
+   * Liste les documents avec filtres (filière, niveau, UE) et pagination.
    */
-  async listDocuments(folderId: string, role: string, filters: Record<string, any>, page = 1, limit = 20) {
-    const where: Record<string, any> = { folder_id: folderId };
+  async listDocuments(role: string, filters: Record<string, any>, page = 1, limit = 20) {
+    const where: Record<string, any> = {};
 
     if (role !== "admin" && role !== "staff") {
       where.moderationStatus = "APPROVED";
       where.isPublic = true;
     }
 
-    if (filters.type)   where.type   = filters.type;
-    if (filters.niveau) where.niveau = filters.niveau;
-    if (filters.year)   where.year   = Number(filters.year);
+    
 
     const skip = (page - 1) * limit;
     const [documents, total] = await Promise.all([
@@ -41,6 +40,17 @@ export class LibraryService {
    * Upload un document avec validation du fichier via FileService.
    */
   async uploadDocument(userId: string, payload: any, file: Buffer, meta: { originalName: string; mimeType: string }) {
+    const { filiere, niveau, ue } = payload;
+    if (!filiere || !niveau || !ue) {
+      throw {
+        code:    ErrorCode.VALIDATION_ERROR,
+        status:  400,
+        message: "Filière, niveau et UE sont requis.",
+      };
+    }
+
+    const folderId = await this.folderResolver.resolveFolderId(userId, filiere, niveau, ue);
+
     const { url, size } = await this.fileService.storeDocument(file, meta.mimeType);
 
     const tagConnections = payload.tags
@@ -53,7 +63,7 @@ export class LibraryService {
 
     const document = await prisma.document.create({
       data: {
-        folder_id:      payload.folderId,
+        folder_id:      folderId,
         uploaded_by_id: userId,
         title:          payload.title,
         description:    payload.description,

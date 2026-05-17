@@ -6,11 +6,10 @@ import vine from "@vinejs/vine";
 export const uploadDocumentValidator = vine.compile(
   vine.object({
     title:       vine.string().minLength(3).maxLength(255),
-    folderId:    vine.string().uuid(),
     description: vine.string().optional(),
-    niveau:      vine.string().optional(),
-    filiere:     vine.string().optional(),
-    ue:          vine.string().optional(),
+    filiere:     vine.string().minLength(1),
+    niveau:      vine.string().minLength(1),
+    ue:          vine.string().minLength(1),
     type:        vine.enum(["COURS", "TD", "TP", "CC", "EXAMEN", "RESUME", "AUTRE"]).optional(),
     year:        vine.number().min(2000).max(2100).optional(),
     tags:        vine.array(vine.string()).optional(),

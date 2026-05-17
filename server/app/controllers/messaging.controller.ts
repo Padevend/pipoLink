@@ -28,9 +28,19 @@ export class MessagingController {
       memberUserIds:  payload.memberUserIds,
       encryptedKeys:  payload.encryptedKeys,
     });
+    const chatLabel = payload.type === "group" ? payload.name ?? "Groupe" : "Nouvelle conversation";
     for (const member of conversation.members) {
       RealtimeBus.addUserToConversationRoom(member.user_id, conversation.id);
       RealtimeBus.emit(WsEventName.ConversationCreated, { conversation }, { userId: member.user_id });
+      if (member.user_id !== userId) {
+        await this.notifications.createNotification(member.user_id, {
+          title: "Nouveau chat",
+          body:    `Vous avez été ajouté à « ${chatLabel} ».`,
+          type:    "CHAT",
+          data:    { conversationId: conversation.id },
+        });
+        RealtimeBus.emit(WsEventName.NotificationCreated, { conversationId: conversation.id }, { userId: member.user_id });
+      }
     }
     return ApiResponse.success(c, conversation, "Conversation créée.", 201);
   }
@@ -71,6 +81,7 @@ export class MessagingController {
     const userId = c.get("userId") as string;
     const conversationId = c.req.param("id")!;
     const payload = await c.validateUsing(sendMessageValidator);
+    console.log("Sending message with payload:", payload);
     const message = await this.service.sendMessage(userId, conversationId, payload);
     const members = await this.service.getConversationMembers(conversationId);
     const lastMessage = await this.service.getMessageSummary(message.id);
@@ -113,7 +124,21 @@ export class MessagingController {
   }
 
   async uploadAttachment(c: HttpContext) {
-    return this.uploadFile(c);
+    const body = await c.req.parseBody();
+    const file = body["file"];
+
+    if (file instanceof File) {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const stored = await this.fileService.storeMessageAttachment(buffer);
+      return ApiResponse.success(c, {
+        url:      stored.url,
+        size:     stored.size,
+        fileName: file.name,
+        mimeType: file.type || "application/octet-stream",
+      }, "Pièce jointe uploadée.", 201);
+    }
+
+    return ApiResponse.error(c, "VALIDATION_ERROR", "Fichier invalide.", 400);
   }
 
   async markAsRead(c: HttpContext) {

@@ -10,10 +10,14 @@ import { PaymentRouter } from "./routes/payment.route.js";
 import { NotificationRouter } from "./routes/notification.route.js";
 import { AnnouncementRouter } from "./routes/announcement.route.js";
 import { UpdatesRouter } from "./routes/updates.route.js";
+import { serveStatic } from "hono/serve-static";
+import { join } from "path";
+import { readFile } from "fs/promises";
 
 export function createRouter() {
   const app = new Hono();
 
+  // Enregistrement des routes
   app.route("/auth", AuthRouter);
   app.route("/users", UserRouter);
   app.route("/devices", DeviceRouter);

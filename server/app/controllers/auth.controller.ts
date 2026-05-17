@@ -1,16 +1,19 @@
 import { HttpContext } from "../../config/app.js";
 import { AuthService } from "../services/auth.service.js";
+import { DeviceService } from "../services/device.service.js";
 import { ApiResponse } from "../helpers/api-response.js";
 import {
   registerValidator, loginValidator, verifyOtpValidator,
   resendOtpValidator, changePasswordValidator,
   resetPasswordValidator, refreshValidator,
+  initiatePairingValidator, approvePairingValidator,
 } from "../validators/auth.validator.js";
 import { RealtimeBus } from "../../src/modules/websocket/gateway/realtime-bus.js";
 import { WsEventName } from "../../src/modules/websocket/events/event-names.js";
 
 export class AuthController {
   private service = new AuthService();
+  private devices = new DeviceService();
 
   async register(c: HttpContext) {
     const payload = await c.validateUsing(registerValidator);
@@ -73,28 +76,40 @@ export class AuthController {
     return ApiResponse.success(c, null, "Mot de passe réinitialisé avec succès.");
   }
 
-  async generateQr(c: HttpContext) {
-    const userId = c.get("userId") as string;
-    const result = await this.service.generateQrToken(userId);
-    return ApiResponse.success(c, result, "Token QR généré.");
+  /** Appareil secondaire — sans authentification. */
+  async initiatePairing(c: HttpContext) {
+    const payload = await c.validateUsing(initiatePairingValidator);
+    const result  = await this.service.initiateDevicePairing(payload);
+    return ApiResponse.success(c, result, "Demande d'appairage créée.", 201);
   }
 
-  async verifyQr(c: HttpContext) {
-    const body = await c.req.json();
-    const { token, deviceName, platform, fingerprint, newDevice, chatKeyBundle } = body;
-    const result = await this.service.verifyQrToken({
-      token,
-      deviceName,
-      platform,
-      fingerprint,
-      newDevice,
-      chatKeyBundle,
+  async previewPairing(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const token = c.req.query("token");
+    const shortCode = c.req.query("shortCode");
+    const result = this.service.previewPairing(userId, {
+      token: token ?? undefined,
+      shortCode: shortCode ?? undefined,
     });
-    if (result.device?.id) {
-      RealtimeBus.emit(WsEventName.DeviceLinked, result.device, { userId: result.user.id });
+    return ApiResponse.success(c, result, "Demande d'appairage.");
+  }
+
+  /** Appareil principal connecté — scan QR ou saisie du code. */
+  async approvePairing(c: HttpContext) {
+    const userId  = c.get("userId") as string;
+    const payload = await c.validateUsing(approvePairingValidator);
+    const result  = await this.service.approveDevicePairing(userId, payload);
+    RealtimeBus.emit(WsEventName.DeviceLinked, result.device, { userId });
+    return ApiResponse.success(c, { device: result.device }, "Appareil secondaire approuvé.", 201);
+  }
+
+  async detachDeviceByFingerprint(c: HttpContext) {
+    const { fingerprint } = await c.req.json();
+    if (!fingerprint || typeof fingerprint !== "string" || fingerprint.length < 4) {
+      return ApiResponse.error(c, "VALIDATION_ERROR", "fingerprint requis.", 400);
     }
-    const { accessToken: _a, refreshToken: _r, ...safe } = result;
-    return ApiResponse.success(c, safe, "Appareil lié avec succès.", 201);
+    const result = await this.devices.detachDeviceByFingerprint(fingerprint);
+    return ApiResponse.success(c, result, result.detached ? "Appareil détaché." : "Aucun appareil actif à détacher.");
   }
 
   async pollQrLink(c: HttpContext) {

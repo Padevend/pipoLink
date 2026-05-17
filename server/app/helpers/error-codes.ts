@@ -45,6 +45,7 @@ export const ErrorCode = {
   ONBOARDING_REQUIRED:   "ONBOARDING_REQUIRED",
   INVALID_DEVICE_KEY:    "INVALID_DEVICE_KEY",
   DEVICE_KEY_REQUIRED:   "DEVICE_KEY_REQUIRED",
+  DEVICE_NOT_REGISTERED: "DEVICE_NOT_REGISTERED",
 } as const;
 
 export type ErrorCodeType = typeof ErrorCode[keyof typeof ErrorCode];

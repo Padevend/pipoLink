@@ -10,29 +10,31 @@ export class LibraryController {
 
   async listDocuments(c: HttpContext) {
     const role = c.get("role") as string;
-    const folderId = c.req.query("folderId") as string;
     const page = parseInt(c.req.query("page") || "1", 10);
     const limit = parseInt(c.req.query("limit") || "20", 10);
-    
+
     const filters = {
-      type: c.req.query("type"),
-      niveau: c.req.query("niveau"),
-      year: c.req.query("year")
+      filiere: c.req.query("filiere"),
+      niveau:  c.req.query("niveau"),
+      ue:      c.req.query("ue"),
+      type:    c.req.query("type"),
+      year:    c.req.query("year")
     };
 
-    const result = await this.service.listDocuments(folderId, role, filters, page, limit);
+    const result = await this.service.listDocuments(role, filters, page, limit);
     return ApiResponse.paginated(c, result.documents, result.total, page, limit);
   }
 
   async uploadDocument(c: HttpContext) {
     const userId = c.get("userId") as string;
-    
+    console.log("Upload document payload:");
+
     const body = await c.req.parseBody();
     const file = body["file"];
     const payloadRaw = body["payload"] ? JSON.parse(body["payload"] as string) : {};
 
     await uploadDocumentValidator.validate(payloadRaw);
-    
+
     if (file instanceof File) {
       const buffer = Buffer.from(await file.arrayBuffer());
       const meta = { originalName: file.name, mimeType: file.type };
@@ -40,7 +42,7 @@ export class LibraryController {
       RealtimeBus.emit(WsEventName.DocumentUploaded, doc, { userId });
       return ApiResponse.success(c, doc, "Document uploadé.", 201);
     }
-    
+
     return ApiResponse.error(c, "VALIDATION_ERROR", "Fichier invalide.", 400);
   }
 
@@ -53,7 +55,7 @@ export class LibraryController {
 
   async downloadDocument(c: HttpContext) {
     const userId = c.get("userId") as string;
-    const documentId = c.req.param("id");
+    const documentId = c.req.param("id") || "";
     const result = await this.service.downloadDocument(documentId, userId);
     return ApiResponse.success(c, result, "Lien de téléchargement généré.");
   }
@@ -61,7 +63,7 @@ export class LibraryController {
   async updateDocument(c: HttpContext) {
     const userId = c.get("userId") as string;
     const role = c.get("role") as string;
-    const documentId = c.req.param("id");
+    const documentId = c.req.param("id") || "";
     const payload = await c.validateUsing(updateDocumentValidator);
 
     const doc = await this.service.updateDocument(userId, role, documentId, payload);
@@ -72,14 +74,14 @@ export class LibraryController {
   async deleteDocument(c: HttpContext) {
     const userId = c.get("userId") as string;
     const role = c.get("role") as string;
-    const documentId = c.req.param("id");
+    const documentId = c.req.param("id") || "";
     await this.service.deleteDocument(userId, role, documentId);
     RealtimeBus.emit(WsEventName.DocumentUpdated, { id: documentId, deleted: true }, { userId });
     return ApiResponse.success(c, null, "Document supprime.");
   }
 
   async moderateDocument(c: HttpContext) {
-    const documentId = c.req.param("id");
+    const documentId = c.req.param("id") || "";
     const payload = await c.validateUsing(moderateDocumentValidator);
     const doc = await this.service.moderateDocument(documentId, payload.decision, payload.rejectionReason);
     RealtimeBus.emit(WsEventName.DocumentUpdated, doc, { userId: c.get("userId") as string });

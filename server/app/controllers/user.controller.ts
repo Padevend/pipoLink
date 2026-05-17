@@ -2,9 +2,11 @@ import { HttpContext } from "../../config/app.js";
 import { UserService } from "../services/user.service.js";
 import { ApiResponse } from "../helpers/api-response.js";
 import { onboardingValidator, updateProfileValidator } from "../validators/user.validator.js";
+import { AuthService } from "../services/auth.service.js";
 
 export class UserController {
   private service = new UserService();
+  private authService = new AuthService();
 
   async me(c: HttpContext) {
     const userId = c.get("userId") as string;
@@ -24,6 +26,13 @@ export class UserController {
     const payload = await c.validateUsing(onboardingValidator);
     const result = await this.service.completeOnboarding(userId, payload as any);
     return ApiResponse.success(c, result, "Profil et appareil configurés.");
+  }
+
+  async search(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const q = c.req.query("q") ?? "";
+    const users = await this.service.searchUsers(userId, String(q));
+    return ApiResponse.success(c, users, "Résultats de recherche.");
   }
 
   async devicePublicKeys(c: HttpContext) {
