@@ -8,6 +8,29 @@ import { WsEventName } from "../../src/modules/websocket/events/event-names.js";
 export class LibraryController {
   private service = new LibraryService();
 
+  async browse(c: HttpContext) {
+    const role = c.get("role") as string;
+    const parentId = c.req.query("parentId") ?? null;
+    const result = await this.service.browse(role, parentId || null);
+    return ApiResponse.success(c, result, "Contenu du dossier.");
+  }
+
+  async listMyDocuments(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const page = parseInt(c.req.query("page") || "1", 10);
+    const limit = parseInt(c.req.query("limit") || "30", 10);
+    const result = await this.service.listMyDocuments(userId, page, limit);
+    return ApiResponse.paginated(c, result.documents, result.total, page, limit);
+  }
+
+  async getDocument(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const role = c.get("role") as string;
+    const documentId = c.req.param("id") || "";
+    const doc = await this.service.getDocument(documentId, role, userId);
+    return ApiResponse.success(c, doc, "Document récupéré.");
+  }
+
   async listDocuments(c: HttpContext) {
     const role = c.get("role") as string;
     const page = parseInt(c.req.query("page") || "1", 10);
@@ -18,7 +41,8 @@ export class LibraryController {
       niveau:  c.req.query("niveau"),
       ue:      c.req.query("ue"),
       type:    c.req.query("type"),
-      year:    c.req.query("year")
+      year:    c.req.query("year"),
+      search:  c.req.query("search"),
     };
 
     const result = await this.service.listDocuments(role, filters, page, limit);
@@ -27,8 +51,6 @@ export class LibraryController {
 
   async uploadDocument(c: HttpContext) {
     const userId = c.get("userId") as string;
-    console.log("Upload document payload:");
-
     const body = await c.req.parseBody();
     const file = body["file"];
     const payloadRaw = body["payload"] ? JSON.parse(body["payload"] as string) : {};
@@ -65,7 +87,6 @@ export class LibraryController {
     const role = c.get("role") as string;
     const documentId = c.req.param("id") || "";
     const payload = await c.validateUsing(updateDocumentValidator);
-
     const doc = await this.service.updateDocument(userId, role, documentId, payload);
     RealtimeBus.emit(WsEventName.DocumentUpdated, doc, { userId });
     return ApiResponse.success(c, doc, "Document mis a jour.");

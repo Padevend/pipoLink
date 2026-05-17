@@ -31,7 +31,7 @@ export class ApiResponse {
    * @param page     - Page courante
    * @param limit    - Nombre d'éléments par page
    */
-  static paginated(c: HttpContext, data: unknown[], total: number, page: number, limit: number) {
+  static paginated(c: HttpContext, data: any, total: number, page: number, limit: number) {
     return c.json({
       success: true,
       data,

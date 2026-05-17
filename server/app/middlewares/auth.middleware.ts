@@ -23,11 +23,25 @@ export async function authMiddleware(c: Context, next: Next) {
 
   try {
     const payload = await hash.jwt.decode(token);
+    // get user from database
+    const user = await prisma.user.findUnique({
+      where: {
+        id: payload.payload.sub,
+      },
+      select: {
+        id: true,
+        role: true,
+        is_configured: true,
+      }
+    });
+    if (!user) {
+      return ApiResponse.error(c as HttpContext, ErrorCode.UNAUTHORIZED, "Utilisateur non trouvé.", 401);
+    }
     
     c.set("userId",   payload.payload.sub);
-    c.set("role",     payload.payload.role);
+    c.set("role",     user.role);
     c.set("deviceId", payload.payload.deviceId);
-    c.set("isConfigured", payload.payload.is_configured === true);
+    c.set("isConfigured", user.is_configured === true);
 
     await next();
   } catch {
