@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import { View, Text, SafeAreaView, Pressable, ScrollView } from 'react-native';
+import { useState } from 'react';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import { ChevronLeft, Mail, Send } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { router } from 'expo-router';
 import { Input } from '@/shared/ui/input';
 import { Button } from '@/shared/ui/button';
 import { authApi } from '@/shared/api/auth';
 import { useToast } from '@/shared/hooks/use-toast';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ForgotPasswordScreen() {
-  const router = useRouter();
   const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -20,7 +20,7 @@ export default function ForgotPasswordScreen() {
       await authApi.forgotPassword({ email });
       showToast({
         type: 'success',
-        message: 'Reset code sent to your email.'
+        message: 'Code de réinitialisation envoyé par email.'
       });
       router.push({
         pathname: '/auth/verify-otp',
@@ -29,7 +29,7 @@ export default function ForgotPasswordScreen() {
     } catch (e: any) {
       showToast({
         type: 'error',
-        message: e.message || 'Failed to send reset code'
+        message: e.message || 'Échec de l\'envoi du code de réinitialisation'
       });
     } finally {
       setIsLoading(false);
@@ -37,44 +37,67 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark">
-      <View className="flex-row items-center px-4 py-2">
+    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top']}>
+      
+      <View className="z-10 flex-row items-center border-b border-border-light/20 bg-surface-light/75 px-4 py-3.5 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl">
         <Pressable 
           onPress={() => router.back()}
-          className="w-10 h-10 items-center justify-center rounded-full bg-surface-light dark:bg-surface-dark"
+          className="h-9 w-9 items-center justify-center rounded-full bg-background-light/40 border border-border-light/20 dark:bg-background-dark/30 active:scale-95 transition-transform"
         >
-          <ChevronLeft size={24} color="#111827" />
+          <ChevronLeft size={18} color="#64748B" />
         </Pressable>
-      </View>
-
-      <ScrollView className="flex-1 px-6 pt-10">
-        <View className="mb-10">
-          <Text className="text-3xl font-black text-text-primary-light dark:text-text-primary-dark">
-            Reset Password
+        
+        <View className="ml-3.5 flex-1">
+          <Text className="text-[16px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+            Mot de passe oublié
           </Text>
-          <Text className="text-text-secondary-light dark:text-text-secondary-dark mt-2 leading-6">
-            Enter your email address and we'll send you a code to reset your password.
+          <Text className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary-light/50 dark:text-text-secondary-dark/50 mt-0.5">
+            Récupération de compte
           </Text>
         </View>
+      </View>
 
-        <View className="gap-8">
-          <Input 
-            label="Email Address"
-            placeholder="student@university.edu"
-            value={email}
-            onChangeText={setEmail}
-            leftIcon={Mail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
+      <ScrollView 
+        className="flex-1"
+        contentContainerStyle={{ flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View className="flex-1 px-6 pt-6 pb-10">
+          
+          {/* Section textuelle épurée d'introduction */}
+          <View className="mb-8">
+            <Text className="text-[24px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+              Réinitialiser le mot de passe
+            </Text>
+            <Text className="text-[13px] font-medium leading-[20px] text-text-secondary-light/70 dark:text-text-secondary-dark/60 mt-1.5">
+              Saisissez votre adresse email académique. Nous vous ferons parvenir un code de sécurité pour configurer un nouveau mot de passe.
+            </Text>
+          </View>
 
-          <Button 
-            label="Send Reset Code"
-            onPress={handleReset}
-            loading={isLoading}
-            size="xl"
-            leftIcon={<Send size={20} color="#FFFFFF" />}
-          />
+          {/* Formulaire enveloppé (Style Satiné / Glassmorphic) */}
+          <View className="w-full gap-y-6">
+            <Input 
+              label="Adresse Email Académique"
+              placeholder="nom@universite.edu"
+              value={email}
+              onChangeText={setEmail}
+              leftIcon={Mail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              containerClassName="bg-transparent"
+            />
+
+            <Button 
+              label="Envoyer le code"
+              onPress={() => void handleReset()}
+              loading={isLoading}
+              size="xl"
+              className="rounded-xl h-12"
+              rightIcon={!isLoading ? <Send size={14} color="#FFFFFF" /> : undefined}
+            />
+          </View>
+
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { router } from 'expo-router';
 import { MessageSquare } from 'lucide-react-native';
 
 import { useConversations } from '@/entities/conversation/hooks';
@@ -18,7 +18,7 @@ type ListRow =
 export function ConversationList() {
   const { data: conversations, isLoading, refetch, isRefetching } = useConversations();
   const { data: announcements } = useAnnouncements();
-  const router = useRouter();
+  
 
   const rows = useMemo<ListRow[]>(() => {
     const list: ListRow[] = [{ kind: 'announcements', id: ANNOUNCEMENTS_ENTRY_ID }];
@@ -30,15 +30,16 @@ export function ConversationList() {
 
   const announcementPreview = announcements?.[0]?.title;
 
+  // État de chargement moderne (Skeleton Loader)
   if (isLoading) {
     return (
-      <View className="flex-1 gap-2 px-4 pt-4">
+      <View className="flex-1 px-5 pt-4 bg-background-light dark:bg-background-dark">
         {[1, 2, 3, 4, 5].map((i) => (
-          <View key={i} className="flex-row items-center gap-4">
-            <Skeleton className="h-14 w-14 rounded-full" />
-            <View className="flex-1 gap-2">
-              <Skeleton className="h-4 w-1/3" />
-              <Skeleton className="h-4 w-full" />
+          <View key={i} className="flex-row items-center gap-4 py-3 border-b border-border-light/10 dark:border-border-dark/10">
+            <Skeleton className="h-12 w-12 rounded-full opacity-70" />
+            <View className="flex-1 gap-2.5">
+              <Skeleton className="h-3.5 w-1/4 rounded-md opacity-80" />
+              <Skeleton className="h-3 w-3/4 rounded-md opacity-50" />
             </View>
           </View>
         ))}
@@ -50,6 +51,11 @@ export function ConversationList() {
     <FlatList
       data={rows}
       keyExtractor={(item) => item.id}
+      contentContainerStyle={{ paddingBottom: 40 }}
+      showsVerticalScrollIndicator={false}
+      ItemSeparatorComponent={() => (
+        <View className="h-[1px] mx-5 bg-border-light/20 dark:bg-border-dark/10" />
+      )}
       renderItem={({ item }) => {
         if (item.kind === 'announcements') {
           return (
@@ -67,19 +73,29 @@ export function ConversationList() {
         );
       }}
       refreshControl={
-        <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#FF7A00" />
+        <RefreshControl 
+          refreshing={isRefetching} 
+          onRefresh={refetch} 
+          tintColor="var(--color-primary)" 
+        />
       }
       ListEmptyComponent={
         rows.length <= 1 ? (
-          <View className="items-center justify-center gap-4 py-20">
-            <View className="h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-              <MessageSquare size={32} color="#64748b" />
+          <View className="items-center justify-center px-6 py-16 mt-10">
+            
+            {/* Conteneur icône style Verre Dépoli */}
+            <View className="mb-5 h-20 w-20 items-center justify-center">
+              <View className="p-3 rounded-xl bg-primary/10">
+                <MessageSquare size={28} className="text-primary" />
+              </View>
             </View>
-            <Text className="px-12 text-center text-lg font-bold text-text-primary-light dark:text-text-primary-dark">
+
+            <Text className="text-lg font-semibold tracking-tight text-text-primary-light dark:text-text-primary-dark text-center">
               Aucune conversation
             </Text>
-            <Text className="px-12 text-center text-text-secondary-light dark:text-text-secondary-dark">
-              Démarrez une discussion avec vos camarades.
+            
+            <Text className="mt-1.5 px-8 text-center text-sm leading-5 text-text-secondary-light/80 dark:text-text-secondary-dark/80">
+              Démarrez une discussion avec vos camarades en cliquant sur le bouton d'ajout en haut.
             </Text>
           </View>
         ) : null

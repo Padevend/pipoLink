@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  Linking,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import {
@@ -53,7 +52,7 @@ const formatDate = (dateString: string): string => {
   });
 };
 
-export function DocumentDetailPage() {
+export default function DocumentDetailPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
   const [isDownloading, setIsDownloading] = useState(false);
@@ -204,20 +203,13 @@ export function DocumentDetailPage() {
         </View>
 
         {/* Tags */}
-        {document.tags && document.tags.length > 0 && (
+        {document.moderationStatus  && (
           <View className="p-4 border-b border-gray-100">
-            <Text className="text-sm font-semibold text-gray-700 mb-3">Tags</Text>
-            <View className="flex-row flex-wrap gap-2">
-              {document.tags.map((tag: any) => (
-                <View
-                  key={tag.id}
-                  className="bg-blue-50 px-3 py-2 rounded-full"
-                >
-                  <Text className="text-xs text-blue-700 font-medium">
-                    {tag.name}
-                  </Text>
-                </View>
-              ))}
+            <View className="ml-3 flex-1">
+              <Text className="text-xs text-gray-500 mb-1">Status</Text>
+              <Text className="text-gray-900">
+                {document.moderationStatus}
+              </Text>
             </View>
           </View>
         )}

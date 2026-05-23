@@ -1,31 +1,48 @@
-import { useRouter } from 'expo-router';
+import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ChevronLeft } from 'lucide-react-native';
 
 import { AssociateDevicePanel } from '@/features/devices/components/associate-device-panel';
 import { AppLogo } from '@/shared/ui/app-logo';
-import { ChevronLeft } from 'lucide-react-native';
 
 export default function LinkDeviceScreen(): JSX.Element {
-  const router = useRouter();
-
   return (
-    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark">
-      <View className="flex-row items-center gap-3 border-b border-border-light px-4 py-3 dark:border-border-dark">
-        <Pressable onPress={() => router.back()} className="h-10 w-10 items-center justify-center rounded-full">
-          <ChevronLeft size={24} color="#111827" />
-        </Pressable>
-        <AppLogo size="sm" />
-        <View className="flex-1">
-          <Text className="text-lg font-black text-text-primary-light dark:text-text-primary-dark">
-            Associer cet appareil
-          </Text>
-          <Text className="text-xs text-text-secondary-light dark:text-text-secondary-dark">
-            Appareil secondaire
-          </Text>
+    <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
+      
+      {/* En-tête Translucide Style Glassmorphism Lumineux (Sans Shadow) */}
+      <View className="z-10 flex-row items-center justify-between border-b border-slate-200/60 bg-white/80 px-4 py-3.5 backdrop-blur-xl">
+        <View className="flex-row items-center flex-1">
+          {/* Bouton Retour Épuré Capsulaire */}
+          <Pressable 
+            onPress={() => router.back()} 
+            className="h-9 w-9 items-center justify-center rounded-full bg-slate-100 border border-slate-200/40 active:scale-95 transition-transform"
+          >
+            <ChevronLeft size={18} color="#64748B" />
+          </Pressable>
+          
+          {/* Conteneur Titre & Sous-titre Contextuel */}
+          <View className="ml-3.5 flex-1">
+            <Text className="text-[16px] font-bold tracking-tight text-slate-800">
+              Associer cet appareil
+            </Text>
+            <Text className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mt-0.5">
+              Équipement secondaire sécurisé
+            </Text>
+          </View>
+        </View>
+
+        {/* Logo d'application équilibré sur la droite */}
+        <View className="opacity-90">
+          <AppLogo size="sm" />
         </View>
       </View>
-      <AssociateDevicePanel autoStart />
+
+      {/* Contenu principal / Panneau d'association */}
+      <View className="flex-1 px-4 pt-4">
+        <AssociateDevicePanel autoStart />
+      </View>
+
     </SafeAreaView>
   );
 }

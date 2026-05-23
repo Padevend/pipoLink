@@ -7,7 +7,7 @@ function envUrl(key: 'EXPO_PUBLIC_API_URL' | 'EXPO_PUBLIC_WS_URL', fallback: str
   return value || fallback;
 }
 
-const API_BASE_URL = envUrl('EXPO_PUBLIC_API_URL', 'http://10.0.2.2:3000');
+const API_BASE_URL = envUrl('EXPO_PUBLIC_API_URL', 'http://192.168.1.147:3000');
 
 export class ApiError extends Error {
   constructor(
@@ -27,7 +27,8 @@ interface RequestOptions extends RequestInit {
 
 async function getAuthToken() {
   try {
-    return await SecureStore.getItemAsync('auth_token');
+    const token = await SecureStore.getItemAsync('auth_token');
+    return token
   } catch (e) {
     return null;
   }

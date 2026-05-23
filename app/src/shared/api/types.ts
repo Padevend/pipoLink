@@ -152,6 +152,10 @@ export interface LibraryBrowseResult {
   currentFolderId: string | null;
 }
 
+export interface getPopularDocumentsResponse {
+  documents: Document[];
+}
+
 /**
  * Auth types
  */

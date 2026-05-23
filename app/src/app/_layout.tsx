@@ -4,7 +4,7 @@ import { installTweetNaclPrng } from '@/shared/crypto/prng';
 installAppCrypto();
 installTweetNaclPrng();
 
-import "@/styles/global.css";
+import '@/styles/global.css';
 import 'react-native-reanimated';
 
 import { Stack } from 'expo-router';
@@ -15,18 +15,57 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { runAppStartup } from '@/processes/app-startup';
 import { registerForPushNotifications, setupPushFromWebSocket } from '@/features/notifications/push';
-import { AuthProvider, QueryProvider, ThemeProvider, ToastProvider, WebSocketProvider } from '@/providers';
+import {
+  AuthProvider,
+  QueryProvider,
+  ThemeProvider,
+  ToastProvider,
+  WebSocketProvider,
+} from '@/providers';
 import { I18nProvider } from '@/providers/i18n-provider';
+import { useKeyboardBehavior } from '@/shared/hooks/use-keyboardBehavior';
+import { KeyboardAvoidingView } from 'react-native';
 
 export const unstable_settings = {
   anchor: '(tabs)',
 };
 
+function AppProviders({ children }: { children: React.ReactNode }): JSX.Element {
+  return (
+    <AppTreeWithKeyboardAvoiding>
+      <ThemeProvider>
+        <I18nProvider>
+          <QueryProvider>
+            <AuthProvider>
+              <ToastProvider>
+                <WebSocketProvider>{children}</WebSocketProvider>
+              </ToastProvider>
+            </AuthProvider>
+          </QueryProvider>
+        </I18nProvider>
+      </ThemeProvider>
+    </AppTreeWithKeyboardAvoiding>
+  );
+}
+
+function AppTreeWithKeyboardAvoiding({ children }: { children: React.ReactNode }): JSX.Element {
+  const behaviour = useKeyboardBehavior();
+  return (
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: "transparent" }}
+      behavior={behaviour}
+      keyboardVerticalOffset={0}
+    >
+      {children}
+    </KeyboardAvoidingView>
+  );
+}
+
 export default function RootLayout(): JSX.Element {
   useEffect(() => {
     void runAppStartup();
     void registerForPushNotifications().catch(() => undefined);
-    let stopPush: () => void = () => {};
+    let stopPush: () => void = () => { };
     try {
       stopPush = setupPushFromWebSocket();
     } catch {
@@ -37,49 +76,15 @@ export default function RootLayout(): JSX.Element {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider>
       <SafeAreaProvider>
-        <I18nProvider>
-        
-          <QueryProvider>
-            <AuthProvider>
-              <ToastProvider>
-                <WebSocketProvider>
-                  <Stack screenOptions={{ headerShown: false }}>
-                    <Stack.Screen name="auth" />
-                    <Stack.Screen name="(tabs)" />
-                    <Stack.Screen name="chat/[id]" />
-                    <Stack.Screen name="devices/index" />
-                    <Stack.Screen name="devices/scan" />
-                    <Stack.Screen name="devices/add" />
-                    <Stack.Screen name="devices/key-recovery" />
-                    <Stack.Screen name="updates/changelog" />
-                    <Stack.Screen name="modal/upload-file" options={{ presentation: 'modal' }} />
-                    <Stack.Screen name="modal/upload-document" options={{ presentation: 'modal' }} />
-                    <Stack.Screen name="modal/device-confirm" options={{ presentation: 'modal' }} />
-                    <Stack.Screen name="modal/update-available" options={{ presentation: 'modal' }} />
-                    <Stack.Screen name="settings/device-qr" />
-                    <Stack.Screen name="settings/profile" />
-                    <Stack.Screen name="settings/language" />
-                    <Stack.Screen name="settings/subscription" />
-                    <Stack.Screen name="settings/appearance" />
-                    <Stack.Screen name="settings/notifications" />
-                    <Stack.Screen name="settings/about" />
-                    <Stack.Screen name="messaging/new" />
-                    <Stack.Screen name="messaging/new-group" />
-                    <Stack.Screen name="announcements/index" />
-                    <Stack.Screen name="announcements/new" />
-                    <Stack.Screen name="library/document/[id]" />
-                    <Stack.Screen name="library/my-documents" />
-                  </Stack>
-                </WebSocketProvider>
-              </ToastProvider>
-            </AuthProvider>
-          </QueryProvider>
-        </I18nProvider>
+        <AppProviders>
+          <Stack screenOptions={{ headerShown: false }} >
+            <Stack.Screen name="index" />
+            <Stack.Screen name="devices/index" />
+          </Stack>
+        </AppProviders>
         <StatusBar style="auto" />
       </SafeAreaProvider>
-      </ThemeProvider>
     </GestureHandlerRootView>
   );
 }

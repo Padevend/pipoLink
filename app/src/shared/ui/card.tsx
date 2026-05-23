@@ -20,7 +20,7 @@ export function Card({
   const Component = onPress ? Pressable : View;
 
   const variants = {
-    elevated: 'bg-surface-light dark:bg-surface-dark shadow-sm shadow-black/5',
+    elevated: 'bg-surface-light dark:bg-surface-dark  shadow-black/5',
     flat: 'bg-surface-light dark:bg-surface-dark',
     outline: 'bg-transparent border border-border-light dark:border-border-dark',
   };

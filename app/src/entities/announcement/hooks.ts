@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { PickedFile } from '@/features/messaging/lib/send-message-pipeline';
 import { announcementsApi, type Announcement } from '@/shared/api/announcements';
 
 export const announcementKeys = {
@@ -19,8 +20,9 @@ export function useCreateAnnouncement() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: { title: string; content: string }) =>
-      announcementsApi.createAnnouncement(payload),
+    mutationFn: (payload: { title: string; content: string, poster: PickedFile | null }) =>{
+      return announcementsApi.createAnnouncement(payload)
+    },
     onSuccess: (created) => {
       queryClient.setQueryData<Announcement[]>(announcementKeys.list(), (prev) =>
         prev ? [created, ...prev.filter((a) => a.id !== created.id)] : [created],

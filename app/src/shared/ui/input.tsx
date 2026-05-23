@@ -1,4 +1,5 @@
 import { cn } from '@/shared/utils/cn';
+import { BRAND } from '@/shared/config/brand';
 import { LucideIcon } from 'lucide-react-native';
 import { useState } from 'react';
 import {
@@ -8,10 +9,6 @@ import {
   View,
   type TextInputProps
 } from 'react-native';
-import Animated, {
-  useSharedValue,
-  withTiming
-} from 'react-native-reanimated';
 
 export interface InputProps extends TextInputProps {
   label?: string;
@@ -35,66 +32,86 @@ export function Input({
   ...props
 }: InputProps): JSX.Element {
   const [isFocused, setIsFocused] = useState(false);
-  const focusAnim = useSharedValue(0);
 
   const handleFocus = (e: any) => {
     setIsFocused(true);
-    focusAnim.value = withTiming(1, { duration: 200 });
     onFocus?.(e);
   };
 
   const handleBlur = (e: any) => {
     setIsFocused(false);
-    focusAnim.value = withTiming(0, { duration: 200 });
     onBlur?.(e);
   };
 
   return (
-    <View className={cn('w-full gap-2', containerClassName)}>
+    <View className={cn('w-full gap-1.5', containerClassName)}>
+      {/* Label Épuré aux dimensions de l'application */}
       {label && (
-        <Text className="text-sm font-semibold text-text-secondary-light dark:text-text-secondary-dark ml-1">
+        <Text className="text-[11px] font-bold uppercase tracking-wide text-text-secondary-light/60 dark:text-text-secondary-dark/60 ml-1">
           {label}
         </Text>
       )}
       
-      <Animated.View 
+      {/* Conteneur adaptatif Style Glassmorphism */}
+      <View 
         className={cn(
-          'h-14 w-full flex-row items-center rounded-2xl bg-surface-light dark:bg-surface-dark px-4',
-          error && 'bg-error/5'
+          'w-full flex-row rounded-xl bg-surface-light/50 dark:bg-surface-dark/40 border px-4 transition-all',
+          // Gestion des hauteurs et alignements selon le mode d'affichage
+          props.multiline 
+            ? 'items-start py-3.5 min-h-[40px] max-h-[200px]' 
+            : 'items-center h-16',
+          error 
+            ? 'border-error/40 bg-error/5 dark:border-error/30' 
+            : isFocused 
+              ? 'border-primary bg-surface-light dark:border-primary dark:bg-surface-dark' 
+              : 'border-border-light/40 dark:border-border-dark/20'
         )}
       >
+        {/* Icône Gauche (Ajustement de marge si multiline) */}
         {LeftIcon && (
           <LeftIcon 
-            size={20} 
-            color={isFocused ? '#FF7A00' : '#6B7280'} 
-            className="mr-3"
+            size={16} 
+            color={isFocused ? BRAND.primary : '#64748B'} 
+            className={cn(props.multiline ? 'mr-3 mt-0.5' : 'mr-3')}
           />
         )}
         
+        {/* Champ de Saisie Natif */}
         <TextInput
           onFocus={handleFocus}
           onBlur={handleBlur}
-          placeholderTextColor="#94A3B8"
+          placeholderTextColor="#64748B"
+          textAlignVertical={props.multiline ? 'top' : 'center'}
+          style={props.multiline ? { paddingTop: 5, paddingBottom: 0 } : undefined}
           className={cn(
-            'flex-1 text-base text-text-primary-light dark:text-text-primary-dark h-full',
+            'flex-1 text-[13px] font-medium text-text-primary-light dark:text-text-primary-dark',
+            props.multiline ? 'h-full text-start' : 'h-full',
             className
           )}
-          {...props}
+          placeholder={props.placeholder}
+          onChangeText={props.onChangeText}
+          value={props.value}
+          multiline={props.multiline}
         />
         
+        {/* Icône Droite (Ajustement de marge si multiline) */}
         {RightIcon && (
-          <Pressable onPress={onRightIconPress} hitSlop={10}>
+          <Pressable 
+            onPress={onRightIconPress} 
+            hitSlop={10}
+            className={cn(props.multiline ? 'ml-3 mt-0.5' : 'ml-3')}
+          >
             <RightIcon 
-              size={20} 
-              color="#6B7280" 
-              className="ml-3"
+              size={16} 
+              color="#64748B" 
             />
           </Pressable>
         )}
-      </Animated.View>
+      </View>
       
+      {/* Message d'erreur micro-ajusté */}
       {error && (
-        <Text className="text-xs font-medium text-error ml-2">
+        <Text className="text-[11px] font-semibold text-error ml-1.5 mt-0.5">
           {error}
         </Text>
       )}

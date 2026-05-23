@@ -1,21 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, Pressable, TextInput } from 'react-native';
 import { useAuth } from '@/providers';
 import { Button } from '@/shared/ui/button';
-import { Input } from '@/shared/ui/input';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useToast } from '@/shared/hooks/use-toast';
-import { Smartphone } from 'lucide-react-native';
+import { Smartphone, CheckCircle2, RotateCcw } from 'lucide-react-native';
+import { router } from 'expo-router';
+import { BRAND } from '@/shared/config/brand';
 
 export function OTPVerify() {
   const { verifyOtp } = useAuth();
   const { showToast } = useToast();
-  const router = useRouter();
+  
   const { email, purpose } = useLocalSearchParams<{ email: string; purpose: string }>();
   
-  const [code, setCode] = useState('');
+  const [codeDigits, setCodeDigits] = useState<string[]>(Array(6).fill(''));
   const [isLoading, setIsLoading] = useState(false);
   const [timer, setTimer] = useState(60);
+
+  // Références pour sauter automatiquement d'un input à l'autre
+  const inputRefs = useRef<Array<TextInput | null>>([]);
 
   useEffect(() => {
     let interval: any;
@@ -25,85 +29,153 @@ export function OTPVerify() {
     return () => clearInterval(interval);
   }, [timer]);
 
+  // Reconstitution du code à 6 chiffres
+  const fullCode = codeDigits.join('');
+
+  const handleDigitChange = (value: string, index: number) => {
+    const cleanValue = value.replace(/[^0-9]/g, '');
+    const newDigits = [...codeDigits];
+    
+    // Gérer le cas du copier-coller d'un code entier
+    if (cleanValue.length > 1) {
+      const pastedDigits = cleanValue.slice(0, 6).split('');
+      for (let i = 0; i < 6; i++) {
+        newDigits[i] = pastedDigits[i] || '';
+      }
+      setCodeDigits(newDigits);
+      // Mettre le focus sur la dernière case remplie
+      const lastIndex = Math.min(pastedDigits.length - 1, 5);
+      inputRefs.current[lastIndex]?.focus();
+      return;
+    }
+
+    newDigits[index] = cleanValue;
+    setCodeDigits(newDigits);
+
+    // Sauter à la case suivante si un chiffre est entré
+    if (cleanValue !== '' && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyPress = (e: any, index: number) => {
+    // Reculer à la case précédente si touche Retour/Supprimer sur une case vide
+    if (e.nativeEvent.key === 'Backspace' && codeDigits[index] === '' && index > 0) {
+      const newDigits = [...codeDigits];
+      newDigits[index - 1] = '';
+      setCodeDigits(newDigits);
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
   const handleVerify = async () => {
-    if (code.length !== 6) {
-      showToast({ type: 'error', message: 'Please enter the 6-digit code' });
+    if (fullCode.length !== 6) {
+      showToast({ type: 'error', message: 'Veuillez saisir le code à 6 chiffres' });
       return;
     }
     
     setIsLoading(true);
     try {
       if (purpose === 'PASSWORD_RESET') {
-        // For password reset, we just verify the code and move to reset screen
-        // In a real app, you might want to exchange the code for a temporary reset token
         router.push({
           pathname: '/auth/reset-password',
-          params: { email, code }
+          params: { email, code: fullCode }
         });
       } else {
         await verifyOtp({ 
           email: email!, 
-          code, 
+          code: fullCode, 
           purpose: (purpose as any) || 'EMAIL_VERIFY' 
         });
-        showToast({ type: 'success', message: 'Identity verified!' });
+        showToast({ type: 'success', message: 'Identité vérifiée avec succès !' });
         router.replace('/auth/onboarding');
       }
     } catch (e: any) {
-      console.log(e)
-      showToast({ type: 'error', message: e.message || 'Verification failed' });
+      showToast({ type: 'error', message: e.message || 'Échec de la vérification' });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <View className="w-full gap-8">
-      <View className="items-center gap-4">
-        <View className="w-20 h-20 rounded-full bg-primary/10 items-center justify-center">
-          <Smartphone size={32} color="#FF7A00" />
+    <View className="w-full">
+      
+      {/* Section Identité & En-tête */}
+      <View className="items-center mb-8">
+        <View 
+          className="w-16 h-16 rounded-2xl items-center justify-center border border-primary/10 bg-primary/10 mb-4"
+          style={{ backgroundColor: `${BRAND.primary}15`, borderColor: `${BRAND.primary}25` }}
+        >
+          <Smartphone size={28} color={BRAND.primary} />
         </View>
-        <View className="items-center gap-2">
-          <Text className="text-2xl font-bold text-text-primary-light dark:text-text-primary-dark">
-            Verify Email
-          </Text>
-          <Text className="text-center text-text-secondary-light dark:text-text-secondary-dark px-6">
-            We've sent a 6-digit code to{'\n'}
-            <Text className="font-bold text-text-primary-light dark:text-text-primary-dark">{email}</Text>
-          </Text>
-        </View>
+        
+        <Text className="text-[22px] font-bold text-text-primary-light dark:text-text-primary-dark tracking-tight">
+          Vérification de l'email
+        </Text>
+        
+        <Text className="text-center text-[13px] leading-[20px] font-medium text-text-secondary-light/70 dark:text-text-secondary-dark/60 mt-2 px-4">
+          Un code de validation à 6 chiffres a été envoyé à l'adresse{'\n'}
+          <Text className="font-bold text-text-primary-light dark:text-text-primary-dark">{email}</Text>
+        </Text>
       </View>
 
-      <View className="gap-6">
-        <Input
-          placeholder="000000"
-          value={code}
-          onChangeText={(val) => setCode(val.replace(/[^0-9]/g, '').slice(0, 6))}
-          keyboardType="number-pad"
-          className="text-center text-3xl tracking-[10px] font-bold h-20"
-          autoFocus
-        />
+      {/* Rangée des 6 Cases de Saisie (Short Inputs) */}
+      <View className="flex-row justify-between gap-2 mb-8">
+        {codeDigits.map((digit, index) => (
+          <View 
+            key={index}
+            className={`flex-1 h-14 rounded-xl border items-center justify-center bg-surface-light/40 dark:bg-surface-dark/30
+              ${digit ? 'border-primary/60 dark:border-primary/60' : 'border-border-light/40 dark:border-border-dark/20'}`}
+          >
+            <TextInput
+              ref={(el) => (inputRefs.current[index] = el) as any}
+              value={digit}
+              onChangeText={(val) => handleDigitChange(val, index)}
+              onKeyPress={(e) => handleKeyPress(e, index)}
+              keyboardType="number-pad"
+              maxLength={index === 0 ? 6 : 1}
+              className="w-auto h-full text-center text-[14px] font-bold text-text-primary-light dark:text-text-primary-dark"
+              style={{ padding: 0 }}
+              placeholder="0"
+              placeholderTextColor="#94A3B8"
+              autoFocus={index === 0}
+            />
+          </View>
+        ))}
+      </View>
 
+      {/* Action finale de validation */}
+      <View className="mb-6">
         <Button
-          label="Verify Code"
-          onPress={handleVerify}
+          label="Vérifier le code"
+          onPress={() => void handleVerify()}
           loading={isLoading}
           size="xl"
-          disabled={code.length !== 6}
+          className="rounded-xl h-12"
+          disabled={fullCode.length !== 6}
+          rightIcon={!isLoading ? <CheckCircle2 size={16} color="#FFFFFF" /> : undefined}
         />
       </View>
 
-      <View className="items-center gap-2">
+      {/* Zone de renvoi du code de sécurité */}
+      <View className="items-center justify-center py-2">
         {timer > 0 ? (
-          <Text className="text-text-secondary-light dark:text-text-secondary-dark">
-            Resend code in <Text className="font-bold text-primary">{timer}s</Text>
+          <Text className="text-[12px] font-medium text-text-secondary-light/60 dark:text-text-secondary-dark/60">
+            Renvoyer un nouveau code dans <Text className="font-bold text-primary" style={{ color: BRAND.primary }}>{timer}s</Text>
           </Text>
         ) : (
-          <Pressable onPress={() => setTimer(60)}>
-            <Text className="font-bold text-primary">Resend Verification Code</Text>
+          <Pressable 
+            onPress={() => setTimer(60)} 
+            className="flex-row items-center gap-1.5 active:opacity-70 py-1"
+          >
+            <RotateCcw size={13} color={BRAND.primary} />
+            <Text className="text-[13px] font-bold text-primary" style={{ color: BRAND.primary }}>
+              Renvoyer le code de vérification
+            </Text>
           </Pressable>
         )}
       </View>
+
     </View>
   );
 }

@@ -28,7 +28,8 @@ export const LEVEL_DATA: FiliereOption[] = [
           "Eléments de Chimie",
           "Langue (Anglais/Français)",
           "Dessin technique",
-          "Comportement et Sport"
+          "Comportement et Sport",
+          "Autres"
         ],
       },
       {
@@ -47,7 +48,8 @@ export const LEVEL_DATA: FiliereOption[] = [
           "Informatique III & IV",
           "Statique",
           "Anglais/Français",
-          "TP Physique"
+          "TP Physique",
+          "Autres"
         ],
       },
     ],
@@ -148,7 +150,8 @@ export const LEVEL_DATA: FiliereOption[] = [
           "Architecture des réseaux et ordinateur",
           "Antennes et propagation",
           "TP Télécommunications",
-          "Instrumentation electronique"
+          "Instrumentation electronique",
+          "Autres"
         ],
       },
       {
@@ -163,7 +166,8 @@ export const LEVEL_DATA: FiliereOption[] = [
           "Télédétection",
           "Transmission des données et réseaux numériques",
           "Séminaire",
-          "Projet d'ingénieur"
+          "Projet d'ingénieur",
+          "Autres"
         ],
       },
     ],
@@ -184,7 +188,8 @@ export const LEVEL_DATA: FiliereOption[] = [
           "Transmissions analogiques et numériques",
           "Informatique industrielle et microprocesseurs",
           "Techniques de modulation analogique et numérique",
-          "Production transport et distribution d'énergie"
+          "Production transport et distribution d'énergie",
+          "Autres"
         ],
       },
       {
@@ -246,7 +251,8 @@ export const LEVEL_DATA: FiliereOption[] = [
           "TP de topographie",
           "Résistance des matériaux",
           "CAO-DAO",
-          "TP Matériaux et géologie"
+          "TP Matériaux et géologie",
+          "Autres",
         ],
       },
       {
@@ -266,7 +272,8 @@ export const LEVEL_DATA: FiliereOption[] = [
           "Recherche opérationnelle",
           "Plaques et coques",
           "TP Géotechnique",
-          "Assainissement"
+          "Assainissement",
+          "Autres"
         ],
       },
       {
@@ -285,7 +292,8 @@ export const LEVEL_DATA: FiliereOption[] = [
           "Projet technique d'aménagement et Analyse de site",
           "Projet technique du bâtiment",
           "Management de l'environnement et déchets",
-          "Droit foncier et Droit de la construction"
+          "Droit foncier et Droit de la construction",
+          "Autres"
         ],
       },
     ],
@@ -307,12 +315,13 @@ export const LEVEL_DATA: FiliereOption[] = [
           "Mécanique des fluides appliqués",
           "Algorithme et programmation",
           "Transformation des matériaux et métallurgie",
-          "Electrotechnique (Machines électriques)",
+          "Electrotechnique",
           "Asservissement",
           "Thermodynamique appliquée",
           "Elasticité",
-          "Dessins assistés par ordinateur (DAO)",
-          "Informatique"
+          "Dessins assistés par ordinateur",
+          "Informatique",
+          "Autres"
         ],
       },
       {
@@ -338,7 +347,8 @@ export const LEVEL_DATA: FiliereOption[] = [
           "Energétique industrielle",
           "Hydraulique",
           "Centrales hydrauliques et thermiques",
-          "Droit du travail et des affaires"
+          "Droit du travail et des affaires",
+          "Autres"
         ],
       },
       {
@@ -357,7 +367,8 @@ export const LEVEL_DATA: FiliereOption[] = [
           "Plasticité",
           "Dynamique des machines",
           "Calcul des structures",
-          "Management de l'entreprise et développement social"
+          "Management de l'entreprise et développement social",
+          "Autres"
         ],
       },
     ],
@@ -384,7 +395,8 @@ export const LEVEL_DATA: FiliereOption[] = [
           "TP Matériaux et géologie",
           "Thermique industrielle",
           "Gestion",
-          "Economie"
+          "Economie",
+          "Autres"
         ],
       },
       {
@@ -406,7 +418,8 @@ export const LEVEL_DATA: FiliereOption[] = [
           "CAO",
           "Informatique industrielle",
           "Tribologie",
-          "Communication en entreprise"
+          "Communication en entreprise",
+          "Autres"
         ],
       },
       {
@@ -421,10 +434,46 @@ export const LEVEL_DATA: FiliereOption[] = [
           "Management de l'entreprise et développement social",
           "Management de l'environnement/Risque industriel",
           "CMAO/Simulation",
-          "Méthodes quantitatives"
+          "Méthodes quantitatives",
+          "Autres"
         ],
       },
     ],
+  },
+  {
+    filiere: "Autres",
+    niveaux: [
+      {
+        label: "N1",
+        ue: [
+          "Autres"
+        ],
+      },
+      {
+        label: "N2",
+        ue: [
+          "Autres"
+        ],
+      },
+      {
+        label: "N3",
+        ue: [
+          "Autres"
+        ],
+      },
+      {
+        label: "N4",
+        ue: [
+          "Autres"
+        ],
+      },
+      {
+        label: "N5",
+        ue: [
+          "Autres"
+        ],
+      },
+    ]
   }
 ];
 export function getFilieres(): string[] {

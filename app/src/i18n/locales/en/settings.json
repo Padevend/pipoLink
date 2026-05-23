@@ -17,13 +17,15 @@
   "notifications": "Notifications",
   "notificationsDesc": "Push & in-app alerts",
   "help": "Help & support",
-  "about": "About PipoLink",
+  "about": "About",
   "aboutDesc": "Version & legal",
   "logout": "Log out",
+  "delete": "Delete Account",
   "darkMode": "Dark mode",
   "version": "PipoLink Mobile • v{{version}}",
   "planFree": "Free plan",
   "planPremium": "Premium plan",
   "primaryOnly": "Available on your primary device only",
-  "detachDevice": "Detach device"
+  "detachDevice": "Detach device",
+  "accountAction": "Account actions"
 }

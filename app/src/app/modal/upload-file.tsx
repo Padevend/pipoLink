@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { CheckCircle2, FileText, Upload, X } from 'lucide-react-native';
 
 import { useSendMessage } from '@/features/messaging/hooks/use-send-message';
@@ -11,9 +11,10 @@ import { Input } from '@/shared/ui/input';
 import { useToast } from '@/shared/hooks/use-toast';
 import { cn } from '@/shared/utils/cn';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 
 export default function UploadFileModal() {
-  const router = useRouter();
+  
   const { id: conversationId } = useLocalSearchParams<{ id: string }>();
   const { showToast } = useToast();
   const sendMessage = useSendMessage(conversationId ?? '');
@@ -54,74 +55,110 @@ export default function UploadFileModal() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark">
-      <View className="flex-row items-center justify-between border-b border-border-light px-6 py-4 dark:border-border-dark">
-        <Text className="text-xl font-black text-text-primary-light dark:text-text-primary-dark">
+    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top', 'bottom']}>
+      
+      {/* Header Minimaliste */}
+      <View className="flex-row items-center justify-between border-b border-border-light/30 px-6 py-4 dark:border-border-dark/20 backdrop-blur-md">
+        <Text className="text-xl font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
           Envoyer un document
         </Text>
         <Pressable
           onPress={() => router.back()}
-          className="h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800"
+          className="h-9 w-9 items-center justify-center rounded-full bg-surface-light/60 border border-border-light/20 dark:bg-surface-dark/40 dark:border-border-dark/20 active:opacity-80"
         >
-          <X size={20} color="#6B7280" />
+          <X size={18} className="text-text-secondary-light dark:text-text-secondary-dark" />
         </Pressable>
       </View>
 
-      <ScrollView className="flex-1 px-6 pt-8">
-        <View className="gap-6">
-          <Pressable onPress={handlePickFile} disabled={sendMessage.isPending}>
+      <ScrollView className="flex-1 px-6 pt-6" showsVerticalScrollIndicator={false}>
+        <View className="gap-6 pb-8">
+          
+          {/* Zone de Sélection Style "Glassmorphism" Tactile */}
+          <Pressable onPress={handlePickFile} disabled={sendMessage.isPending} className="active:opacity-90">
             <Card
               variant="outline"
               className={cn(
-                'h-44 items-center justify-center gap-4 border-2 border-dashed',
-                file ? 'border-success/50 bg-success/5' : 'border-primary/30 bg-primary/5',
+                'h-48 items-center justify-center gap-3.5 rounded-3xl border-2 border-dashed transition-colors',
+                file 
+                  ? 'border-success/40 bg-success/5 dark:bg-success/10' 
+                  : 'border-primary/20 bg-surface-light/40 dark:bg-surface-dark/20 backdrop-blur-md',
               )}
             >
               {file ? (
-                <>
-                  <CheckCircle2 size={40} color="#22C55E" />
-                  <Text className="font-bold text-success">{file.name}</Text>
-                </>
+                <View className="items-center px-4">
+                  <View className="p-3 rounded-2xl bg-success/10 mb-2">
+                    <CheckCircle2 size={32} className="text-success" />
+                  </View>
+                  <Text className="font-semibold text-center text-success text-[15px]" numberOfLines={1}>
+                    Fichier sélectionné
+                  </Text>
+                </View>
               ) : (
-                <>
-                  <Upload size={40} color="#FF7A00" />
-                  <Text className="font-bold text-primary">Choisir un fichier</Text>
-                </>
+                <View className="items-center px-4">
+                  <View className="p-3 rounded-2xl bg-primary/10 mb-2">
+                    <Upload size={28} className="text-primary" />
+                  </View>
+                  <Text className="font-medium text-[15px] text-text-primary-light dark:text-text-primary-dark">
+                    Parcourir les fichiers
+                  </Text>
+                  <Text className="text-xs text-text-secondary-light/60 dark:text-text-secondary-dark/60 mt-1">
+                    Tous les formats sont acceptés
+                  </Text>
+                </View>
               )}
             </Card>
           </Pressable>
 
+          {/* Détails du Fichier Sélectionné (si présent) */}
           {file && (
-            <View className="flex-row items-center gap-3 rounded-2xl border border-border-light bg-slate-50 p-4 dark:border-border-dark dark:bg-slate-900">
-              <FileText size={24} color="#6B7280" />
+            <View className="flex-row items-center gap-3.5 rounded-2xl border border-border-light/40 bg-surface-light/50 p-4 dark:border-border-dark/20 dark:bg-surface-dark/30 backdrop-blur-lg ">
+              <View className="p-2.5 rounded-xl bg-primary/10">
+                <FileText size={20} className="text-primary" />
+              </View>
               <View className="flex-1">
-                <Text className="font-bold text-text-primary-light dark:text-text-primary-dark" numberOfLines={1}>
+                <Text className="font-semibold text-[14px] text-text-primary-light dark:text-text-primary-dark" numberOfLines={1}>
                   {file.name}
                 </Text>
                 {file.size != null && (
-                  <Text className="text-xs text-text-secondary-light dark:text-text-secondary-dark">
+                  <Text className="text-[11px] font-medium text-text-secondary-light/70 dark:text-text-secondary-dark/70 mt-0.5">
                     {(file.size / (1024 * 1024)).toFixed(2)} Mo
                   </Text>
                 )}
               </View>
+              {/* Option d'annulation rapide */}
+              <Pressable onPress={() => setFile(null)} className="p-1 rounded-full bg-text-secondary-light/10 dark:bg-text-secondary-dark/10">
+                <X size={14} className="text-text-secondary-light dark:text-text-secondary-dark" />
+              </Pressable>
             </View>
           )}
 
-          <Input
-            label="Message (optionnel)"
-            placeholder="Ajouter un commentaire…"
-            value={caption}
-            onChangeText={setCaption}
-            multiline
-          />
+          {/* Champ d'annotation épuré */}
+          <View className="mt-2">
+            <Input
+              label="Message (optionnel)"
+              placeholder="Ajouter un commentaire lié à ce document…"
+              value={caption}
+              onChangeText={setCaption}
+              multiline
+              containerClassName="rounded-2xl bg-surface-light/30 border-border-light/40 dark:bg-surface-dark/20 dark:border-border-dark/20"
+              className="text-[15px] pt-3"
+            />
+          </View>
 
-          <Button
-            label="Envoyer dans le chat"
-            size="xl"
-            onPress={() => void handleSend()}
-            loading={sendMessage.isPending}
-            disabled={!file || !conversationId}
-          />
+          {/* Bouton de Soumission Principal */}
+          <View className="mt-4">
+            <Button
+              label="Envoyer le document"
+              size="xl"
+              className={cn(
+                "rounded-2xl h-14 ",
+                (!file || !conversationId) && "opacity-40"
+              )}
+              onPress={() => void handleSend()}
+              loading={sendMessage.isPending}
+              disabled={!file || !conversationId}
+            />
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>

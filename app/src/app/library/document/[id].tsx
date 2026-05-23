@@ -1,54 +1,30 @@
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import {
   Calendar,
   ChevronLeft,
   Download,
+  DownloadCloud,
   FileText,
-  HardDrive,
-  User,
+  Info,
+  Layers,
+  User
 } from 'lucide-react-native';
-import { useCallback, useState, type ReactNode } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useDocument } from '@/entities/document/hooks';
 import { openDocumentDownload } from '@/features/library/lib/download-document';
+import { BRAND } from '@/shared/config/brand';
+import { useToast } from '@/shared/hooks/use-toast';
+import { formatBytes } from '@/shared/lib/file';
 import { Button } from '@/shared/ui/button';
 import { Skeleton } from '@/shared/ui/skeleton';
-import { formatBytes } from '@/shared/lib/file';
-import { useToast } from '@/shared/hooks/use-toast';
-
-function InfoRow({
-  icon,
-  label,
-  value,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <View className="mb-4 flex-row items-start gap-3">
-      <View className="mt-0.5 h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
-        {icon}
-      </View>
-      <View className="flex-1">
-        <Text className="text-xs font-semibold uppercase tracking-wide text-text-secondary-light dark:text-text-secondary-dark">
-          {label}
-        </Text>
-        <Text className="mt-0.5 text-base font-semibold text-text-primary-light dark:text-text-primary-dark">
-          {value}
-        </Text>
-      </View>
-    </View>
-  );
-}
 
 export default function DocumentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
   const { showToast } = useToast();
   const [downloading, setDownloading] = useState(false);
 
@@ -62,7 +38,7 @@ export default function DocumentDetailScreen() {
       void refetch();
     } catch (e) {
       showToast({
-        type:    'error',
+        type: 'error',
         message: e instanceof Error ? e.message : 'Échec du téléchargement.',
       });
     } finally {
@@ -71,101 +47,177 @@ export default function DocumentDetailScreen() {
   }, [doc?.id, refetch, showToast]);
 
   return (
-    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark">
-      <View className="flex-row items-center border-b border-border-light px-2 dark:border-border-dark">
-        <Pressable onPress={() => router.back()} className="h-10 w-10 items-center justify-center">
-          <ChevronLeft size={24} color="#111827" />
-        </Pressable>
-        <Text
-          numberOfLines={1}
-          className="flex-1 pr-4 text-lg font-black text-text-primary-light dark:text-text-primary-dark"
+    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top', 'bottom']}>
+      
+      {/* HEADER: Épuré & Transparent */}
+      <View className="z-10 flex-row items-center border-b border-border-light/40 bg-surface-light/75 px-4 py-3 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl">
+        <Pressable 
+          onPress={() => router.back()} 
+          className="h-9 w-9 items-center justify-center rounded-xl bg-background-light/40 border border-border-light/20 dark:bg-background-dark/30 active:scale-95 transition-transform"
         >
-          Détail du document
+          <ChevronLeft size={20} color="#64748B" />
+        </Pressable>
+        <Text className="ml-3 text-[16px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+          Ressource Académique
         </Text>
       </View>
 
       {isLoading ? (
-        <View className="gap-4 p-5">
-          <Skeleton className="h-8 w-3/4 rounded-lg" />
-          <Skeleton className="h-40 w-full rounded-3xl" />
+        <View className="gap-5 p-5">
+          <View className="items-center gap-3 my-4">
+            <Skeleton className="h-16 w-16 rounded-2xl opacity-70" />
+            <Skeleton className="h-6 w-3/4 rounded-lg opacity-70" />
+            <Skeleton className="h-4 w-1/4 rounded-md opacity-70" />
+          </View>
+          <Skeleton className="h-[120px] w-full rounded-2xl opacity-70" />
+          <Skeleton className="h-[180px] w-full rounded-2xl opacity-70" />
         </View>
       ) : !doc ? (
         <View className="flex-1 items-center justify-center p-8">
-          <Text className="text-center text-text-secondary-light dark:text-text-secondary-dark">
-            Document introuvable.
+          <View className="h-14 w-14 items-center justify-center rounded-2xl bg-text-secondary-light/5 border border-border-light/10 mb-3">
+            <FileText size={22} color={BRAND.primary} />
+          </View>
+          <Text className="text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark text-center">
+            Document introuvable ou archivé.
           </Text>
         </View>
       ) : (
-        <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
-          <View className="mb-6 flex-row items-start gap-4">
-            <View className="h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-              <FileText size={32} color="#FF7A00" />
-            </View>
-            <View className="flex-1">
-              <Text className="text-xl font-black text-text-primary-light dark:text-text-primary-dark">
-                {doc.title}
+        <View className="flex-1">
+          <ScrollView 
+            className="flex-1" 
+            contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 100 }}
+            showsVerticalScrollIndicator={false}
+          >
+            
+            {/* HERO BLOCK: Présentation Focus du Document */}
+            <View className="items-center text-center mb-6">
+              <View 
+                className="h-16 w-16 items-center justify-center rounded-2xl border border-primary/10 mb-4"
+                style={{ backgroundColor: `${BRAND.primary}12` }}
+              >
+                <FileText size={32} color={BRAND.primary} />
+              </View>
+              
+              <Text className="text-[20px] font-bold tracking-tight text-center text-text-primary-light dark:text-text-primary-dark px-2">
+                {doc.fileName}
               </Text>
-              {doc.ue ? (
-                <Text className="mt-1 text-sm font-medium text-primary">{doc.ue}</Text>
-              ) : null}
-              <View className="mt-2 self-start rounded-lg bg-slate-100 px-2 py-1 dark:bg-slate-800">
-                <Text className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
-                  {doc.type}
-                </Text>
+
+              {/* Métadonnées directes sous forme de capsules horizontales */}
+              <View className="flex-row items-center gap-2 mt-3 flex-wrap justify-center">
+                <View className="rounded-md border border-primary/20 px-2 py-0.5 bg-primary/5">
+                  <Text className="text-[10px] font-bold tracking-wide uppercase" style={{ color: BRAND.primary }}>
+                    {doc.type || 'DOC'}
+                  </Text>
+                </View>
+                <View className="rounded-md border border-border-light/60 bg-surface-light px-2 py-0.5 dark:border-border-dark/30 dark:bg-surface-dark">
+                  <Text className="text-[10px] font-semibold text-text-secondary-light/70 dark:text-text-secondary-dark/70">
+                    {formatBytes(doc.fileSize)}
+                  </Text>
+                </View>
               </View>
             </View>
+
+            {/* SECTION: Description de l'auteur */}
+            {doc.description && (
+              <View className="mb-5 rounded-2xl border border-border-light/30 bg-surface-light/30 p-4 dark:border-border-dark/10 dark:bg-surface-dark/20 backdrop-blur-md">
+                <View className="flex-row items-center gap-1.5 mb-2">
+                  <Info size={13} color="#64748B" />
+                  <Text className="text-[11px] font-bold uppercase tracking-wider text-text-secondary-light/50 dark:text-text-secondary-dark/50">
+                    Note de l'auteur
+                  </Text>
+                </View>
+                <Text className="text-[13.5px] leading-[20px] text-text-primary-light/80 dark:text-text-primary-dark/80">
+                  {doc.description}
+                </Text>
+              </View>
+            )}
+
+            {/* GRID/CARDS SYSTEM: Nouvelle disposition non-linéaire */}
+            <View className="gap-3">
+              
+              {/* Carte Contextuelle : UE / Filière / Niveau */}
+              {(doc.filiere || doc.ue) && (
+                <View className="rounded-2xl border border-border-light/40 bg-surface-light/50 p-4 dark:border-border-dark/20 dark:bg-surface-dark/40 backdrop-blur-md flex-row items-center gap-3.5">
+                  <View className="h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10 border border-blue-500/10 dark:bg-blue-500/15">
+                    <Layers size={16} color="#64748B" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-[10px] font-bold uppercase tracking-wider text-text-secondary-light/40 dark:text-text-secondary-dark/50">
+                      Classification & Cours
+                    </Text>
+                    <Text className="text-[14px] font-semibold text-text-primary-light dark:text-text-primary-dark mt-0.5" numberOfLines={1}>
+                      {doc.ue ? doc.ue.toUpperCase() : 'Général'} {doc.filiere ? `· ${doc.filiere}` : ''}
+                    </Text>
+                    {doc.niveau && (
+                      <Text className="text-[11px] font-medium text-text-secondary-light/60 dark:text-text-secondary-dark/60 mt-0.5">
+                        Niveau ciblé : {doc.niveau}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              )}
+
+              {/* Carte Profil de l'Uploader */}
+              <View className="rounded-2xl border border-border-light/40 bg-surface-light/50 p-4 dark:border-border-dark/20 dark:bg-surface-dark/40 backdrop-blur-md flex-row items-center gap-3.5">
+                <View className="h-9 w-9 items-center justify-center rounded-xl bg-purple-500/10 border border-purple-500/10 dark:bg-purple-500/15">
+                  <User size={16} color="#64748B" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-[10px] font-bold uppercase tracking-wider text-text-secondary-light/40 dark:text-text-secondary-dark/50">
+                    Contributeur
+                  </Text>
+                  <Text className="text-[14px] font-semibold text-text-primary-light dark:text-text-primary-dark mt-0.5">
+                    {doc.uploadedBy.displayName}
+                  </Text>
+                  <Text className="text-[11px] font-medium text-text-secondary-light/50 dark:text-text-secondary-dark/50">
+                    Communauté étudiante
+                  </Text>
+                </View>
+              </View>
+
+              {/* Carte Statistiques et Date (Agencée en ligne partagée) */}
+              <View className="flex-row gap-3">
+                <View className="flex-1 rounded-2xl border border-border-light/40 bg-surface-light/50 p-3.5 dark:border-border-dark/20 dark:bg-surface-dark/40 backdrop-blur-md">
+                  <Calendar size={15} color="#64748B"/>
+                  <Text className="text-[10px] font-bold uppercase tracking-wider text-text-secondary-light/40 dark:text-text-secondary-dark/50">
+                    Publié le
+                  </Text>
+                  <Text className="text-[12px] font-semibold text-text-primary-light dark:text-text-primary-dark mt-0.5">
+                    {format(new Date(doc.createdAt), "d MMM yyyy", { locale: fr })}
+                  </Text>
+                </View>
+
+                <View className="flex-1 rounded-2xl border border-border-light/40 bg-surface-light/50 p-3.5 dark:border-border-dark/20 dark:bg-surface-dark/40 backdrop-blur-md">
+                  <DownloadCloud size={15} color="#64748B"  />
+                  <Text className="text-[10px] font-bold uppercase tracking-wider text-text-secondary-light/40 dark:text-text-secondary-dark/50">
+                    Consultations
+                  </Text>
+                  <Text className="text-[12px] font-semibold text-text-primary-light dark:text-text-primary-dark mt-0.5">
+                    {doc.downloadCount} fois
+                  </Text>
+                </View>
+              </View>
+
+            </View>
+          </ScrollView>
+
+          {/* ZONE ACTIONS FIXE: Bouton ancré en bas style Floating Panel */}
+          <View className="absolute bottom-0 left-0 right-0 p-5 border-t border-border-light/20 bg-background-light/80 dark:border-border-dark/10 dark:bg-background-dark/80 backdrop-blur-lg">
+            <Button
+              label={downloading ? 'Ouverture de la ressource...' : 'Télécharger le document'}
+              leftIcon={
+                downloading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Download size={16} color="#FFFFFF" />
+                )
+              }
+              onPress={() => void handleDownload()}
+              disabled={downloading}
+              className="rounded-xl h-12 active:scale-[0.99] transition-transform"
+            />
           </View>
-
-          {doc.description ? (
-            <Text className="mb-6 text-[15px] leading-6 text-text-primary-light dark:text-text-primary-dark">
-              {doc.description}
-            </Text>
-          ) : null}
-
-          <View className="mb-8 rounded-3xl border border-border-light bg-surface-light p-5 dark:border-border-dark dark:bg-surface-dark">
-            <InfoRow
-              icon={<HardDrive size={18} color="#64748B" />}
-              label="Taille"
-              value={formatBytes(doc.fileSize)}
-            />
-            <InfoRow
-              icon={<Calendar size={18} color="#64748B" />}
-              label="Date de publication"
-              value={format(new Date(doc.createdAt), "d MMMM yyyy 'à' HH:mm", { locale: fr })}
-            />
-            <InfoRow
-              icon={<Download size={18} color="#64748B" />}
-              label="Téléchargements"
-              value={String(doc.downloadCount)}
-            />
-            <InfoRow
-              icon={<User size={18} color="#64748B" />}
-              label="Publié par"
-              value={doc.uploadedBy.displayName}
-            />
-            {doc.filiere && doc.niveau ? (
-              <InfoRow
-                icon={<FileText size={18} color="#64748B" />}
-                label="Parcours"
-                value={`${doc.filiere} · ${doc.niveau}`}
-              />
-            ) : null}
-          </View>
-
-          <Button
-            label={downloading ? 'Ouverture…' : 'Télécharger'}
-            leftIcon={
-              downloading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Download size={20} color="#FFFFFF" />
-              )
-            }
-            onPress={() => void handleDownload()}
-            disabled={downloading}
-            size="lg"
-          />
-        </ScrollView>
+        </View>
       )}
     </SafeAreaView>
   );

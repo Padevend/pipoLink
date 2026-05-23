@@ -41,7 +41,7 @@ export function AuthForm({ onSubmit, loading }: AuthFormProps) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
           className="px-6 py-8"
@@ -92,7 +92,7 @@ export function AuthForm({ onSubmit, loading }: AuthFormProps) {
                   />
                 )}
               />
-              <Pressable 
+              <Pressable
                 onPress={() => setIsPasswordVisible(!isPasswordVisible)}
                 className="absolute right-4 top-[42px] active:opacity-60"
               >
@@ -110,9 +110,9 @@ export function AuthForm({ onSubmit, loading }: AuthFormProps) {
               loading={loading}
               onPress={handleSubmit(onSubmit)}
               // Style moderne : bords arrondis XXL et ombre légère
-              className="h-14 rounded-2xl bg-blue-600 shadow-md shadow-blue-400 dark:bg-blue-500"
+              className="h-14 rounded-2xl bg-blue-600  shadow-blue-400 dark:bg-blue-500"
             />
-            
+
             <Text className="mt-6 text-center text-xs leading-5 text-slate-400 dark:text-slate-500">
               En continuant, vous acceptez nos{" "}
               <Text className="font-medium text-slate-900 underline dark:text-slate-300">
