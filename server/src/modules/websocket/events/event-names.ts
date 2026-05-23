@@ -21,6 +21,7 @@ export const WsEventName = {
   ConversationUpdated: "conversation.updated",
   NotificationCreated: "notification.created",
   AnnouncementCreated: "announcement.created",
+  AnnouncementDeleted: "announcement.deleted",
   DocumentUploaded: "document.uploaded",
   DocumentUpdated: "document.updated",
   DeviceLinked: "device.linked",

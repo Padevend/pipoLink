@@ -17,6 +17,7 @@ export class AuthController {
 
   async register(c: HttpContext) {
     const payload = await c.validateUsing(registerValidator);
+    console.log("Register payload:", payload);
     const result  = await this.service.register(payload);
     return ApiResponse.success(c, result, "Compte créé. Vérifiez votre email.", 201);
   }

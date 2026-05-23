@@ -12,7 +12,7 @@ export class AiController {
     const userId = c.get("userId") as string;
     const plan = c.get("plan") as string || "FREE";
     const payload = await c.validateUsing(chatValidator);
-    
+
     const result = await this.service.chat(userId, payload.sessionId ?? null, payload.message, plan);
     RealtimeBus.emit(WsEventName.AiResponseCreated, result, { userId });
     return ApiResponse.success(c, result, "Message envoyé.", 201);
@@ -31,9 +31,13 @@ export class AiController {
     return ApiResponse.success(c, session, "Session récupérée.");
   }
 
-  async clearHistory(c: HttpContext) {
+  async deleteSession(c: HttpContext) {
     const userId = c.get("userId") as string;
-    await this.service.clearHistory(userId);
-    return ApiResponse.success(c, null, "Historique supprimé.");
+    const sessionId = c.req.param("id");
+    if (!sessionId) {
+      return ApiResponse.error(c, "ID_REQUIRED", "ID de session requis.", 400);
+    }
+    await this.service.deleteSession(userId, sessionId);
+    return ApiResponse.success(c, null, "Session supprimée.");
   }
 }

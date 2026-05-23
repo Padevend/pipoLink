@@ -32,7 +32,6 @@ export class AuthService {
         password: passwordHash,
         username: payload.email.split("@")[0],
         matricule: `STU-${Date.now()}`,
-        public_key: "",
         role:      "student",
         is_active: false,
       },

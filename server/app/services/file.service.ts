@@ -84,6 +84,24 @@ export class FileService {
     return { url: `/storage/message-attachments/${fileName}`, size: buffer.length };
   }
 
+  /**
+   * Traite et enregistre l'affiche d'une annonce.
+   */
+  async saveAnnouncementPoster(buffer: Buffer, mimeType: string, quality: number): Promise<string> {
+    this._validateMime(mimeType, this.ALLOWED_IMAGES);
+    this._validateSize(buffer.length, env.get("MAX_FILE_SIZE_MB") * 1024 * 1024);
+
+    const outputPath = this._ensureDir("announcements");
+    const fileName   = `${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
+    const filePath   = path.join(outputPath, fileName);
+
+    await sharp(buffer)
+      .webp({ quality: quality })
+      .toFile(filePath);
+
+    return `/storage/announcements/${fileName}`;
+  }
+
   // ── Méthodes privées ──────────────────────────────────────────────────────
 
   /**

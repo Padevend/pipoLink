@@ -1,7 +1,7 @@
 import { HttpContext } from "../../config/app.js";
 import { LibraryService } from "../services/library.service.js";
 import { ApiResponse } from "../helpers/api-response.js";
-import { uploadDocumentValidator, moderateDocumentValidator, updateDocumentValidator } from "../validators/library.validator.js";
+import { uploadDocumentValidator, moderateDocumentValidator } from "../validators/library.validator.js";
 import { RealtimeBus } from "../../src/modules/websocket/gateway/realtime-bus.js";
 import { WsEventName } from "../../src/modules/websocket/events/event-names.js";
 
@@ -82,16 +82,6 @@ export class LibraryController {
     return ApiResponse.success(c, result, "Lien de téléchargement généré.");
   }
 
-  async updateDocument(c: HttpContext) {
-    const userId = c.get("userId") as string;
-    const role = c.get("role") as string;
-    const documentId = c.req.param("id") || "";
-    const payload = await c.validateUsing(updateDocumentValidator);
-    const doc = await this.service.updateDocument(userId, role, documentId, payload);
-    RealtimeBus.emit(WsEventName.DocumentUpdated, doc, { userId });
-    return ApiResponse.success(c, doc, "Document mis a jour.");
-  }
-
   async deleteDocument(c: HttpContext) {
     const userId = c.get("userId") as string;
     const role = c.get("role") as string;
@@ -107,5 +97,17 @@ export class LibraryController {
     const doc = await this.service.moderateDocument(documentId, payload.decision, payload.rejectionReason);
     RealtimeBus.emit(WsEventName.DocumentUpdated, doc, { userId: c.get("userId") as string });
     return ApiResponse.success(c, doc, "Document modéré.");
+  }
+
+  async getPopularDocuments(c: HttpContext) {
+    const niveau = c.req.query("level")
+    const docs = await this.service.getPopular(niveau);
+    return ApiResponse.success(c, docs, "Documents populaires.");
+  }
+
+  async getRecommandedDocuments(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const docs = await this.service.getRecommanded(userId);
+    return ApiResponse.success(c, docs, "Documents recommandés.");
   }
 }

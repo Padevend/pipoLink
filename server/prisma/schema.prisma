@@ -8,18 +8,17 @@ datasource db {
 }
 
 model User {
-  id            String    @id @db.Uuid @default(uuid())
-  email         String?   @unique
+  id            String   @id @default(uuid()) @db.Uuid
+  email         String?  @unique
   password      String
   username      String?
   matricule     String?
-  public_key    String?
-  role          String    @default("student")
-  is_active     Boolean   @default(false)
-  is_excluded   Boolean   @default(false)
-  is_configured Boolean   @default(false)
-  createdAt     DateTime  @default(now()) @db.Timestamptz
-  updatedAt     DateTime  @updatedAt @db.Timestamptz
+  role          String   @default("student")
+  is_active     Boolean  @default(false)
+  is_excluded   Boolean  @default(false)
+  is_configured Boolean  @default(false)
+  createdAt     DateTime @default(now()) @db.Timestamptz
+  updatedAt     DateTime @updatedAt @db.Timestamptz
 
   profile       UserProfile?
   subscription  Subscription?
@@ -29,9 +28,9 @@ model User {
   qrTokens      QrToken[]
   messages      Message[]
   memberships   ConversationMember[]
-  chatsCreated  Chat[]    @relation("ChatCreatedBy")
+  chatsCreated  Chat[]               @relation("ChatCreatedBy")
   otps          Otp[]
-  documents     Document[]     @relation("UserDocuments")
+  documents     Document[]           @relation("UserDocuments")
   aiSessions    AiSession[]
   payments      Payment[]
   notifications Notification[]
@@ -41,29 +40,29 @@ model User {
 }
 
 model UserProfile {
-  id          String   @id @db.Uuid @default(uuid())
-  user_id     String   @unique @db.Uuid
-  firstname   String
-  lastname    String
-  phone       String?
-  gender      String?
-  niveau      String?
-  filiere     String?
-  bio         String?
-  avatarUrl   String?
+  id        String  @id @default(uuid()) @db.Uuid
+  user_id   String  @unique @db.Uuid
+  firstname String
+  lastname  String
+  phone     String?
+  gender    String?
+  niveau    String?
+  filiere   String?
+  bio       String?
+  avatarUrl String?
 
-  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("user_profiles")
 }
 
 model QrToken {
-  id        String   @id @db.Uuid @default(uuid())
-  user_id   String   @db.Uuid
-  token     String   @unique
-  expiresAt DateTime @db.Timestamptz
+  id        String    @id @default(uuid()) @db.Uuid
+  user_id   String    @db.Uuid
+  token     String    @unique
+  expiresAt DateTime  @db.Timestamptz
   usedAt    DateTime? @db.Timestamptz
-  createdAt DateTime @db.Timestamptz @default(now())
+  createdAt DateTime  @default(now()) @db.Timestamptz
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
@@ -72,19 +71,19 @@ model QrToken {
 }
 
 model Device {
-  id           String    @id @db.Uuid @default(uuid())
-  user_id      String    @db.Uuid
-  name         String
-  platform     String
-  fingerprint  String
-  isPrimary    Boolean   @default(false)
-  public_key      String?
-  key_signature   String?
-  keyCreatedAt    DateTime? @db.Timestamptz
-  keyExpiresAt    DateTime? @db.Timestamptz
-  revokedAt    DateTime? @db.Timestamptz
-  lastActiveAt DateTime  @default(now()) @db.Timestamptz
-  createdAt    DateTime  @default(now()) @db.Timestamptz
+  id            String    @id @default(uuid()) @db.Uuid
+  user_id       String    @db.Uuid
+  name          String
+  platform      String
+  fingerprint   String
+  isPrimary     Boolean   @default(false)
+  public_key    String?
+  key_signature String?
+  keyCreatedAt  DateTime? @db.Timestamptz
+  keyExpiresAt  DateTime? @db.Timestamptz
+  revokedAt     DateTime? @db.Timestamptz
+  lastActiveAt  DateTime  @default(now()) @db.Timestamptz
+  createdAt     DateTime  @default(now()) @db.Timestamptz
 
   user           User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
   tokens         RefreshToken[]
@@ -94,7 +93,7 @@ model Device {
 }
 
 model RefreshToken {
-  id        String    @id @db.Uuid @default(uuid())
+  id        String    @id @default(uuid()) @db.Uuid
   user_id   String    @db.Uuid
   device_id String?   @db.Uuid
   tokenHash String    @unique
@@ -102,20 +101,20 @@ model RefreshToken {
   expiresAt DateTime  @db.Timestamptz
   createdAt DateTime  @default(now()) @db.Timestamptz
 
-  user      User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  device    Device?   @relation(fields: [device_id], references: [id], onDelete: SetNull)
+  user   User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  device Device? @relation(fields: [device_id], references: [id], onDelete: SetNull)
 
   @@map("refresh_tokens")
 }
 
 model AuditLog {
-  id        String   @id @db.Uuid @default(uuid())
+  id        String   @id @default(uuid()) @db.Uuid
   user_id   String   @db.Uuid
   action    String
   targetId  String?
   createdAt DateTime @default(now()) @db.Timestamptz
 
-  user      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("audit_logs")
 }
@@ -131,45 +130,45 @@ enum ConversationMemberRole {
 }
 
 model Chat {
-  id            String   @id @db.Uuid @default(uuid())
+  id            String   @id @default(uuid()) @db.Uuid
   type          ChatType @default(private)
   name          String?
   created_by_id String?  @db.Uuid
   created_at    DateTime @default(now()) @db.Timestamptz
   updatedAt     DateTime @updatedAt @db.Timestamptz
 
-  createdBy   User?              @relation("ChatCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
-  messages    Message[]
-  members     ConversationMember[]
-  memberKeys  ChatMemberKey[]
+  createdBy  User?                @relation("ChatCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
+  messages   Message[]
+  members    ConversationMember[]
+  memberKeys ChatMemberKey[]
 
   @@map("chats")
 }
 
 model ConversationMember {
-  id              String   @id @db.Uuid @default(uuid())
-  user_id         String   @db.Uuid
-  conversation_id String   @db.Uuid
+  id              String                 @id @default(uuid()) @db.Uuid
+  user_id         String                 @db.Uuid
+  conversation_id String                 @db.Uuid
   role            ConversationMemberRole @default(member)
-  lastReadAt      DateTime? @db.Timestamptz
+  lastReadAt      DateTime?              @db.Timestamptz
 
-  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  conversation    Chat     @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+  user         User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  conversation Chat @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, conversation_id])
   @@map("conversation_members")
 }
 
 model ChatMemberKey {
-  id                 String   @id @db.Uuid @default(uuid())
+  id                 String   @id @default(uuid()) @db.Uuid
   chat_id            String   @db.Uuid
   device_id          String   @db.Uuid
   encrypted_chat_key String
   created_at         DateTime @default(now()) @db.Timestamptz
   updated_at         DateTime @updatedAt @db.Timestamptz
 
-  chat    Chat   @relation(fields: [chat_id], references: [id], onDelete: Cascade)
-  device  Device @relation(fields: [device_id], references: [id], onDelete: Cascade)
+  chat   Chat   @relation(fields: [chat_id], references: [id], onDelete: Cascade)
+  device Device @relation(fields: [device_id], references: [id], onDelete: Cascade)
 
   @@unique([chat_id, device_id])
   @@index([chat_id])
@@ -186,7 +185,7 @@ enum MessageType {
 }
 
 model Message {
-  id         String      @id @db.Uuid @default(uuid())
+  id         String      @id @default(uuid()) @db.Uuid
   chat_id    String      @db.Uuid
   sender_id  String      @db.Uuid
   cipherText String
@@ -197,15 +196,15 @@ model Message {
   deletedAt  DateTime?   @db.Timestamptz
   created_at DateTime    @default(now()) @db.Timestamptz
 
-  chat         Chat                @relation(fields: [chat_id], references: [id], onDelete: Cascade)
-  sender       User                @relation(fields: [sender_id], references: [id], onDelete: Cascade)
-  attachments  MessageAttachment[]
+  chat        Chat                @relation(fields: [chat_id], references: [id], onDelete: Cascade)
+  sender      User                @relation(fields: [sender_id], references: [id], onDelete: Cascade)
+  attachments MessageAttachment[]
 
   @@map("messages")
 }
 
 model MessageAttachment {
-  id         String   @id @db.Uuid @default(uuid())
+  id         String   @id @default(uuid()) @db.Uuid
   message_id String   @db.Uuid
   file_url   String
   iv         String
@@ -221,22 +220,22 @@ model MessageAttachment {
 }
 
 model Subscription {
-  id               String   @id @db.Uuid @default(uuid())
-  user_id          String   @unique @db.Uuid
-  plan             String   @default("free")
-  status           String   @default("active")
+  id               String    @id @default(uuid()) @db.Uuid
+  user_id          String    @unique @db.Uuid
+  plan             String    @default("free")
+  status           String    @default("active")
   currentPeriodEnd DateTime? @db.Timestamptz
-  createdAt        DateTime @default(now()) @db.Timestamptz
-  updatedAt        DateTime @updatedAt @db.Timestamptz
+  createdAt        DateTime  @default(now()) @db.Timestamptz
+  updatedAt        DateTime  @updatedAt @db.Timestamptz
 
-  user             User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  payments         Payment[]
+  user     User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  payments Payment[]
 
   @@map("subscriptions")
 }
 
 model Folder {
-  id        String   @id @db.Uuid @default(uuid())
+  id        String   @id @default(uuid()) @db.Uuid
   name      String
   owner_id  String   @db.Uuid
   parent_id String?  @db.Uuid
@@ -246,7 +245,7 @@ model Folder {
 }
 
 model Document {
-  id               String   @id @db.Uuid @default(uuid())
+  id               String   @id @default(uuid()) @db.Uuid
   title            String
   description      String?
   niveau           String?
@@ -266,14 +265,14 @@ model Document {
   uploaded_by_id   String   @db.Uuid
   createdAt        DateTime @default(now()) @db.Timestamptz
 
-  uploadedBy       User     @relation("UserDocuments", fields: [uploaded_by_id], references: [id], onDelete: Cascade)
-  tags             Tag[]    @relation("DocumentTags")
+  uploadedBy User  @relation("UserDocuments", fields: [uploaded_by_id], references: [id], onDelete: Cascade)
+  tags       Tag[] @relation("DocumentTags")
 
   @@map("documents")
 }
 
 model Tag {
-  id        String     @id @db.Uuid @default(uuid())
+  id        String     @id @default(uuid()) @db.Uuid
   name      String     @unique
   documents Document[] @relation("DocumentTags")
 
@@ -281,7 +280,7 @@ model Tag {
 }
 
 model Download {
-  id          String   @id @db.Uuid @default(uuid())
+  id          String   @id @default(uuid()) @db.Uuid
   document_id String   @db.Uuid
   user_id     String?  @db.Uuid
   createdAt   DateTime @default(now()) @db.Timestamptz
@@ -290,7 +289,7 @@ model Download {
 }
 
 model Otp {
-  id        String    @id @db.Uuid @default(uuid())
+  id        String    @id @default(uuid()) @db.Uuid
   user_id   String    @db.Uuid
   code      String
   purpose   String
@@ -299,57 +298,57 @@ model Otp {
   usedAt    DateTime? @db.Timestamptz
   createdAt DateTime  @default(now()) @db.Timestamptz
 
-  user      User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("otps")
 }
 
 model AiSession {
-  id        String      @id @db.Uuid @default(uuid())
-  user_id   String      @db.Uuid
+  id        String   @id @default(uuid()) @db.Uuid
+  user_id   String   @db.Uuid
   title     String
-  createdAt DateTime    @default(now()) @db.Timestamptz
-  updatedAt DateTime    @updatedAt @db.Timestamptz
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
 
-  user      User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  messages  AiMessage[]
+  user     User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  messages AiMessage[]
 
   @@map("ai_sessions")
 }
 
 model AiMessage {
-  id         String    @id @db.Uuid @default(uuid())
-  session_id String    @db.Uuid
+  id         String   @id @default(uuid()) @db.Uuid
+  session_id String   @db.Uuid
   role       String
   content    String
-  createdAt  DateTime  @default(now()) @db.Timestamptz
+  createdAt  DateTime @default(now()) @db.Timestamptz
 
-  session    AiSession @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  session AiSession @relation(fields: [session_id], references: [id], onDelete: Cascade)
 
   @@map("ai_messages")
 }
 
 model Payment {
-  id              String   @id @db.Uuid @default(uuid())
-  user_id         String   @db.Uuid
-  subscription_id String   @db.Uuid
+  id              String    @id @default(uuid()) @db.Uuid
+  user_id         String    @db.Uuid
+  subscription_id String    @db.Uuid
   amount          Float
-  currency        String   @default("XAF")
-  status          String   @default("PENDING")
+  currency        String    @default("XAF")
+  status          String    @default("PENDING")
   provider        String
   providerRef     String?
   paidAt          DateTime? @db.Timestamptz
-  expiresAt       DateTime @db.Timestamptz
-  createdAt       DateTime @default(now()) @db.Timestamptz
+  expiresAt       DateTime  @db.Timestamptz
+  createdAt       DateTime  @default(now()) @db.Timestamptz
 
-  user            User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  subscription    Subscription @relation(fields: [subscription_id], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  subscription Subscription @relation(fields: [subscription_id], references: [id], onDelete: Cascade)
 
   @@map("payments")
 }
 
 model Notification {
-  id        String   @id @db.Uuid @default(uuid())
+  id        String   @id @default(uuid()) @db.Uuid
   user_id   String   @db.Uuid
   title     String
   body      String
@@ -358,20 +357,22 @@ model Notification {
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now()) @db.Timestamptz
 
-  user      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("notifications")
 }
 
 model Announcement {
-  id        String   @id @db.Uuid @default(uuid())
-  title     String
-  content   String
-  author_id String   @db.Uuid
-  createdAt DateTime @default(now()) @db.Timestamptz
-  updatedAt DateTime @updatedAt @db.Timestamptz
+  id         String   @id @default(uuid()) @db.Uuid
+  title      String
+  content    String
+  poster     String?
+  previewUrl String?
+  author_id  String   @db.Uuid
+  createdAt  DateTime @default(now()) @db.Timestamptz
+  updatedAt  DateTime @updatedAt @db.Timestamptz
 
-  author    User     @relation(fields: [author_id], references: [id], onDelete: Cascade)
+  author User @relation(fields: [author_id], references: [id], onDelete: Cascade)
 
   @@map("announcements")
 }

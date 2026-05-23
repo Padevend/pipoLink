@@ -4,7 +4,7 @@ import { ApiResponse } from "../helpers/api-response.js";
 export class UpdatesController {
   async getMetadata(c: HttpContext) {
     const metadata = {
-      version: "1.0.0",
+      version: "1.0.1",
       forceUpdate: false,
       message: "Bienvenue sur PipoLink!"
     };

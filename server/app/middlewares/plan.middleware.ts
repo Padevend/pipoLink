@@ -2,6 +2,7 @@ import { Context, Next } from "hono";
 import { prisma } from "../../config/database.js";
 import { ApiResponse } from "../helpers/api-response.js";
 import { ErrorCode } from "../helpers/error-codes.js";
+import { HttpContext } from "../../config/app.js";
 
 /**
  * Middleware de contrôle du plan d'abonnement.
@@ -19,7 +20,7 @@ export async function planMiddleware(c: Context, next: Next) {
   const subscription = await prisma.subscription.findUnique({ where: { user_id: userId } });
 
   if (!subscription || subscription.plan !== "PREMIUM" || subscription.status !== "ACTIVE") {
-    return ApiResponse.error(c, ErrorCode.PREMIUM_REQUIRED, "Cette fonctionnalité nécessite un abonnement PREMIUM.", 402);
+    return ApiResponse.error(c as HttpContext, ErrorCode.PREMIUM_REQUIRED, "Cette fonctionnalité nécessite un abonnement PREMIUM.", 402);
   }
 
   c.set("plan", "PREMIUM");

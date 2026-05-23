@@ -7,6 +7,8 @@ import { roleMiddleware } from "../../app/middlewares/role.middleware.js";
 export const LibraryRouter = new Hono();
 
 LibraryRouter
+  .get("/popular", authMiddleware, callAction(LibraryController, "getPopularDocuments"))
+  .get("/recommended", authMiddleware, callAction(LibraryController, "getRecommandedDocuments"))
   .get("/browse", authMiddleware, callAction(LibraryController, "browse"))
   .get("/documents/mine", authMiddleware, callAction(LibraryController, "listMyDocuments"))
   .get("/documents/search", authMiddleware, callAction(LibraryController, "searchDocuments"))
@@ -14,6 +16,5 @@ LibraryRouter
   .get("/documents/:id", authMiddleware, callAction(LibraryController, "getDocument"))
   .get("/documents", authMiddleware, callAction(LibraryController, "listDocuments"))
   .post("/documents", authMiddleware, callAction(LibraryController, "uploadDocument"))
-  .put("/documents/:id", authMiddleware, callAction(LibraryController, "updateDocument"))
   .delete("/documents/:id", authMiddleware, callAction(LibraryController, "deleteDocument"))
   .post("/documents/:id/moderate", authMiddleware, roleMiddleware(["admin", "staff"]), callAction(LibraryController, "moderateDocument"));

@@ -8,5 +8,5 @@ export const AiRouter = new Hono();
 AiRouter
   .post("/chat", authMiddleware, callAction(AiController, "chat"))
   .get("/sessions", authMiddleware, callAction(AiController, "getSessions"))
-  .delete("/sessions", authMiddleware, callAction(AiController, "clearHistory"))
+  .delete("/sessions/:id", authMiddleware, callAction(AiController, "deleteSession"))
   .get("/sessions/:id", authMiddleware, callAction(AiController, "getSession"));

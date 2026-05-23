@@ -8,4 +8,5 @@ export const AnnouncementRouter = new Hono();
 
 AnnouncementRouter
   .get("/", authMiddleware, callAction(AnnouncementController, "list"))
-  .post("/", authMiddleware, roleMiddleware(["admin", "staff"]), callAction(AnnouncementController, "create"));
+  .post("/", authMiddleware, roleMiddleware(["admin", "staff"]), callAction(AnnouncementController, "create"))
+  .delete("/:id", authMiddleware, roleMiddleware(["admin", "staff"]), callAction(AnnouncementController, "delete"));

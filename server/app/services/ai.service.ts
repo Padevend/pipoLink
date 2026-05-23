@@ -24,7 +24,7 @@ export class AiService {
       });
     }
 
-    await prisma.aiMessage.create({
+    const request = await prisma.aiMessage.create({
       data: { session_id: session.id, role: "user", content: message },
     });
 
@@ -34,7 +34,7 @@ export class AiService {
       data: { session_id: session.id, role: "assistant", content: aiResponse },
     });
 
-    return { session, message: aiMessage };
+    return { session, message: aiMessage, request };
   }
 
   async getSessions(userId: string) {
@@ -54,8 +54,8 @@ export class AiService {
     return session;
   }
 
-  async clearHistory(userId: string) {
-    await prisma.aiSession.deleteMany({ where: { user_id: userId } });
+  async deleteSession(userId: string, sessionId: string) {
+    await prisma.aiSession.deleteMany({ where: { id: sessionId, user_id: userId } });
   }
 
   // ── Méthodes privées ──────────────────────────────────────────────────────

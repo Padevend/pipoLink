@@ -23,9 +23,16 @@ export class AnnouncementController {
     if (role !== "admin" && role !== "staff") {
       return ApiResponse.error(c, "FORBIDDEN", "Réservé au personnel.", 403);
     }
+    
+    const body = await c.req.parseBody();
+    const file = body["file"];
+    const payloadRaw = body["payload"] ? JSON.parse(body["payload"] as string) : {};
 
-    const payload = await c.validateUsing(announcementValidator);
-    const announcement = await this.service.createAnnouncement(authorId, payload);
+    const payload = await announcementValidator.validate(payloadRaw);
+    const announcement = await this.service.createAnnouncement(authorId, {
+      ...payload,
+      poster: file as File | null | undefined,
+    });
 
     RealtimeBus.emit(WsEventName.AnnouncementCreated, announcement, {});
 
@@ -51,5 +58,37 @@ export class AnnouncementController {
     );
 
     return ApiResponse.success(c, announcement, "Annonce créée.", 201);
+  }
+
+  async delete(c: HttpContext) {
+    const announcementId = c.req.param("id");
+    const role = c.get("role") as string;
+
+    if( !announcementId ) {
+      return ApiResponse.error(c, "BAD_REQUEST", "ID de l'annonce requis.", 400);
+    }
+
+    if (role !== "admin" && role !== "staff") {
+      return ApiResponse.error(c, "FORBIDDEN", "Réservé au personnel.", 403);
+    }
+
+    // Vérifier que l'annonce existe avant de tenter de la supprimer
+    const announcement = await prisma.announcement.findUnique({
+      where: { id: announcementId },
+    });
+
+    if (!announcement) {
+      return ApiResponse.error(c, "NOT_FOUND", "Annonce non trouvée.", 404);
+    }
+
+    if(announcement.author_id !== c.get("userId") || role !== "admin") {
+      return ApiResponse.error(c, "FORBIDDEN", "Réservé au personnel.", 403);
+    }
+
+    await this.service.deleteAnnouncement(announcementId);
+
+    RealtimeBus.emit(WsEventName.AnnouncementDeleted, { id: announcementId }, {});
+
+    return ApiResponse.success(c, null, "Annonce supprimée.");
   }
 }

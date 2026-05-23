@@ -42,6 +42,7 @@ export async function authMiddleware(c: Context, next: Next) {
     c.set("role",     user.role);
     c.set("deviceId", payload.payload.deviceId);
     c.set("isConfigured", user.is_configured === true);
+    c.set("user", user);
 
     await next();
   } catch {
