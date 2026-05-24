@@ -1,14 +1,14 @@
-import { useMemo } from 'react';
-import { FlatList, RefreshControl, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { MessageSquare } from 'lucide-react-native';
+import { useMemo } from 'react';
+import { FlatList, RefreshControl, Text, View } from 'react-native';
 
-import { useConversations } from '@/entities/conversation/hooks';
 import { useAnnouncements } from '@/entities/announcement/hooks';
-import { AnnouncementListItem } from '@/features/announcements/components/announcement-list-item';
+import { useConversations } from '@/entities/conversation/hooks';
 import { ConversationItem } from '@/entities/conversation/ui/conversation-item';
-import { ANNOUNCEMENTS_ENTRY_ID } from '@/shared/constants/announcements';
+import { AnnouncementListItem } from '@/features/announcements/components/announcement-list-item';
 import type { Conversation } from '@/shared/api/messaging';
+import { ANNOUNCEMENTS_ENTRY_ID } from '@/shared/constants/announcements';
 import { Skeleton } from '@/shared/ui/skeleton';
 
 type ListRow =
@@ -38,8 +38,8 @@ export function ConversationList() {
           <View key={i} className="flex-row items-center gap-4 py-3 border-b border-border-light/10 dark:border-border-dark/10">
             <Skeleton className="h-12 w-12 rounded-full opacity-70" />
             <View className="flex-1 gap-2.5">
-              <Skeleton className="h-3.5 w-1/4 rounded-md opacity-80" />
-              <Skeleton className="h-3 w-3/4 rounded-md opacity-50" />
+              <Skeleton className="mh-3 w-1/4 rounded-md opacity-80" />
+              <Skeleton className="min-h-3 w-3/4 rounded-md opacity-50" />
             </View>
           </View>
         ))}

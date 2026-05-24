@@ -1,8 +1,7 @@
-import { useAuth } from '@/providers';
+import { useAuth, useToast } from '@/providers';
 import { authApi } from '@/shared/api/auth';
 import { ApiError } from '@/shared/api/client';
 import { BRAND } from '@/shared/config/brand';
-import { useToast } from '@/shared/hooks/use-toast';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { generateUUID } from '@/shared/utils/uuid';

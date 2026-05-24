@@ -1,22 +1,21 @@
+import { router } from "expo-router";
+import { ArrowLeft } from "lucide-react-native";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   Text,
   View,
-  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTranslation } from "react-i18next";
-import { ChevronLeft } from "lucide-react-native";
-import { router } from "expo-router";
 
-import { useAuth } from "@/providers";
+import { useAuth, useToast } from "@/providers";
 import { queryClient } from "@/providers/query-provider";
 import { userApi } from "@/shared/api/user";
 import { patchCurrentUserAvatar } from "@/shared/lib/query-cache";
-import { useToast } from "@/shared/hooks/use-toast";
 import { AvatarPicker } from "@/shared/ui/avatar-picker";
 import { Button } from "@/shared/ui/button";
 import { GenderPicker, type GenderId } from "@/shared/ui/gender-picker";
@@ -98,9 +97,9 @@ export default function ProfileSettingsScreen(): JSX.Element {
       <View className="z-10 flex-row items-center border-b border-border-light/20 bg-surface-light/75 px-4 py-3.5 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl ">
         <Pressable
           onPress={() => router.back()}
-          className="h-9 w-9 items-center justify-center rounded-full bg-background-light/40 border border-border-light/20 dark:bg-background-dark/30 active:scale-95 transition-transform"
+          className="h-9 w-9 items-center justify-center active:scale-95 transition-transform"
         >
-          <ChevronLeft
+          <ArrowLeft
             size={20}
             color="#64748B"
           />
@@ -210,7 +209,7 @@ export default function ProfileSettingsScreen(): JSX.Element {
             label={t("save")}
             loading={saving}
             onPress={() => void save()}
-            className="rounded-2xl h-12  shadow-primary/10 active:scale-[0.98] transition-transform"
+            className="rounded-2xl h-12 active:scale-[0.98] transition-transform"
           />
         </ScrollView>
       </KeyboardAvoidingView>

@@ -54,7 +54,7 @@ export const announcementsApi = {
   createAnnouncement: async (payload: { title: string; content: string, poster: PickedFile | null }): Promise<Announcement> => {
     const formData = new FormData();
     // @ts-expect-error React Native FormData file blob
-    formData.append("file", toUploadFile(payload.poster));
+    if (payload.poster) formData.append("file", toUploadFile(payload.poster));
     formData.append(
       "payload",
       JSON.stringify({
@@ -62,11 +62,6 @@ export const announcementsApi = {
         content: payload.content
       }),
     );
-    console.log('Payload for announcement creation:', {
-      title: payload.title,
-      content: payload.content,
-      poster: payload.poster ? toUploadFile(payload.poster) : null,
-    });
     const raw = await api.upload<RawAnnouncement>('/announcements', formData);
     return normalize(raw);
   },

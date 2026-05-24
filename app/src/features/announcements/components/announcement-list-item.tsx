@@ -1,5 +1,5 @@
-import { Pressable, Text, View } from 'react-native';
 import { Megaphone } from 'lucide-react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { ANNOUNCEMENTS_ENTRY_ID } from '@/shared/constants/announcements';
 import { cn } from '@/shared/utils/cn';
@@ -20,7 +20,7 @@ export function AnnouncementListItem({ preview, onPress }: AnnouncementListItemP
       )}
     >
       {/* Conteneur d'icône style Verre Lumineux */}
-      <View className="h-12 w-12 items-center justify-center rounded-2xl bg-primary  shadow-primary/30">
+      <View className="h-12 w-12 items-center justify-center rounded-2xl bg-primary">
         <Megaphone size={22} color="#FFFFFF" className="opacity-95" />
       </View>
 

@@ -1,22 +1,22 @@
-import { ScrollView, Text, View, Pressable, Linking } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTranslation } from 'react-i18next';
 import Constants from 'expo-constants';
-import { useRouter } from 'expo-router';
-import { 
-  ChevronLeft, 
-  Globe, 
-  Shield, 
-  BookOpen, 
-  Cpu, 
-  Users, 
-  Bell, 
-  WifiOff,
-  Disc
+import {
+  ArrowLeft,
+  Bell,
+  BookOpen,
+  Cpu,
+  Disc,
+  Globe,
+  Shield,
+  Users,
+  WifiOff
 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
+import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AppLogo } from '@/shared/ui/app-logo';
 import { BRAND } from '@/shared/config/brand';
+import { AppLogo } from '@/shared/ui/app-logo';
+import { router } from 'expo-router';
 
 const ICON_MAP = {
   1: Shield,
@@ -66,7 +66,7 @@ const FEATURES = [
 
 export default function AboutScreen(): JSX.Element {
   const { t } = useTranslation('settings');
-  const router = useRouter();
+  
   const version = Constants.expoConfig?.version ?? '1.0.0';
 
   const openUrl = async (url: string) => {
@@ -81,9 +81,9 @@ export default function AboutScreen(): JSX.Element {
       <View className="z-10 flex-row items-center border-b border-border-light/20 bg-surface-light/75 px-4 py-3.5 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl">
         <Pressable 
           onPress={() => router.back()} 
-          className="h-9 w-9 items-center justify-center rounded-full bg-background-light/40 border border-border-light/20 dark:bg-background-dark/30 active:scale-95 transition-transform"
+          className="h-9 w-9 items-center justify-center active:scale-95 transition-transform"
         >
-          <ChevronLeft size={20} color="#64748B" />
+          <ArrowLeft size={20} color="#64748B" />
         </Pressable>
         <Text className="flex-1 ml-3 text-[17px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
           {t('about')}

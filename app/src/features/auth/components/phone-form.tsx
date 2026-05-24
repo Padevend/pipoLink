@@ -110,7 +110,7 @@ export function AuthForm({ onSubmit, loading }: AuthFormProps) {
               loading={loading}
               onPress={handleSubmit(onSubmit)}
               // Style moderne : bords arrondis XXL et ombre légère
-              className="h-14 rounded-2xl bg-blue-600  shadow-blue-400 dark:bg-blue-500"
+              className="h-14 rounded-2xl bg-blue-600  dark:bg-blue-500"
             />
 
             <Text className="mt-6 text-center text-xs leading-5 text-slate-400 dark:text-slate-500">

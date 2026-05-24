@@ -5,7 +5,7 @@ import { Button } from "@/shared/ui/button";
 import DataUIProvider from "@/shared/ui/data-ui-provider";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { router } from "expo-router";
-import { BookOpen, FolderOpen, Upload, User } from "lucide-react-native";
+import { ArrowDownToLine, BookOpen, FolderOpen, Upload, User } from "lucide-react-native";
 import { useCallback } from "react";
 import {
   ImageBackground,
@@ -61,17 +61,23 @@ export default function LibraryScreen() {
             </View>
 
             <View className="flex-row items-center gap-2">
-              {/* Bouton profil utilisateur */}
               <Pressable
-                onPress={() => router.push("/library/my-documents" as never)}
-                className="h-9 w-9 items-center justify-center rounded-full bg-background-light/40 border border-border-light/20 dark:bg-background-dark/30 active:opacity-80"
+                onPress={() => router.push("/library/history")}
+                className="h-10 w-10 items-center justify-center rounded-full bg-background-light/40 dark:bg-background-dark/30 active:opacity-80"
+              >
+                <ArrowDownToLine size={22} color="#64748B" />
+              </Pressable>
+
+              <Pressable
+                onPress={() => router.push("/library/my-documents")}
+                className="h-10 w-10 items-center justify-center rounded-full bg-background-light/40 dark:bg-background-dark/30 active:opacity-80"
               >
                 <User size={22} color="#64748B" />
               </Pressable>
 
               <Pressable
                 onPress={() => router.push("/modal/upload-document")}
-                className="h-12 w-12 items-center justify-center rounded-full bg-primary  shadow-primary/20 active:opacity-80"
+                className="h-12 w-12 items-center justify-center rounded-full bg-primary active:opacity-80"
               >
                 <Upload size={22} color="#FFFFFF" />
               </Pressable>

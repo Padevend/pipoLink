@@ -1,12 +1,11 @@
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { X, Calendar, Users, UserPlus } from 'lucide-react-native';
+import { Calendar, UserPlus, Users, X } from 'lucide-react-native';
+import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 
 import type { Conversation } from '@/shared/api/messaging';
 import { Avatar } from '@/shared/ui/avatar';
 import { Button } from '@/shared/ui/button';
-import { cn } from '@/shared/utils/cn';
 
 interface ChatInfoSheetProps {
   visible: boolean;
@@ -32,7 +31,7 @@ export function ChatInfoSheet({
   const conversationName = conversation?.name ?? 'Conversation';
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable className="flex-1 justify-end bg-black/40 backdrop-blur-sm" onPress={onClose}>
         <Pressable 
           className="max-h-[85%] rounded-t-[36px] border-t border-border-light/30 bg-background-light/95 p-6 pb-8 dark:border-border-dark/20 dark:bg-background-dark/95 backdrop-blur-xl" 
@@ -53,7 +52,7 @@ export function ChatInfoSheet({
               onPress={onClose} 
               className="h-9 w-9 items-center justify-center rounded-full bg-surface-light/60 border border-border-light/30 dark:bg-surface-dark/50 dark:border-border-dark/30 active:opacity-80"
             >
-              <X size={18} className="text-text-secondary-light dark:text-text-secondary-dark" />
+              <X size={20} color="#64748B" />
             </Pressable>
           </View>
 
@@ -70,7 +69,7 @@ export function ChatInfoSheet({
 
               {createdAt && (
                 <View className="mt-4 pt-4 border-t border-border-light/20 dark:border-border-dark/10 flex-row items-center gap-2.5">
-                  <Calendar size={16} className="text-text-secondary-light/60 dark:text-text-secondary-dark/60" />
+                  <Calendar size={16} color="#64748B" />
                   <View>
                     <Text className="text-[10px] font-bold uppercase tracking-widest text-text-secondary-light/60 dark:text-text-secondary-dark/60">
                       Création
@@ -86,7 +85,7 @@ export function ChatInfoSheet({
             {/* Section Membres */}
             <View className="mt-4">
               <View className="mb-3 flex-row items-center gap-2 px-1">
-                <Users size={16} className="text-text-secondary-light/70 dark:text-text-secondary-dark/70" />
+                <Users size={16} color="#64748B" />
                 <Text className="text-xs font-bold uppercase tracking-widest text-text-secondary-light/70 dark:text-text-secondary-dark/70">
                   Membres ({members.length})
                 </Text>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Keyboard, KeyboardAvoidingViewProps, Platform } from "react-native";
 
 export function useKeyboardBehavior() {
@@ -6,6 +6,7 @@ export function useKeyboardBehavior() {
     Platform.OS === "ios" ? "padding" : "height";
   const [behaviour, setBehaviour] =
     useState<KeyboardAvoidingViewProps["behavior"]>(defaultValue);
+
   useEffect(() => {
     const showListener = Keyboard.addListener("keyboardDidShow", () => {
       setBehaviour(defaultValue);
@@ -18,5 +19,6 @@ export function useKeyboardBehavior() {
       hideListener.remove();
     };
   }, []);
-  return behaviour;
+  
+  return useMemo(() => behaviour, [behaviour]);
 }

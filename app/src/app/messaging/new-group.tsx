@@ -1,19 +1,18 @@
 import { router } from 'expo-router';
+import { ArrowLeft, Check, GraduationCap, Search } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTranslation } from 'react-i18next';
-import { ChevronLeft, Check, Users, Search, GraduationCap } from 'lucide-react-native';
 
 import { useCreateChat } from '@/features/messaging/hooks/use-create-chat';
 import { useSearchUsers, type SearchUserResult } from '@/features/messaging/hooks/use-search-users';
-import { useAuth } from '@/providers';
-import { useToast } from '@/shared/hooks/use-toast';
+import { useAuth, useToast } from '@/providers';
+import { BRAND } from '@/shared/config/brand';
 import { Avatar } from '@/shared/ui/avatar';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { SearchBar } from '@/shared/ui/search-bar';
-import { BRAND } from '@/shared/config/brand';
 import { cn } from '@/shared/utils/cn';
 
 function displayName(u: SearchUserResult): string {
@@ -60,16 +59,16 @@ export default function NewGroupScreen(): JSX.Element {
 
   return (
     <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top']}>
-      
+
       {/* Header Translucide Style Glassmorphism (Sans Shadow) */}
       <View className="z-10 flex-row items-center border-b border-border-light/20 bg-surface-light/75 px-4 py-3.5 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl">
-        <Pressable 
-          onPress={() => router.back()} 
-          className="h-9 w-9 items-center justify-center rounded-full bg-background-light/40 border border-border-light/20 dark:bg-background-dark/30 active:scale-95 transition-transform"
+        <Pressable
+          onPress={() => router.back()}
+          className="h-9 w-9 items-center justify-center active:scale-95 transition-transform"
         >
-          <ChevronLeft size={20} className="text-text-primary-light dark:text-text-primary-dark" />
+          <ArrowLeft size={20} color="#64748B" />
         </Pressable>
-        
+
         <View className="flex-1 ml-3">
           <Text className="text-[17px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
             {t('newGroup')}
@@ -81,7 +80,7 @@ export default function NewGroupScreen(): JSX.Element {
       </View>
 
       <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingTop: 20, paddingBottom: 40 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        
+
         {/* Section 1 : Informations du groupe */}
         <Input
           label={t('groupName')}
@@ -103,9 +102,9 @@ export default function NewGroupScreen(): JSX.Element {
           )}
         </View>
 
-        <SearchBar 
-          value={query} 
-          onChangeText={setQuery} 
+        <SearchBar
+          value={query}
+          onChangeText={setQuery}
           placeholder={t('searchUsers')}
         />
 
@@ -124,7 +123,7 @@ export default function NewGroupScreen(): JSX.Element {
               return (
                 <View key={item.id}>
                   {index > 0 && <View className="mx-4 h-[0.5px] bg-border-light/10 dark:bg-border-dark/5" />}
-                  
+
                   <Pressable
                     onPress={() => toggle(item.id)}
                     className={cn(
@@ -134,7 +133,7 @@ export default function NewGroupScreen(): JSX.Element {
                   >
                     <View className="flex-row items-center gap-3.5 flex-1">
                       <Avatar name={displayName(item)} uri={item.profile?.avatarUrl} size="sm" />
-                      
+
                       <View className="flex-1 justify-center">
                         <Text className={cn(
                           "text-[14px] font-semibold tracking-tight",
@@ -154,8 +153,8 @@ export default function NewGroupScreen(): JSX.Element {
                     {/* Case à cocher / Checkbox circulaire sur mesure */}
                     <View className={cn(
                       "h-5 w-5 items-center justify-center rounded-full border transition-all",
-                      isSelected 
-                        ? "border-primary bg-primary" 
+                      isSelected
+                        ? "border-primary bg-primary"
                         : "border-border-light/60 dark:border-border-dark/40 bg-transparent"
                     )}>
                       {isSelected && <Check size={11} color="#FFFFFF" strokeWidth={3} />}

@@ -6,10 +6,10 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useUploadDocument } from '@/entities/document/hooks';
+import { useToast } from '@/providers';
 import type { PickedLibraryFile } from '@/shared/api/library';
 import type { DocumentType } from '@/shared/api/types';
 import { BRAND } from '@/shared/config/brand';
-import { useToast } from '@/shared/hooks/use-toast';
 import { AcademicPathPicker, type AcademicPath } from '@/shared/ui/academic-path-picker';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';

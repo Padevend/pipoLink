@@ -81,6 +81,18 @@ export interface MessageAttachment {
   fileName: string;
   fileSize: number;
   mimeType: string;
+  downloaded?: boolean,
+  decryptedLocalUri?: string,
+}
+
+export interface LocalMessageAttachements {
+  id: string;
+  encrypted_url: string;
+  decrypted_local_uri: string;
+  filename: string;
+  mime_type: string;
+  downloaded: number,
+  created_at: number
 }
 
 /**
@@ -98,6 +110,14 @@ export interface Message {
   attachments?: MessageAttachment[];
 }
 
+export interface LocalMessageAttachementsProps{
+  id: string;
+  encryptedUrl: string;
+  decryptedLocalUri: string;
+  filename: string;
+  mimeType: string;
+}
+
 /**
  * Document types
  */
@@ -107,6 +127,14 @@ export type DocumentType = 'COURS' | 'TD' | 'TP' | 'CC' | 'EXAMEN' | 'RESUME' | 
  * Moderation status
  */
 export type ModerationStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export type DownloadStatus = 
+  | "queued"
+  | "downloading"
+  | "paused"
+  | "completed"
+  | "failed"
+  | "cancelled";
 
 export interface DocumentUploader {
   id: string;
@@ -154,6 +182,22 @@ export interface LibraryBrowseResult {
 
 export interface getPopularDocumentsResponse {
   documents: Document[];
+}
+
+export interface downloadTask {
+  id: string,
+  document_id: string,
+  filename: string,
+  remote_uri: string,
+  local_uri: string,
+  mineType?: string,
+  progress: number,
+  totalBytes: number,
+  writtenBytes: number,
+  status: DownloadStatus,
+  created_at: number;
+  updated_at: number;
+  resume_data?: string | null;
 }
 
 /**

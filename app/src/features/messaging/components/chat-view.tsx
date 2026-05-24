@@ -1,16 +1,17 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, FlatList, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { format } from 'date-fns';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
-import { FileText, Paperclip, Send, Image as ImageIcon, Check, CheckCircle2, SpellCheck2, CheckCheck } from 'lucide-react-native';
+import { Check, CheckCheck, FileText, Image as ImageIcon, Paperclip, Send } from 'lucide-react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { FlatList, Image, KeyboardAvoidingView, Platform, Pressable, Text, View } from 'react-native';
 
-import { groupMessagesByDate } from '@/features/messaging/lib/group-messages-by-date';
 import { useMessages } from '@/features/messaging/hooks/use-messages';
 import { useSendMessage } from '@/features/messaging/hooks/use-send-message';
+import { groupMessagesByDate } from '@/features/messaging/lib/group-messages-by-date';
 import { useAuth } from '@/providers';
 import { messagingApi } from '@/shared/api/messaging';
 import type { MessageAttachment } from '@/shared/api/types';
+import { formatBytes } from '@/shared/lib/file';
 import { Input } from '@/shared/ui/input';
 import { cn } from '@/shared/utils/cn';
 
@@ -19,7 +20,6 @@ interface ChatViewProps {
 }
 
 export function ChatView({ conversationId }: ChatViewProps) {
-  
   const { user } = useAuth();
   const { data, fetchNextPage, hasNextPage } = useMessages(conversationId);
   const sendMessage = useSendMessage(conversationId);
@@ -99,45 +99,62 @@ export function ChatView({ conversationId }: ChatViewProps) {
                 className={cn(
                   'rounded-3xl px-4 py-3 ',
                   isMe
-                    ? 'rounded-tr-lg bg-primary shadow-primary/10'
+                    ? 'rounded-tr-lg bg-primary'
                     : 'rounded-tl-lg border border-border-light/40 bg-surface-light/60 dark:border-border-dark/30 dark:bg-surface-dark/60 backdrop-blur-lg',
                 )}
               >
                 {hasAttachments &&
-                  msg.attachments!.map((att: MessageAttachment) => (
-                    <View
-                      key={att.id}
-                      className={cn(
-                        'mb-2 flex-row items-center gap-3 rounded-2xl px-3 py-2.5 border',
-                        isMe 
-                          ? 'bg-white/10 border-white/10' 
-                          : 'bg-background-light/50 border-border-light/30 dark:bg-background-dark/50 dark:border-border-dark/30',
-                      )}
-                    >
-                      <View className={cn('p-2 rounded-xl', isMe ? 'bg-white/15' : 'bg-primary/10')}>
-                        <FileText size={18} color={isMe ? '#FFFFFF' : '#3B82F6'} />
+                  msg.attachments!.map((att: MessageAttachment) => {
+                    console.log('Attachment:', att);
+                    return (
+                      <View
+                        key={att.id}
+                        className={cn(
+                          'mb-2 flex-row items-center gap-3 rounded-2xl px-3 py-2.5 border',
+                          isMe
+                            ? 'bg-white/10 border-white/10'
+                            : 'bg-background-light/50 border-border-light/30 dark:bg-background-dark/50 dark:border-border-dark/30',
+                        )}
+                      >
+                        {att.mimeType.startsWith('image/') ? (
+                          <>
+                            <Image
+                              source={{ uri: att.decryptedLocalUri ?? att.fileUrl }}
+                              className="h-40 w-40 rounded-xl bg-neutral-800"
+                              resizeMode="cover"
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <View className={cn('p-2 rounded-xl', isMe ? 'bg-white/15' : 'bg-primary/10')}>
+                              <FileText size={18} color={isMe ? '#FFFFFF' : '#3B82F6'} />
+                            </View>
+
+                            <View className="flex-1">
+                              <Text
+                                className={cn(
+                                  'text-sm font-medium tracking-wide',
+                                  isMe ? 'text-white' : 'text-text-primary-light dark:text-text-primary-dark',
+                                )}
+                                numberOfLines={1}
+                              >
+                                {att.fileName}
+                              </Text>
+                              <Text
+                                className={cn(
+                                  'text-[11px] mt-0.5 opacity-80',
+                                  isMe ? 'text-white/70' : 'text-text-secondary-light dark:text-text-secondary-dark',
+                                )}
+                              >
+                                {formatBytes(att.fileSize)}
+                              </Text>
+                            </View>
+                          </>
+                        )}
                       </View>
-                      <View className="flex-1">
-                        <Text
-                          className={cn(
-                            'text-sm font-medium tracking-wide',
-                            isMe ? 'text-white' : 'text-text-primary-light dark:text-text-primary-dark',
-                          )}
-                          numberOfLines={1}
-                        >
-                          {att.fileName}
-                        </Text>
-                        <Text
-                          className={cn(
-                            'text-[11px] mt-0.5 opacity-80',
-                            isMe ? 'text-white/70' : 'text-text-secondary-light dark:text-text-secondary-dark',
-                          )}
-                        >
-                          {(att.fileSize / 1024).toFixed(0)} Ko
-                        </Text>
-                      </View>
-                    </View>
-                  ))}
+                    )
+                  }
+                  )}
 
                 {(msg.decryptedContent || !hasAttachments) && (
                   <Text
@@ -152,7 +169,7 @@ export function ChatView({ conversationId }: ChatViewProps) {
                   </Text>
                 )}
               </View>
-              
+
               {/* Métadonnées du message (Heure + Statut) */}
               <View className="flex-row items-center mt-1 px-1 gap-1.5">
                 <Text className="text-[10px] font-medium tracking-wide text-text-secondary-light/60 dark:text-text-secondary-dark/60">
@@ -160,12 +177,12 @@ export function ChatView({ conversationId }: ChatViewProps) {
                 </Text>
                 {msg.status === 'send' && isMe && (
                   <Text className="text-[10px] font-medium text-primary/70 dark:text-primary/90">
-                    <Check size={12}/>
+                    <Check size={12} />
                   </Text>
                 )}
                 {msg.status === 'read' && isMe && (
                   <Text className="text-[10px] font-medium text-primary/70 dark:text-primary/90">
-                    <CheckCheck size={12}/>
+                    <CheckCheck size={12} />
                   </Text>
                 )}
               </View>
@@ -178,7 +195,7 @@ export function ChatView({ conversationId }: ChatViewProps) {
       {/* Zone d'input style Glassmorphism floutée et épurée */}
       <View className="border-t border-border-light/30 bg-background-light/80 px-4 pt-3 pb-6 dark:border-border-dark/30 dark:bg-background-dark/80 backdrop-blur-xl">
         <View className="flex-row items-center gap-2.5 bg-surface-light/50 dark:bg-surface-dark/40 border border-border-light/40 dark:border-border-dark/20 rounded-3xl p-1.5 ">
-          
+
           {/* Bouton Pièce Jointe */}
           <Pressable
             onPress={() =>
@@ -216,8 +233,8 @@ export function ChatView({ conversationId }: ChatViewProps) {
             disabled={!text.trim() || sendMessage.isPending}
             className={cn(
               'h-10 w-10 items-center justify-center rounded-full  active:opacity-80',
-              text.trim() 
-                ? 'bg-primary shadow-primary/20' 
+              text.trim()
+                ? 'bg-primary'
                 : 'bg-transparent opacity-40',
             )}
           >

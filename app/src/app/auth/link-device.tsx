@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
+import { ArrowLeft } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft } from 'lucide-react-native';
 
 import { AssociateDevicePanel } from '@/features/devices/components/associate-device-panel';
 import { AppLogo } from '@/shared/ui/app-logo';
@@ -16,9 +16,9 @@ export default function LinkDeviceScreen(): JSX.Element {
           {/* Bouton Retour Épuré Capsulaire */}
           <Pressable 
             onPress={() => router.back()} 
-            className="h-9 w-9 items-center justify-center rounded-full bg-slate-100 border border-slate-200/40 active:scale-95 transition-transform"
+            className="h-9 w-9 items-center justify-center active:scale-95 transition-transform"
           >
-            <ChevronLeft size={18} color="#64748B" />
+            <ArrowLeft size={20} color="#64748B" />
           </Pressable>
           
           {/* Conteneur Titre & Sous-titre Contextuel */}

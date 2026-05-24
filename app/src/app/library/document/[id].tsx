@@ -2,8 +2,8 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
+  ArrowLeft,
   Calendar,
-  ChevronLeft,
   Download,
   DownloadCloud,
   FileText,
@@ -16,10 +16,11 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useDocument } from '@/entities/document/hooks';
-import { openDocumentDownload } from '@/features/library/lib/download-document';
+import { downloadManager } from '@/features/downloads/services/download.manager';
+import { useToast } from '@/providers';
 import { BRAND } from '@/shared/config/brand';
-import { useToast } from '@/shared/hooks/use-toast';
 import { formatBytes } from '@/shared/lib/file';
+import { getStaticUri } from '@/shared/lib/static';
 import { Button } from '@/shared/ui/button';
 import { Skeleton } from '@/shared/ui/skeleton';
 
@@ -28,23 +29,21 @@ export default function DocumentDetailScreen() {
   const { showToast } = useToast();
   const [downloading, setDownloading] = useState(false);
 
-  const { data: doc, isLoading, refetch } = useDocument(id ?? '');
+  const { data: doc, isLoading} = useDocument(id ?? '');
 
   const handleDownload = useCallback(async () => {
     if (!doc?.id) return;
     setDownloading(true);
-    try {
-      await openDocumentDownload(doc.id);
-      void refetch();
-    } catch (e) {
-      showToast({
-        type: 'error',
-        message: e instanceof Error ? e.message : 'Échec du téléchargement.',
-      });
-    } finally {
-      setDownloading(false);
-    }
-  }, [doc?.id, refetch, showToast]);
+
+    await downloadManager.start({
+      filename: doc.fileName,
+      url: getStaticUri(doc.fileUrl),
+      documentId: doc.id,
+    });
+    
+    showToast({ type: 'success', message: 'Téléchargement lancé !' });
+    setDownloading(false);    
+  }, [doc?.id, showToast]);
 
   return (
     <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top', 'bottom']}>
@@ -53,9 +52,9 @@ export default function DocumentDetailScreen() {
       <View className="z-10 flex-row items-center border-b border-border-light/40 bg-surface-light/75 px-4 py-3 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl">
         <Pressable 
           onPress={() => router.back()} 
-          className="h-9 w-9 items-center justify-center rounded-xl bg-background-light/40 border border-border-light/20 dark:bg-background-dark/30 active:scale-95 transition-transform"
+          className="h-9 w-9 items-center justify-center active:scale-95 transition-transform"
         >
-          <ChevronLeft size={20} color="#64748B" />
+          <ArrowLeft size={20} color="#64748B" />
         </Pressable>
         <Text className="ml-3 text-[16px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
           Ressource Académique

@@ -1,15 +1,15 @@
 import { router } from "expo-router";
-import { Plus, ShieldAlert, Laptop, ChevronLeft } from "lucide-react-native";
+import { ArrowLeft, Laptop, Plus, ShieldAlert } from "lucide-react-native";
+import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTranslation } from "react-i18next";
 
 import { DeviceItem } from "@/features/devices/components/device-item";
-import { useIsPrimaryDevice } from "@/features/devices/hooks/use-is-primary-device";
 import { useDevices } from "@/features/devices/hooks/use-devices";
+import { useIsPrimaryDevice } from "@/features/devices/hooks/use-is-primary-device";
 import { useRemoveDevice } from "@/features/devices/hooks/use-remove-device";
-import { Loader } from "@/shared/ui/loader";
 import { BRAND } from "@/shared/config/brand";
+import { Loader } from "@/shared/ui/loader";
 
 export default function DevicesScreen(): JSX.Element {
   const { t } = useTranslation("settings");
@@ -43,9 +43,9 @@ export default function DevicesScreen(): JSX.Element {
         <View className="z-10 flex-row items-center border-b border-border-light/20 bg-surface-light/75 px-4 py-3.5 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl ">
           <Pressable
             onPress={() => router.back()}
-            className="h-9 w-9 items-center justify-center rounded-full bg-background-light/40 border border-border-light/20 dark:bg-background-dark/30 active:scale-95 transition-transform"
+            className="h-9 w-9 items-center justify-center active:scale-95 transition-transform"
           >
-            <ChevronLeft
+            <ArrowLeft
               size={20}
               className="text-text-primary-light dark:text-text-primary-dark"
             />
@@ -80,9 +80,9 @@ export default function DevicesScreen(): JSX.Element {
         <View className="flex-row items-center flex-1">
           <Pressable
             onPress={() => router.back()}
-            className="h-9 w-9 items-center justify-center rounded-full bg-background-light/40 border border-border-light/20 dark:bg-background-dark/30 active:scale-95 transition-transform"
+            className="h-9 w-9 items-center justify-center rounded-full active:scale-95 transition-transform"
           >
-            <ChevronLeft size={20} color="#64748B" />
+            <ArrowLeft size={20} color="#64748B" />
           </Pressable>
           <Text className="ml-3 text-[17px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
             {t("linkedDevices")}

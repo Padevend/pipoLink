@@ -10,7 +10,7 @@ import { BRAND } from '@/shared/config/brand';
 import { Input } from '@/shared/ui/input';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { router } from 'expo-router';
-import { FolderOpen, Search, Upload, User } from 'lucide-react-native';
+import { ArrowDownToLine, ArrowLeft, FolderOpen, Search, Upload, User } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -89,32 +89,39 @@ export default function LibraryExplorerScreen() {
             {/* En-tête Translucide Style Glassmorphism Solide */}
             <View className="z-10 border-b border-border-light/20 bg-surface-light/75 px-5 pb-0 pt-4 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl ">
                 <View className="mb-4 flex-row items-center justify-between">
-                    <View className="flex-1 pr-3">
+
+                    <Pressable
+                        onPress={() => router.back()}
+                        hitSlop={8}
+                        className="h-9 w-9 items-center justify-center rounded-xl bg-background-light/40 dark:bg-background-dark/30 active:scale-95 transition-transform"
+                    >
+                        <ArrowLeft size={18} color="#64748B" />
+                    </Pressable>
+
+                    <View className="flex-1 pl-4">
                         <Text className="text-xl font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
                             Bibliothèque
                         </Text>
-
-                        <View className="flex-row mt-1">
-                            <View className="rounded-full bg-text-secondary-light/5 px-2 py-0.5 dark:bg-text-secondary-dark/5 border border-border-light/10 dark:border-border-dark/10">
-                                <Text className="text-[10px] font-semibold tracking-wide text-text-secondary-light/80 dark:text-text-secondary-dark/80">
-                                    Filière · Niveau · UE
-                                </Text>
-                            </View>
-                        </View>
                     </View>
 
                     <View className="flex-row items-center gap-2">
-                        {/* Bouton profil utilisateur */}
                         <Pressable
-                            onPress={() => router.push('/library/my-documents' as never)}
-                            className="h-9 w-9 items-center justify-center rounded-full bg-background-light/40 border border-border-light/20 dark:bg-background-dark/30 active:opacity-80"
+                            onPress={() => router.push("/library/history")}
+                            className="h-10 w-10 items-center justify-center rounded-full bg-background-light/40 dark:bg-background-dark/30 active:opacity-80"
+                        >
+                            <ArrowDownToLine size={22} color="#64748B" />
+                        </Pressable>
+
+                        <Pressable
+                            onPress={() => router.push("/library/my-documents")}
+                            className="h-10 w-10 items-center justify-center rounded-full bg-background-light/40 dark:bg-background-dark/30 active:opacity-80"
                         >
                             <User size={22} color="#64748B" />
                         </Pressable>
 
                         <Pressable
                             onPress={() => router.push('/modal/upload-document')}
-                            className="h-12 w-12 items-center justify-center rounded-full bg-primary  shadow-primary/20 active:opacity-80"
+                            className="h-12 w-12 items-center justify-center rounded-full bg-primary active:opacity-80"
                         >
                             <Upload size={22} color="#FFFFFF" />
                         </Pressable>

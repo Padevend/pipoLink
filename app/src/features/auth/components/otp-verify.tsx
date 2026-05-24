@@ -1,12 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, Pressable, TextInput } from 'react-native';
-import { useAuth } from '@/providers';
-import { Button } from '@/shared/ui/button';
-import { useLocalSearchParams } from 'expo-router';
-import { useToast } from '@/shared/hooks/use-toast';
-import { Smartphone, CheckCircle2, RotateCcw } from 'lucide-react-native';
-import { router } from 'expo-router';
+import { useAuth, useToast } from '@/providers';
 import { BRAND } from '@/shared/config/brand';
+import { Button } from '@/shared/ui/button';
+import { router, useLocalSearchParams } from 'expo-router';
+import { CheckCircle2, RotateCcw, Smartphone } from 'lucide-react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Pressable, Text, TextInput, View } from 'react-native';
 
 export function OTPVerify() {
   const { verifyOtp } = useAuth();

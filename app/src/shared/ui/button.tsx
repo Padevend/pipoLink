@@ -1,8 +1,8 @@
-import React, { type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
-import { cn } from '@/shared/utils/cn';
 import { pressFeedback } from '@/shared/ui/press-feedback';
+import { cn } from '@/shared/utils/cn';
 
 export interface ButtonProps {
   label: string;
@@ -30,11 +30,11 @@ export function Button({
   const isDisabled = disabled || loading;
 
   const variants = {
-    primary:   'bg-primary  shadow-primary/20',
+    primary:   'bg-primary',
     secondary: 'bg-accent-muted-light dark:bg-accent-muted-dark',
     outline:   'border border-border-light dark:border-border-dark bg-transparent',
     ghost:     'bg-transparent',
-    danger:    'bg-error  shadow-error/20',
+    danger:    'bg-error',
   };
 
   const textVariants = {

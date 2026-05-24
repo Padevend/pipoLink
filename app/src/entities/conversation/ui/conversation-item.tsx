@@ -1,13 +1,12 @@
-import { View, Text, Pressable } from 'react-native';
-import { Avatar } from '@/shared/ui/avatar';
-import { Conversation } from '@/shared/api/messaging';
-import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale'; // Ajout de la locale pour un rendu propre en français
-import { cn } from '@/shared/utils/cn';
-import { decryptMessage } from '@/shared/crypto';
-import { useEffect, useMemo, useState } from 'react';
 import { ensureChatKeyForChat } from '@/features/messaging/lib/ensure-chat-key';
 import { useAuth } from '@/providers';
+import { Conversation } from '@/shared/api/messaging';
+import { decryptMessage } from '@/shared/crypto';
+import { Avatar } from '@/shared/ui/avatar';
+import { cn } from '@/shared/utils/cn';
+import { formatDistanceToNow } from 'date-fns';
+import { useEffect, useMemo, useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
 
 export interface ConversationItemProps {
   conversation: Conversation;
@@ -95,7 +94,7 @@ export function ConversationItem({ conversation, onPress }: ConversationItemProp
               ? 'text-primary font-semibold' 
               : 'text-text-secondary-light/60 dark:text-text-secondary-dark/60'
           )}>
-            {formatDistanceToNow(new Date(conversation.updatedAt), { addSuffix: false, locale: fr })}
+            {formatDistanceToNow(new Date(conversation.updatedAt), { addSuffix: false })}
           </Text>
         </View>
 
@@ -114,7 +113,7 @@ export function ConversationItem({ conversation, onPress }: ConversationItemProp
 
           {/* Badge de notification style capsule moderne */}
           {isUnread && (
-            <View className="bg-primary rounded-full min-w-[18px] h-[18px] px-1 items-center justify-center  shadow-primary/20">
+            <View className="bg-primary rounded-full min-w-[18px] h-[18px] px-1 items-center justify-center">
               <Text className="text-white text-[10px] font-bold tracking-tighter">
                 {conversation.unreadCount}
               </Text>

@@ -1,21 +1,21 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router } from "expo-router";
+import {
+  ArrowLeft,
+  Keyboard,
+  QrCode,
+  ShieldCheck
+} from "lucide-react-native";
 import { useCallback, useRef, useState } from "react";
 import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
   Text,
   TextInput,
   View,
-  Pressable,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  ChevronLeft,
-  QrCode,
-  Keyboard,
-  ShieldCheck,
-} from "lucide-react-native";
 
 import { useApproveByCode } from "@/features/devices/hooks/use-approve-by-code";
 import { useLinkDevice } from "@/features/devices/hooks/use-link-device";
@@ -23,7 +23,7 @@ import {
   parseDeviceQrPayload,
   verifyDeviceQrPayloadSignature,
 } from "@/features/devices/lib/verify-qr-payload";
-import { useToast } from "@/shared/hooks/use-toast";
+import { useToast } from "@/providers";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/utils/cn";
 
@@ -115,9 +115,9 @@ export default function DeviceScanScreen() {
           <View className="flex-row items-center justify-between rounded-2xl border border-white/10 bg-black/40 p-2 backdrop-blur-md">
             <Pressable
               onPress={() => router.back()}
-              className="h-9 w-9 items-center justify-center rounded-xl bg-white/10 border border-white/10 active:scale-95 transition-transform"
+              className="h-9 w-9 items-center justify-center active:scale-95 transition-transform"
             >
-              <ChevronLeft size={20} color="#FFFFFF" />
+              <ArrowLeft size={20} color="#FFFFFF" />
             </Pressable>
 
             <View className="items-center">

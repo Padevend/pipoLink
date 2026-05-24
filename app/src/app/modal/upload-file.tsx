@@ -1,17 +1,17 @@
-import { useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { useLocalSearchParams } from 'expo-router';
 import { CheckCircle2, FileText, Upload, X } from 'lucide-react-native';
+import { useState } from 'react';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { useSendMessage } from '@/features/messaging/hooks/use-send-message';
+import { useToast } from '@/providers';
 import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';
 import { Input } from '@/shared/ui/input';
-import { useToast } from '@/shared/hooks/use-toast';
 import { cn } from '@/shared/utils/cn';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function UploadFileModal() {
   

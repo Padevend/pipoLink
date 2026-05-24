@@ -1,9 +1,9 @@
-import { db } from '@/shared/storage/sqlite';
+import type { AiChatMessage, AiSession } from '@/shared/api/ai';
 import type { Conversation } from '@/shared/api/messaging';
 import { normalizeConversation } from '@/shared/api/normalize-conversation';
 import { normalizeMessage } from '@/shared/api/normalize-message';
-import type { Message } from '@/shared/api/types';
-import type { AiChatMessage, AiSession } from '@/shared/api/ai';
+import type { downloadTask, LocalMessageAttachements, LocalMessageAttachementsProps, Message } from '@/shared/api/types';
+import { db } from '@/shared/storage/sqlite';
 
 export type PendingMessageRow = {
   id: string;
@@ -15,6 +15,8 @@ export type PendingMessageRow = {
 };
 
 export const localDb = {
+  // gestion des conversations
+  // ============================================================================================
   upsertConversations(items: Conversation[]): void {
     for (const raw of items) {
       const c = normalizeConversation(raw);
@@ -39,7 +41,47 @@ export const localDb = {
     );
     return rows.map((r) => normalizeConversation(JSON.parse(r.payload_json) as Conversation));
   },
+  // ============================================================================================
 
+  // gestionnaire des documents associer au messages de chat
+  // ============================================================================================
+  upsertAttachments(data: LocalMessageAttachementsProps): void {
+    db.runSync(
+      `
+      INSERT OR REPLACE INTO attachements (
+      id, 
+      encrypted_url, 
+      decrypted_local_uri, 
+      filename, 
+      mime_type, 
+      downloaded, 
+      created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        data.id,
+        data.encryptedUrl,
+        data.decryptedLocalUri,
+        data.filename,
+        data.mimeType,
+        1,
+        Date.now()
+      ]
+    )
+  },
+
+  getAttachementsById(id: string): LocalMessageAttachements | null {
+    const row = db.getFirstSync<LocalMessageAttachements>(
+      `SELECT * FROM attachements WHERE id = ?`,
+      [id]
+    );
+
+    return row || null;
+  },
+
+  // ============================================================================================
+
+  // gestion des messages de chats
+  // ============================================================================================
   upsertMessages(conversationId: string, items: Message[]): void {
     for (const raw of items) {
       const m = normalizeMessage({ ...raw, chat_id: raw.chat_id || conversationId });
@@ -93,7 +135,10 @@ export const localDb = {
   bumpPendingRetry(id: string): void {
     db.runSync('UPDATE pending_messages SET retry_count = retry_count + 1 WHERE id = ?', [id]);
   },
+  // ============================================================================================
 
+  // gestions des sessions du caht Ai
+  // ============================================================================================
   upsertAiSessions(sessions: AiSession[]): void {
     for (const s of sessions) {
       db.runSync(
@@ -124,7 +169,10 @@ export const localDb = {
       [sessionId],
     );
   },
+  // ============================================================================================
 
+  // gestionnaire des documents de la bibliotheques
+  // ============================================================================================
   upsertDocument(doc: {
     id: string;
     folder_id: string;
@@ -140,4 +188,69 @@ export const localDb = {
       [doc.id, doc.folder_id, doc.title, doc.type, doc.size, doc.local_uri ?? null, doc.download_count],
     );
   },
+  // ============================================================================================
+
+  // gestionnaite de telechargment des documents de la librairie
+  // ============================================================================================
+  saveDownloadRepository(task: downloadTask) {
+    return db.runSync(
+      `INSERT OR REPLACE INTO downloads (
+        id, 
+        document_id, 
+        filename, 
+        remote_uri, 
+        local_uri,
+        mineType, 
+        progress, 
+        totalBytes, 
+        writtenBytes, 
+        status, 
+        created_at, 
+        updated_at
+      )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        task.id,
+        task.document_id,
+        task.filename,
+        task.remote_uri,
+        task.local_uri,
+        task.mineType ?? null,
+        task.progress,
+        task.totalBytes,
+        task.writtenBytes,
+        task.status,
+        task.created_at,
+        task.updated_at
+      ],
+    );
+  },
+
+  getDownloadRepository(): downloadTask[] {
+    return db.getAllSync<downloadTask>(
+      'SELECT * FROM downloads ORDER BY created_at DESC',
+    )
+  },
+
+  getDownloadRepositoryById(id: string): downloadTask | null {
+    const row = db.getFirstSync<downloadTask>(
+      'SELECT * FROM downloads WHERE id = ?',
+      [id],
+    );
+    return row || null;
+  },
+
+  deleteDownloadRepository(id: string): void {
+    db.runSync(
+      'DELETE FROM downloads WHERE id = ?',
+      [id],
+    );
+  },
+
+  clearDownlaodHistory(): void {
+    db.runAsync(
+      'DELETE FROM downloads WHERE status IN [completed, failed, cancelled]'
+    )
+  }
+  // ============================================================================================
 };

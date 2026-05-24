@@ -63,6 +63,35 @@ export async function initializeSqlite(): Promise<void> {
       name TEXT NOT NULL,
       document_count INTEGER NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS downloads (
+      id TEXT PRIMARY KEY NOT NULL,
+      document_id TEXT NOT NULL,
+      filename TEXT NOT NULL,
+      remote_uri TEXT NOT NULL,
+      local_uri TEXT NOT NULL,
+      mineType TEXT,
+
+      progress REAL DEFAULT 0,
+      totalBytes INTEGER DEFAULT 0,
+      writtenBytes INTEGER DEFAULT 0,
+
+      status TEXT NOT NULL,
+      resume_data TEXT,
+      
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS attachements (
+      id TEXT PRIMARY KEY NOT NULL,
+      encrypted_url TEXT NOT NULL,
+      decrypted_local_uri TEXT NOT NULL,
+      filename TEXT NOT NULL,
+      mime_type TEXT NOT NULL,
+      downloaded INTEGER DEFAULT 0,
+      created_at INTEGER NOT NULL
+    );
   `);
 
   await migrateSqliteColumns();

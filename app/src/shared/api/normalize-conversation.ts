@@ -2,14 +2,10 @@ import type { Conversation } from '@/shared/api/messaging';
 import type { Message } from '@/shared/api/types';
 
 type RawMember = {
-  id?: string;
-  user_id?: string;
-  username?: string;
-  user?: {
-    id?: string;
-    username?: string;
-    profile?: { avatarUrl?: string | null } | null;
-  };
+    id: string,
+    username: string,
+    avatarUrl?: string | undefined,
+    phone?: string | undefined
 };
 
 export type RawConversation = Partial<Conversation> & {
@@ -19,11 +15,14 @@ export type RawConversation = Partial<Conversation> & {
 };
 
 export function normalizeConversation(raw: RawConversation): Conversation {
-  const members = ((raw.members ?? []) as RawMember[]).map((m) => ({
-    id: m.user?.id ?? m.user_id ?? m.id ?? '',
-    username: m.user?.username ?? m.username ?? 'User',
-    avatarUrl: m.user?.profile?.avatarUrl ?? undefined,
-  }));
+  const members = ((raw.members ?? []) as RawMember[]).map((m) => {
+    return {
+      id: m.id,
+      username: m.username,
+      avatarUrl: m.avatarUrl,
+      phone: m.phone
+    }
+  });
 
   const updatedAtRaw = raw.updatedAt ?? raw.updated_at;
   const updatedAt =

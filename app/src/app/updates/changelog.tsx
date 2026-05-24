@@ -1,10 +1,11 @@
+import { ArrowLeft, GitCommit, Sparkles } from 'lucide-react-native';
 import { ScrollView, Text, View } from 'react-native';
-import { GitCommit, Sparkles } from 'lucide-react-native';
 
 import { useOtaUpdate } from '@/features/updates/hooks/use-ota-update';
-import { Header } from '@/shared/ui/header';
-import { Loader } from '@/shared/ui/loader';
 import { BRAND } from '@/shared/config/brand';
+import { Loader } from '@/shared/ui/loader';
+import { router } from 'expo-router';
+import { TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ChangelogScreen(): JSX.Element {
@@ -16,8 +17,13 @@ export default function ChangelogScreen(): JSX.Element {
         className="flex-1 bg-background-light dark:bg-background-dark"
         showsVerticalScrollIndicator={false}
       >
-        {/* En-tête Global de l'Écran */}
-        <Header title="Changelog" subtitle="Historique des versions" />
+        <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-200">
+          <TouchableOpacity onPress={() => router.back()}>
+            <ArrowLeft size={20} color="#000" />
+          </TouchableOpacity>
+          <Text className="text-lg font-semibold text-gray-900">Détails du document</Text>
+          <View className="w-6" />
+        </View>
 
         <View className="px-5 py-4">
           {isLoading ? (

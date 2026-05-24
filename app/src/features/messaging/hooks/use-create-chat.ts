@@ -8,7 +8,6 @@ import {
   generateChatKey,
   getCachedChatKey,
 } from '@/shared/crypto/chat-key';
-import { encryptMessage } from '@/shared/crypto/message';
 import { messagingApi } from '@/shared/api/messaging';
 import { userApi } from '@/shared/api/user';
 

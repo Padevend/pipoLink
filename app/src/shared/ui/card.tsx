@@ -1,6 +1,6 @@
-import React, { type ReactNode } from 'react';
-import { View, Pressable, type ViewProps } from 'react-native';
 import { cn } from '@/shared/utils/cn';
+import { type ReactNode } from 'react';
+import { Pressable, View, type ViewProps } from 'react-native';
 
 export interface CardProps extends ViewProps {
   children: ReactNode;
@@ -20,7 +20,7 @@ export function Card({
   const Component = onPress ? Pressable : View;
 
   const variants = {
-    elevated: 'bg-surface-light dark:bg-surface-dark  shadow-black/5',
+    elevated: 'bg-surface-light dark:bg-surface-dark',
     flat: 'bg-surface-light dark:bg-surface-dark',
     outline: 'bg-transparent border border-border-light dark:border-border-dark',
   };

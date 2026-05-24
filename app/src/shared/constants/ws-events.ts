@@ -35,6 +35,7 @@ export const WS_EVENTS = {
   DEVICE_REVOKED: 'device.revoked',
   AI_RESPONSE_CREATED: 'ai.response.created',
   ANNOUNCEMENT_CREATED: 'announcement.created',
+  ANNOUNCEMENT_DELETE: 'announcement.delete',
   SUBSCRIPTION_UPDATED: 'subscription.updated',
 } as const;
 

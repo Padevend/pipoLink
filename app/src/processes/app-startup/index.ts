@@ -14,3 +14,6 @@ export async function runAppStartup(): Promise<void> {
   stopRealtimeSync = setupRealtimeSync();
   await updatesApi.checkUpdate().catch(() => undefined);
 }
+
+
+  

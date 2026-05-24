@@ -292,7 +292,7 @@ export default function AnnouncementsScreen() {
           <Pressable
             onPress={() => router.back()}
             hitSlop={8}
-            className="h-9 w-9 items-center justify-center rounded-xl bg-background-light/40 border border-border-light/20 dark:bg-background-dark/30 active:scale-95 transition-transform"
+            className="h-9 w-9 items-center justify-center active:scale-95 transition-transform"
           >
             <ArrowLeft size={18} color="#64748B" />
           </Pressable>

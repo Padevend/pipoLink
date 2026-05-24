@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
-import { ChevronLeft, Mail, Send } from 'lucide-react-native';
-import { router } from 'expo-router';
-import { Input } from '@/shared/ui/input';
-import { Button } from '@/shared/ui/button';
+import { useToast } from '@/providers';
 import { authApi } from '@/shared/api/auth';
-import { useToast } from '@/shared/hooks/use-toast';
+import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
+import { router } from 'expo-router';
+import { ArrowLeft, Mail, Send } from 'lucide-react-native';
+import { useState } from 'react';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ForgotPasswordScreen() {
@@ -42,9 +42,9 @@ export default function ForgotPasswordScreen() {
       <View className="z-10 flex-row items-center border-b border-border-light/20 bg-surface-light/75 px-4 py-3.5 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl">
         <Pressable 
           onPress={() => router.back()}
-          className="h-9 w-9 items-center justify-center rounded-full bg-background-light/40 border border-border-light/20 dark:bg-background-dark/30 active:scale-95 transition-transform"
+          className="h-9 w-9 items-center justify-center active:scale-95 transition-transform"
         >
-          <ChevronLeft size={18} color="#64748B" />
+          <ArrowLeft size={20} color="#64748B" />
         </Pressable>
         
         <View className="ml-3.5 flex-1">

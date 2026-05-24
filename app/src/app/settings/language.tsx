@@ -1,13 +1,13 @@
+import { router } from 'expo-router';
+import { ArrowLeft, Languages } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTranslation } from 'react-i18next';
-import { ChevronLeft, Languages } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
 
 import type { AppLanguage } from '@/i18n';
+import { BRAND } from '@/shared/config/brand';
 import { useLanguage } from '@/shared/hooks/use-language';
 import { cn } from '@/shared/utils/cn';
-import { BRAND } from '@/shared/config/brand';
 
 const LANGUAGES: { id: AppLanguage; label: string; subLabel: string }[] = [
   { id: 'fr', label: 'Français', subLabel: 'French' },
@@ -16,7 +16,6 @@ const LANGUAGES: { id: AppLanguage; label: string; subLabel: string }[] = [
 
 export default function LanguageScreen(): JSX.Element {
   const { t } = useTranslation('settings');
-  const router = useRouter();
   const { language, setLanguage } = useLanguage();
 
   return (
@@ -26,9 +25,9 @@ export default function LanguageScreen(): JSX.Element {
       <View className="z-10 flex-row items-center border-b border-border-light/20 bg-surface-light/75 px-4 py-3.5 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl">
         <Pressable 
           onPress={() => router.back()} 
-          className="h-9 w-9 items-center justify-center rounded-full bg-background-light/40 border border-border-light/20 dark:bg-background-dark/30 active:scale-95 transition-transform"
+          className="h-9 w-9 items-center justify-center rounded-full active:scale-95 transition-transform"
         >
-          <ChevronLeft size={20} color="#64748B" />
+          <ArrowLeft size={20} color="#64748B" />
         </Pressable>
         
         <Text className="flex-1 ml-3 text-[17px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">

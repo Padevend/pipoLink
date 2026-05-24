@@ -1,6 +1,6 @@
 import { RegisterForm } from '@/features/auth/components/register-form';
 import { router } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
+import { ArrowLeft } from 'lucide-react-native';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -12,9 +12,9 @@ export default function RegisterScreen() {
       <View className="z-10 flex-row items-center border-b border-border-light/20 bg-surface-light/75 px-4 py-3.5 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl">
         <Pressable 
           onPress={() => router.back()}
-          className="h-9 w-9 items-center justify-center rounded-full bg-background-light/40 border border-border-light/20 dark:bg-background-dark/30 active:scale-95 transition-transform"
+          className="h-9 w-9 items-center justify-center rounded-full bg-background-light/40 dark:bg-background-dark/30 active:scale-95 transition-transform"
         >
-          <ChevronLeft size={18} className="text-text-primary-light dark:text-text-primary-dark" />
+          <ArrowLeft size={18} className="text-text-primary-light dark:text-text-primary-dark" />
         </Pressable>
         
         <View className="ml-3.5 flex-1">

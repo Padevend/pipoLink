@@ -1,25 +1,25 @@
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-} from "react-native";
+import { useDeleteDocument } from "@/entities/document/hooks/use-delete-document";
+import { useDocument } from "@/entities/document/hooks/use-document";
+import { useAuth } from "@/providers";
+import { libraryApi } from "@/shared/api/library";
 import { router, useLocalSearchParams } from "expo-router";
 import {
-  ChevronLeft,
-  Download,
-  Trash2,
+  ArrowLeft,
   Calendar,
-  User,
+  Download,
   HardDrive,
+  Trash2,
+  User,
 } from "lucide-react-native";
 import { useState } from "react";
-import { useDocument } from "@/entities/document/hooks/use-document";
-import { useDeleteDocument } from "@/entities/document/hooks/use-delete-document";
-import { libraryApi } from "@/shared/api/library";
-import { useAuth } from "@/providers";
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 const getDocumentTypeColor = (type: string) => {
   const colors: Record<string, { bg: string; text: string }> = {
@@ -108,7 +108,7 @@ export default function DocumentDetailPage() {
     Alert.alert("Confirmer la suppression", "Êtes-vous sûr de vouloir supprimer ce document?", [
       {
         text: "Annuler",
-        onPress: () => {},
+        onPress: () => { },
         style: "cancel",
       },
       {
@@ -132,7 +132,7 @@ export default function DocumentDetailPage() {
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-200">
         <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft width={24} height={24} color="#000" />
+          <ArrowLeft size={20} color="#000" />
         </TouchableOpacity>
         <Text className="text-lg font-semibold text-gray-900">Détails du document</Text>
         <View className="w-6" />
@@ -203,7 +203,7 @@ export default function DocumentDetailPage() {
         </View>
 
         {/* Tags */}
-        {document.moderationStatus  && (
+        {document.moderationStatus && (
           <View className="p-4 border-b border-gray-100">
             <View className="ml-3 flex-1">
               <Text className="text-xs text-gray-500 mb-1">Status</Text>
@@ -234,7 +234,7 @@ export default function DocumentDetailPage() {
           )}
         </TouchableOpacity>
 
-        {canDelete && (
+        {!canDelete && (
           <TouchableOpacity
             onPress={handleDelete}
             disabled={deleteDocMutation.isPending}

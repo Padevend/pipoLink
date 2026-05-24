@@ -1,17 +1,16 @@
 import { router } from 'expo-router';
+import { ArrowLeft, GraduationCap, Search } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTranslation } from 'react-i18next';
-import { ChevronLeft, UserPlus, Search, GraduationCap } from 'lucide-react-native';
 
 import { useCreateChat } from '@/features/messaging/hooks/use-create-chat';
 import { useSearchUsers, type SearchUserResult } from '@/features/messaging/hooks/use-search-users';
-import { useAuth } from '@/providers';
-import { useToast } from '@/shared/hooks/use-toast';
+import { useAuth, useToast } from '@/providers';
+import { BRAND } from '@/shared/config/brand';
 import { Avatar } from '@/shared/ui/avatar';
 import { SearchBar } from '@/shared/ui/search-bar';
-import { BRAND } from '@/shared/config/brand';
 
 function displayName(u: SearchUserResult): string {
   if (u.profile?.firstname || u.profile?.lastname) {
@@ -55,9 +54,9 @@ export default function NewChatScreen(): JSX.Element {
       <View className="z-10 flex-row items-center border-b border-border-light/20 bg-surface-light/75 px-4 py-3.5 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl">
         <Pressable 
           onPress={() => router.back()} 
-          className="h-9 w-9 items-center justify-center rounded-full bg-background-light/40 border border-border-light/20 dark:bg-background-dark/30 active:scale-95 transition-transform"
+          className="h-9 w-9 items-center justify-center active:scale-95 transition-transform"
         >
-          <ChevronLeft size={20} className="text-text-primary-light dark:text-text-primary-dark" />
+          <ArrowLeft size={20} color="#64748B" />
         </Pressable>
         
         <View className="flex-1 ml-3">

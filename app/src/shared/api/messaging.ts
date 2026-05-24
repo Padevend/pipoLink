@@ -10,7 +10,7 @@ export interface Conversation {
   avatarUrl?: string;
   lastMessage?: Message;
   unreadCount: number;
-  members: { id: string; username: string; avatarUrl?: string }[];
+  members: { id: string; username: string; avatarUrl?: string, phone?: string | undefined }[];
   updatedAt: string;
 }
 

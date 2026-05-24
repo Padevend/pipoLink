@@ -1,14 +1,14 @@
-import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react-native';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Pressable, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ConversationList } from '@/features/messaging/components/conversation-list';
 import { useAuth } from '@/providers/auth-provider';
-import { AppLogo } from '@/shared/ui/app-logo';
 import { ActionMenu } from '@/shared/ui/action-menu';
+import { AppLogo } from '@/shared/ui/app-logo';
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -44,7 +44,7 @@ export default function HomeScreen() {
         <View className="flex-row items-center">
           <Pressable
             onPress={() => setMenuOpen(true)}
-            className="h-10 w-10 items-center justify-center rounded-full bg-primary  shadow-primary/20 active:opacity-75"
+            className="h-10 w-10 items-center justify-center rounded-full bg-primary active:opacity-75"
           >
             <Plus size={22} color="#FFFFFF" />
           </Pressable>

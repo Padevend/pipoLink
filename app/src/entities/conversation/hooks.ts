@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { useCreateChat } from '@/features/messaging/hooks/use-create-chat';
 import { messagingApi } from '@/shared/api/messaging';
+import { localDb } from '@/shared/storage/local-db';
 
 export const conversationKeys = {
   all: ['conversations'] as const,
@@ -15,11 +16,10 @@ export const useConversations = () => {
     queryFn: async () => {
       try {
         const remote = await messagingApi.getConversations();
-        const { localDb } = await import('@/shared/storage/local-db');
         localDb.upsertConversations(remote);
         return remote;
-      } catch {
-        const { localDb } = await import('@/shared/storage/local-db');
+      } catch (e) {
+        console.error(e)
         const cached = localDb.getConversations();
         if (cached.length) return cached;
         throw new Error('Hors ligne — aucune conversation en cache.');

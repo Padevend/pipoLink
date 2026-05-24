@@ -1,23 +1,20 @@
 import { router } from "expo-router";
 import { useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  View,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    Text,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Sparkles } from "lucide-react-native";
 
-import {
-  onboardingSchema,
-  type OnboardingFormValues,
-} from "@/features/auth/lib/onboarding-schema";
 import { useOnboarding } from "@/features/auth/hooks/use-onboarding";
-import { useAuth } from "@/providers";
-import { useToast } from "@/shared/hooks/use-toast";
-import { BRAND } from "@/shared/config/brand";
+import {
+    onboardingSchema,
+    type OnboardingFormValues,
+} from "@/features/auth/lib/onboarding-schema";
+import { useAuth, useToast } from "@/providers";
 import { AppLogo } from "@/shared/ui/app-logo";
 import { AvatarPicker } from "@/shared/ui/avatar-picker";
 import { Button } from "@/shared/ui/button";

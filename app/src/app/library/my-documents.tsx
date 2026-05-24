@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { router } from 'expo-router';
-import { ChevronLeft, FileText, Trash2 } from 'lucide-react-native';
+import { ArrowLeft, FileText, Trash2 } from 'lucide-react-native';
 import { useCallback, useMemo } from 'react';
 import {
   ActivityIndicator,
@@ -14,11 +14,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useDeleteDocument, useMyDocuments } from '@/entities/document/hooks';
-import { Skeleton } from '@/shared/ui/skeleton';
+import { useToast } from '@/providers';
 import type { Document } from '@/shared/api/types';
-import { formatBytes } from '@/shared/lib/file';
-import { useToast } from '@/shared/hooks/use-toast';
 import { BRAND } from '@/shared/config/brand';
+import { formatBytes } from '@/shared/lib/file';
+import { Skeleton } from '@/shared/ui/skeleton';
 import { cn } from '@/shared/utils/cn';
 
 export default function MyDocumentsScreen() {
@@ -67,9 +67,9 @@ export default function MyDocumentsScreen() {
       <View className="z-10 flex-row items-center border-b border-border-light/20 bg-surface-light/75 px-4 py-3.5 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl ">
         <Pressable 
           onPress={() => router.back()} 
-          className="h-9 w-9 items-center justify-center rounded-full bg-background-light/40 border border-border-light/20 dark:bg-background-dark/30 active:opacity-80"
+          className="h-9 w-9 items-center justify-center rounded-full active:opacity-80"
         >
-          <ChevronLeft size={20} className="text-text-primary-light dark:text-text-primary-dark" />
+          <ArrowLeft size={20} className="text-text-primary-light dark:text-text-primary-dark" />
         </Pressable>
         
         <Text className="flex-1 ml-3 text-[17px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">

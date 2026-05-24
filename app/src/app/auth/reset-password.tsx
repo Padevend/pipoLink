@@ -1,17 +1,17 @@
-import { useState } from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
-import { ChevronLeft, Lock, Eye, EyeOff, CheckCircle2 } from 'lucide-react-native';
-import { useLocalSearchParams, router } from 'expo-router';
-import { Input } from '@/shared/ui/input';
-import { Button } from '@/shared/ui/button';
+import { useToast } from '@/providers';
 import { authApi } from '@/shared/api/auth';
-import { useToast } from '@/shared/hooks/use-toast';
+import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
+import { router, useLocalSearchParams } from 'expo-router';
+import { ArrowLeft, CheckCircle2, Eye, EyeOff, Lock } from 'lucide-react-native';
+import { useState } from 'react';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ResetPasswordScreen() {
   const { showToast } = useToast();
   const { email, code } = useLocalSearchParams<{ email: string; code: string }>();
-  
+
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -30,7 +30,7 @@ export default function ResetPasswordScreen() {
       showToast({ type: 'error', message: 'Les mots de passe ne correspondent pas' });
       return;
     }
-    
+
     setIsLoading(true);
     try {
       await authApi.resetPassword({ email: email!, code: code!, newPassword: password });
@@ -45,16 +45,16 @@ export default function ResetPasswordScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top']}>
-      
+
       {/* En-tête Translucide Style Glassmorphism (Sans Shadow - Adaptatif Light/Dark) */}
       <View className="z-10 flex-row items-center border-b border-border-light/20 bg-surface-light/75 px-4 py-3.5 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl">
-        <Pressable 
+        <Pressable
           onPress={() => router.back()}
-          className="h-9 w-9 items-center justify-center rounded-full bg-background-light/40 border border-border-light/20 dark:bg-background-dark/30 active:scale-95 transition-transform"
+          className="h-9 w-9 items-center justify-center active:scale-95 transition-transform"
         >
-          <ChevronLeft size={18} className="text-text-primary-light dark:text-text-primary-dark" />
+          <ArrowLeft size={20} className="text-text-primary-light dark:text-text-primary-dark" />
         </Pressable>
-        
+
         <View className="ml-3.5 flex-1">
           <Text className="text-[16px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
             Nouveau mot de passe
@@ -65,14 +65,14 @@ export default function ResetPasswordScreen() {
         </View>
       </View>
 
-      <ScrollView 
+      <ScrollView
         className="flex-1"
         contentContainerStyle={{ flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
         <View className="flex-1 px-6 pt-6 pb-10">
-          
+
           <View className="mb-8">
             <Text className="text-[24px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
               Créez vos nouveaux accès
@@ -83,7 +83,7 @@ export default function ResetPasswordScreen() {
           </View>
 
           <View className="w-full gap-y-5">
-            <Input 
+            <Input
               label="Nouveau mot de passe"
               placeholder="Minimum 8 caractères"
               value={password}
@@ -95,7 +95,7 @@ export default function ResetPasswordScreen() {
               containerClassName="bg-transparent"
             />
 
-            <Input 
+            <Input
               label="Confirmer le mot de passe"
               placeholder="Répétez le mot de passe"
               value={confirmPassword}
@@ -105,7 +105,7 @@ export default function ResetPasswordScreen() {
               containerClassName="bg-transparent"
             />
 
-            <Button 
+            <Button
               label="Mettre à jour le mot de passe"
               onPress={() => void handleReset()}
               loading={isLoading}

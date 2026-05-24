@@ -1,20 +1,20 @@
-import { useMemo, useState } from 'react';
-import { View, Pressable, Text } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ChatView } from '@/features/messaging/components/chat-view';
-import { ChatInfoSheet } from '@/features/messaging/components/chat-info-sheet';
 import { useConversations } from '@/entities/conversation/hooks';
+import { ChatInfoSheet } from '@/features/messaging/components/chat-info-sheet';
+import { ChatView } from '@/features/messaging/components/chat-view';
 import { useAuth } from '@/providers';
 import { Avatar } from '@/shared/ui/avatar';
-import { ArrowLeft, ChevronLeft, Info, MessageSquareOff } from 'lucide-react-native';
 import { cn } from '@/shared/utils/cn';
+import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
+import { ArrowLeft, EllipsisVertical, MessageSquareOff, Phone } from 'lucide-react-native';
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  
   const { user } = useAuth();
   const { data: conversations } = useConversations();
   const [infoOpen, setInfoOpen] = useState(false);
@@ -58,6 +58,10 @@ export default function ChatScreen() {
     );
   }
 
+  useEffect(() => {
+    console.log('Conversation loaded:', conversation);
+  }, [])
+
   // get chat name
   const chatName = useMemo(() => {
     if (conversation.type === "group") {
@@ -66,6 +70,14 @@ export default function ChatScreen() {
     const otherMember = conversation.members.find(m => m.id !== user?.id);
     return otherMember?.username || 'Privé';
   }, [conversation.name, conversation.members]);
+
+  const userPhone = useMemo(() => {
+    if (conversation.type === "group") return null;
+    const otherMember = conversation.members.find(m => m.id !== user?.id);
+    console.log(otherMember)
+
+    return otherMember?.phone || null;
+  }, [conversation.members, conversation.type]);
 
   // getchat avatarUrl
   const chatAvatar = useMemo(() => {
@@ -88,9 +100,9 @@ export default function ChatScreen() {
           {/* Bouton Retour */}
           <Pressable
             onPress={() => router.back()}
-            className="h-9 w-9 items-center justify-center rounded-full bg-background-light/40 dark:bg-background-dark/30 active:opacity-80"
+            className="h-9 w-9 items-center justify-center active:opacity-80"
           >
-            <ChevronLeft size={22} color="#64748B" />
+            <ArrowLeft size={20} color="#64748B" />
           </Pressable>
 
           <View className="">
@@ -123,12 +135,25 @@ export default function ChatScreen() {
           </View>
         </View>
 
-        <Pressable
-          onPress={() => setInfoOpen(true)}
-          className="h-9 w-9 items-center justify-center rounded-full bg-background-light/40 dark:bg-background-dark/30 active:opacity-80"
-        >
-          <Info size={22} color="#64748B" />
-        </Pressable>
+        <View className="flex-row items-center">
+          {userPhone && (
+            <Pressable
+              onPress={() => {
+                Linking.openURL(`tel:${userPhone}`);
+              }}
+              className="h-9 w-9 items-center justify-center rounded-full bg-background-light/40 dark:bg-background-dark/30 active:opacity-80"
+            >
+              <Phone size={22} color="#64748B" />
+            </Pressable>
+          )}
+
+          <Pressable
+            onPress={() => setInfoOpen(true)}
+            className="h-9 w-9 items-center justify-center rounded-full bg-background-light/40 dark:bg-background-dark/30 active:opacity-80"
+          >
+            <EllipsisVertical size={22} color="#64748B" />
+          </Pressable>
+        </View>
       </View>
 
       {/* Vue du Chat */}

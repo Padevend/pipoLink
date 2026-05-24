@@ -1,11 +1,10 @@
 import { prepareDeviceForNewAccount } from '@/features/auth/lib/prepare-new-account-device';
-import { useAuth } from '@/providers';
-import { useToast } from '@/shared/hooks/use-toast';
+import { useAuth, useToast } from '@/providers';
 import { BRAND } from '@/shared/config/brand';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { router } from 'expo-router';
-import { Eye, EyeOff, Lock, Mail, ArrowRight } from 'lucide-react-native';
+import { ArrowRight, Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 

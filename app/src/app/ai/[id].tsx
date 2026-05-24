@@ -1,18 +1,18 @@
 import { useAiChat, useAiHistory } from '@/entities/ai/hooks';
+import { BRAND } from '@/shared/config/brand';
 import { Input } from '@/shared/ui/input';
 import { cn } from '@/shared/utils/cn';
-import { BRAND } from '@/shared/config/brand';
 import * as DocumentPicker from 'expo-document-picker';
-import { Paperclip, Send, Sparkles, X, ChevronLeft } from 'lucide-react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { ArrowLeft, Paperclip, Send, Sparkles, X } from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams } from 'expo-router';
 
 export default function AiChatScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const [sessionId, setSessionId] = useState<string | undefined>(id === "new" ? undefined : id);
-    
+
     const { data: history, isLoading: historyLoading } = useAiHistory(sessionId || '');
     const flatListRef = useRef<FlatList>(null);
     const chatMutation = useAiChat();
@@ -42,7 +42,7 @@ export default function AiChatScreen() {
 
         }
     };
-    
+
     // ==================== VUE CHAT IA ====================
     return (
         <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top']}>
@@ -52,7 +52,8 @@ export default function AiChatScreen() {
                     onPress={() => router.back()}
                     className="flex-row items-center gap-1 h-9 rounded-full bg-background-light/40 pl-2 pr-3 dark:bg-background-dark/30 active:opacity-80"
                 >
-                    <ChevronLeft size={18} color="#64748B" />
+                    <ArrowLeft size={18} color="#64748B" />
+
                 </Pressable>
 
                 <View className="flex-row items-center">
@@ -85,7 +86,7 @@ export default function AiChatScreen() {
                                             'px-4 py-3 rounded-3xl ',
                                             isAi
                                                 ? 'rounded-tl-lg border border-border-light/40 bg-surface-light/60 dark:border-border-dark/30 dark:bg-surface-dark/60 backdrop-blur-lg'
-                                                : 'rounded-tr-lg bg-primary shadow-primary/10',
+                                                : 'rounded-tr-lg bg-primary',
                                         )}
                                     >
                                         <Text className={cn('text-[15px] leading-[22px] tracking-wide', isAi ? 'text-text-primary-light dark:text-text-primary-dark' : 'text-white')}>
