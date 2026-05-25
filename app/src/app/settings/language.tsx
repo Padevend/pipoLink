@@ -31,7 +31,7 @@ export default function LanguageScreen(): JSX.Element {
         </Pressable>
         
         <Text className="flex-1 ml-3 text-[17px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
-          {t('language')}
+          Langue
         </Text>
       </View>
 

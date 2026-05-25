@@ -71,7 +71,7 @@ export default function NewGroupScreen(): JSX.Element {
 
         <View className="flex-1 ml-3">
           <Text className="text-[17px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
-            {t('newGroup')}
+            Nouveau groupe
           </Text>
           <Text className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary-light/50 dark:text-text-secondary-dark/50 mt-0.5">
             Espace collaboratif
@@ -83,8 +83,8 @@ export default function NewGroupScreen(): JSX.Element {
 
         {/* Section 1 : Informations du groupe */}
         <Input
-          label={t('groupName')}
-          placeholder={t('groupNamePlaceholder')}
+          label="Nouveau groupe"
+          placeholder="Ex. 3GI — TD"
           value={name}
           onChangeText={setName}
           containerClassName="mb-6 bg-surface-light/50 dark:bg-surface-dark/40 border-border-light/40 dark:border-border-dark/20"
@@ -93,7 +93,7 @@ export default function NewGroupScreen(): JSX.Element {
         {/* Section 2 : Recherche des membres */}
         <View className="flex-row items-center justify-between mb-3 ml-2">
           <Text className="text-[10px] font-bold uppercase tracking-widest text-text-secondary-light/60 dark:text-text-secondary-dark/60">
-            {t('selectMembers')}
+            Sélectionner les membres
           </Text>
           {selected.length > 0 && (
             <Text className="text-[11px] font-bold text-primary">
@@ -105,7 +105,7 @@ export default function NewGroupScreen(): JSX.Element {
         <SearchBar
           value={query}
           onChangeText={setQuery}
-          placeholder={t('searchUsers')}
+          placeholder="Rechercher par nom, pseudo ou matricule"
         />
 
         {/* Indicateur de chargement */}
@@ -179,7 +179,7 @@ export default function NewGroupScreen(): JSX.Element {
 
         {/* Bouton de validation inférieur */}
         <Button
-          label={t('createGroup')}
+          label="Créer le groupe"
           onPress={() => void create()}
           loading={createChat.isPending}
           disabled={!name.trim() || selected.length < 1}

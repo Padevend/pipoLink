@@ -26,7 +26,7 @@ export default function HomeScreen() {
           </View>
           <View className="justify-center">
             <Text className="text-xl font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
-              {t('messages')}
+              Messages
             </Text>
             
             {/* Tag utilisateur style badge minimaliste */}

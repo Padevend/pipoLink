@@ -31,7 +31,7 @@ export default function SettingsScreen() {
         <View className="px-5 py-6">
           {/* Titre Principal Raffiné */}
           <Text className="mb-6 text-[26px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
-            {t("title")}
+            Profil
           </Text>
 
           {/* En-tête de Profil Façon Badge Volant */}
@@ -60,13 +60,13 @@ export default function SettingsScreen() {
 
           {/* Section : Compte */}
           <Text className="mb-2.5 ml-3 text-[10px] font-bold uppercase tracking-widest text-text-secondary-light/60 dark:text-text-secondary-dark/60">
-            {t("account")}
+            Compte
           </Text>
           <View className="mb-6 overflow-hidden rounded-2xl border border-border-light/40 bg-surface-light/50 dark:border-border-dark/20 dark:bg-surface-dark/40 backdrop-blur-md">
             <SettingItem
               icon={User}
-              label={t("accountManager")}
-              value={t("accountManagerDesc")}
+              label="Mon compte"
+              value="Voir et modifier les détails de votre compte"
               onPress={() => router.push("/settings/Accounts")}
             />
             {isPrimary && (
@@ -74,8 +74,8 @@ export default function SettingsScreen() {
                 <View className="mx-4 h-[0.5px] bg-border-light/10 dark:bg-border-dark/5" />
                 <SettingItem
                   icon={Shield}
-                  label={t("linkedDevices")}
-                  value={t("linkedDevicesDesc")}
+                  label="Appareils liés"
+                  value="Voir et gérer les appareils connectés à votre compte"
                   onPress={() => router.push("/devices")}
                 />
                 <View className="mx-4 h-[0.5px] bg-border-light/10 dark:bg-border-dark/5" />
@@ -84,48 +84,48 @@ export default function SettingsScreen() {
             <View className="mx-4 h-[0.5px] bg-border-light/10 dark:bg-border-dark/5" />
             <SettingItem
               icon={CreditCard}
-              label={t("subscription")}
-              value={t("subscriptionDesc")}
+              label="Abonnement"
+              value="Forfait et facturation"
               onPress={() => router.push("/settings/subscription")}
             />
           </View>
 
           {/* Section : Préférences */}
           <Text className="mb-2.5 ml-3 text-[10px] font-bold uppercase tracking-widest text-text-secondary-light/60 dark:text-text-secondary-dark/60">
-            {t("preferences")}
+            Préférences
           </Text>
           <View className="mb-6 overflow-hidden rounded-2xl border border-border-light/40 bg-surface-light/50 dark:border-border-dark/20 dark:bg-surface-dark/40 backdrop-blur-md">
             <SettingItem
               icon={Palette}
-              label={t("appearance")}
-              value={t("appearanceDesc")}
+              label="Apparence"
+              value="Thème clair, sombre, système"
               onPress={() => router.push("/settings/appearance")}
             />
             <View className="mx-4 h-[0.5px] bg-border-light/10 dark:bg-border-dark/5" />
             <SettingItem
               icon={Globe}
-              label={t("language")}
-              value={t("languageDesc")}
+              label="Langue"
+              value="Voir et modifier la langue de l'application"
               onPress={() => router.push("/settings/language")}
             />
             <View className="mx-4 h-[0.5px] bg-border-light/10 dark:bg-border-dark/5" />
             <SettingItem
               icon={Bell}
-              label={t("notifications")}
-              value={t("notificationsDesc")}
+              label="Notifications"
+              value="Gérer les notifications"
               onPress={() => router.push("/settings/notifications")}
             />
           </View>
 
           {/* Section : Aide */}
           <Text className="mb-2.5 ml-3 text-[10px] font-bold uppercase tracking-widest text-text-secondary-light/60 dark:text-text-secondary-dark/60">
-            {t("help")}
+            Aide & support
           </Text>
           <View className="mb-8 overflow-hidden rounded-2xl border border-border-light/40 bg-surface-light/50 dark:border-border-dark/20 dark:bg-surface-dark/40 backdrop-blur-md">
             <SettingItem
               icon={HelpCircle}
-              label={t("help")}
-              value={t("helpDesc")}
+              label="Centre d'aide"
+              value="Obtenir de l'aide et du support"
               onPress={() => router.push("/settings/Help")}
             />
           </View>

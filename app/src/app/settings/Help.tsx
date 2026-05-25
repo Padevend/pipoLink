@@ -23,7 +23,7 @@ export default function HelpsAndCommentScreen() {
                 </Pressable>
 
                 <View className="flex-row items-center">
-                    <Text className="font-semibold tracking-tight text-text-primary-light dark:text-text-primary-dark text-xl">{t("help")}</Text>
+                    <Text className="font-semibold tracking-tight text-text-primary-light dark:text-text-primary-dark text-xl">Aide & Support</Text>
                 </View>
             </View>
 
@@ -31,8 +31,8 @@ export default function HelpsAndCommentScreen() {
                 <View className="mb-6 overflow-hidden backdrop-blur-md py-6">
                     <SettingItem
                         icon={Info}
-                        label={t("about")}
-                        value={t("aboutDesc")}
+                        label="À propos"
+                        value="Informations sur l'application"
                         onPress={() => router.push("/settings/Help")}
                     />
 

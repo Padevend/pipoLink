@@ -5,12 +5,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BRAND } from '@/shared/config/brand';
 import { Button } from '@/shared/ui/button';
-import { ScrollView } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
+import { ScrollView } from 'react-native-gesture-handler';
 
 export default function SubscriptionScreen(): JSX.Element {
   const { t } = useTranslation('settings');
-  
+
 
   return (
     <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top']}>
@@ -25,7 +25,7 @@ export default function SubscriptionScreen(): JSX.Element {
         </Pressable>
 
         <Text className="flex-1 ml-3 text-[17px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
-          {t('subscription')}
+          Abonnement
         </Text>
       </View>
 
@@ -36,7 +36,7 @@ export default function SubscriptionScreen(): JSX.Element {
           <View className="rounded-2xl border border-border-light/40 bg-surface-light/50 p-5 dark:border-border-dark/20 dark:bg-surface-dark/40 backdrop-blur-md">
             <View className="flex-row justify-between items-center mb-4">
               <Text className="text-[16px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
-                {t('planFree')}
+                Plan Gratuit
               </Text>
               <View className="rounded-full bg-text-secondary-light/10 dark:bg-text-secondary-dark/10 px-2.5 py-0.5 border border-border-light/10">
                 <Text className="text-[10px] font-bold text-text-secondary-light dark:text-text-secondary-dark">
@@ -70,7 +70,7 @@ export default function SubscriptionScreen(): JSX.Element {
               <View className="flex-row items-center gap-1.5">
                 <Sparkles size={16} color={BRAND.primary} />
                 <Text className="text-[16px] font-bold tracking-tight text-primary">
-                  {t('planPremium')}
+                  Plan Premium
                 </Text>
               </View>
               <View className="rounded-full bg-primary/10 px-2.5 py-0.5 border border-primary/20">

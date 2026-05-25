@@ -61,10 +61,10 @@ export default function NewChatScreen(): JSX.Element {
         
         <View className="flex-1 ml-3">
           <Text className="text-[17px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
-            {t('newPrivateChat')}
+            Échange privé
           </Text>
           <Text className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary-light/50 dark:text-text-secondary-dark/50 mt-0.5">
-            {t('searchUsers')}
+            Rechercher par nom, pseudo ou matricule
           </Text>
         </View>
       </View>
@@ -74,7 +74,7 @@ export default function NewChatScreen(): JSX.Element {
         <SearchBar 
           value={query} 
           onChangeText={setQuery} 
-          placeholder={t('searchUsers')}
+          placeholder="Rechercher par nom, pseudo ou matricule"
         />
       </View>
 
@@ -118,14 +118,13 @@ export default function NewChatScreen(): JSX.Element {
             />
           </View>
         ) : (
-          /* État vide stylisé (uniquement si une recherche n'aboutit pas) */
           query.length > 0 && (
             <View className="flex-1 items-center justify-center pb-24">
               <View className="h-11 w-11 items-center justify-center rounded-xl bg-text-secondary-light/5 border border-border-light/10 mb-3">
                 <Search size={18} color="#64748B" />
               </View>
               <Text className="text-center text-[12px] font-medium text-text-secondary-light/60 dark:text-text-secondary-dark/60">
-                {t('noUsers')}
+                Aucun utilisateur trouvé
               </Text>
             </View>
           )

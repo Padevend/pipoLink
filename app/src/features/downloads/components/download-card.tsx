@@ -1,6 +1,7 @@
 import { downloadTask } from "@/shared/api/types";
 import { BRAND } from "@/shared/config/brand";
 import { formatBytes } from "@/shared/lib/file";
+import * as Linking from "expo-linking";
 import { CheckCircle2, ExternalLink, Pause, Play, Trash2 } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
 import { downloadManager } from "../services/download.manager";
@@ -96,7 +97,9 @@ export function DownloadCard({ task }: { task: downloadTask }) {
           {/* Bouton Ouvrir le fichier */}
           {isCompleted && (
             <Pressable
-              onPress={() => { /* Ouvrir le document local ici */ }}
+              onPress={() => {
+                Linking.openURL(task.local_uri)
+              }}
               hitSlop={6}
               className="h-8 px-3 flex-row items-center gap-x-1.5 rounded-lg border border-border-light/40 bg-surface-light dark:border-border-dark/20 dark:bg-surface-dark active:scale-95 transition-transform"
             >

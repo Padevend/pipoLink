@@ -15,10 +15,20 @@ export type RawMessage = Partial<Message> & {
   attachments?: RawAttachment[];
 };
 
+/**
+ * Normalises a raw server attachment into an `AttachmentMetadata` descriptor.
+ *
+ * CONTRACT: This function NEVER triggers a download or decrypt operation.
+ * Attachments are purely metadata at this stage. The download manager
+ * (`attachment-download.manager.ts`) handles the actual file retrieval on
+ * user demand.
+ */
 function normalizeAttachment(raw: RawAttachment): MessageAttachment {
   return {
     id: raw.id ?? '',
+    // fileUrl is the remote signed URL to the encrypted .enc file
     fileUrl: raw.fileUrl ?? raw.file_url ?? '',
+    // iv is a base64-encoded 12-byte AES-GCM nonce
     iv: raw.iv ?? '',
     fileName: raw.fileName ?? raw.file_name ?? 'file',
     fileSize: raw.fileSize ?? raw.file_size ?? 0,

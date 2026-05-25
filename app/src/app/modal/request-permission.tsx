@@ -1,35 +1,33 @@
-// app/onboarding/permissions.tsx
-// Écran de demande de permissions — PipoLink
-
 import { BRAND } from "@/shared/config/brand";
-import { Audio } from "expo-av";
 import { Camera } from "expo-camera";
+import * as FileSystem from "expo-file-system/legacy";
+import * as MediaLibrary from "expo-media-library";
 import { router } from "expo-router";
 import {
-    Camera as CameraIcon,
-    CheckCircle2,
-    Mic,
-    ShieldCheck
+  Camera as CameraIcon,
+  CheckCircle2,
+  FolderOpen,
+  ImageIcon,
+  ShieldCheck
 } from "lucide-react-native";
 import React, { useState } from "react";
 import {
-    Alert,
-    Pressable,
-    ScrollView,
-    Text,
-    View
+  Alert,
+  Pressable,
+  ScrollView,
+  Text,
+  View
 } from "react-native";
 import Animated, {
-    FadeInUp,
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-    withTiming,
+  FadeInUp,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
+// Types
 type PermStatus = "idle" | "granted" | "denied";
 
 interface Permission {
@@ -38,44 +36,55 @@ interface Permission {
   desc:     string;
   required: boolean;
   icon:     React.ElementType;
-  color:    string;
-  bgClass:  string; // Classes Tailwind adaptatives pour le fond de l'icône
   request:  () => Promise<PermStatus>;
 }
 
-// ─── Définitions des Permissions ──────────────────────────────────────────────
-
+// Définitions des Permissions
 const PERMISSIONS: Permission[] = [
   {
     key:      "camera",
     label:    "Caméra",
-    desc:     "Scanner des QR codes, photo de profil et documents",
+    desc:     "Scanner des QR codes, photos de profil et pièces jointes",
     required: true,
     icon:      CameraIcon,
-    color:    "#818cf8",
-    bgClass:  "bg-indigo-500/10 dark:bg-indigo-500/20 border-indigo-500/10",
     request:  async () => {
       const { status } = await Camera.requestCameraPermissionsAsync();
       return status === "granted" ? "granted" : "denied";
     },
   },
   {
-    key:      "microphone",
-    label:    "Microphone",
-    desc:     "Messages vocaux dans les conversations",
-    required: false,
-    icon:      Mic,
-    color:    "#f87171",
-    bgClass:  "bg-red-500/10 dark:bg-red-500/20 border-red-500/10",
+    key:      "files",
+    label:    "Espace de stockage",
+    desc:     "Autoriser l'application à enregistrer et lire les documents partagés",
+    required: true,
+    icon:      FolderOpen,
     request:  async () => {
-      const { status } = await Audio.requestPermissionsAsync();
-      return status === "granted" ? "granted" : "denied";
+      try {
+        const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+        return permissions.granted ? "granted" : "denied";
+      } catch (error) {
+        return "denied";
+      }
     },
   },
+  {
+    key:      "gallery",
+    label:    "Galerie photo",
+    desc:     "Permettre la sauvegarde des images et affiches en haute définition sur votre appareil",
+    required: true,
+    icon:      ImageIcon,
+    request:  async () => {
+      try {
+        const { status } = await MediaLibrary.requestPermissionsAsync(true);
+        return status === "granted" ? "granted" : "denied";
+      } catch (error) {
+        return "denied";
+      }
+    },
+  }
 ];
 
-// ─── Composant PermissionItem ──────────────────────────────────────────────────
-
+// Composant PermissionItem
 function PermissionItem({
   perm,
   status,
@@ -98,11 +107,11 @@ function PermissionItem({
         <Pressable
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
-          className="flex-row items-center gap-x-3.5 p-3.5 mb-2.5 rounded-xl border border-border-light/30 bg-surface-light/40 dark:border-border-dark/10 dark:bg-surface-dark/40 backdrop-blur-md"
+          className="flex-row items-center gap-x-3.5 p-4 mb-3 rounded-2xl border border-border-light/30 bg-surface-light/40 dark:border-border-dark/10 dark:bg-surface-dark/40 backdrop-blur-md"
         >
           {/* Icône enveloppée */}
-          <View className={`h-10 w-10 items-center justify-center rounded-xl border ${perm.bgClass}`}>
-            <Icon size={16} color={perm.color} strokeWidth={2} />
+          <View className="bg-surface-light dark:bg-surface-dark h-10 w-10 items-center justify-center rounded-xl ">
+            <Icon size={16} color="#64748B" strokeWidth={2} />
           </View>
 
           {/* Textes explicatifs */}
@@ -118,8 +127,8 @@ function PermissionItem({
           {/* États et Badges à droite */}
           <View className="flex-shrink-0">
             {status === "granted" ? (
-              <View className="h-6 w-6 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                <CheckCircle2 size={13} className="text-emerald-500 dark:text-emerald-400" strokeWidth={2.5} />
+              <View className="h-6 w-6 items-center justify-center rounded-lg bg-surface-light dark:bg-surface-dark">
+                <CheckCircle2 size={13} color="green" strokeWidth={2.5} />
               </View>
             ) : status === "denied" ? (
               <View className="rounded-md bg-red-500/10 border border-red-500/20 px-2 py-0.5">
@@ -128,11 +137,11 @@ function PermissionItem({
             ) : (
               <View className={`rounded-md px-2 py-0.5 border ${
                 perm.required 
-                  ? 'bg-indigo-500/10 border-indigo-500/20' 
+                  ? 'bg-primary/10 border-primary/20' 
                   : 'bg-text-secondary-light/5 border-border-light/20 dark:border-border-dark/10'
               }`}>
                 <Text className={`text-[10px] font-bold uppercase tracking-wide ${
-                  perm.required ? 'text-indigo-500' : 'text-text-secondary-light/40 dark:text-text-secondary-dark/40'
+                  perm.required ? 'text-primary' : 'text-text-secondary-light/40 dark:text-text-secondary-dark/40'
                 }`}>
                   {perm.required ? "Requis" : "Optionnel"}
                 </Text>
@@ -145,8 +154,7 @@ function PermissionItem({
   );
 }
 
-// ─── Écran Principal ──────────────────────────────────────────────────────────
-
+// Écran Principal
 export default function PermissionsScreen() {
   const insets = useSafeAreaInsets();
   const [statuses, setStatuses] = useState<Record<string, PermStatus>>(
@@ -182,10 +190,10 @@ export default function PermissionsScreen() {
     if (requiredDenied) {
       Alert.alert(
         "Permissions nécessaires",
-        "Certaines permissions obligatoires ont été refusées. Vous pouvez les activer manuellement dans Paramètres > Applications > PipoLink.",
+        "Pour pouvoir échanger et stocker vos cours et documents sur PipoLink, l'accès à la caméra et au stockage est indispensable.",
         [
           { text: "Plus tard", style: "cancel" },
-          { text: "Ouvrir les paramètres", onPress: () => { /* Linking.openSettings() */ } },
+          { text: "Ouvrir les paramètres", onPress: () => {} },
         ]
       );
     } else {
@@ -213,33 +221,23 @@ export default function PermissionsScreen() {
       className="flex-1 bg-background-light dark:bg-background-dark" 
       style={{ paddingBottom: insets.bottom + 16, paddingTop: insets.top + 8 }}
     >
-      {/* Indicateur de progression Onboarding (Step dots) */}
-      <View className="flex-row justify-center gap-x-1.5 py-3">
-        <View className="w-1.5 h-1.5 rounded-full bg-text-secondary-light/10 dark:bg-text-secondary-dark/10" />
-        <View className="h-1.5 rounded-full bg-indigo-500" style={{ width: 18 }} />
-        <View className="w-1.5 h-1.5 rounded-full bg-text-secondary-light/10 dark:bg-text-secondary-dark/10" />
-      </View>
-
       {/* Zone d'en-tête (Hero) */}
-      <Animated.View entering={FadeInUp.delay(0).springify()} className="items-center px-7 py-5">
-        <View className="h-16 w-16 items-center justify-center rounded-2xl bg-indigo-500/10 border border-indigo-500/20 mb-4.5">
-          <ShieldCheck size={26} className="text-indigo-500" strokeWidth={1.8} />
+      <Animated.View entering={FadeInUp.delay(0).springify()} className="items-center px-7 pt-4 pb-6">
+        <View className="h-16 w-16 items-center justify-center rounded-2xl mb-5 bg-surface-light dark:bg-surface-dark">
+          <ShieldCheck size={26} color="#64748B" strokeWidth={1.8} />
         </View>
-        <Text className="text-[18px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark mb-1.5">
+        <Text className="text-[18px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark mb-2">
           Autorisations requises
         </Text>
         <Text className="text-[12px] font-medium text-center text-text-secondary-light/40 dark:text-text-secondary-dark/40 leading-5 px-3">
-          PipoLink a besoin de quelques accès pour fonctionner correctement, distribuer vos documents et vous notifier en toute sécurité.
+          PipoLink requiert ces accès afin de valider vos documents d'étude, téléverser vos fichiers de stockage et sécuriser votre terminal.
         </Text>
       </Animated.View>
-
-      {/* Ligne de séparation épurée */}
-      <View className="h-[0.5px] bg-border-light/20 dark:bg-border-dark/10" />
 
       {/* Liste défilante des permissions */}
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 4 }}
         showsVerticalScrollIndicator={false}
       >
         {PERMISSIONS.map((perm, i) => (
@@ -252,15 +250,13 @@ export default function PermissionsScreen() {
         ))}
       </ScrollView>
 
-      <View className="h-[0.5px] bg-border-light/20 dark:bg-border-dark/10" />
-
       {/* Pied de page (Actions de validation) */}
-      <View className="px-4 pt-4 gap-y-2">
+      <View className="px-5 py-4 gap-y-2">
         <Pressable
           onPress={handleRequestAll}
           disabled={loading}
-          className="h-11 items-center justify-center rounded-xl active:scale-[0.99] transition-transform"
-          style={{ backgroundColor: BRAND.primary, opacity: loading ? 0.6 : 1 }}
+          className="h-12 items-center justify-center rounded-xl active:scale-[0.99] transition-transform"
+          style={{ backgroundColor: BRAND.primary, opacity: loading ? 0.7 : 1 }}
         >
           <Text className="text-[13px] font-bold text-white uppercase tracking-wider">
             {loading ? "Vérification en cours…" : "Autoriser les accès"}
@@ -269,17 +265,12 @@ export default function PermissionsScreen() {
 
         <Pressable 
           onPress={handleSkip} 
-          className="h-11 items-center justify-center rounded-xl border border-border-light/40 bg-surface-light dark:border-border-dark/20 dark:bg-surface-dark active:scale-[0.99] transition-transform"
+          className="h-12 items-center justify-center rounded-xl border border-border-light/40 bg-surface-light dark:border-border-dark/20 dark:bg-surface-dark active:scale-[0.99] transition-transform"
         >
           <Text className="text-[12px] font-bold text-text-secondary-light/60 dark:text-text-secondary-dark/60 uppercase tracking-wide">
             Configurer plus tard
           </Text>
         </Pressable>
-
-        <Text className="text-[10px] font-medium text-center text-text-secondary-light/30 dark:text-text-secondary-dark/30 pt-1 leading-4">
-          Vos choix restent modifiables à tout moment.{"\n"}
-          <Text className="text-indigo-500/70 font-semibold">Politique de confidentialité</Text>
-        </Text>
       </View>
     </View>
   );

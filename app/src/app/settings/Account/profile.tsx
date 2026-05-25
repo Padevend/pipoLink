@@ -206,7 +206,7 @@ export default function ProfileSettingsScreen(): JSX.Element {
 
           {/* Bouton d'Action */}
           <Button
-            label={t("save")}
+            label="Enregistrer"
             loading={saving}
             onPress={() => void save()}
             className="rounded-2xl h-12 active:scale-[0.98] transition-transform"

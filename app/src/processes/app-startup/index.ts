@@ -1,3 +1,4 @@
+import { attachmentDownloadManager } from '@/features/attachments/lib/attachment-download.manager';
 import { setupOfflineSync } from '@/processes/offline-sync';
 import { setupRealtimeSync } from '@/processes/realtime-sync';
 import { updatesApi } from '@/shared/api/updates';
@@ -12,6 +13,8 @@ export async function runAppStartup(): Promise<void> {
   stopOfflineSync = setupOfflineSync();
   stopRealtimeSync?.();
   stopRealtimeSync = setupRealtimeSync();
+
+  await attachmentDownloadManager.initialize()
   await updatesApi.checkUpdate().catch(() => undefined);
 }
 

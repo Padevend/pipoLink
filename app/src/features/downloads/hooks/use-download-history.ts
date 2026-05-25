@@ -5,10 +5,15 @@ import { downloadManager } from "../services/download.manager";
 
 export function useDownloadHistory() {
     const [history, setHistory] = useState<downloadTask[]>([]);
+    const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
 
     const refresh = () => {
+        setIsRefreshing(true)
         const data = localDb.getDownloadRepository();
         setHistory(data);
+        setTimeout(()=>{
+            setIsRefreshing(false)
+        },500)
     };
 
     const clearHistory = () => {
@@ -26,6 +31,7 @@ export function useDownloadHistory() {
     }, []);
 
     return {
+        isRefreshing,
         history,
         refresh,
         clearHistory,

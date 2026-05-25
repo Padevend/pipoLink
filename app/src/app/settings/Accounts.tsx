@@ -34,7 +34,7 @@ export default function AccountsSettingsScreen() {
                 </Pressable>
 
                 <View className="flex-row items-center">
-                    <Text className="font-semibold tracking-tight text-text-primary-light dark:text-text-primary-dark text-xl">{t("accountManager")}</Text>
+                    <Text className="font-semibold tracking-tight text-text-primary-light dark:text-text-primary-dark text-xl">Mon Compte</Text>
                 </View>
             </View>
 
@@ -42,22 +42,22 @@ export default function AccountsSettingsScreen() {
                 <View className="mb-6 overflow-hidden backdrop-blur-md py-6">
                     <SettingItem
                         icon={User}
-                        label={t("personalInfo")}
-                        value={t("personalInfoDesc")}
+                        label="Informations personnelles"
+                        value="Nom, email, téléphone, bio"
                         onPress={() => router.push("/settings/Account/profile")}
                     />
 
                     <SettingItem
                         icon={MailPlus}
-                        label={t("changeEmail")}
-                        value={t("changeEmailDesc")}
+                        label="Changer d'email"
+                        value="Mettre à jour votre adresse email"
                         onPress={() => router.push("/settings/Account/change-email")}
                     />
 
                     <SettingItem
                         icon={Key}
-                        label={t("changePassword")}
-                        value={t("changePasswordDesc")}
+                        label="Changer de mot de passe"
+                        value="Mettre à jour votre mot de passe"
                         onPress={() => router.push("/settings/Account/change-password")}
                     />
                 </View>
@@ -65,12 +65,12 @@ export default function AccountsSettingsScreen() {
 
                 {/* Section : Action de compte*/}
                 <Text className="mb-2.5 ml-3 text-[10px] font-bold uppercase tracking-widest text-text-secondary-light/60 dark:text-text-secondary-dark/60">
-                    {t("actions")}
+                    Actions de compte
                 </Text>
                 <View className="mb-8 overflow-hidden rounded-2xl border border-border-light/40 bg-surface-light/50 dark:border-border-dark/20 dark:bg-surface-dark/40 backdrop-blur-md">
                     <SettingItem
                         icon={LogOut}
-                        label={t("logout")}
+                        label="Déconnexion"
                         destructive
                         showChevron={false}
                         onPress={() => void handleLogout()}
@@ -78,7 +78,7 @@ export default function AccountsSettingsScreen() {
                     <View className="mx-4 h-[0.5px] bg-border-light/10 dark:bg-border-dark/5" />
                     <SettingItem
                         icon={Trash}
-                        label={t("delete")}
+                        label="Supprimer mon compte"
                         destructive
                         showChevron={false}
                         onPress={() => void handleDeleteAccount()}

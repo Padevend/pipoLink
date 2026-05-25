@@ -5,7 +5,6 @@ installAppCrypto();
 installTweetNaclPrng();
 
 import '@/styles/global.css';
-import 'react-native-reanimated';
 
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -25,10 +24,16 @@ import {
 import { I18nProvider } from '@/providers/i18n-provider';
 import { useKeyboardBehavior } from '@/shared/hooks/use-keyboardBehavior';
 import { KeyboardAvoidingView } from 'react-native';
+import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
 
 export const unstable_settings = {
   anchor: '(tabs)',
 };
+
+configureReanimatedLogger({
+  level: ReanimatedLogLevel.warn,
+  strict: false,
+});
 
 function AppProviders({ children }: { children: React.ReactNode }): JSX.Element {
   return (
@@ -83,7 +88,7 @@ export default function RootLayout(): JSX.Element {
         <SafeAreaProvider>
           <AppProviders>
             <AppTreeWithKeyboardAvoiding>
-              <Stack screenOptions={{ headerShown: false }} />
+              <Stack screenOptions={{ headerShown: false }} initialRouteName='index' />
               <AppStartup />
             </AppTreeWithKeyboardAvoiding>
           </AppProviders>

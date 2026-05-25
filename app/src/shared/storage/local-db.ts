@@ -2,7 +2,7 @@ import type { AiChatMessage, AiSession } from '@/shared/api/ai';
 import type { Conversation } from '@/shared/api/messaging';
 import { normalizeConversation } from '@/shared/api/normalize-conversation';
 import { normalizeMessage } from '@/shared/api/normalize-message';
-import type { downloadTask, LocalMessageAttachements, LocalMessageAttachementsProps, Message } from '@/shared/api/types';
+import type { downloadTask, Message } from '@/shared/api/types';
 import { db } from '@/shared/storage/sqlite';
 
 export type PendingMessageRow = {
@@ -41,43 +41,6 @@ export const localDb = {
     );
     return rows.map((r) => normalizeConversation(JSON.parse(r.payload_json) as Conversation));
   },
-  // ============================================================================================
-
-  // gestionnaire des documents associer au messages de chat
-  // ============================================================================================
-  upsertAttachments(data: LocalMessageAttachementsProps): void {
-    db.runSync(
-      `
-      INSERT OR REPLACE INTO attachements (
-      id, 
-      encrypted_url, 
-      decrypted_local_uri, 
-      filename, 
-      mime_type, 
-      downloaded, 
-      created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [
-        data.id,
-        data.encryptedUrl,
-        data.decryptedLocalUri,
-        data.filename,
-        data.mimeType,
-        1,
-        Date.now()
-      ]
-    )
-  },
-
-  getAttachementsById(id: string): LocalMessageAttachements | null {
-    const row = db.getFirstSync<LocalMessageAttachements>(
-      `SELECT * FROM attachements WHERE id = ?`,
-      [id]
-    );
-
-    return row || null;
-  },
-
   // ============================================================================================
 
   // gestion des messages de chats

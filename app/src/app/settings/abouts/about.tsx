@@ -86,7 +86,7 @@ export default function AboutScreen(): JSX.Element {
           <ArrowLeft size={20} color="#64748B" />
         </Pressable>
         <Text className="flex-1 ml-3 text-[17px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
-          {t('about')}
+          À propos
         </Text>
       </View>
 

@@ -51,7 +51,7 @@ export default function DevicesScreen(): JSX.Element {
             />
           </Pressable>
           <Text className="flex-1 ml-3 text-[17px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
-            {t("linkedDevices")}
+            Appareils liés
           </Text>
         </View>
 
@@ -63,7 +63,7 @@ export default function DevicesScreen(): JSX.Element {
             Accès restreint
           </Text>
           <Text className="text-center text-xs leading-[20px] text-text-secondary-light/70 dark:text-text-secondary-dark/70">
-            {t("primaryOnly")}
+            Disponible uniquement sur l'appareil principal
           </Text>
         </View>
       </SafeAreaView>
@@ -85,7 +85,7 @@ export default function DevicesScreen(): JSX.Element {
             <ArrowLeft size={20} color="#64748B" />
           </Pressable>
           <Text className="ml-3 text-[17px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
-            {t("linkedDevices")}
+            Appareils liés
           </Text>
         </View>
 
@@ -108,7 +108,7 @@ export default function DevicesScreen(): JSX.Element {
       >
         {/* Description contextuelle discrète en entête */}
         <Text className="mb-6 px-1 text-xs leading-[18px] text-text-secondary-light/70 dark:text-text-secondary-dark/70">
-          {t("linkedDevicesDesc")}
+          Appareils secondaires (principal uniquement)
         </Text>
 
         {isLoading ? (

@@ -37,7 +37,7 @@ export default function NotificationsScreen(): JSX.Element {
         </Pressable>
         
         <Text className="flex-1 ml-3 text-[17px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
-          {t('notifications')}
+          Notifications
         </Text>
       </View>
 
