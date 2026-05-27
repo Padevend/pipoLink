@@ -17,7 +17,7 @@ import { wsManager } from '@/shared/websocket/manager';
 
 // Subscribe to a new message event
 const unsubscribe = wsManager.on('MESSAGE_NEW', (payload) => {
-  console.log(payload);
+ 
 });
 
 // Cleanup

@@ -2,6 +2,7 @@ import { authApi } from '@/shared/api/auth';
 import { normalizeUser, type UserWithProfile } from '@/shared/api/normalize-user';
 import type { User } from '@/shared/api/types';
 import { userApi } from '@/shared/api/user';
+import { getSecureItem, removeSecureItem, setSecureItem } from '@/shared/storage/secure-storage';
 import { disconnect } from '@/shared/websocket/manager';
 import * as SecureStore from 'expo-secure-store';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
@@ -54,11 +55,11 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
     tokens: { accessToken: string; refreshToken: string; expiresAt: number; deviceId?: string | null },
     userData?: UserWithProfile,
   ) => {
-    await SecureStore.setItemAsync('auth_token', tokens.accessToken);
-    await SecureStore.setItemAsync('refresh_token', tokens.refreshToken);
-    await SecureStore.setItemAsync('expires_at', String(tokens.expiresAt));
+    await setSecureItem('auth_token', tokens.accessToken).then(()=>console.log('Access token saved'));
+    await setSecureItem('refresh_token', tokens.refreshToken);
+    await setSecureItem('expires_at', String(tokens.expiresAt));
     if (tokens.deviceId) {
-      await SecureStore.setItemAsync('device_id', tokens.deviceId);
+      await setSecureItem('device_id', tokens.deviceId);
     }
 
     const normalized = userData ? normalizeUser(userData) : null;
@@ -72,19 +73,19 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
   };
 
   const clearAuthData = async () => {
-    await SecureStore.deleteItemAsync('auth_token');
-    await SecureStore.deleteItemAsync('refresh_token');
-    await SecureStore.deleteItemAsync('expires_at');
-    await SecureStore.deleteItemAsync('user_data');
-    await SecureStore.deleteItemAsync('device_id').catch(() => {});
+    await removeSecureItem('auth_token');
+    await removeSecureItem('refresh_token');
+    await removeSecureItem('expires_at');
+    await removeSecureItem('user_data');
+    await removeSecureItem('device_id').catch(() => {});
     setUser(null);
   };
 
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const token = await SecureStore.getItemAsync('auth_token');
-        const savedUser = await SecureStore.getItemAsync('user_data');
+        const token = await getSecureItem('auth_token');
+        const savedUser = await getSecureItem('user_data');
 
         if (token && savedUser) {
           setUser(normalizeUser(JSON.parse(savedUser) as UserWithProfile));
@@ -98,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
           }
         }
       } catch (e) {
-        console.error('Auth initialization failed:', e);
+
       } finally {
         setIsLoading(false);
       }

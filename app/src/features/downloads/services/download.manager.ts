@@ -21,7 +21,6 @@ class DownloadManager {
         const id = generateUUID();
 
         const localUri = FileSystemLegacy.documentDirectory + "documents/pipolink/" + filename;
-        console.log("localUri", localUri);
 
         // verifie si le dossier existe sinon le cree
         const dirInfo = await FileSystemLegacy.getInfoAsync(FileSystemLegacy.documentDirectory + "documents/pipolink");

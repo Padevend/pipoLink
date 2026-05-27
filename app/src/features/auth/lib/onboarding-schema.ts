@@ -11,7 +11,7 @@ export const onboardingSchema = z.object({
     .string()
     .trim()
     .optional()
-    .refine((v) => !v || /^[a-zA-Z0-9_]{3,24}$/.test(v), 'Pseudo invalide (3–24 caractères)'),
+    .refine((v) => !v || /^(?! )[^\s]{1,30}(?! )$/u.test(v), 'Pseudo invalide (3–32 caractères)'),
   phone: z
     .string()
     .optional()

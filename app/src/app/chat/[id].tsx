@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -58,10 +58,6 @@ export default function ChatScreen() {
     );
   }
 
-  useEffect(() => {
-    console.log('Conversation loaded:', conversation);
-  }, [])
-
   // get chat name
   const chatName = useMemo(() => {
     if (conversation.type === "group") {
@@ -74,7 +70,6 @@ export default function ChatScreen() {
   const userPhone = useMemo(() => {
     if (conversation.type === "group") return null;
     const otherMember = conversation.members.find(m => m.id !== user?.id);
-    console.log(otherMember)
 
     return otherMember?.phone || null;
   }, [conversation.members, conversation.type]);

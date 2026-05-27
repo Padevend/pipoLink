@@ -1,12 +1,32 @@
 import SettingItem from "@/shared/ui/settings-cards";
 import { router } from "expo-router";
-import { ArrowLeft, Info } from "lucide-react-native";
+import { ArrowLeft, Info, RefreshCw } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View, Modal, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useState } from "react";
+import { UpdateManager } from "@/processes/update-manager";
 
 export default function HelpsAndCommentScreen() {
     const { t } = useTranslation("settings");
+    const [isChecking, setIsChecking] = useState(false);
+
+    const handleCheckUpdate = async () => {
+        try {
+            setIsChecking(true);
+            const updateData = await UpdateManager.checkAndHandleUpdates();
+            
+            if (updateData) {
+                router.replace('/updates');
+            } else {
+                Alert.alert("Mise à jour", "Votre application est déjà à jour.");
+            }
+        } catch (error) {
+            Alert.alert("Erreur", "Impossible de vérifier les mises à jour.");
+        } finally {
+            setIsChecking(false);
+        }
+    };
 
     return (
         <SafeAreaView
@@ -35,11 +55,24 @@ export default function HelpsAndCommentScreen() {
                         value="Informations sur l'application"
                         onPress={() => router.push("/settings/Help")}
                     />
-
+                    <SettingItem
+                        icon={RefreshCw}
+                        label="Vérifier la mise à jour"
+                        value="Rechercher une nouvelle version"
+                        onPress={handleCheckUpdate}
+                    />
                 </View>
-
             </View>
 
+            {/* Loading Modal */}
+            <Modal transparent visible={isChecking} animationType="fade">
+                <View className="flex-1 items-center justify-center bg-black/50">
+                    <View className="bg-surface-light dark:bg-surface-dark p-6 rounded-2xl items-center flex-row gap-4 shadow-lg">
+                        <ActivityIndicator size="large" color="#007AFF" />
+                        <Text className="text-text-primary-light dark:text-text-primary-dark font-medium text-lg">Recherche en cours...</Text>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     )
 }

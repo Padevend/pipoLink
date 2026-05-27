@@ -1,5 +1,5 @@
 import * as FileSystem from "expo-file-system/legacy";
-import { Album, Asset, requestPermissionsAsync } from 'expo-media-library/next';
+//import { Album, Asset, requestPermissionsAsync } from 'expo-media-library';
 import { Platform } from "react-native";
 
 export function formatBytes(bytes: number, decimals = 1) {
@@ -87,27 +87,27 @@ const ALBUM_NAME = 'PipolinkImages';
 export async function saveToGallery(
   uri: string
 ): Promise<{ success: boolean; message: string }> {
-  const { status } = await requestPermissionsAsync();
-  if (status !== 'granted') {
-    return { success: false, message: 'Permission galerie refusée' };
-  }
+  // const { status } = await requestPermissionsAsync();
+  // if (status !== 'granted') {
+  //   return { success: false, message: 'Permission galerie refusée' };
+  // }
 
-  let localUri = uri;
-  if (uri.startsWith('http://') || uri.startsWith('https://')) {
-    const filename = uri.split('/').pop()?.split('?')[0] ?? `pipolink_${Date.now()}.jpg`;
-    const dest = `${FileSystem.cacheDirectory}${filename}`;
-    const { uri: downloaded } = await FileSystem.downloadAsync(uri, dest);
-    localUri = downloaded;
-  }
+  // let localUri = uri;
+  // if (uri.startsWith('http://') || uri.startsWith('https://')) {
+  //   const filename = uri.split('/').pop()?.split('?')[0] ?? `pipolink_${Date.now()}.jpg`;
+  //   const dest = `${FileSystem.cacheDirectory}${filename}`;
+  //   const { uri: downloaded } = await FileSystem.downloadAsync(uri, dest);
+  //   localUri = downloaded;
+  // }
 
-  const asset = await Asset.create(localUri);
+  // const asset = await Asset.create(localUri);
 
-  const existing = await Album.get(ALBUM_NAME);
-  if (existing) {
-    await existing.add([asset]);
-  } else {
-    await Album.create(ALBUM_NAME, [asset]);
-  }
+  // const existing = await Album.get(ALBUM_NAME);
+  // if (existing) {
+  //   await existing.add([asset]);
+  // } else {
+  //   await Album.create(ALBUM_NAME, [asset]);
+  // }
 
   return { success: true, message: 'Image enregistrée dans la galerie' };
 }

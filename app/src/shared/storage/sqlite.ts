@@ -9,6 +9,7 @@ export async function initializeSqlite(): Promise<void> {
       conversation_id TEXT NOT NULL,
       content_encrypted TEXT NOT NULL,
       sender_id TEXT NOT NULL,
+      response_id TEXT,
       created_at TEXT NOT NULL,
       status TEXT NOT NULL,
       iv TEXT NOT NULL DEFAULT '',

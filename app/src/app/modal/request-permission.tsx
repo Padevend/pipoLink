@@ -1,13 +1,12 @@
 import { BRAND } from "@/shared/config/brand";
 import { Camera } from "expo-camera";
 import * as FileSystem from "expo-file-system/legacy";
-import * as MediaLibrary from "expo-media-library";
+//import * as MediaLibrary from "expo-media-library";
 import { router } from "expo-router";
 import {
   Camera as CameraIcon,
   CheckCircle2,
   FolderOpen,
-  ImageIcon,
   ShieldCheck
 } from "lucide-react-native";
 import React, { useState } from "react";
@@ -67,21 +66,21 @@ const PERMISSIONS: Permission[] = [
       }
     },
   },
-  {
-    key:      "gallery",
-    label:    "Galerie photo",
-    desc:     "Permettre la sauvegarde des images et affiches en haute définition sur votre appareil",
-    required: true,
-    icon:      ImageIcon,
-    request:  async () => {
-      try {
-        const { status } = await MediaLibrary.requestPermissionsAsync(true);
-        return status === "granted" ? "granted" : "denied";
-      } catch (error) {
-        return "denied";
-      }
-    },
-  }
+  // {
+  //   key:      "gallery",
+  //   label:    "Galerie photo",
+  //   desc:     "Permettre la sauvegarde des images et affiches en haute définition sur votre appareil",
+  //   required: true,
+  //   icon:      ImageIcon,
+  //   request:  async () => {
+  //     try {
+  //       const { status } = await MediaLibrary.requestPermissionsAsync(true);
+  //       return status === "granted" ? "granted" : "denied";
+  //     } catch (error) {
+  //       return "denied";
+  //     }
+  //   },
+  // }
 ];
 
 // Composant PermissionItem
