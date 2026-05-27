@@ -54,8 +54,8 @@ export class MessagingService {
       for (const d of userDevices) {
         if (!payload.encryptedKeys.some((e) => e.deviceId === d.id)) {
           throw {
-            code:    ErrorCode.VALIDATION_ERROR,
-            status:  400,
+            code: ErrorCode.VALIDATION_ERROR,
+            status: 400,
             message: `Clé de chat manquante pour l'appareil ${d.id} (utilisateur ${uid}).`,
           };
         }
@@ -65,13 +65,13 @@ export class MessagingService {
     return await prisma.$transaction(async (trx) => {
       const chat = await trx.chat.create({
         data: {
-          type:          payload.type,
-          name:          payload.type === "group" ? payload.name!.trim() : null,
+          type: payload.type,
+          name: payload.type === "group" ? payload.name!.trim() : null,
           created_by_id: creatorId,
           members: {
             create: uniqueMembers.map((uid) => ({
               user_id: uid,
-              role:    uid === creatorId ? "admin" : "member",
+              role: uid === creatorId ? "admin" : "member",
             })),
           },
         },
@@ -79,9 +79,9 @@ export class MessagingService {
 
       await trx.chatMemberKey.createMany({
         data: payload.encryptedKeys.map((e) => ({
-          id:                 crypto.randomUUID(),
-          chat_id:            chat.id,
-          device_id:          e.deviceId,
+          id: crypto.randomUUID(),
+          chat_id: chat.id,
+          device_id: e.deviceId,
           encrypted_chat_key: e.encryptedKey,
         })),
       });
@@ -93,9 +93,9 @@ export class MessagingService {
             include: {
               user: {
                 select: {
-                  id:       true,
+                  id: true,
                   username: true,
-                  profile:  { select: { firstname: true, lastname: true, avatarUrl: true } },
+                  profile: { select: { firstname: true, lastname: true, avatarUrl: true } },
                 },
               },
             },
@@ -136,17 +136,17 @@ export class MessagingService {
     await prisma.$transaction(async (trx) => {
       await trx.conversationMember.create({
         data: {
-          id:               crypto.randomUUID(),
-          user_id:          payload.userId,
-          conversation_id:  chatId,
-          role:             "member",
+          id: crypto.randomUUID(),
+          user_id: payload.userId,
+          conversation_id: chatId,
+          role: "member",
         },
       });
       await trx.chatMemberKey.createMany({
         data: payload.encryptedKeys.map((e) => ({
-          id:                 crypto.randomUUID(),
-          chat_id:            chatId,
-          device_id:          e.deviceId,
+          id: crypto.randomUUID(),
+          chat_id: chatId,
+          device_id: e.deviceId,
           encrypted_chat_key: e.encryptedKey,
         })),
       });
@@ -159,9 +159,9 @@ export class MessagingService {
           include: {
             user: {
               select: {
-                id:       true,
+                id: true,
                 username: true,
-                profile:  { select: { firstname: true, lastname: true, avatarUrl: true } },
+                profile: { select: { firstname: true, lastname: true, avatarUrl: true } },
               },
             },
           },
@@ -188,7 +188,7 @@ export class MessagingService {
 
   async listConversations(userId: string) {
     const members = await prisma.conversationMember.findMany({
-      where:   { user_id: userId },
+      where: { user_id: userId },
       include: {
         conversation: {
           include: {
@@ -196,9 +196,9 @@ export class MessagingService {
               include: {
                 user: {
                   select: {
-                    id:       true,
+                    id: true,
                     username: true,
-                    profile:  { select: { firstname: true, lastname: true, avatarUrl: true, phone: true } },
+                    profile: { select: { firstname: true, lastname: true, avatarUrl: true, phone: true } },
                   },
                 },
               },
@@ -214,35 +214,35 @@ export class MessagingService {
         const chat = m.conversation;
         const [lastMessage, unreadCount] = await Promise.all([
           prisma.message.findFirst({
-            where:   { chat_id: chat.id, deletedAt: null },
+            where: { chat_id: chat.id, deletedAt: null },
             orderBy: { created_at: "desc" },
           }),
           this.getUnreadCount(userId, chat.id),
         ]);
 
         return {
-          id:          chat.id,
-          type:        chat.type,
-          name:        chat.name,
-          updatedAt:   chat.updatedAt,
+          id: chat.id,
+          type: chat.type,
+          name: chat.name,
+          updatedAt: chat.updatedAt,
           unreadCount,
           lastMessage: lastMessage
             ? {
-                id:         lastMessage.id,
-                chat_id:    lastMessage.chat_id,
-                cipherText: lastMessage.cipherText,
-                sender_id:  lastMessage.sender_id,
-                created_at: lastMessage.created_at,
-                status:     lastMessage.status,
-                iv:         lastMessage.iv,
-                type:       lastMessage.type,
-              }
+              id: lastMessage.id,
+              chat_id: lastMessage.chat_id,
+              cipherText: lastMessage.cipherText,
+              sender_id: lastMessage.sender_id,
+              created_at: lastMessage.created_at,
+              status: lastMessage.status,
+              iv: lastMessage.iv,
+              type: lastMessage.type,
+            }
             : undefined,
           members: chat.members.map((cm) => ({
-            id:        cm.user.id,
-            username:  cm.user.username,
+            id: cm.user.id,
+            username: cm.user.username,
             avatarUrl: cm.user.profile?.avatarUrl ?? undefined,
-            phone:     cm.user.profile?.phone ?? undefined,
+            phone: cm.user.profile?.phone ?? undefined,
           })),
         };
       }),
@@ -255,12 +255,22 @@ export class MessagingService {
     const skip = (page - 1) * limit;
     const [messages, total] = await Promise.all([
       prisma.message.findMany({
-        where:   { chat_id: conversationId, deletedAt: null },
+        where: { chat_id: conversationId, deletedAt: null },
         skip,
-        take:    limit,
+        take: limit,
         orderBy: { created_at: "desc" },
         include: {
-          sender:      { select: { id: true, username: true } },
+          sender: {
+            select: {
+              id: true,
+              username: true,
+              profile:{
+                select: {
+                  avatarUrl: true
+                }
+              }
+            }
+          },
           attachments: true,
           responseTo: {
             include: {
@@ -294,18 +304,18 @@ export class MessagingService {
     }[];
   }) {
     return {
-      id:         m.id,
-      chat_id:    m.chat_id,
-      sender_id:  m.sender_id,
+      id: m.id,
+      chat_id: m.chat_id,
+      sender_id: m.sender_id,
       cipherText: m.cipherText,
-      iv:         m.iv,
-      status:     m.status,
-      type:       m.type,
+      iv: m.iv,
+      status: m.status,
+      type: m.type,
       created_at: m.created_at,
       attachments: (m.attachments ?? []).map((a) => ({
-        id:       a.id,
-        fileUrl:  a.file_url,
-        iv:       a.iv,
+        id: a.id,
+        fileUrl: a.file_url,
+        iv: a.iv,
         fileName: a.file_name,
         fileSize: a.file_size,
         mimeType: a.mime_type,
@@ -328,22 +338,22 @@ export class MessagingService {
 
     const message = await prisma.message.create({
       data: {
-        id:         crypto.randomUUID(),
-        chat_id:    conversationId,
-        sender_id:  userId,
+        id: crypto.randomUUID(),
+        chat_id: conversationId,
+        sender_id: userId,
         cipherText: payload.content,
-        iv:         payload.iv,
-        status:     "send",
+        iv: payload.iv,
+        status: "send",
         response_to: payload.response_to,
-        type:       (payload.type ?? "TEXT") as any,
+        type: (payload.type ?? "TEXT") as any,
         attachments: {
           create: (payload.attachments ?? []).map((a) => ({
-            id:         crypto.randomUUID(),
-            file_url:   a.fileUrl,
-            iv:         a.iv,
-            file_name:  a.fileName,
-            file_size:  a.fileSize,
-            mime_type:  a.mimeType,
+            id: crypto.randomUUID(),
+            file_url: a.fileUrl,
+            iv: a.iv,
+            file_name: a.fileName,
+            file_size: a.fileSize,
+            mime_type: a.mimeType,
           })),
         },
       },
@@ -393,7 +403,7 @@ export class MessagingService {
   async markAsRead(userId: string, conversationId: string) {
     await prisma.conversationMember.updateMany({
       where: { user_id: userId, conversation_id: conversationId },
-      data:  { lastReadAt: new Date() },
+      data: { lastReadAt: new Date() },
     });
   }
 
@@ -420,10 +430,10 @@ export class MessagingService {
     const since = membership.lastReadAt ?? new Date(0);
     return await prisma.message.count({
       where: {
-        chat_id:    conversationId,
-        sender_id:  { not: userId },
+        chat_id: conversationId,
+        sender_id: { not: userId },
         created_at: { gt: since },
-        deletedAt:  null,
+        deletedAt: null,
       },
     });
   }
