@@ -1,4 +1,4 @@
-import * as SecureStore from 'expo-secure-store';
+import { SecureStorageService, SECURE_STORAGE_KEYS } from '@/shared/lib/storage';
 import { emitter } from './emitter';
 import { WS_EVENTS, WsEvent } from '../constants/ws-events';
 
@@ -24,8 +24,8 @@ class WebSocketManager {
   async connect() {
     if (this.socket || this.status === 'connecting') return;
 
-    const token = await SecureStore.getItemAsync('auth_token');
-    const deviceId = (await SecureStore.getItemAsync('device_id')) ?? 'mobile-app';
+    const token = await SecureStorageService.get(SECURE_STORAGE_KEYS.AUTH_TOKEN);
+    const deviceId = (await SecureStorageService.get(SECURE_STORAGE_KEYS.DEVICE_ID)) ?? 'mobile-app';
     if (!token) return;
 
     this.status = 'connecting';

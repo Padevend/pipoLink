@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-import { getJson, setJson } from '@/shared/storage/async-storage';
+import { AsyncStorageService } from '@/shared/lib/storage';
 import { WS_EVENTS } from '@/shared/constants/ws-events';
 import { on } from '@/shared/websocket/manager';
 
@@ -62,7 +62,7 @@ export function arePushNotificationsSupported(): boolean {
 }
 
 export async function isPushEnabled(): Promise<boolean> {
-  return getJson(ENABLED_KEY, true);
+  return (await AsyncStorageService.get<boolean>(ENABLED_KEY)) ?? true;
 }
 
 export async function registerForPushNotifications(): Promise<string | null> {
@@ -142,7 +142,7 @@ export function setupPushFromWebSocket(): () => void {
 }
 
 export async function setPushEnabled(enabled: boolean): Promise<void> {
-  await setJson(ENABLED_KEY, enabled);
+  await AsyncStorageService.set(ENABLED_KEY, enabled);
   if (enabled) {
     await registerForPushNotifications();
   }

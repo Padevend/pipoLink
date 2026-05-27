@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import * as SecureStore from 'expo-secure-store';
+import { SecureStorageService, SECURE_STORAGE_KEYS } from '@/shared/lib/storage';
 import { Platform } from 'react-native';
 
 import type { DeviceQrPayloadV2 } from '@/features/devices/lib/verify-qr-payload';
@@ -15,10 +15,10 @@ export function usePrepareDeviceQr() {
     mutationFn: async (): Promise<DeviceQrPayloadV2> => {
       const { publicKey, signature } = await generateIdentityKeys();
 
-      let fingerprint = await SecureStore.getItemAsync('device_fingerprint');
+      let fingerprint = await SecureStorageService.get(SECURE_STORAGE_KEYS.DEVICE_FINGERPRINT);
       if (!fingerprint) {
         fingerprint = generateUUID();
-        await SecureStore.setItemAsync('device_fingerprint', fingerprint);
+        await SecureStorageService.set(SECURE_STORAGE_KEYS.DEVICE_FINGERPRINT, fingerprint);
       }
 
       const { token, shortCode } = await authApi.initiatePairing({

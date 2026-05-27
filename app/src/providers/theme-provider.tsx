@@ -3,7 +3,7 @@ import { createContext, type ReactNode, useEffect, useMemo, useState } from 'rea
 import { useColorScheme as useDeviceColorScheme } from 'react-native';
 
 import { DARK, LIGHT, type ThemeColors } from '@/shared/constants/colors';
-import { getJson, setJson } from '@/shared/storage/async-storage';
+import { AsyncStorageService } from '@/shared/lib/storage';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
@@ -25,7 +25,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const loadTheme = async () => {
-      const savedMode = await getJson<ThemeMode>(STORAGE_KEY, 'system');
+      const savedMode = (await AsyncStorageService.get<ThemeMode>(STORAGE_KEY)) ?? 'system';
       setModeState(savedMode);
       
       const resolved = savedMode === 'system' ? (deviceScheme ?? 'light') : savedMode;
@@ -47,7 +47,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         setModeState(nextMode);
         const resolved = nextMode === 'system' ? (deviceScheme ?? 'light') : nextMode;
         setNWColorScheme(resolved);
-        void setJson(STORAGE_KEY, nextMode);
+        void AsyncStorageService.set(STORAGE_KEY, nextMode);
       },
     }),
     [mode, resolvedScheme, colors, deviceScheme, setNWColorScheme],

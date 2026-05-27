@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import * as SecureStore from 'expo-secure-store';
+import { SecureStorageService, AsyncStorageService, SECURE_STORAGE_KEYS, ASYNC_STORAGE_KEYS } from '@/shared/lib/storage';
 import { Platform } from 'react-native';
 
 import { useAuth } from '@/providers';
@@ -29,10 +29,10 @@ export function useOnboarding() {
       bio?: string;
       avatarUri?: string | null;
     }) => {
-      let fingerprint = await SecureStore.getItemAsync('device_fingerprint');
+      let fingerprint = await SecureStorageService.get(SECURE_STORAGE_KEYS.DEVICE_FINGERPRINT);
       if (!fingerprint) {
         fingerprint = generateUUID();
-        await SecureStore.setItemAsync('device_fingerprint', fingerprint);
+        await SecureStorageService.set(SECURE_STORAGE_KEYS.DEVICE_FINGERPRINT, fingerprint);
       }
 
       try {
@@ -60,11 +60,11 @@ export function useOnboarding() {
       }
 
       if (result.device?.id) {
-        await SecureStore.setItemAsync('device_id', result.device.id);
+        await SecureStorageService.set(SECURE_STORAGE_KEYS.DEVICE_ID, result.device.id);
       }
 
       if (result.user) {
-        await SecureStore.setItemAsync('user_data', JSON.stringify(result.user));
+        await AsyncStorageService.set(ASYNC_STORAGE_KEYS.USER_DATA, result.user);
       }
 
       return result;

@@ -36,7 +36,7 @@ export interface ErrorResponse {
 /**
  * User roles
  */
-export type UserRole = 'student' | 'staff' | 'admin';
+export type UserRole = "student" | "staff" | "admin";
 
 /**
  * User object
@@ -67,12 +67,12 @@ export interface UserProfile {
 /**
  * Message types
  */
-export type MessageType = 'TEXT' | 'IMAGE' | 'DOCUMENT' | 'MIXED' | 'SYSTEM';
+export type MessageType = "TEXT" | "IMAGE" | "DOCUMENT" | "MIXED" | "SYSTEM";
 
 /**
  * Message status
  */
-export type MessageStatus = 'send' | 'delivered' | 'read';
+export type MessageStatus = "send" | "delivered" | "read";
 
 /**
  * Attachment metadata received from the server.
@@ -84,39 +84,23 @@ export type MessageStatus = 'send' | 'delivered' | 'read';
  * table → rendered as placeholder UI until user taps download.
  */
 export interface MessageAttachment {
-  /** Unique server-assigned attachment ID */
   id: string;
-  /** Signed URL pointing to the encrypted `.enc` file on the CDN */
   fileUrl: string;
-  /** Base64-encoded AES-GCM IV used to decrypt this file */
   iv: string;
-  /** Original filename (before encryption), e.g. "photo.jpg" */
   fileName: string;
-  /** File size in bytes of the ORIGINAL (pre-encryption) file */
   fileSize: number;
-  /** MIME type of the original file, e.g. "image/jpeg" */
   mimeType: string;
 }
 
-/**
- * Attachment download lifecycle state machine.
- *
- * State transitions:
- *   idle → queued → downloading → decrypting → completed
- *                      ↓ (pause)    ↑ (resume)
- *                   paused ─────────┘
- *                → failed   (on network/decrypt error, retryable)
- *                → cancelled (user-initiated)
- */
 export type AttachmentDownloadStatus =
-  | 'idle'         // Not yet requested by user
-  | 'queued'       // In download queue, waiting for an open slot
-  | 'downloading'  // Actively downloading the .enc file
-  | 'paused'       // Download paused by user (resume_data stored in SQLite)
-  | 'decrypting'   // .enc file downloaded, decryption in progress
-  | 'completed'    // Decrypted file written to cache/decrypted/
-  | 'failed'       // Error during download or decryption (retryable)
-  | 'cancelled';   // User cancelled, local .enc file deleted
+  | "idle"
+  | "queued"
+  | "downloading"
+  | "paused"
+  | "decrypting"
+  | "completed"
+  | "failed"
+  | "cancelled";
 
 /**
  * SQLite row for the `attachment_downloads` table.
@@ -125,41 +109,23 @@ export type AttachmentDownloadStatus =
  * and completed files can be served from cache without re-downloading.
  */
 export interface AttachmentDownloadState {
-  /** Attachment ID — primary key, matches `MessageAttachment.id` */
   id: string;
-  /** Parent message ID */
   message_id: string;
-  /** Parent conversation/chat ID */
   chat_id: string;
-  /** Remote CDN URL to the encrypted file */
   encrypted_url: string;
-  /** Original filename */
   filename: string;
-  /** MIME type */
   mime_type: string;
-  /** File size in bytes of the original file */
   file_size: number;
-  /** Base64 AES-GCM IV */
   iv: string;
-  /** Current download/decrypt lifecycle status */
   status: AttachmentDownloadStatus;
-  /** Download progress from 0.0 to 1.0 */
   progress: number;
-  /** Total expected bytes */
   total_bytes: number;
-  /** Bytes written so far */
   written_bytes: number;
-  /** Absolute path to the encrypted .enc file in cache/attachments/encrypted/ */
   encrypted_local_uri: string | null;
-  /** Absolute path to the decrypted file in cache/attachments/decrypted/ */
   decrypted_local_uri: string | null;
-  /** JSON blob for DownloadResumable.savable(), null if not paused */
   resume_data: string | null;
-  /** Human-readable error description for the failed state */
   error_message: string | null;
-  /** Unix timestamp (ms) when the row was created */
   created_at: number;
-  /** Unix timestamp (ms) of last status/progress update */
   updated_at: number;
 }
 
@@ -176,6 +142,15 @@ export interface Message {
   type: MessageType;
   created_at: string;
   attachments?: MessageAttachment[];
+  sender?: MessageSender;
+}
+
+export interface MessageSender {
+  id: string;
+  username: string;
+  profile?: {
+    avatarUrl: string | null;
+  }
 }
 
 /**
@@ -193,14 +168,21 @@ export interface LocalMessageAttachementsProps {
 /**
  * Document types
  */
-export type DocumentType = 'COURS' | 'TD' | 'TP' | 'CC' | 'EXAMEN' | 'RESUME' | 'AUTRE';
+export type DocumentType =
+  | "COURS"
+  | "TD"
+  | "TP"
+  | "CC"
+  | "EXAMEN"
+  | "RESUME"
+  | "AUTRE";
 
 /**
  * Moderation status
  */
-export type ModerationStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type ModerationStatus = "PENDING" | "APPROVED" | "REJECTED";
 
-export type DownloadStatus = 
+export type DownloadStatus =
   | "queued"
   | "downloading"
   | "paused"
@@ -257,16 +239,16 @@ export interface getPopularDocumentsResponse {
 }
 
 export interface downloadTask {
-  id: string,
-  document_id: string,
-  filename: string,
-  remote_uri: string,
-  local_uri: string,
-  mineType?: string,
-  progress: number,
-  totalBytes: number,
-  writtenBytes: number,
-  status: DownloadStatus,
+  id: string;
+  document_id: string;
+  filename: string;
+  remote_uri: string;
+  local_uri: string;
+  mineType?: string;
+  progress: number;
+  totalBytes: number;
+  writtenBytes: number;
+  status: DownloadStatus;
   created_at: number;
   updated_at: number;
   resume_data?: string | null;

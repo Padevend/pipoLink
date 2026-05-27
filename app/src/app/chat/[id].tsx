@@ -7,12 +7,12 @@ import { useConversations } from '@/entities/conversation/hooks';
 import { ChatInfoSheet } from '@/features/messaging/components/chat-info-sheet';
 import { ChatView } from '@/features/messaging/components/chat-view';
 import { useAuth } from '@/providers';
+import { BRAND } from '@/shared/config/brand';
 import { Avatar } from '@/shared/ui/avatar';
 import { cn } from '@/shared/utils/cn';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { ArrowLeft, EllipsisVertical, MessageSquareOff, Phone } from 'lucide-react-native';
-import { BRAND } from '@/shared/config/brand';
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -154,7 +154,7 @@ export default function ChatScreen() {
       </View>
 
       {/* Vue du Chat */}
-      <ChatView conversationId={id!} />
+      <ChatView conversationId={id!} type={conversation?.type ?? "private"} />
 
       {/* Sheet d'informations */}
       <ChatInfoSheet

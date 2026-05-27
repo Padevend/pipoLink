@@ -2,13 +2,13 @@ import nacl from 'tweetnacl';
 import naclUtil from 'tweetnacl-util';
 
 import { installTweetNaclPrng } from '@/shared/crypto/prng';
-import { getSecureItem, removeSecureItem, setSecureItem } from '@/shared/storage/secure-storage';
+import { SecureStorageService, SECURE_STORAGE_KEYS } from '@/shared/lib/storage';
 
 installTweetNaclPrng();
 
-const SK_BOX = 'identity_private_key';
-const SK_SIGN = 'identity_signing_private_key';
-const PK_BOX = 'identity_public_key';
+const SK_BOX = SECURE_STORAGE_KEYS.IDENTITY_PRIVATE_KEY;
+const SK_SIGN = SECURE_STORAGE_KEYS.IDENTITY_SIGNING_PRIVATE_KEY;
+const PK_BOX = SECURE_STORAGE_KEYS.IDENTITY_PUBLIC_KEY;
 
 function packKeySignature(signingPublicKey: Uint8Array, detachedSig: Uint8Array): string {
   const packed = new Uint8Array(32 + 64);
@@ -19,9 +19,9 @@ function packKeySignature(signingPublicKey: Uint8Array, detachedSig: Uint8Array)
 
 /** Supprime les clés d'identité locales (nouveau compte / réinitialisation). */
 export async function clearIdentityKeys(): Promise<void> {
-  await removeSecureItem(SK_BOX).catch(() => undefined);
-  await removeSecureItem(SK_SIGN).catch(() => undefined);
-  await removeSecureItem(PK_BOX).catch(() => undefined);
+  await SecureStorageService.remove(SK_BOX).catch(() => undefined);
+  await SecureStorageService.remove(SK_SIGN).catch(() => undefined);
+  await SecureStorageService.remove(PK_BOX).catch(() => undefined);
 }
 
 /**
@@ -33,9 +33,9 @@ export async function generateIdentityKeys(options?: { forceNew?: boolean }): Pr
     await clearIdentityKeys();
   }
 
-  const existingPk = await getSecureItem(PK_BOX);
-  const existingSk = await getSecureItem(SK_BOX);
-  const existingSign = await getSecureItem(SK_SIGN);
+  const existingPk = await SecureStorageService.get(PK_BOX);
+  const existingSk = await SecureStorageService.get(SK_BOX);
+  const existingSign = await SecureStorageService.get(SK_SIGN);
   if (!options?.forceNew && existingPk && existingSk && existingSign) {
     const boxPub = naclUtil.decodeBase64(existingPk);
     const signSecret = naclUtil.decodeBase64(existingSign);
@@ -48,9 +48,9 @@ export async function generateIdentityKeys(options?: { forceNew?: boolean }): Pr
   const signPair = nacl.sign.keyPair();
   const sig = nacl.sign.detached(boxPair.publicKey, signPair.secretKey);
 
-  await setSecureItem(SK_BOX, naclUtil.encodeBase64(boxPair.secretKey));
-  await setSecureItem(SK_SIGN, naclUtil.encodeBase64(signPair.secretKey));
-  await setSecureItem(PK_BOX, naclUtil.encodeBase64(boxPair.publicKey));
+  await SecureStorageService.set(SK_BOX, naclUtil.encodeBase64(boxPair.secretKey));
+  await SecureStorageService.set(SK_SIGN, naclUtil.encodeBase64(signPair.secretKey));
+  await SecureStorageService.set(PK_BOX, naclUtil.encodeBase64(boxPair.publicKey));
 
   return {
     publicKey: naclUtil.encodeBase64(boxPair.publicKey),
@@ -59,11 +59,11 @@ export async function generateIdentityKeys(options?: { forceNew?: boolean }): Pr
 }
 
 export async function getPublicKey(): Promise<string | null> {
-  return getSecureItem(PK_BOX);
+  return SecureStorageService.get(PK_BOX);
 }
 
 export async function getIdentityPrivateKeyBytes(): Promise<Uint8Array | null> {
-  const b64 = await getSecureItem(SK_BOX);
+  const b64 = await SecureStorageService.get(SK_BOX);
   if (!b64) return null;
   return naclUtil.decodeBase64(b64);
 }
@@ -74,7 +74,7 @@ export interface SessionKeys {
 }
 
 export async function generateSessionKeys(recipientPublicKey: Uint8Array): Promise<SessionKeys> {
-  const privateKeyBase64 = await getSecureItem(SK_BOX);
+  const privateKeyBase64 = await SecureStorageService.get(SK_BOX);
   const privateKey = privateKeyBase64 ? naclUtil.decodeBase64(privateKeyBase64) : nacl.box.keyPair().secretKey;
   const sharedSecret = nacl.box.before(recipientPublicKey, privateKey);
   const sessionKey = nacl.hash(sharedSecret).slice(0, 32);

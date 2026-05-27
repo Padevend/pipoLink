@@ -4,16 +4,16 @@ import { useEffect, useState } from 'react';
 
 import i18n from '@/i18n';
 import type { AppLanguage } from '@/i18n';
-import { getJson, setJson } from '@/shared/storage/async-storage';
+import { AsyncStorageService } from '@/shared/lib/storage';
 
 const LANG_KEY = 'app_language';
 
 export async function getStoredLanguage(): Promise<AppLanguage> {
-  return getJson<AppLanguage>(LANG_KEY, 'en');
+  return (await AsyncStorageService.get<AppLanguage>(LANG_KEY)) ?? 'en';
 }
 
 export async function setStoredLanguage(lang: AppLanguage): Promise<void> {
-  await setJson(LANG_KEY, lang);
+  await AsyncStorageService.set(LANG_KEY, lang);
   await i18n.changeLanguage(lang);
 }
 

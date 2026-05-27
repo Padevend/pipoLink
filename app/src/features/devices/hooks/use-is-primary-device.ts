@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import * as SecureStore from 'expo-secure-store';
+import { SecureStorageService, SECURE_STORAGE_KEYS } from '@/shared/lib/storage';
 
 import { devicesApi } from '@/shared/api/devices';
 
@@ -7,7 +7,7 @@ export function useIsPrimaryDevice() {
   return useQuery({
     queryKey: ['devices', 'is-primary'],
     queryFn: async () => {
-      const deviceId = await SecureStore.getItemAsync('device_id');
+      const deviceId = await SecureStorageService.get(SECURE_STORAGE_KEYS.DEVICE_ID);
       if (!deviceId) return false;
       const devices = await devicesApi.getDevices();
       const current = devices.find((d) => d.id === deviceId);

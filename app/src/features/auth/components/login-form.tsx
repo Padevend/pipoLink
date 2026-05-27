@@ -6,7 +6,7 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { generateUUID } from '@/shared/utils/uuid';
 import { router } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
+import { SecureStorageService, SECURE_STORAGE_KEYS } from '@/shared/lib/storage';
 import { ArrowLeft, ChevronRight, Eye, EyeOff, Laptop, Link2, Lock, Mail } from 'lucide-react-native';
 import { useState } from 'react';
 import { Platform, Pressable, Text, View } from 'react-native';
@@ -38,10 +38,10 @@ export function LoginForm() {
     if (!validate()) return;
     setIsLoading(true);
     try {
-      let fingerprint = await SecureStore.getItemAsync('device_fingerprint');
+      let fingerprint = await SecureStorageService.get(SECURE_STORAGE_KEYS.DEVICE_FINGERPRINT);
       if (!fingerprint) {
         fingerprint = generateUUID();
-        await SecureStore.setItemAsync('device_fingerprint', fingerprint);
+        await SecureStorageService.set(SECURE_STORAGE_KEYS.DEVICE_FINGERPRINT, fingerprint);
       }
 
       const result = await authApi.login({

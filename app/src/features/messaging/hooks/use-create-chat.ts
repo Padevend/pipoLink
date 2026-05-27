@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import * as SecureStore from 'expo-secure-store';
+import { AsyncStorageService, ASYNC_STORAGE_KEYS } from '@/shared/lib/storage';
 
 import {
   cacheChatKey,
@@ -12,9 +12,7 @@ import { messagingApi } from '@/shared/api/messaging';
 import { userApi } from '@/shared/api/user';
 
 async function resolveMeId(): Promise<string> {
-  const raw = await SecureStore.getItemAsync('user_data');
-  if (!raw) throw new Error('Session introuvable.');
-  const u = JSON.parse(raw) as { id: string };
+  const u = await AsyncStorageService.get<{ id: string }>(ASYNC_STORAGE_KEYS.USER_DATA);
   if (!u?.id) throw new Error('Session invalide.');
   return u.id;
 }

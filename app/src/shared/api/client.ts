@@ -1,4 +1,4 @@
-import * as SecureStore from 'expo-secure-store';
+import { SecureStorageService, SECURE_STORAGE_KEYS } from '@/shared/lib/storage';
 import { ApiResponse, ErrorResponse, PaginatedResponse } from './types';
 
 function envUrl(key: 'EXPO_PUBLIC_API_URL' | 'EXPO_PUBLIC_WS_URL', fallback: string): string {
@@ -27,7 +27,7 @@ interface RequestOptions extends RequestInit {
 
 async function getAuthToken() {
   try {
-    const token = await SecureStore.getItemAsync('auth_token');
+    const token = await SecureStorageService.get(SECURE_STORAGE_KEYS.AUTH_TOKEN);
     return token
   } catch (e) {
     return null;

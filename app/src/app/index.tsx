@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 
 import { useAuth } from '@/providers';
 import { getIdentityPrivateKeyBytes } from '@/shared/crypto/keys';
-import { getItem, setItem } from '@/shared/storage/async-storage';
+import { AsyncStorageService } from '@/shared/lib/storage';
 import { Loader } from '@/shared/ui/loader';
 
 type KeyStatus = 'pending' | 'present' | 'missing';
@@ -27,10 +27,10 @@ export default function Index(){
 
     useEffect(() => {
         async function bootstrap() {
-            const isFirstLaunch = await getItem(FIRST_LAUNCH_KEY)
+            const isFirstLaunch = await AsyncStorageService.get<string>(FIRST_LAUNCH_KEY)
 
             if (isFirstLaunch === null) {
-                await setItem(FIRST_LAUNCH_KEY, 'done');
+                await AsyncStorageService.set(FIRST_LAUNCH_KEY, 'done');
                 setHasCheckedFirstLaunch(true);
             }
         }

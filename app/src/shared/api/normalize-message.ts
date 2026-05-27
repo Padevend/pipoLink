@@ -1,4 +1,4 @@
-import type { Message, MessageAttachment, MessageStatus, MessageType } from '@/shared/api/types';
+import type { Message, MessageAttachment, MessageSender, MessageStatus, MessageType } from '@/shared/api/types';
 
 type RawAttachment = Partial<MessageAttachment> & {
   file_url?: string;
@@ -13,6 +13,7 @@ export type RawMessage = Partial<Message> & {
   cipher_text?: string;
   created_at?: string | Date;
   attachments?: RawAttachment[];
+  sender?: MessageSender;
 };
 
 /**
@@ -26,9 +27,7 @@ export type RawMessage = Partial<Message> & {
 function normalizeAttachment(raw: RawAttachment): MessageAttachment {
   return {
     id: raw.id ?? '',
-    // fileUrl is the remote signed URL to the encrypted .enc file
     fileUrl: raw.fileUrl ?? raw.file_url ?? '',
-    // iv is a base64-encoded 12-byte AES-GCM nonce
     iv: raw.iv ?? '',
     fileName: raw.fileName ?? raw.file_name ?? 'file',
     fileSize: raw.fileSize ?? raw.file_size ?? 0,
@@ -55,6 +54,13 @@ export function normalizeMessage(raw: RawMessage): Message {
     type: (raw.type ?? 'TEXT') as MessageType,
     created_at: createdAt,
     attachments: (raw.attachments ?? []).map(normalizeAttachment),
+    sender: raw.sender ? {
+      id: raw.sender.id,
+      username: raw.sender.username,
+      profile: {
+        avatarUrl: raw.sender.profile?.avatarUrl ?? null,
+      }
+    } : undefined
   };
 }
 

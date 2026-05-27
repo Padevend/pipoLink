@@ -1,7 +1,7 @@
-import { getSecureItem, removeSecureItem, setSecureItem } from '@/shared/storage/secure-storage';
+import { SecureStorageService, SECURE_STORAGE_KEYS } from '@/shared/lib/storage';
 
 export async function attachAuthHeader(headers: HeadersInit = {}): Promise<HeadersInit> {
-  const token = await getSecureItem('access_token');
+  const token = await SecureStorageService.get(SECURE_STORAGE_KEYS.AUTH_TOKEN);
   if (!token) {
     return headers;
   }
@@ -14,11 +14,11 @@ export async function attachAuthHeader(headers: HeadersInit = {}): Promise<Heade
 
 export async function persistTokens(accessToken: string, refreshToken: string): Promise<void> {
   await Promise.all([
-    setSecureItem('access_token', accessToken),
-    setSecureItem('refresh_token', refreshToken),
+    SecureStorageService.set(SECURE_STORAGE_KEYS.AUTH_TOKEN, accessToken),
+    SecureStorageService.set(SECURE_STORAGE_KEYS.REFRESH_TOKEN, refreshToken),
   ]);
 }
 
 export async function clearTokens(): Promise<void> {
-  await Promise.all([removeSecureItem('access_token'), removeSecureItem('refresh_token')]);
+  await Promise.all([SecureStorageService.remove(SECURE_STORAGE_KEYS.AUTH_TOKEN), SecureStorageService.remove(SECURE_STORAGE_KEYS.REFRESH_TOKEN)]);
 }

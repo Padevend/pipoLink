@@ -1,14 +1,16 @@
 import { router } from 'expo-router';
-import { MessageSquare } from 'lucide-react-native';
+import { CheckCheck, MessageSquare } from 'lucide-react-native';
 import { useMemo } from 'react';
-import { FlatList, RefreshControl, Text, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 
 import { useAnnouncements } from '@/entities/announcement/hooks';
-import { useConversations } from '@/entities/conversation/hooks';
+import { useConversations, conversationKeys } from '@/entities/conversation/hooks';
 import { ConversationItem } from '@/entities/conversation/ui/conversation-item';
 import { AnnouncementListItem } from '@/features/announcements/components/announcement-list-item';
 import type { Conversation } from '@/shared/api/messaging';
+import { messagingApi } from '@/shared/api/messaging';
 import { ANNOUNCEMENTS_ENTRY_ID } from '@/shared/constants/announcements';
+import { queryClient } from '@/providers';
 import { Skeleton } from '@/shared/ui/skeleton';
 
 type ListRow =
@@ -19,6 +21,21 @@ export function ConversationList() {
   const { data: conversations, isLoading, refetch, isRefetching } = useConversations();
   const { data: announcements } = useAnnouncements();
   
+  const hasUnread = useMemo(() => {
+    return conversations?.some((c) => c.unreadCount > 0) ?? false;
+  }, [conversations]);
+
+  const markAllAsRead = () => {
+    queryClient.setQueryData<Conversation[]>(conversationKeys.list(), (prev) => {
+      if (!prev) return prev;
+      return prev.map(c => ({ ...c, unreadCount: 0 }));
+    });
+    
+    const unreadChats = conversations?.filter(c => c.unreadCount > 0) || [];
+    unreadChats.forEach(c => {
+       messagingApi.markAsRead(c.id).catch(() => {});
+    });
+  };
 
   const rows = useMemo<ListRow[]>(() => {
     const list: ListRow[] = [{ kind: 'announcements', id: ANNOUNCEMENTS_ENTRY_ID }];
@@ -48,9 +65,21 @@ export function ConversationList() {
   }
 
   return (
-    <FlatList
-      data={rows}
-      keyExtractor={(item) => item.id}
+    <View className="flex-1 bg-background-light dark:bg-background-dark">
+      {hasUnread && (
+        <View className="px-5 pt-3 pb-1 flex-row justify-end">
+          <Pressable 
+            onPress={markAllAsRead}
+            className="flex-row items-center gap-1.5 bg-primary/10 px-3 py-1.5 rounded-full active:opacity-70"
+          >
+            <CheckCheck size={14} className="text-primary" />
+            <Text className="text-[12px] font-medium text-primary">Tout marquer comme lu</Text>
+          </Pressable>
+        </View>
+      )}
+      <FlatList
+        data={rows}
+        keyExtractor={(item) => item.id}
       contentContainerStyle={{ paddingBottom: 40 }}
       showsVerticalScrollIndicator={false}
       ItemSeparatorComponent={() => (
@@ -101,5 +130,6 @@ export function ConversationList() {
         ) : null
       }
     />
+    </View>
   );
 }

@@ -1,28 +1,98 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
-import { Image as ImageIcon, Paperclip, Send } from 'lucide-react-native';
+import { ChevronDown, Image as ImageIcon, Paperclip, Send } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, Pressable, Text, View } from 'react-native';
 
-import { useMessages } from '@/features/messaging/hooks/use-messages';
+import { useMessages, type DecryptedMessage } from '@/features/messaging/hooks/use-messages';
 import { useSendMessage } from '@/features/messaging/hooks/use-send-message';
+import { activeChat } from '@/features/messaging/lib/active-chat';
 import { groupMessagesByDate } from '@/features/messaging/lib/group-messages-by-date';
-import { useAuth } from '@/providers';
+import { queryClient, useAuth } from '@/providers';
 import { messagingApi } from '@/shared/api/messaging';
+import type { PaginatedResponse } from '@/shared/api/types';
 import { Input } from '@/shared/ui/input';
 import { cn } from '@/shared/utils/cn';
+import type { InfiniteData } from '@tanstack/react-query';
 import { MessageBubble } from './message-bubble';
 
 interface ChatViewProps {
   conversationId: string;
+  type: 'group' | 'private';
 }
 
-export function ChatView({ conversationId }: ChatViewProps) {
+export function ChatView({ conversationId, type }: ChatViewProps) {
   const { user } = useAuth();
   const { data, fetchNextPage, hasNextPage } = useMessages(conversationId);
   const sendMessage = useSendMessage(conversationId);
   const [text, setText] = useState('');
   const flatListRef = useRef<FlatList>(null);
+  const [hasScrolledInitial, setHasScrolledInitial] = useState(false);
+
+  useEffect(() => {
+    activeChat.set(conversationId);
+    return () => activeChat.set(null);
+  }, [conversationId]);
+
+  const listItems = useMemo(() => {
+    data?.pages
+    const messages = data?.pages.flatMap((page) => page.items) ?? [];
+    return groupMessagesByDate(messages, user?.id);
+  }, [data, user?.id]);
+
+  const unreadCount = useMemo(() => {
+    let count = 0;
+    for (const item of listItems) {
+      if (item.type === 'message' && item.message.sender_id !== user?.id && item.message.status !== 'read') {
+        count++;
+      }
+    }
+    return count;
+  }, [listItems, user?.id]);
+
+  useEffect(() => {
+    if (!hasScrolledInitial && listItems.length > 0) {
+      const firstUnreadIndex = listItems.findIndex((item) => item.type === 'unread-separator');
+      if (firstUnreadIndex !== -1) {
+        setTimeout(() => {
+          flatListRef.current?.scrollToIndex({ index: firstUnreadIndex, animated: false, viewPosition: 0 });
+        }, 100);
+      } else {
+        setTimeout(() => {
+          flatListRef.current?.scrollToEnd({ animated: false });
+        }, 100);
+      }
+      setHasScrolledInitial(true);
+    }
+  }, [listItems, hasScrolledInitial]);
+
+  const markAsReadAndScroll = () => {
+    flatListRef.current?.scrollToEnd({ animated: true });
+    
+    queryClient.setQueryData<InfiniteData<PaginatedResponse<DecryptedMessage>>>(
+      ['messages', conversationId],
+      (old) => {
+        if (!old?.pages) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            items: page.items.map((m) => {
+              if (m.sender_id !== user?.id && m.status !== 'read') {
+                return { ...m, status: 'read' as const };
+              }
+              return m;
+            }),
+          })),
+        };
+      }
+    );
+
+    messagingApi.markAsRead(conversationId).catch(() => undefined);
+    import('@/shared/websocket/manager').then(({ wsManager }) => {
+      wsManager.send('message.read', { conversationId });
+    });
+  };
 
   // onViewableItemsChanged to detect when unread messages from other users become visible
   const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
@@ -50,11 +120,6 @@ export function ChatView({ conversationId }: ChatViewProps) {
     itemVisiblePercentThreshold: 50,
     minimumViewTime: 250,
   }).current;
-
-  const listItems = useMemo(() => {
-    const messages = data?.pages.flatMap((page) => page.items) ?? [];
-    return groupMessagesByDate(messages);
-  }, [data]);
 
   const handleSend = () => {
     if (!text.trim()) return;
@@ -112,16 +177,61 @@ export function ChatView({ conversationId }: ChatViewProps) {
             );
           }
 
+          if (item.type === 'unread-separator') {
+            return (
+              <View className="my-6 items-center">
+                <View className="rounded-full bg-surface-light/40 border border-border-light/20 px-4 py-1 dark:bg-surface-dark/40 dark:border-border-dark/20 backdrop-blur-md">
+                  <Text className="text-[10px] font-semibold uppercase tracking-widest text-text-secondary-light/80 dark:text-text-secondary-dark/80">
+                    Messages non lus
+                  </Text>
+                </View>
+              </View>
+            );
+          }
+
           const msg = item.message;
           const isMe = msg.sender_id === user?.id;
           const hasAttachments = (msg.attachments?.length ?? 0) > 0;
 
           return (
-            <MessageBubble message={msg} isMine={isMe} hasAttachments={hasAttachments} />
+            <MessageBubble 
+              message={msg}
+              isMine={isMe}
+              hasAttachments={hasAttachments} 
+              isGroup={type === 'group'}
+              onDelete={()=>{
+                
+              }}
+              onReply={()=>{
+                
+              }}
+            />
           );
         }}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+        onContentSizeChange={() => {
+           // On new message sent by the user, or keyboard opening, we scroll to bottom.
+           // However, if there are unread messages, we don't force scroll to bottom on mount.
+        }}
+        onScrollToIndexFailed={(info) => {
+          setTimeout(() => {
+            flatListRef.current?.scrollToIndex({ index: info.index, animated: false, viewPosition: 0 });
+          }, 500);
+        }}
       />
+      
+      {unreadCount > 0 && (
+        <View className="absolute right-5 bottom-24 z-50">
+          <Pressable
+            onPress={markAsReadAndScroll}
+            className="h-10 w-10 bg-surface-light dark:bg-surface-dark border border-border-light/20 dark:border-border-dark/20 rounded-full shadow-lg items-center justify-center backdrop-blur-md active:opacity-80"
+          >
+            <ChevronDown size={20} className="text-primary" />
+            <View className="absolute -top-1.5 -right-1.5 bg-primary h-5 min-w-[20px] rounded-full items-center justify-center px-1 border-2 border-background-light dark:border-background-dark">
+              <Text className="text-[10px] text-white font-bold">{unreadCount}</Text>
+            </View>
+          </Pressable>
+        </View>
+      )}
 
       {/* Zone d'input style Glassmorphism floutée et épurée */}
       <View className="border-t border-border-light/30 bg-background-light/80 px-4 pt-3 pb-6 dark:border-border-dark/30 dark:bg-background-dark/80 backdrop-blur-xl">

@@ -15,7 +15,7 @@ export type DecryptedMessage = Message & {
 export function useMessages(conversationId: string) {
   return useInfiniteQuery({
     queryKey: ['messages', conversationId],
-    queryFn: async ({ pageParam = 1 }) => {
+    queryFn: async ({ pageParam = 1 }): Promise<PaginatedResponse<DecryptedMessage>> => {
       const page = pageParam as number;
       let raw;
       try {
@@ -65,6 +65,7 @@ export function useMessages(conversationId: string) {
         ...raw,
         items,
       };
+      console.log(out.items);
       return out;
     },
     initialPageParam: 1,

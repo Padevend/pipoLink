@@ -36,8 +36,10 @@
  *      - Error message shown
  */
 
+import { useToast } from '@/providers';
 import type { MessageAttachment } from '@/shared/api/types';
 import { formatBytes } from '@/shared/lib/file';
+import { ImageViewer } from '@/shared/ui/image-viewer';
 import { cn } from '@/shared/utils/cn';
 import { useEffect, useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
@@ -84,6 +86,9 @@ export function AttachmentImage({
 
   // Actual image aspect ratio (resolved once the image loads)
   const [aspectRatio, setAspectRatio] = useState<number>(DEFAULT_ASPECT);
+  const [hasImage, setHasImage] = useState<string | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
+  const { showToast } = useToast();
 
   // Fade-in animation for when the decrypted image loads
   const fadeIn = useSharedValue(0);
@@ -97,7 +102,7 @@ export function AttachmentImage({
         (w, h) => {
           if (w > 0 && h > 0) setAspectRatio(w / h);
         },
-        () => {}, // Ignore size errors — keep default
+        () => { }, // Ignore size errors — keep default
       );
       // Fade the image in
       fadeIn.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) });
@@ -128,83 +133,104 @@ export function AttachmentImage({
 
   // ── Rendered image or placeholder ─────────────────────────────────────────
   return (
-    <Pressable
-      onPress={status === 'completed' ? openFile : undefined}
-      disabled={status !== 'completed'}
-    >
-      <View
-        className={cn(
-          'rounded-xl overflow-hidden bg-black/10 dark:bg-black/30',
-          'border border-black/5 dark:border-white/5',
-        )}
-        style={{ width: MAX_WIDTH, aspectRatio }}
+    <>
+      <Pressable
+        onPress={status === 'completed' ? openFile : undefined}
+        disabled={status !== 'completed'}
       >
-        {/* ── Decrypted image (only when completed) ── */}
-        {status === 'completed' && decryptedUri ? (
-          <Animated.View style={[{ flex: 1 }, fadeStyle]}>
-            <Image
-              source={{ uri: decryptedUri }}
-              style={{ flex: 1 }}
-              resizeMode="cover"
-            />
-          </Animated.View>
-        ) : (
-          /* ── Placeholder overlay (shown for all non-completed states) ── */
-          <View className="flex-1 items-center justify-center">
+        <View
+          className={cn(
+            'rounded-xl overflow-hidden bg-black/10 dark:bg-black/30',
+            'border border-black/5 dark:border-white/5',
+          )}
+          style={{ width: MAX_WIDTH, aspectRatio }}
+        >
+          {/* ── Decrypted image (only when completed) ── */}
+          {status === 'completed' && decryptedUri ? (
+            <Animated.View style={[{ flex: 1 }, fadeStyle]}>
+              <Pressable
+                className='absolute inset-0 z-10'
+                onPress={() => {
+                  setHasImage(decryptedUri);
+                  setIsPreviewOpen(true);
+                }}
+              ></Pressable>
+              <Image
+                source={{ uri: decryptedUri }}
+                style={{ flex: 1 }}
+                resizeMode="cover"
+              />
+            </Animated.View>
+          ) : (
+            /* ── Placeholder overlay (shown for all non-completed states) ── */
+            <View className="flex-1 items-center justify-center">
 
-            {/* Blurred grey background */}
-            <View
-              className="absolute inset-0 bg-neutral-300 dark:bg-neutral-700 opacity-60"
-            />
+              {/* Blurred grey background */}
+              <View
+                className="absolute inset-0 bg-neutral-300 dark:bg-neutral-700 opacity-60"
+              />
 
-            {/* Dark tint overlay */}
-            <View className="absolute inset-0 bg-black/20" />
+              {/* Dark tint overlay */}
+              <View className="absolute inset-0 bg-black/20" />
 
-            {/* Circular progress + action button */}
-            <AttachmentProgressCircle
-              progress={progress}
-              status={status}
-              size={52}
-              isMine={isMine}
-              onPress={handleCirclePress}
-            />
+              {/* Circular progress + action button */}
+              <AttachmentProgressCircle
+                progress={progress}
+                status={status}
+                size={52}
+                isMine={isMine}
+                onPress={handleCirclePress}
+              />
 
-            {/* Status label */}
-            <View className="mt-2 items-center">
-              {status === 'downloading' && (
-                <Text className="text-white text-[10px] font-bold opacity-90">
-                  {Math.round(progress * 100)}%
-                </Text>
-              )}
-              {status === 'decrypting' && (
-                <Text className="text-white text-[10px] font-semibold opacity-80">
-                  Déchiffrement…
-                </Text>
-              )}
-              {status === 'paused' && (
-                <Text className="text-white text-[10px] font-semibold opacity-70">
-                  En pause
-                </Text>
-              )}
-              {(status === 'idle' || status === 'cancelled') && (
-                <Text className="text-white text-[10px] font-medium opacity-70">
-                  {formatBytes(attachment.fileSize)}
-                </Text>
-              )}
-              {status === 'failed' && (
-                <Text className="text-red-300 text-[10px] font-bold">
-                  Réessayer
-                </Text>
-              )}
-              {status === 'queued' && (
-                <Text className="text-white text-[10px] font-medium opacity-70">
-                  En file…
-                </Text>
-              )}
+              {/* Status label */}
+              <View className="mt-2 items-center">
+                {status === 'downloading' && (
+                  <Text className="text-white text-[10px] font-bold opacity-90">
+                    {Math.round(progress * 100)}%
+                  </Text>
+                )}
+                {status === 'decrypting' && (
+                  <Text className="text-white text-[10px] font-semibold opacity-80">
+                    Déchiffrement…
+                  </Text>
+                )}
+                {status === 'paused' && (
+                  <Text className="text-white text-[10px] font-semibold opacity-70">
+                    En pause
+                  </Text>
+                )}
+                {(status === 'idle' || status === 'cancelled') && (
+                  <Text className="text-white text-[10px] font-medium opacity-70">
+                    {formatBytes(attachment.fileSize)}
+                  </Text>
+                )}
+                {status === 'failed' && (
+                  <Text className="text-red-300 text-[10px] font-bold">
+                    Réessayer
+                  </Text>
+                )}
+                {status === 'queued' && (
+                  <Text className="text-white text-[10px] font-medium opacity-70">
+                    En file…
+                  </Text>
+                )}
+              </View>
             </View>
-          </View>
-        )}
-      </View>
-    </Pressable>
+          )}
+        </View>
+      </Pressable>
+
+      {/* MODAL POUR L'OUVERTURE DE L'IMAGE EN PLEIN ÉCRAN */}
+      {hasImage && (
+        <ImageViewer
+          visible={isPreviewOpen}
+          uri={hasImage}
+          aspectRatio={aspectRatio}
+          onClose={() => setIsPreviewOpen(false)}
+          onDownloadSuccess={() => showToast({ type: 'success', message: 'Image enregistrée ✓' })}
+          onDownloadError={(msg) => showToast({ type: 'error', message: "error" })}
+        />
+      )}
+    </>
   );
 }

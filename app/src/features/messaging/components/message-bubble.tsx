@@ -1,10 +1,12 @@
 import { AttachmentDocument } from "@/features/attachments/components/attachment-document";
 import { AttachmentImage } from "@/features/attachments/components/attachment-image";
 import { MessageAttachment } from "@/shared/api/types";
+import { BRAND } from "@/shared/config/brand";
+import { Avatar } from "@/shared/ui/avatar";
 import { cn } from '@/shared/utils/cn';
 import { format } from "date-fns";
 import { Check, CheckCheck, Clock, Reply, Trash2 } from "lucide-react-native";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Pressable, Text, View } from 'react-native';
 import Animated, {
   FadeIn,
@@ -14,7 +16,6 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { DecryptedMessage } from "../hooks/use-messages";
-import { BRAND } from "@/shared/config/brand";
 
 // ─── COMPOSANT : MENU CONTEXTUEL (SATINÉ ET SUBTILE) ──────────────────────────
 
@@ -29,9 +30,9 @@ function BubbleMenu({ isMine, onReply, onDelete, onClose }: BubbleMenuProps) {
   return (
     <>
       {/* Overlay plein écran pour intercepter la fermeture sans décaler la grille */}
-      <Pressable 
-        onPress={onClose} 
-        className="absolute inset-0 z-40 bg-transparent"
+      <Pressable
+        onPress={onClose}
+        className="absolute right-0 inset-0 z-40 bg-transparent"
         style={{ width: 4000, height: 4000, left: -2000, top: -2000 }}
       />
 
@@ -39,10 +40,10 @@ function BubbleMenu({ isMine, onReply, onDelete, onClose }: BubbleMenuProps) {
         entering={FadeIn.duration(140).springify().mass(0.8)}
         exiting={FadeOut.duration(90)}
         className={cn(
-          'absolute z-50 top-[-46px] flex-row items-center p-1 rounded-xl border backdrop-blur-xl',
+          'absolute right-0 z-50 top-[-46px] flex-col items-center p-1 rounded-xl border backdrop-blur-xl',
           'bg-white/95 dark:bg-zinc-900/95 shadow-2xl shadow-black/10',
           'border-neutral-200/50 dark:border-neutral-800/60',
-          isMine ? 'right-0' : 'left-0'
+          isMine ? 'right-20' : 'left-0'
         )}
       >
         {/* Option : Répondre */}
@@ -77,6 +78,7 @@ function BubbleMenu({ isMine, onReply, onDelete, onClose }: BubbleMenuProps) {
 // ─── COMPOSANT PRINCIPAL : BULLE DE MESSAGE ──────────────────────────────────
 
 interface MessageBubbleProps {
+  isGroup?: boolean;
   message: DecryptedMessage;
   isMine: boolean;
   hasAttachments: boolean;
@@ -90,9 +92,13 @@ export function MessageBubble({
   hasAttachments,
   onReply,
   onDelete,
+  isGroup,
 }: MessageBubbleProps) {
   const [menuVisible, setMenuVisible] = useState(false);
   const hasText = !!message.decryptedContent || !hasAttachments;
+  useEffect(()=>{
+    console.log("message", message)
+  },[])
 
   // Animation élastique premium lors de l'interaction longue
   const scale = useSharedValue(1);
@@ -131,7 +137,7 @@ export function MessageBubble({
   return (
     <View className={cn('mb-1.5 w-full flex-row', isMine ? 'justify-end pl-12' : 'justify-start pr-12')}>
       <View className={cn('max-w-[85%] items-start relative z-10', isMine ? 'items-end' : 'items-start')}>
-        
+
         {/* Menu Contextuel Flottant */}
         {menuVisible && (
           <BubbleMenu
@@ -145,11 +151,20 @@ export function MessageBubble({
         {/* Structure de la Bulle */}
         <Pressable
           onLongPress={handleLongPress}
-          delayLongPress={240} // Vitesse réactive de l'écosystème iOS/Android moderne
+          delayLongPress={240}
           onPress={() => menuVisible && setMenuVisible(false)}
-          className="active:opacity-95"
+          className="active:opacity-95 flex-row items-end"
         >
-          <Animated.View style={animStyle}>
+          {isGroup && !isMine && (
+            <View className="rounded-full mx-2">
+              <Avatar 
+                name="Pavel"
+                uri="https://avatars.dicebear.com/api/initials/pavel.svg?background=%23FF0000&color=%23FFFFFF"
+                size="md"
+              />
+            </View>
+          )}
+          <Animated.View style={animStyle} className="flex flex-xol">
             <View
               className={cn(
                 'rounded-2xl px-3.5 py-2.5',
@@ -192,6 +207,11 @@ export function MessageBubble({
                 </Text>
               )}
             </View>
+            {isGroup && !isMine && ( 
+              <Text className="text-sm text-text-primary-light/40 dark:text-text-primary-dark/40 mt-0.5">
+                @pavel
+              </Text> 
+            )}
           </Animated.View>
         </Pressable>
 

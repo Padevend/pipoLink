@@ -18,7 +18,8 @@ export function ConversationItem({ conversation, onPress }: ConversationItemProp
 
   const lastMessage = conversation.lastMessage;
   const [chatKey, setChatKey] = useState<Uint8Array | null>(null);
-  const isUnread = conversation.unreadCount > 0;
+  const safeUnreadCount = Math.max(0, conversation.unreadCount);
+  const isUnread = safeUnreadCount > 0;
 
   // Récupération du nom du chat (Logique métier préservée)
   const chatName = useMemo(() => {
@@ -113,9 +114,9 @@ export function ConversationItem({ conversation, onPress }: ConversationItemProp
 
           {/* Badge de notification style capsule moderne */}
           {isUnread && (
-            <View className="bg-primary rounded-full min-w-[18px] h-[18px] px-1 items-center justify-center">
-              <Text className="text-white text-[10px] font-bold tracking-tighter">
-                {conversation.unreadCount}
+            <View className="bg-primary rounded-full min-w-[20px] h-[20px] px-1.5 items-center justify-center shadow-sm">
+              <Text className="text-white text-[11px] font-bold tracking-tighter">
+                {safeUnreadCount}
               </Text>
             </View>
           )}

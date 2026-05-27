@@ -3,9 +3,7 @@ import { normalizeUser, type UserWithProfile } from '@/shared/api/normalize-user
 import type { User } from '@/shared/api/types';
 import { userApi } from '@/shared/api/user';
 import { disconnect } from '@/shared/websocket/manager';
-import { getSecureItem, removeSecureItem, setSecureItem } from '@/shared/storage/secure-storage';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as SecureStore from 'expo-secure-store';
+import { SecureStorageService, AsyncStorageService, SECURE_STORAGE_KEYS, ASYNC_STORAGE_KEYS } from '@/shared/lib/storage';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 interface AuthContextValue {
@@ -49,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
 
   const persistUser = async (userData: UserWithProfile) => {
     try {
-      await AsyncStorage.setItem('user_data', JSON.stringify(userData));
+      await AsyncStorageService.set(ASYNC_STORAGE_KEYS.USER_DATA, userData);
       setUser(userData);
     } catch (error) {
       console.warn('Failed to save user data:', error);
@@ -60,11 +58,11 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
     tokens: { accessToken: string; refreshToken: string; expiresAt: number; deviceId?: string | null },
     userData?: UserWithProfile,
   ) => {
-    await SecureStore.setItemAsync('auth_token', tokens.accessToken);
-    await SecureStore.setItemAsync('refresh_token', tokens.refreshToken);
-    await SecureStore.setItemAsync('expires_at', String(tokens.expiresAt));
+    await SecureStorageService.set(SECURE_STORAGE_KEYS.AUTH_TOKEN, tokens.accessToken);
+    await SecureStorageService.set(SECURE_STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken);
+    await SecureStorageService.set(SECURE_STORAGE_KEYS.EXPIRES_AT, String(tokens.expiresAt));
     if (tokens.deviceId) {
-      await SecureStore.setItemAsync('device_id', tokens.deviceId);
+      await SecureStorageService.set(SECURE_STORAGE_KEYS.DEVICE_ID, tokens.deviceId);
     }
 
     const normalized = userData ? normalizeUser(userData) : null;
@@ -78,22 +76,22 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
   };
 
   const clearAuthData = async () => {
-    await removeSecureItem('auth_token');
-    await removeSecureItem('refresh_token');
-    await removeSecureItem('expires_at');
-    await removeSecureItem('device_id');
-    await AsyncStorage.removeItem('user_data').catch(() => {});
+    await SecureStorageService.remove(SECURE_STORAGE_KEYS.AUTH_TOKEN);
+    await SecureStorageService.remove(SECURE_STORAGE_KEYS.REFRESH_TOKEN);
+    await SecureStorageService.remove(SECURE_STORAGE_KEYS.EXPIRES_AT);
+    await SecureStorageService.remove(SECURE_STORAGE_KEYS.DEVICE_ID);
+    await AsyncStorageService.remove(ASYNC_STORAGE_KEYS.USER_DATA);
     setUser(null);
   };
 
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const token = await getSecureItem('auth_token');
-        const savedUser = await AsyncStorage.getItem('user_data').catch(() => null);
+        const token = await SecureStorageService.get(SECURE_STORAGE_KEYS.AUTH_TOKEN);
+        const savedUser = await AsyncStorageService.get<UserWithProfile>(ASYNC_STORAGE_KEYS.USER_DATA);
 
         if (token && savedUser) {
-          setUser(normalizeUser(JSON.parse(savedUser) as UserWithProfile));
+          setUser(normalizeUser(savedUser));
           try {
             const freshUser = await fetchFullUser();
             await persistUser(freshUser);

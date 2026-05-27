@@ -1,4 +1,4 @@
-import * as SecureStore from 'expo-secure-store';
+import { SecureStorageService, SECURE_STORAGE_KEYS } from '@/shared/lib/storage';
 
 import { messagingApi } from '@/shared/api/messaging';
 import {
@@ -11,7 +11,7 @@ export async function ensureChatKeyForChat(chatId: string): Promise<Uint8Array> 
   const cached = await getCachedChatKey(chatId);
   if (cached) return cached;
 
-  const deviceId = await SecureStore.getItemAsync('device_id');
+  const deviceId = await SecureStorageService.get(SECURE_STORAGE_KEYS.DEVICE_ID);
   if (!deviceId) {
     throw new Error('Appareil non enregistré : reconnectez-vous après onboarding.');
   }
