@@ -9,6 +9,7 @@ export const sendMessageValidator = vine.compile(
     content: vine.string().minLength(1),
     iv:      vine.string().minLength(1),
     type:    vine.enum(["TEXT", "IMAGE", "DOCUMENT", "MIXED", "SYSTEM"]).optional(),
+    response_to: vine.string().uuid().optional(),
     attachments: vine
       .array(
         vine.object({

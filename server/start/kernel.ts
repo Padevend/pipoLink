@@ -10,12 +10,28 @@ import { PaymentRouter } from "./routes/payment.route.js";
 import { NotificationRouter } from "./routes/notification.route.js";
 import { AnnouncementRouter } from "./routes/announcement.route.js";
 import { UpdatesRouter } from "./routes/updates.route.js";
-import { serveStatic } from "hono/serve-static";
-import { join } from "path";
-import { readFile } from "fs/promises";
+import { env } from "../config/envManager.js";
+import { connect } from "http2";
+import { prisma } from "../config/database.js";
 
 export function createRouter() {
   const app = new Hono();
+
+  // route de sante
+  app.get("/health", async (c) => {
+    // verifier les connexions à la base de données, services externes, etc.
+    let isDbConnected = await prisma.$connect().then(() => true).catch(() => false);
+
+    return c.json({ 
+      status: "live",
+      environment: env.get("NODE_ENV") || "development",
+      version: env.get("APP_VERSION") || "1.0.0",
+      clientDomain: env.get("CLIENT_DOMAIN"),
+      connectionCheck: {
+        database: isDbConnected,
+      }
+    });
+  });
 
   // Enregistrement des routes
   app.route("/auth", AuthRouter);

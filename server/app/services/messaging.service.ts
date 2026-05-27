@@ -198,7 +198,7 @@ export class MessagingService {
                   select: {
                     id:       true,
                     username: true,
-                    profile:  { select: { firstname: true, lastname: true, avatarUrl: true } },
+                    profile:  { select: { firstname: true, lastname: true, avatarUrl: true, phone: true } },
                   },
                 },
               },
@@ -242,6 +242,7 @@ export class MessagingService {
             id:        cm.user.id,
             username:  cm.user.username,
             avatarUrl: cm.user.profile?.avatarUrl ?? undefined,
+            phone:     cm.user.profile?.phone ?? undefined,
           })),
         };
       }),
@@ -261,6 +262,11 @@ export class MessagingService {
         include: {
           sender:      { select: { id: true, username: true } },
           attachments: true,
+          responseTo: {
+            include: {
+              sender: { select: { id: true, username: true } },
+            }
+          }
         },
       }),
       prisma.message.count({ where: { chat_id: conversationId, deletedAt: null } }),
@@ -314,6 +320,7 @@ export class MessagingService {
       content: string;
       iv: string;
       type?: string;
+      response_to?: string;
       attachments?: { fileUrl: string; iv: string; fileName: string; fileSize: number; mimeType: string }[];
     },
   ) {
@@ -327,6 +334,7 @@ export class MessagingService {
         cipherText: payload.content,
         iv:         payload.iv,
         status:     "send",
+        response_to: payload.response_to,
         type:       (payload.type ?? "TEXT") as any,
         attachments: {
           create: (payload.attachments ?? []).map((a) => ({

@@ -7,6 +7,26 @@ datasource db {
   provider = "postgresql"
 }
 
+// enum 
+enum ChatType {
+  private
+  group
+}
+
+enum ConversationMemberRole {
+  admin
+  member
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  DOCUMENT
+  MIXED
+  SYSTEM
+}
+
+// model
 model User {
   id            String   @id @default(uuid()) @db.Uuid
   email         String?  @unique
@@ -95,7 +115,7 @@ model Device {
 model RefreshToken {
   id        String    @id @default(uuid()) @db.Uuid
   user_id   String    @db.Uuid
-  device_id String?   @db.Uuid
+  device_id String? 
   tokenHash String    @unique
   revokedAt DateTime? @db.Timestamptz
   expiresAt DateTime  @db.Timestamptz
@@ -117,16 +137,6 @@ model AuditLog {
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("audit_logs")
-}
-
-enum ChatType {
-  private
-  group
-}
-
-enum ConversationMemberRole {
-  admin
-  member
 }
 
 model Chat {
@@ -176,29 +186,24 @@ model ChatMemberKey {
   @@map("chat_member_keys")
 }
 
-enum MessageType {
-  TEXT
-  IMAGE
-  DOCUMENT
-  MIXED
-  SYSTEM
-}
-
 model Message {
-  id         String      @id @default(uuid()) @db.Uuid
-  chat_id    String      @db.Uuid
-  sender_id  String      @db.Uuid
-  cipherText String
-  iv         String
-  status     String      @default("send")
-  type       MessageType @default(TEXT)
-  editedAt   DateTime?   @db.Timestamptz
-  deletedAt  DateTime?   @db.Timestamptz
-  created_at DateTime    @default(now()) @db.Timestamptz
+  id          String      @id @default(uuid()) @db.Uuid
+  chat_id     String      @db.Uuid
+  sender_id   String      @db.Uuid
+  response_to String?     @db.Uuid
+  cipherText  String
+  iv          String
+  status      String      @default("send")
+  type        MessageType @default(TEXT)
+  editedAt    DateTime?   @db.Timestamptz
+  deletedAt   DateTime?   @db.Timestamptz
+  created_at  DateTime    @default(now()) @db.Timestamptz
 
   chat        Chat                @relation(fields: [chat_id], references: [id], onDelete: Cascade)
   sender      User                @relation(fields: [sender_id], references: [id], onDelete: Cascade)
   attachments MessageAttachment[]
+  responseTo  Message?            @relation("MessageResponse", fields: [response_to], references: [id], onDelete: SetNull)
+  responses   Message[]           @relation("MessageResponse")
 
   @@map("messages")
 }
