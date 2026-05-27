@@ -16,7 +16,7 @@ export default function TabsLayout() {
           backgroundColor: colorScheme === 'dark' ? '#0F172A' : '#FFFFFF',
           borderTopColor: colorScheme === 'dark' ? '#1E293B' : '#E2E8F0',
           elevation: 0,
-          height: 75,
+          height: 95,
           paddingBottom: 8,
           paddingTop: 8,
         },

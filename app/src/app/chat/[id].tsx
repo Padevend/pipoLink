@@ -12,13 +12,17 @@ import { Avatar } from '@/shared/ui/avatar';
 import { cn } from '@/shared/utils/cn';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
-import { ArrowLeft, EllipsisVertical, MessageSquareOff, Phone } from 'lucide-react-native';
+import { messagingApi } from '@/shared/api/messaging';
+import { queryClient } from '@/providers';
+import { conversationKeys } from '@/entities/conversation/hooks';
+import { ArrowLeft, EllipsisVertical, MessageSquareOff, Phone, Info, LogOut, Trash2 } from 'lucide-react-native';
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
   const { data: conversations } = useConversations();
   const [infoOpen, setInfoOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const conversation = conversations?.find((c) => c.id === id);
 
@@ -144,17 +148,72 @@ export default function ChatScreen() {
             </Pressable>
           )}
 
-          <Pressable
-            onPress={() => setInfoOpen(true)}
-            className="h-9 w-9 items-center justify-center rounded-full bg-background-light/40 dark:bg-background-dark/30 active:opacity-80"
-          >
-            <EllipsisVertical size={22} color="#64748B" />
-          </Pressable>
+          <View className="relative">
+            <Pressable
+              onPress={() => setMenuOpen(!menuOpen)}
+              className="h-9 w-9 items-center justify-center rounded-full bg-background-light/40 dark:bg-background-dark/30 active:opacity-80"
+            >
+              <EllipsisVertical size={22} color="#64748B" />
+            </Pressable>
+            {menuOpen && (
+              <>
+                <Pressable
+                  onPress={() => setMenuOpen(false)}
+                  className="absolute right-0 inset-0 z-40 bg-transparent"
+                  style={{ width: 4000, height: 4000, left: -2000, top: -2000 }}
+                />
+                <View className="absolute right-0 top-12 z-50 w-48 rounded-xl border border-border-light/40 bg-surface-light/95 p-1 shadow-lg dark:border-border-dark/40 dark:bg-surface-dark/95 backdrop-blur-xl">
+                  <Pressable
+                    onPress={() => { setMenuOpen(false); setInfoOpen(true); }}
+                    className="flex-row items-center gap-2 rounded-lg px-3 py-2 active:bg-neutral-100 dark:active:bg-neutral-800"
+                  >
+                    <Info size={16} color="#64748B" />
+                    <Text className="text-sm font-medium text-text-primary-light dark:text-text-primary-dark">Voir infos</Text>
+                  </Pressable>
+                  {conversation?.type === 'group' ? (
+                    <Pressable
+                      onPress={async () => {
+                        setMenuOpen(false);
+                        try {
+                          await messagingApi.leaveGroup(id!);
+                          queryClient.invalidateQueries({ queryKey: conversationKeys.list() });
+                          router.replace('/(tabs)');
+                        } catch (e) {
+                          console.error(e);
+                        }
+                      }}
+                      className="flex-row items-center gap-2 rounded-lg px-3 py-2 mt-1 active:bg-red-500/10"
+                    >
+                      <LogOut size={16} color="#EF4444" />
+                      <Text className="text-sm font-medium text-red-500">Quitter le groupe</Text>
+                    </Pressable>
+                  ) : (
+                    <Pressable
+                      onPress={async () => {
+                        setMenuOpen(false);
+                        try {
+                          await messagingApi.deleteChat(id!);
+                          queryClient.invalidateQueries({ queryKey: conversationKeys.list() });
+                          router.replace('/(tabs)');
+                        } catch (e) {
+                          console.error(e);
+                        }
+                      }}
+                      className="flex-row items-center gap-2 rounded-lg px-3 py-2 mt-1 active:bg-red-500/10"
+                    >
+                      <Trash2 size={16} color="#EF4444" />
+                      <Text className="text-sm font-medium text-red-500">Supprimer le chat</Text>
+                    </Pressable>
+                  )}
+                </View>
+              </>
+            )}
+          </View>
         </View>
       </View>
 
       {/* Vue du Chat */}
-      <ChatView conversationId={id!} type={conversation?.type ?? "private"} />
+      <ChatView conversation={conversation} />
 
       {/* Sheet d'informations */}
       <ChatInfoSheet

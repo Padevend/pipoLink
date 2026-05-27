@@ -56,6 +56,7 @@ export const messagingApi = {
       content: string;
       iv: string;
       type?: string;
+      replyToId?: string;
       attachments?: { fileUrl: string; iv: string; fileName: string; fileSize: number; mimeType: string }[];
     },
   ) => api.post<RawMessage>(`/messaging/${conversationId}/messages`, payload).then(normalizeMessage),
@@ -73,4 +74,13 @@ export const messagingApi = {
     ),
 
   markAsRead: (conversationId: string) => api.post<void>(`/messaging/${conversationId}/read`),
+
+  deleteMessage: (conversationId: string, messageId: string) => 
+    api.delete<void>(`/messaging/${conversationId}/messages/${messageId}`),
+
+  leaveGroup: (conversationId: string) => 
+    api.post<void>(`/messaging/${conversationId}/leave`),
+
+  deleteChat: (conversationId: string) => 
+    api.delete<void>(`/messaging/${conversationId}`),
 };

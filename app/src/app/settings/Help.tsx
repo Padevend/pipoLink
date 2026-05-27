@@ -1,11 +1,11 @@
+import { UpdateManager } from "@/processes/update-manager";
 import SettingItem from "@/shared/ui/settings-cards";
 import { router } from "expo-router";
-import { ArrowLeft, Info, RefreshCw } from "lucide-react-native";
-import { useTranslation } from "react-i18next";
-import { Pressable, Text, View, Modal, ActivityIndicator, Alert } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ArrowLeft, Info, MessageCircle, RefreshCw } from "lucide-react-native";
 import { useState } from "react";
-import { UpdateManager } from "@/processes/update-manager";
+import { useTranslation } from "react-i18next";
+import { ActivityIndicator, Alert, Modal, Pressable, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HelpsAndCommentScreen() {
     const { t } = useTranslation("settings");
@@ -49,6 +49,12 @@ export default function HelpsAndCommentScreen() {
 
             <View className="px-4 py-6">
                 <View className="mb-6 overflow-hidden backdrop-blur-md py-6">
+                    <SettingItem
+                        icon={MessageCircle}
+                        label="Feedback & Suggestions"
+                        value="Votre avis compte ! Envoyez-nous vos commentaires et suggestions."
+                        onPress={()=>router.push("/settings/abouts/comment")}
+                    />
                     <SettingItem
                         icon={Info}
                         label="À propos"

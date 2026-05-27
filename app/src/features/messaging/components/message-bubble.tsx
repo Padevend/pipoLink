@@ -5,75 +5,20 @@ import { BRAND } from "@/shared/config/brand";
 import { Avatar } from "@/shared/ui/avatar";
 import { cn } from '@/shared/utils/cn';
 import { format } from "date-fns";
-import { Check, CheckCheck, Clock, Reply, Trash2 } from "lucide-react-native";
-import { useCallback, useEffect, useState } from "react";
+import { Check, CheckCheck, Clock } from "lucide-react-native";
+import { useCallback, useState } from "react";
 import { Pressable, Text, View } from 'react-native';
 import Animated, {
-  FadeIn,
-  FadeOut,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
+  withSpring
 } from "react-native-reanimated";
 import { DecryptedMessage } from "../hooks/use-messages";
+import BubbleMenu from "./Bubble-menu";
 
 // ─── COMPOSANT : MENU CONTEXTUEL (SATINÉ ET SUBTILE) ──────────────────────────
 
-interface BubbleMenuProps {
-  isMine: boolean;
-  onReply: () => void;
-  onDelete: () => void;
-  onClose: () => void;
-}
 
-function BubbleMenu({ isMine, onReply, onDelete, onClose }: BubbleMenuProps) {
-  return (
-    <>
-      {/* Overlay plein écran pour intercepter la fermeture sans décaler la grille */}
-      <Pressable
-        onPress={onClose}
-        className="absolute right-0 inset-0 z-40 bg-transparent"
-        style={{ width: 4000, height: 4000, left: -2000, top: -2000 }}
-      />
-
-      <Animated.View
-        entering={FadeIn.duration(140).springify().mass(0.8)}
-        exiting={FadeOut.duration(90)}
-        className={cn(
-          'absolute right-0 z-50 top-[-46px] flex-col items-center p-1 rounded-xl border backdrop-blur-xl',
-          'bg-white/95 dark:bg-zinc-900/95 shadow-2xl shadow-black/10',
-          'border-neutral-200/50 dark:border-neutral-800/60',
-          isMine ? 'right-20' : 'left-0'
-        )}
-      >
-        {/* Option : Répondre */}
-        <Pressable
-          onPress={() => { onReply(); onClose(); }}
-          className="flex-row items-center gap-x-1.5 px-3 py-1.5 rounded-lg active:bg-neutral-100 dark:active:bg-neutral-800"
-        >
-          <Reply size={13} className="text-indigo-500 dark:text-indigo-400" strokeWidth={2.5} />
-          <Text className="text-[12px] font-bold text-indigo-600 dark:text-indigo-400">
-            Répondre
-          </Text>
-        </Pressable>
-
-        {/* Micro-séparateur */}
-        <View className="w-[0.5px] h-4 bg-neutral-200 dark:bg-neutral-800" />
-
-        {/* Option : Supprimer */}
-        <Pressable
-          onPress={() => { onDelete(); onClose(); }}
-          className="flex-row items-center gap-x-1.5 px-3 py-1.5 rounded-lg active:bg-red-500/10"
-        >
-          <Trash2 size={13} className="text-red-500" strokeWidth={2.5} />
-          <Text className="text-[12px] font-bold text-red-500">
-            Supprimer
-          </Text>
-        </Pressable>
-      </Animated.View>
-    </>
-  );
-}
 
 // ─── COMPOSANT PRINCIPAL : BULLE DE MESSAGE ──────────────────────────────────
 
@@ -84,6 +29,7 @@ interface MessageBubbleProps {
   hasAttachments: boolean;
   onReply?: (message: DecryptedMessage) => void;
   onDelete?: (messageId: string) => void;
+  onPressReplyQuote?: (messageId: string) => void;
 }
 
 export function MessageBubble({
@@ -92,13 +38,21 @@ export function MessageBubble({
   hasAttachments,
   onReply,
   onDelete,
+  onPressReplyQuote,
   isGroup,
 }: MessageBubbleProps) {
   const [menuVisible, setMenuVisible] = useState(false);
   const hasText = !!message.decryptedContent || !hasAttachments;
-  useEffect(()=>{
-    console.log("message", message)
-  },[])
+
+  const getReplyPreview = (rep: DecryptedMessage) => {
+    if (rep.is_deleted) return 'Ce message a été supprimé';
+    if (rep.decryptedContent) return rep.decryptedContent;
+    if (rep.attachments && rep.attachments.length > 0) {
+      if (rep.attachments[0].mimeType.startsWith('image/')) return '📷 Photo';
+      return '📎 Document';
+    }
+    return 'Message';
+  };
 
   // Animation élastique premium lors de l'interaction longue
   const scale = useSharedValue(1);
@@ -107,11 +61,12 @@ export function MessageBubble({
   }));
 
   const handleLongPress = useCallback(() => {
+    if (message.is_deleted) return;
     scale.value = withSpring(0.97, { damping: 20, stiffness: 300 }, () => {
       scale.value = withSpring(1, { damping: 20, stiffness: 300 });
     });
     setMenuVisible(true);
-  }, []);
+  }, [message.is_deleted]);
 
   const renderStatusIcon = () => {
     if (!isMine) return null;
@@ -156,61 +111,96 @@ export function MessageBubble({
           className="active:opacity-95 flex-row items-end"
         >
           {isGroup && !isMine && (
-            <View className="rounded-full mx-2">
-              <Avatar 
-                name="Pavel"
-                uri="https://avatars.dicebear.com/api/initials/pavel.svg?background=%23FF0000&color=%23FFFFFF"
+            <Pressable onPress={() => { }} className="rounded-full mx-2">
+              <Avatar
+                name={message.sender?.username || 'Inconnu'}
+                uri={message.sender?.profile?.avatarUrl ?? undefined}
                 size="md"
               />
-            </View>
+            </Pressable>
           )}
-          <Animated.View style={animStyle} className="flex flex-xol">
+          <Animated.View style={animStyle} className="flex flex-col">
             <View
               className={cn(
                 'rounded-2xl px-3.5 py-2.5',
                 isMine
-                  ? 'rounded-br-sm bg-primary'
+                  ? `rounded-br-sm ${message.is_deleted ? 'bg-primary/20' : 'bg-primary'}`
                   : 'rounded-bl-sm border border-border-light/30 bg-surface-light dark:border-border-dark/10 dark:bg-surface-dark/40 faceblur',
-                isSingleImageOnly && 'bg-transparent border-0 dark:bg-transparent p-0'
+                isSingleImageOnly && 'bg-transparent border-0 dark:bg-transparent p-0',
+
               )}
             >
-              {/* Pièces Jointes / Attachements */}
-              {hasAttachments && message.attachments && (
-                <View className={cn('w-full gap-y-1.5', hasText && 'mb-2')}>
-                  {message.attachments.map((att: MessageAttachment) => {
-                    const Component = att.mimeType.startsWith('image/') ? AttachmentImage : AttachmentDocument;
-                    return (
-                      <Component
-                        key={att.id}
-                        attachment={att}
-                        messageId={message.id}
-                        chatId={message.chat_id}
-                        isMine={isMine}
-                      />
-                    );
-                  })}
-                </View>
-              )}
-
-              {/* Contenu textuel */}
-              {hasText && (
-                <Text
-                  className={cn(
-                    'text-[14px] leading-[20px] tracking-tight',
-                    isMine ? 'text-white font-normal' : 'text-text-primary-light dark:text-text-primary-dark',
-                    message.decryptFailed && 'text-[12.5px] italic text-red-500/80 dark:text-red-400/80 font-medium'
-                  )}
-                >
-                  {message.decryptFailed
-                    ? 'Message chiffré corrompu ou clé introuvable'
-                    : message.decryptedContent ?? message.cipherText}
+              {message.is_deleted ? (
+                <Text className="text-[14px] italic text-white dark:text-text-secondary-dark">
+                  Ce message a été supprimé
                 </Text>
+              ) : (
+                <>
+                  {/* Référence de la réponse (Blockquote) */}
+                  {message.responseToDecrypted && (
+                    <Pressable
+                      onPress={() => {
+                        if (message.responseToId && onPressReplyQuote) {
+                          onPressReplyQuote(message.responseToId);
+                        }
+                      }}
+                      className={cn(
+                        'mb-2 border-l-2 pl-2 rounded-sm',
+                        isMine ? 'border-white/50 bg-white/10' : 'border-primary/50 bg-primary/5',
+                        'py-1 px-2'
+                      )}
+                    >
+                      <Text className={cn("text-[11px] font-bold mb-0.5", isMine ? "text-white/80" : "text-primary")}>
+                        {message.responseToDecrypted.sender?.username || 'Utilisateur'}
+                      </Text>
+                      <Text
+                        className={cn("text-[12px]", isMine ? "text-white/90" : "text-text-primary-light dark:text-text-primary-dark")}
+                        numberOfLines={2}
+                      >
+                        {getReplyPreview(message.responseToDecrypted)}
+                      </Text>
+                    </Pressable>
+                  )}
+
+                  {/* Pièces Jointes / Attachements */}
+                  {hasAttachments && message.attachments && (
+                    <View className={cn('w-full gap-y-1.5', hasText && 'mb-2')}>
+                      {message.attachments.map((att: MessageAttachment) => {
+                        const Component = att.mimeType.startsWith('image/') ? AttachmentImage : AttachmentDocument;
+                        return (
+                          <Component
+                            key={att.id}
+                            attachment={att}
+                            messageId={message.id}
+                            chatId={message.chat_id}
+                            isMine={isMine}
+                          />
+                        );
+                      })}
+                    </View>
+                  )}
+
+                  {/* Contenu textuel */}
+                  {hasText && (
+                    <Text
+                      className={cn(
+                        'text-[14px] leading-[20px] tracking-tight',
+                        isMine ? 'text-white font-normal' : 'text-text-primary-light dark:text-text-primary-dark',
+                        message.decryptFailed && 'text-[12.5px] italic text-red-500/80 dark:text-red-400/80 font-medium'
+                      )}
+                    >
+                      {message.decryptFailed
+                        ? 'Message chiffré corrompu ou clé introuvable'
+                        : message.decryptedContent ?? message.cipherText}
+                    </Text>
+                  )}
+                </>
               )}
             </View>
-            {isGroup && !isMine && ( 
-              <Text className="text-sm text-text-primary-light/40 dark:text-text-primary-dark/40 mt-0.5">
-                @pavel
-              </Text> 
+            {isGroup && !isMine && message.sender?.username && (
+              <Text className="text-sm text-text-primary-light/40 dark:text-text-primary-dark/40 mt-0.5 ml-1">
+                @{message.sender.username}
+              </Text>
             )}
           </Animated.View>
         </Pressable>

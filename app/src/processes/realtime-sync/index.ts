@@ -33,13 +33,27 @@ async function decryptForCache(message: Message): Promise<DecryptedMessage> {
   try {
     const chatKey = await ensureChatKeyForChat(message.chat_id);
     const text = await decryptMessage(message.cipherText, message.iv, chatKey);
+    let responseToDecrypted: DecryptedMessage | null = null;
+    if (message.responseTo) {
+      const repText = await decryptMessage(message.responseTo.cipherText, message.responseTo.iv, chatKey);
+      responseToDecrypted = {
+        ...message.responseTo,
+        decryptedContent: repText,
+        decryptFailed: repText === null
+      };
+    }
     return {
       ...message,
       decryptedContent: text,
       decryptFailed: text === null,
+      responseToDecrypted
     };
   } catch {
-    return { ...message, decryptedContent: null, decryptFailed: true };
+    let responseToDecrypted: DecryptedMessage | null = null;
+    if (message.responseTo) {
+      responseToDecrypted = { ...message.responseTo, decryptedContent: null, decryptFailed: true };
+    }
+    return { ...message, decryptedContent: null, decryptFailed: true, responseToDecrypted };
   }
 }
 

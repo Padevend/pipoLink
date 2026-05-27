@@ -47,7 +47,7 @@ export const localDb = {
   // ============================================================================================
   upsertMessages(conversationId: string, items: Message[]): void {
     for (const raw of items) {
-      const m = normalizeMessage({ ...raw, chat_id: raw.chat_id || conversationId });
+      const m = normalizeMessage({ ...raw, chat_id: conversationId } as any);
       const attachmentsJson = JSON.stringify(m.attachments ?? []);
       db.runSync(
         `INSERT OR REPLACE INTO messages
@@ -74,7 +74,7 @@ export const localDb = {
       `SELECT payload_json FROM messages WHERE conversation_id = ? ORDER BY datetime(created_at) ASC LIMIT ?`,
       [conversationId, limit],
     );
-    return rows.map((r) => normalizeMessage(JSON.parse(r.payload_json) as Message));
+    return rows.map((r) => normalizeMessage(JSON.parse(r.payload_json)));
   },
 
   queuePendingMessage(row: Omit<PendingMessageRow, 'retry_count'>): void {

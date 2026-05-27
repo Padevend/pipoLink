@@ -143,6 +143,9 @@ export interface Message {
   created_at: string;
   attachments?: MessageAttachment[];
   sender?: MessageSender;
+  responseToId?: string | null;
+  responseTo?: Message | null;
+  is_deleted?: boolean;
 }
 
 export interface MessageSender {

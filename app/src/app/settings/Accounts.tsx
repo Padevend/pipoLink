@@ -1,31 +1,22 @@
-import { useAuth } from "@/providers";
-import SettingItem from "@/shared/ui/settings-cards";
-import { router } from "expo-router";
-import { ArrowLeft, Key, LogOut, MailPlus, Trash, User } from "lucide-react-native";
-import { useTranslation } from "react-i18next";
-import { Pressable, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useLogout } from '@/features/auth/model/use-logout';
+import SettingItem from '@/shared/ui/settings-cards';
+import { router } from 'expo-router';
+import { ArrowLeft, Key, LogOut, MailPlus, Trash, User } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
+import { Pressable, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function AccountsSettingsScreen() {
-    const { logout } = useAuth();
-    const { t } = useTranslation("settings");
-
-    const handleLogout = async () => {
-        await logout();
-        router.replace("/auth/login");
-    };
-
-    const handleDeleteAccount = async () => {
-        return null;
-    }
+    const { confirmLogout } = useLogout();
+    const { t } = useTranslation('settings');
 
     return (
         <SafeAreaView
             className="flex-1 bg-background-light dark:bg-background-dark"
-            edges={["top"]}
+            edges={['top']}
         >
-            {/* Header Chat épuré */}
-            <View className="z-10 flex-row items-center justify-left border-b border-border-light/30 bg-surface-light/75 px-4 py-3 dark:border-border-dark/20 dark:bg-surface-dark/75 backdrop-blur-xl ">
+            {/* Header épuré */}
+            <View className="z-10 flex-row items-center border-b border-border-light/30 bg-surface-light/75 px-4 py-3 dark:border-border-dark/20 dark:bg-surface-dark/75 backdrop-blur-xl">
                 <Pressable
                     onPress={() => router.back()}
                     className="flex-row items-center gap-1 h-9 pl-2 pr-3 active:opacity-80"
@@ -44,21 +35,21 @@ export default function AccountsSettingsScreen() {
                         icon={User}
                         label="Informations personnelles"
                         value="Nom, email, téléphone, bio"
-                        onPress={() => router.push("/settings/Account/profile")}
+                        onPress={() => router.push('/settings/Account/profile')}
                     />
 
                     <SettingItem
                         icon={MailPlus}
                         label="Changer d'email"
                         value="Mettre à jour votre adresse email"
-                        onPress={() => router.push("/settings/Account/change-email")}
+                        onPress={() => router.push('/settings/Account/change-email')}
                     />
 
                     <SettingItem
                         icon={Key}
                         label="Changer de mot de passe"
                         value="Mettre à jour votre mot de passe"
-                        onPress={() => router.push("/settings/Account/change-password")}
+                        onPress={() => router.push('/settings/Account/change-password')}
                     />
                 </View>
 
@@ -73,7 +64,7 @@ export default function AccountsSettingsScreen() {
                         label="Déconnexion"
                         destructive
                         showChevron={false}
-                        onPress={() => void handleLogout()}
+                        onPress={confirmLogout}
                     />
                     <View className="mx-4 h-[0.5px] bg-border-light/10 dark:bg-border-dark/5" />
                     <SettingItem
@@ -81,7 +72,7 @@ export default function AccountsSettingsScreen() {
                         label="Supprimer mon compte"
                         destructive
                         showChevron={false}
-                        onPress={() => void handleDeleteAccount()}
+                        onPress={() => router.push('/settings/Account/account-delete')}
                     />
                 </View>
             </View>

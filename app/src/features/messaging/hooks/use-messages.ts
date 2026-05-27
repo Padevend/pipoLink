@@ -10,6 +10,7 @@ import { localDb } from '@/shared/storage/local-db';
 export type DecryptedMessage = Message & {
   decryptedContent: string | null;
   decryptFailed: boolean;
+  responseToDecrypted?: DecryptedMessage | null;
 };
 
 export function useMessages(conversationId: string) {
@@ -53,10 +54,27 @@ export function useMessages(conversationId: string) {
           // decrypt messages
           const text = await decryptMessage(m.cipherText, m.iv, chatKey);
 
+          let responseToDecrypted: DecryptedMessage | null = null;
+          if (m.responseTo && chatKey) {
+            const repText = await decryptMessage(m.responseTo.cipherText, m.responseTo.iv, chatKey);
+            responseToDecrypted = {
+              ...m.responseTo,
+              decryptedContent: repText,
+              decryptFailed: repText === null
+            };
+          } else if (m.responseTo) {
+            responseToDecrypted = {
+              ...m.responseTo,
+              decryptedContent: null,
+              decryptFailed: true
+            };
+          }
+
           return {
             ...m,
             decryptedContent: text,
             decryptFailed: text === null,
+            responseToDecrypted
           };
         }),
       );
@@ -65,7 +83,6 @@ export function useMessages(conversationId: string) {
         ...raw,
         items,
       };
-      console.log(out.items);
       return out;
     },
     initialPageParam: 1,

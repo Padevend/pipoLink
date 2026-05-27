@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
-import { ChevronDown, Image as ImageIcon, Paperclip, Send } from 'lucide-react-native';
+import { ChevronDown, Image as ImageIcon, Paperclip, Send, X } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, Pressable, Text, View } from 'react-native';
 
@@ -9,7 +9,7 @@ import { useSendMessage } from '@/features/messaging/hooks/use-send-message';
 import { activeChat } from '@/features/messaging/lib/active-chat';
 import { groupMessagesByDate } from '@/features/messaging/lib/group-messages-by-date';
 import { queryClient, useAuth } from '@/providers';
-import { messagingApi } from '@/shared/api/messaging';
+import { messagingApi, type Conversation } from '@/shared/api/messaging';
 import type { PaginatedResponse } from '@/shared/api/types';
 import { Input } from '@/shared/ui/input';
 import { cn } from '@/shared/utils/cn';
@@ -17,17 +17,29 @@ import type { InfiniteData } from '@tanstack/react-query';
 import { MessageBubble } from './message-bubble';
 
 interface ChatViewProps {
-  conversationId: string;
-  type: 'group' | 'private';
+  conversation?: Conversation;
 }
 
-export function ChatView({ conversationId, type }: ChatViewProps) {
+export function ChatView({ conversation }: ChatViewProps) {
+  const conversationId = conversation?.id ?? '';
+  const type = conversation?.type ?? 'private';
   const { user } = useAuth();
   const { data, fetchNextPage, hasNextPage } = useMessages(conversationId);
   const sendMessage = useSendMessage(conversationId);
   const [text, setText] = useState('');
+  const [responseTo, setResponseTo] = useState<DecryptedMessage | null>(null);
   const flatListRef = useRef<FlatList>(null);
   const [hasScrolledInitial, setHasScrolledInitial] = useState(false);
+
+  const getReplyPreview = (rep: DecryptedMessage) => {
+    if (rep.is_deleted) return 'Ce message a été supprimé';
+    if (rep.decryptedContent) return rep.decryptedContent;
+    if (rep.attachments && rep.attachments.length > 0) {
+      if (rep.attachments[0].mimeType.startsWith('image/')) return '📷 Photo';
+      return '📎 Document';
+    }
+    return 'Message';
+  };
 
   useEffect(() => {
     activeChat.set(conversationId);
@@ -123,8 +135,14 @@ export function ChatView({ conversationId, type }: ChatViewProps) {
 
   const handleSend = () => {
     if (!text.trim()) return;
-    sendMessage.mutate({ content: text.trim(), type: 'text' });
+    sendMessage.mutate({ 
+      content: text.trim(), 
+      type: 'text', 
+      replyToId: responseTo?.id,
+      responseToMsg: responseTo
+    });
     setText('');
+    setResponseTo(null);
   };
 
   const handlePickImage = async () => {
@@ -138,6 +156,8 @@ export function ChatView({ conversationId, type }: ChatViewProps) {
     sendMessage.mutate({
       content: text.trim(),
       type: 'image',
+      replyToId: responseTo?.id,
+      responseToMsg: responseTo,
       file: {
         uri: asset.uri,
         name: asset.fileName ?? `image-${Date.now()}.jpg`,
@@ -146,6 +166,7 @@ export function ChatView({ conversationId, type }: ChatViewProps) {
       },
     });
     setText('');
+    setResponseTo(null);
   };
 
   return (
@@ -199,11 +220,36 @@ export function ChatView({ conversationId, type }: ChatViewProps) {
               isMine={isMe}
               hasAttachments={hasAttachments} 
               isGroup={type === 'group'}
-              onDelete={()=>{
-                
+              onDelete={async () => {
+                try {
+                  await messagingApi.deleteMessage(conversationId, msg.id);
+                  queryClient.setQueryData<InfiniteData<PaginatedResponse<DecryptedMessage>>>(
+                    ['messages', conversationId],
+                    (old) => {
+                      if (!old?.pages) return old;
+                      return {
+                        ...old,
+                        pages: old.pages.map((page) => ({
+                          ...page,
+                          items: page.items.map((m) =>
+                            m.id === msg.id ? { ...m, is_deleted: true } : m
+                          ),
+                        })),
+                      };
+                    }
+                  );
+                } catch (e) {
+                  console.error('Failed to delete message', e);
+                }
               }}
-              onReply={()=>{
-                
+              onReply={(message) => {
+                setResponseTo(message);
+              }}
+              onPressReplyQuote={(id) => {
+                const idx = listItems.findIndex((i) => i.type === 'message' && i.message.id === id);
+                if (idx !== -1) {
+                  flatListRef.current?.scrollToIndex({ index: idx, animated: true, viewPosition: 0.5 });
+                }
               }}
             />
           );
@@ -225,7 +271,7 @@ export function ChatView({ conversationId, type }: ChatViewProps) {
             onPress={markAsReadAndScroll}
             className="h-10 w-10 bg-surface-light dark:bg-surface-dark border border-border-light/20 dark:border-border-dark/20 rounded-full shadow-lg items-center justify-center backdrop-blur-md active:opacity-80"
           >
-            <ChevronDown size={20} className="text-primary" />
+            <ChevronDown size={20} color="#64748B" />
             <View className="absolute -top-1.5 -right-1.5 bg-primary h-5 min-w-[20px] rounded-full items-center justify-center px-1 border-2 border-background-light dark:border-background-dark">
               <Text className="text-[10px] text-white font-bold">{unreadCount}</Text>
             </View>
@@ -235,6 +281,21 @@ export function ChatView({ conversationId, type }: ChatViewProps) {
 
       {/* Zone d'input style Glassmorphism floutée et épurée */}
       <View className="border-t border-border-light/30 bg-background-light/80 px-4 pt-3 pb-6 dark:border-border-dark/30 dark:bg-background-dark/80 backdrop-blur-xl">
+        {responseTo && (
+          <View className="mb-2 bg-surface-light/80 dark:bg-surface-dark/80 border-l-4 border-primary rounded-r-lg px-3 py-2 flex-row justify-between items-center relative">
+            <View className="flex-1 mr-4">
+              <Text className="text-primary text-[12px] font-bold mb-0.5">
+                {responseTo.sender?.username || 'Utilisateur'}
+              </Text>
+              <Text className="text-text-primary-light dark:text-text-primary-dark text-[13px]" numberOfLines={1}>
+                {getReplyPreview(responseTo)}
+              </Text>
+            </View>
+            <Pressable onPress={() => setResponseTo(null)} className="h-6 w-6 items-center justify-center rounded-full bg-border-light/50 dark:bg-border-dark/50 active:opacity-80">
+              <X size={14} className="text-text-secondary-light dark:text-text-secondary-dark" />
+            </Pressable>
+          </View>
+        )}
         <View className="flex-row items-center gap-2.5 bg-surface-light/50 dark:bg-surface-dark/40 border border-border-light/40 dark:border-border-dark/20 rounded-3xl p-1.5 ">
 
           {/* Bouton Pièce Jointe */}

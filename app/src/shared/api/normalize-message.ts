@@ -14,6 +14,9 @@ export type RawMessage = Partial<Message> & {
   created_at?: string | Date;
   attachments?: RawAttachment[];
   sender?: MessageSender;
+  responseToId?: string;
+  responseTo?: RawMessage;
+  is_deleted?: boolean;
 };
 
 /**
@@ -60,7 +63,10 @@ export function normalizeMessage(raw: RawMessage): Message {
       profile: {
         avatarUrl: raw.sender.profile?.avatarUrl ?? null,
       }
-    } : undefined
+    } : undefined,
+    responseToId: raw.responseTo?.id ?? null,
+    responseTo: raw.responseTo ? normalizeMessage(raw.responseTo) : null,
+    is_deleted: raw.is_deleted ?? false,
   };
 }
 

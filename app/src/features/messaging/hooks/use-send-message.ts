@@ -1,12 +1,12 @@
 import { useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 
+import { conversationKeys } from '@/entities/conversation/hooks';
 import type { DecryptedMessage } from '@/features/messaging/hooks/use-messages';
 import {
   sendMessageToServer,
   type PickedFile,
   type SendMessageInput,
 } from '@/features/messaging/lib/send-message-pipeline';
-import { conversationKeys } from '@/entities/conversation/hooks';
 import { useAuth } from '@/providers';
 import type { Conversation } from '@/shared/api/messaging';
 import type { Message, MessageType, PaginatedResponse } from '@/shared/api/types';
@@ -83,6 +83,8 @@ export function useSendMessage(conversationId: string) {
         cipherText: '',
         iv: '',
         status: 'send',
+        responseToId: input.replyToId,
+        responseToDecrypted: input.responseToMsg,
         type: (input.file ? (input.content.trim() ? 'MIXED' : 'DOCUMENT') : 'TEXT') as MessageType,
         created_at: new Date().toISOString(),
         attachments: input.file

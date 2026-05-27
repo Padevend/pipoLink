@@ -18,6 +18,8 @@ export type SendMessageInput = {
   content: string;
   type: 'text' | 'image' | 'document';
   file?: PickedFile;
+  replyToId?: string;
+  responseToMsg?: any;
 };
 
 function resolveMessageType(input: SendMessageInput): MessageType {
@@ -94,6 +96,7 @@ export async function sendMessageToServer(
     content: encrypted.cipherText,
     iv: encrypted.iv,
     type: resolveMessageType(input),
+    replyToId: input.replyToId,
     attachments: attachments.length ? attachments : undefined,
   });
 }
