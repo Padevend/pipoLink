@@ -75,8 +75,9 @@ export function useSendMessage(conversationId: string) {
         conversationId,
       ]);
 
+      const tempId = `temp-${generateUUID()}`;
       const optimistic: DecryptedMessage = {
-        id: `temp-${generateUUID()}`,
+        id: tempId,
         chat_id: conversationId,
         sender_id: user?.id ?? '',
         cipherText: '',
@@ -117,17 +118,48 @@ export function useSendMessage(conversationId: string) {
         },
       );
 
-      return { previous };
+      return { previous, tempId };
     },
     onError: (_error, _input, context) => {
       if (context?.previous) {
         queryClient.setQueryData(['messages', conversationId], context.previous);
       }
     },
-    onSuccess: (result) => {
+    onSuccess: (result, _input, context) => {
       if (result && 'queued' in result) return;
       const message = result as Message;
       localDb.upsertMessages(conversationId, [message]);
+
+      queryClient.setQueryData<InfiniteData<PaginatedResponse<DecryptedMessage>>>(
+        ['messages', conversationId],
+        (old) => {
+          if (!old?.pages) return old;
+
+          let realExists = false;
+          old.pages.forEach((p) => {
+            if (p.items.some((m) => m.id === message.id)) {
+              realExists = true;
+            }
+          });
+
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              items: page.items.reduce<DecryptedMessage[]>((acc, m) => {
+                if (m.id === context?.tempId) {
+                  if (!realExists) {
+                    acc.push({ ...m, ...message, id: message.id, status: 'send' });
+                  }
+                } else {
+                  acc.push(m);
+                }
+                return acc;
+              }, []),
+            })),
+          };
+        },
+      );
 
       queryClient.setQueryData<Conversation[]>(conversationKeys.list(), (prev) => {
         if (!prev) return prev;

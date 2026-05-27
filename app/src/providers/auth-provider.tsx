@@ -2,8 +2,9 @@ import { authApi } from '@/shared/api/auth';
 import { normalizeUser, type UserWithProfile } from '@/shared/api/normalize-user';
 import type { User } from '@/shared/api/types';
 import { userApi } from '@/shared/api/user';
-import { getSecureItem, removeSecureItem, setSecureItem } from '@/shared/storage/secure-storage';
 import { disconnect } from '@/shared/websocket/manager';
+import { getSecureItem, removeSecureItem, setSecureItem } from '@/shared/storage/secure-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
@@ -47,19 +48,23 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
   const [isLoading, setIsLoading] = useState(true);
 
   const persistUser = async (userData: UserWithProfile) => {
-    await SecureStore.setItemAsync('user_data', JSON.stringify(userData));
-    setUser(userData);
+    try {
+      await AsyncStorage.setItem('user_data', JSON.stringify(userData));
+      setUser(userData);
+    } catch (error) {
+      console.warn('Failed to save user data:', error);
+    }
   };
 
   const saveAuthData = async (
     tokens: { accessToken: string; refreshToken: string; expiresAt: number; deviceId?: string | null },
     userData?: UserWithProfile,
   ) => {
-    await setSecureItem('auth_token', tokens.accessToken).then(()=>console.log('Access token saved'));
-    await setSecureItem('refresh_token', tokens.refreshToken);
-    await setSecureItem('expires_at', String(tokens.expiresAt));
+    await SecureStore.setItemAsync('auth_token', tokens.accessToken);
+    await SecureStore.setItemAsync('refresh_token', tokens.refreshToken);
+    await SecureStore.setItemAsync('expires_at', String(tokens.expiresAt));
     if (tokens.deviceId) {
-      await setSecureItem('device_id', tokens.deviceId);
+      await SecureStore.setItemAsync('device_id', tokens.deviceId);
     }
 
     const normalized = userData ? normalizeUser(userData) : null;
@@ -76,8 +81,8 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
     await removeSecureItem('auth_token');
     await removeSecureItem('refresh_token');
     await removeSecureItem('expires_at');
-    await removeSecureItem('user_data');
-    await removeSecureItem('device_id').catch(() => {});
+    await removeSecureItem('device_id');
+    await AsyncStorage.removeItem('user_data').catch(() => {});
     setUser(null);
   };
 
@@ -85,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
     const initializeAuth = async () => {
       try {
         const token = await getSecureItem('auth_token');
-        const savedUser = await getSecureItem('user_data');
+        const savedUser = await AsyncStorage.getItem('user_data').catch(() => null);
 
         if (token && savedUser) {
           setUser(normalizeUser(JSON.parse(savedUser) as UserWithProfile));
@@ -99,7 +104,6 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
           }
         }
       } catch (e) {
-
       } finally {
         setIsLoading(false);
       }

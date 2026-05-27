@@ -31,7 +31,7 @@ export async function syncFromServer(): Promise<void> {
       await Promise.all(
         sessions.slice(0, 8).map(async (s) => {
           const history = await aiApi.getSessionHistory(s.id);
-          localDb.upsertAiMessages(s.id, history);
+          localDb.upsertAiMessages(s.id, history.messages);
         }),
       );
     } catch {

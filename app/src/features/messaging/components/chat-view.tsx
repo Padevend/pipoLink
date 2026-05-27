@@ -24,9 +24,32 @@ export function ChatView({ conversationId }: ChatViewProps) {
   const [text, setText] = useState('');
   const flatListRef = useRef<FlatList>(null);
 
-  useEffect(() => {
-    void messagingApi.markAsRead(conversationId).catch(() => undefined);
-  }, [conversationId]);
+  // onViewableItemsChanged to detect when unread messages from other users become visible
+  const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
+    let unreadVisible = false;
+    for (const { item } of viewableItems) {
+      if (item.type === 'message') {
+        const msg = item.message;
+        if (msg.sender_id !== user?.id && msg.status !== 'read') {
+          unreadVisible = true;
+          break;
+        }
+      }
+    }
+    
+    if (unreadVisible) {
+      void messagingApi.markAsRead(conversationId).catch(() => undefined);
+      // Broadcast read receipt instantly via WebSocket
+      import('@/shared/websocket/manager').then(({ wsManager }) => {
+        wsManager.send('message.read', { conversationId });
+      });
+    }
+  }).current;
+
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 50,
+    minimumViewTime: 250,
+  }).current;
 
   const listItems = useMemo(() => {
     const messages = data?.pages.flatMap((page) => page.items) ?? [];
@@ -74,6 +97,8 @@ export function ChatView({ conversationId }: ChatViewProps) {
         onEndReached={() => hasNextPage && fetchNextPage()}
         onEndReachedThreshold={0.3}
         showsVerticalScrollIndicator={false}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
         renderItem={({ item }) => {
           if (item.type === 'date') {
             return (

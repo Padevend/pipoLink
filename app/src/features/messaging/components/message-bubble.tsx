@@ -3,7 +3,7 @@ import { AttachmentImage } from "@/features/attachments/components/attachment-im
 import { MessageAttachment } from "@/shared/api/types";
 import { cn } from '@/shared/utils/cn';
 import { format } from "date-fns";
-import { Check, CheckCheck, Reply, Trash2 } from "lucide-react-native";
+import { Check, CheckCheck, Clock, Reply, Trash2 } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { Pressable, Text, View } from 'react-native';
 import Animated, {
@@ -14,6 +14,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { DecryptedMessage } from "../hooks/use-messages";
+import { BRAND } from "@/shared/config/brand";
 
 // ─── COMPOSANT : MENU CONTEXTUEL (SATINÉ ET SUBTILE) ──────────────────────────
 
@@ -108,10 +109,17 @@ export function MessageBubble({
 
   const renderStatusIcon = () => {
     if (!isMine) return null;
-    if (message.status === 'read') {
-      return <CheckCheck size={11} strokeWidth={2.5} className="text-indigo-500 dark:text-indigo-400" />;
+    if (message.id.startsWith('temp-')) {
+      return <Clock size={11} strokeWidth={2.5} color="#64748B" />;
     }
-    return <Check size={11} strokeWidth={2} className="text-text-secondary-light/30 dark:text-text-secondary-dark/40" />;
+    if (message.status === 'read') {
+      return <CheckCheck size={11} strokeWidth={2.5} color={BRAND.secondary} />;
+    }
+    if (message.status === 'delivered') {
+      return <CheckCheck size={11} strokeWidth={2.5} color={BRAND.secondary} />;
+    }
+
+    return <Check size={11} strokeWidth={2.5} color="#64748B" />;
   };
 
   const isSingleImageOnly =

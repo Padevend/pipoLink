@@ -1,4 +1,3 @@
-import * as SecureStore from 'expo-secure-store';
 
 import { clearIdentityKeys } from '@/shared/crypto/keys';
 import { getJson, removeItem, setJson } from '@/shared/storage/async-storage';
@@ -28,7 +27,4 @@ export async function clearCachedChatKeys(): Promise<void> {
 export async function wipeDeviceForNewAccount(): Promise<void> {
   await clearIdentityKeys();
   await clearCachedChatKeys();
-
-  const authKeys = ['auth_token', 'refresh_token', 'expires_at', 'user_data', 'device_id'] as const;
-  await Promise.all(authKeys.map((k) => SecureStore.deleteItemAsync(k).catch(() => undefined)));
 }

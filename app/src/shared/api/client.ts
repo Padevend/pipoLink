@@ -1,6 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
 import { ApiResponse, ErrorResponse, PaginatedResponse } from './types';
-import { getSecureItem } from '../storage/secure-storage';
 
 function envUrl(key: 'EXPO_PUBLIC_API_URL' | 'EXPO_PUBLIC_WS_URL', fallback: string): string {
   const raw = process.env[key];
@@ -28,7 +27,7 @@ interface RequestOptions extends RequestInit {
 
 async function getAuthToken() {
   try {
-    const token = await getSecureItem('auth_token')
+    const token = await SecureStore.getItemAsync('auth_token');
     return token
   } catch (e) {
     return null;

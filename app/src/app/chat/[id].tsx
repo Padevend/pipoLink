@@ -12,6 +12,7 @@ import { cn } from '@/shared/utils/cn';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { ArrowLeft, EllipsisVertical, MessageSquareOff, Phone } from 'lucide-react-native';
+import { BRAND } from '@/shared/config/brand';
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -21,6 +22,34 @@ export default function ChatScreen() {
 
   const conversation = conversations?.find((c) => c.id === id);
 
+  // get chat name
+  const chatName = useMemo(() => {
+    if (!conversation) return '';
+    if (conversation.type === "group") {
+      return conversation.name || 'Groupe';
+    }
+    const otherMember = conversation.members.find(m => m.id !== user?.id);
+    return otherMember?.username || 'Privé';
+  }, [conversation?.name, conversation?.members, conversation?.type, user?.id]);
+
+  const userPhone = useMemo(() => {
+    if (!conversation || conversation.type === "group") return null;
+    const otherMember = conversation.members.find(m => m.id !== user?.id);
+    return otherMember?.phone || null;
+  }, [conversation?.members, conversation?.type, user?.id]);
+
+  // getchat avatarUrl
+  const chatAvatar = useMemo(() => {
+    if (!conversation) return undefined;
+    if (conversation.type === "group") {
+      return conversation.avatarUrl;
+    }
+    const otherMember = conversation.members.find(m => m.id !== user?.id);
+    return otherMember?.avatarUrl;
+  }, [conversation?.avatarUrl, conversation?.members, conversation?.type, user?.id]);
+
+  const isAdmin = user?.role === 'admin' || user?.role === 'staff';
+
   if (!conversation) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-background-light px-6 dark:bg-background-dark">
@@ -29,7 +58,7 @@ export default function ChatScreen() {
           {/* Conteneur d'icône style Glassmorphism */}
           <View className="mb-6 h-24 w-24 items-center justify-center">
             <View className="p-4 rounded-2xl bg-primary/10 dark:bg-primary/20">
-              <MessageSquareOff size={38} className="text-primary" />
+              <MessageSquareOff size={38} color={BRAND.primary} />
             </View>
           </View>
 
@@ -57,33 +86,6 @@ export default function ChatScreen() {
       </SafeAreaView>
     );
   }
-
-  // get chat name
-  const chatName = useMemo(() => {
-    if (conversation.type === "group") {
-      return conversation.name || 'Groupe';
-    }
-    const otherMember = conversation.members.find(m => m.id !== user?.id);
-    return otherMember?.username || 'Privé';
-  }, [conversation.name, conversation.members]);
-
-  const userPhone = useMemo(() => {
-    if (conversation.type === "group") return null;
-    const otherMember = conversation.members.find(m => m.id !== user?.id);
-
-    return otherMember?.phone || null;
-  }, [conversation.members, conversation.type]);
-
-  // getchat avatarUrl
-  const chatAvatar = useMemo(() => {
-    if (conversation.type === "group") {
-      return conversation.avatarUrl;
-    }
-    const otherMember = conversation.members.find(m => m.id !== user?.id);
-    return otherMember?.avatarUrl;
-  }, [conversation.avatarUrl, conversation.members]);
-
-  const isAdmin = user?.role === 'admin' || user?.role === 'staff';
 
   return (
     <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top']}>

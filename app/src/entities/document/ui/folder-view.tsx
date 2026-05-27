@@ -138,8 +138,8 @@ export function FolderView({
           keyExtractor={(item) => item.data.id}
           renderItem={({ item }) =>
             item.type === "folder"
-              ? renderFolder({ item: item.data })
-              : renderDocument({ item: item.data })
+              ? renderFolder({ item: item.data as SubFolder })
+              : renderDocument({ item: item.data as Document })
           }
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}

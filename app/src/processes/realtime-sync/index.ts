@@ -54,6 +54,20 @@ function upsertMessageInCache(conversationId: string, incoming: DecryptedMessage
             items: page.items.map((m) => (m.id === incoming.id ? incoming : m)),
           };
         }
+
+        const tempIndex = page.items.findIndex(
+          (m) =>
+            m.id.startsWith('temp-') &&
+            m.sender_id === incoming.sender_id &&
+            m.decryptedContent === incoming.decryptedContent
+        );
+
+        if (tempIndex !== -1) {
+          const newItems = [...page.items];
+          newItems[tempIndex] = incoming;
+          return { ...page, items: sortMessagesAsc(newItems) as DecryptedMessage[] };
+        }
+
         return { ...page, items: sortMessagesAsc([...page.items, incoming]) as DecryptedMessage[] };
       });
 
@@ -114,9 +128,25 @@ export function setupRealtimeSync(): () => void {
       void queryClient.invalidateQueries({ queryKey: ['messages', payload.conversationId] });
     }),
 
-    on<MessageCreatedPayload>(WS_EVENTS.MESSAGE_READ, ({ conversationId }) => {
-      void queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
-      void queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    on<{ conversationId: string; userId: string }>(WS_EVENTS.MESSAGE_READ, ({ conversationId, userId }) => {
+      queryClient.setQueryData<InfiniteData<PaginatedResponse<DecryptedMessage>>>(
+        ['messages', conversationId],
+        (old) => {
+          if (!old?.pages) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              items: page.items.map((m) => {
+                if (m.sender_id !== userId && m.status !== 'read') {
+                  return { ...m, status: 'read' as const };
+                }
+                return m;
+              }),
+            })),
+          };
+        }
+      );
     }),
 
     on(WS_EVENTS.DOCUMENT_UPLOADED, () => {

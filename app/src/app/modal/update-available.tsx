@@ -46,13 +46,13 @@ export default function UpdateAvailableModal() {
           </Text>
 
           {/* Notes de mise à jour (Style Satiné / Glassmorphic) */}
-          {data?.notes && (
+          {data?.changelog && data.changelog.length > 0 && (
             <View className="mt-6 w-full rounded-2xl border border-border-light/40 bg-surface-light/50 p-4 dark:border-border-dark/20 dark:bg-surface-dark/40 backdrop-blur-md">
               <Text className="text-[10px] font-bold text-text-secondary-light/50 dark:text-text-secondary-dark/50 uppercase tracking-wider mb-2">
                 Au programme :
               </Text>
               <Text className="text-[13px] leading-[20px] font-medium text-text-primary-light dark:text-text-primary-dark">
-                {data.notes}
+                {data.changelog.join('\n')}
               </Text>
             </View>
           )}
