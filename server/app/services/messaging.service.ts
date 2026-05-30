@@ -364,7 +364,21 @@ export class MessagingService {
           })),
         },
       },
-      include: { attachments: true },
+      include: {
+        attachments: true,
+        sender: { 
+          select: { 
+            id: true, 
+            username: true, 
+            profile: { 
+              select: { 
+                avatarUrl: true 
+              } 
+            } 
+          } 
+        },
+        responseTo: true
+      },
     });
 
     await prisma.chat.update({ where: { id: conversationId }, data: { updatedAt: new Date() } });
@@ -454,7 +468,7 @@ export class MessagingService {
     if (member.conversation.type !== "group") throw { code: ErrorCode.VALIDATION_ERROR, status: 400, message: "Action réservée aux groupes." };
 
     await prisma.conversationMember.delete({ where: { id: member.id } });
-    
+
     const remaining = await prisma.conversationMember.count({ where: { conversation_id: conversationId } });
     if (remaining === 0) {
       await prisma.chat.delete({ where: { id: conversationId } });
@@ -466,7 +480,7 @@ export class MessagingService {
       where: { user_id: userId, conversation_id: conversationId },
     });
     if (!member) throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Chat introuvable." };
-    
+
     await prisma.conversationMember.delete({ where: { id: member.id } });
   }
 

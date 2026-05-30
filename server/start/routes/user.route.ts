@@ -8,6 +8,7 @@ import { requireDeviceWithPublicKeyMiddleware } from "../../app/middlewares/devi
 export const UserRouter = new Hono();
 
 UserRouter
+  .get("/get/:id", authMiddleware, requireOnboardingMiddleware, callAction(UserController, "getUser"))
   .get("/search", authMiddleware, requireOnboardingMiddleware, callAction(UserController, "search"))
   .get("/me", authMiddleware, callAction(UserController, "me"))
   .put("/me", authMiddleware, requireOnboardingMiddleware, callAction(UserController, "updateProfile"))

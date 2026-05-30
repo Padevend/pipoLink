@@ -81,7 +81,6 @@ export class MessagingController {
     const userId = c.get("userId") as string;
     const conversationId = c.req.param("id")!;
     const payload = await c.validateUsing(sendMessageValidator);
-    console.log(payload)
     const message = await this.service.sendMessage(userId, conversationId, payload);
     const members = await this.service.getConversationMembers(conversationId);
     const lastMessage = await this.service.getMessageSummary(message.id);

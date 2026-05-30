@@ -28,7 +28,7 @@ export class UserService {
   private deviceService = new DeviceService();
 
   async getMe(userId: string) {
-    return await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
         profile: true,
@@ -36,6 +36,41 @@ export class UserService {
         devices: { where: { revokedAt: null } },
       },
     });
+
+    return user;
+  }
+
+  async getUser(userId: string, authUserId: string) {
+    /**
+     * option de recuperation de profil user
+     * - recuperation des infos de base (id, username, matricule, email)
+     * - recuperation des infos de profil (firstname, lastname, avatarUrl, niveau, filiere)
+     * - recuperation des chats communs avec l'utilisateur (id, name, type)
+     */
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        username: true,
+        matricule: true,
+        email: true,
+        role: true,
+        profile: true,
+      }
+    });
+
+    if (!user) return null;
+
+    const conversations = await prisma.chat.findMany({
+      where: {
+        AND: [
+          { members: { some: { user_id: userId } } },
+          { members: { some: { user_id: authUserId } } },
+        ]
+      }
+    });
+
+    return { ...user, conversations };
   }
 
   async completeOnboarding(userId: string, payload: OnboardingPayload) {
@@ -47,8 +82,8 @@ export class UserService {
     const otherUserDevice = await prisma.device.findFirst({
       where: {
         fingerprint: payload.deviceFingerprint,
-        revokedAt:   null,
-        user_id:     { not: userId },
+        revokedAt: null,
+        user_id: { not: userId },
       },
     });
     if (otherUserDevice) {
@@ -73,30 +108,30 @@ export class UserService {
 
       const device = existing
         ? await trx.device.update({
-            where: { id: existing.id },
-            data: {
-              name:          deviceName,
-              platform:      devicePlatform,
-              public_key:    devicePublicKey,
-              key_signature: deviceKeySignature,
-              keyCreatedAt:  now,
-              keyExpiresAt,
-              revokedAt:     null,
-            },
-          })
+          where: { id: existing.id },
+          data: {
+            name: deviceName,
+            platform: devicePlatform,
+            public_key: devicePublicKey,
+            key_signature: deviceKeySignature,
+            keyCreatedAt: now,
+            keyExpiresAt,
+            revokedAt: null,
+          },
+        })
         : await trx.device.create({
-            data: {
-              user_id:       userId,
-              name:          deviceName,
-              platform:      devicePlatform,
-              fingerprint:   deviceFingerprint,
-              isPrimary:     true,
-              public_key:    devicePublicKey,
-              key_signature: deviceKeySignature,
-              keyCreatedAt:  now,
-              keyExpiresAt,
-            },
-          });
+          data: {
+            user_id: userId,
+            name: deviceName,
+            platform: devicePlatform,
+            fingerprint: deviceFingerprint,
+            isPrimary: true,
+            public_key: devicePublicKey,
+            key_signature: deviceKeySignature,
+            keyCreatedAt: now,
+            keyExpiresAt,
+          },
+        });
 
       await trx.user.update({ where: { id: userId }, data: { is_configured: true, username } });
 
@@ -112,9 +147,9 @@ export class UserService {
         user,
         device,
         tokens: {
-          accessToken:  tokens.accessToken,
+          accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken,
-          expiresAt:    expiresAtMs,
+          expiresAt: expiresAtMs,
         },
       };
     });
@@ -128,56 +163,63 @@ export class UserService {
 
     return prisma.user.findMany({
       where: {
-        id:            { not: requesterId },
-        is_active:     true,
+        id: { not: requesterId },
+        is_active: true,
         is_configured: true,
-        is_excluded:   false,
+        is_excluded: false,
         OR: [
-          { username:  { contains: q, mode: "insensitive" } },
+          { username: { contains: q, mode: "insensitive" } },
           { matricule: { contains: q, mode: "insensitive" } },
-          { email:     { contains: q, mode: "insensitive" } },
-          { profile:   { firstname: { contains: q, mode: "insensitive" } } },
-          { profile:   { lastname:  { contains: q, mode: "insensitive" } } },
+          { email: { contains: q, mode: "insensitive" } },
+          { profile: { firstname: { contains: q, mode: "insensitive" } } },
+          { profile: { lastname: { contains: q, mode: "insensitive" } } },
         ],
       },
       select: {
-        id:        true,
-        username:  true,
+        id: true,
+        username: true,
         matricule: true,
-        email:     true,
-        profile:   {
+        email: true,
+        profile: {
           select: {
             firstname: true,
-            lastname:  true,
+            lastname: true,
             avatarUrl: true,
-            niveau:    true,
-            filiere:   true,
+            niveau: true,
+            filiere: true,
           },
         },
       },
-      take:    40,
+      take: 40,
       orderBy: { username: "asc" },
     });
   }
 
   async listDevicePublicKeys(targetUserId: string) {
     const devices = await prisma.device.findMany({
-      where:   { user_id: targetUserId, revokedAt: null, public_key: { not: null } },
-      select:  { id: true, public_key: true },
+      where: { user_id: targetUserId, revokedAt: null, public_key: { not: null } },
+      select: { id: true, public_key: true },
     });
     return devices.map((d) => ({ deviceId: d.id, publicKey: d.public_key as string }));
   }
 
   async updateProfile(userId: string, payload: Record<string, any>) {
     const { username, ...profile } = payload;
-    if (username !== undefined) {
-      await prisma.user.update({ where: { id: userId }, data: { username } });
+
+    try {
+      if (username !== undefined) {
+        await prisma.user.update({ where: { id: userId }, data: { username } });
+      }
+
+      await prisma.userProfile.upsert({
+        where: { user_id: userId },
+        update: profile,
+        create: { user_id: userId, firstname: profile.firstname ?? "", lastname: profile.lastname ?? "", ...profile },
+      });
+    } catch (e) {
+      console.error("Error updating profile:", e);
+      throw { code: ErrorCode.INTERNAL_ERROR, status: 500, message: "Échec de la mise à jour du profil." };
     }
-    await prisma.userProfile.upsert({
-      where: { user_id: userId },
-      update: profile,
-      create: { user_id: userId, firstname: profile.firstname ?? "", lastname: profile.lastname ?? "", ...profile },
-    });
   }
 
   async uploadAvatar(userId: string, file: Buffer) {

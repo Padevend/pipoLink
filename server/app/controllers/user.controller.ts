@@ -6,7 +6,23 @@ import { AuthService } from "../services/auth.service.js";
 
 export class UserController {
   private service = new UserService();
-  private authService = new AuthService();
+
+  async getUser(c: HttpContext) {
+    const authUserId = c.get("userId") as string;
+    const userIdParam = c.req.param("id");
+
+    if(!userIdParam) {
+      return ApiResponse.error(c, "VALIDATION_ERROR", "ID utilisateur requis.", 400);
+    }
+
+    const user = await this.service.getUser(userIdParam, authUserId);
+    
+    if (!user) {
+      return ApiResponse.error(c, "NOT_FOUND", "Utilisateur non trouvé.", 404);
+    }
+    
+    return ApiResponse.success(c, user, "Utilisateur récupéré.");
+  }
 
   async me(c: HttpContext) {
     const userId = c.get("userId") as string;
@@ -18,7 +34,9 @@ export class UserController {
     const userId = c.get("userId") as string;
     const payload = await c.validateUsing(updateProfileValidator);
     await this.service.updateProfile(userId, payload);
-    return ApiResponse.success(c, null, "Profil mis à jour.");
+    return ApiResponse.success(c, {
+      success: true,
+    }, "Profil mis à jour.");
   }
 
   async completeOnboarding(c: HttpContext) {
