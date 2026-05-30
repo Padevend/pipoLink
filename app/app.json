@@ -56,26 +56,6 @@
           "supportsOpeningDocumentsInPlace": true,
           "enableFileSharing": true
         }
-      ],
-      [
-        "expo-sharing",
-        {
-          "ios": {
-            "enabled": true,
-            "activationRule": {
-              "supportsImageWithMaxCount": 5
-            }
-          },
-          "android": {
-            "enabled": true,
-            "singleShareMimeTypes": [
-              "image/*"
-            ],
-            "multipleShareMimeTypes": [
-              "image/*"
-            ]
-          }
-        }
       ]
     ],
     "experiments": {

@@ -6,7 +6,7 @@ import { CheckCircle2, ExternalLink, Pause, Play, Trash2 } from "lucide-react-na
 import { Pressable, Text, View } from "react-native";
 import { downloadManager } from "../services/download.manager";
 
-export function DownloadCard({ task }: { task: downloadTask }) {
+export function DownloadCard({ task, onDelete }: { task: downloadTask, onDelete?: (id: string) => void }) {
   const progressPercent = Math.floor(task.progress * 100);
   const isCompleted = task.status === "completed";
   const isDownloading = task.status === "downloading";
@@ -110,7 +110,9 @@ export function DownloadCard({ task }: { task: downloadTask }) {
 
           {/* Bouton Supprimer / Annuler */}
           <Pressable
-            onPress={() => downloadManager.cancel(task.id)}
+            onPress={() => {
+              onDelete ? onDelete(task.id) : downloadManager.cancel(task.id)
+            }}
             hitSlop={6}
             className="h-8 px-3 flex-row items-center justify-center rounded-lg bg-red-500/10 border border-red-500/20 active:scale-95 transition-transform"
           >

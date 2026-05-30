@@ -2,13 +2,11 @@ import { useLogout } from '@/features/auth/model/use-logout';
 import SettingItem from '@/shared/ui/settings-cards';
 import { router } from 'expo-router';
 import { ArrowLeft, Key, LogOut, MailPlus, Trash, User } from 'lucide-react-native';
-import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function AccountsSettingsScreen() {
     const { confirmLogout } = useLogout();
-    const { t } = useTranslation('settings');
 
     return (
         <SafeAreaView

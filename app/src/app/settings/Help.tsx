@@ -59,7 +59,7 @@ export default function HelpsAndCommentScreen() {
                         icon={Info}
                         label="À propos"
                         value="Informations sur l'application"
-                        onPress={() => router.push("/settings/Help")}
+                        onPress={() => router.push("/settings/abouts/about")}
                     />
                     <SettingItem
                         icon={RefreshCw}

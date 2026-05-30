@@ -12,7 +12,7 @@ import { Skeleton } from '@/shared/ui/skeleton';
 import { router } from 'expo-router';
 import { ArrowDownToLine, ArrowLeft, FolderOpen, Search, Upload, User } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
+import { FlatList, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const ROOT_CRUMB: BreadcrumbItem = { id: null, name: 'Bibliothèque' };
@@ -160,13 +160,14 @@ export default function LibraryExplorerScreen() {
                         showsVerticalScrollIndicator={false}
                         contentContainerStyle={{ paddingBottom: 40 }}
                         ItemSeparatorComponent={() => <View className="h-2.5" />}
-                        ListHeaderComponent={
-                            isFetching && !isLoading ? (
-                                <View className="mb-3 items-center py-1">
-                                    <ActivityIndicator size="small" color={BRAND.primary} />
-                                </View>
-                            ) : null
-                        }
+                        refreshing={isFetching}
+                        onRefresh={() => {
+                            if (isSearching) {
+                                searchQuery.refetch();
+                            } else {
+                                browseQuery.refetch();
+                            }
+                        }}
                         ListEmptyComponent={
                             <View className="items-center justify-center py-20 px-6">
                                 {/* Icône enveloppée dans un conteneur Soft Glassmorphism */}

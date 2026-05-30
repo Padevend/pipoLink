@@ -25,6 +25,10 @@ export function useDownloadHistory() {
 
         downloadManager.clearHistory();
     };
+    const deleteItem = (id: string) => {
+        setHistory((prev) => prev.filter((item) => item.id !== id));
+        downloadManager.cancel(id);
+    }
 
     useEffect(() => {
         refresh();
@@ -35,5 +39,6 @@ export function useDownloadHistory() {
         history,
         refresh,
         clearHistory,
+        deleteItem
     };
 }

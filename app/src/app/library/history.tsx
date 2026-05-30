@@ -7,7 +7,7 @@ import { DownloadCard } from "@/features/downloads/components/download-card";
 import { useDownloadHistory } from "@/features/downloads/hooks/use-download-history";
 
 export default function DownloadHistoryScreen() {
-  const { history, clearHistory, refresh, isRefreshing } = useDownloadHistory();
+  const { history, clearHistory, refresh, isRefreshing, deleteItem } = useDownloadHistory();
 
   const handleClearHistory = () => {
     if (!history || history.length === 0) return;
@@ -80,7 +80,7 @@ export default function DownloadHistoryScreen() {
         contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
         renderItem={({ item }) => (
           <View className="mb-3">
-            <DownloadCard task={item} />
+            <DownloadCard task={item} onDelete={deleteItem} />
           </View>
         )}
         ListEmptyComponent={() => (

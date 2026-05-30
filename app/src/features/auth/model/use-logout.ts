@@ -1,8 +1,8 @@
+import { useAuth } from '@/providers/auth-provider';
+import { useQueryClient } from '@tanstack/react-query';
+import { router } from 'expo-router';
 import { useCallback } from 'react';
 import { Alert } from 'react-native';
-import { router } from 'expo-router';
-import { useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/providers/auth-provider';
 
 /**
  * Hook — logout with confirmation modal.
@@ -26,7 +26,8 @@ export function useLogout() {
           onPress: async () => {
             queryClient.clear();
             await logout();
-            router.replace('/auth/login');
+            router.dismissAll()
+            router.replace('/auth/login', { });
           },
         },
       ],

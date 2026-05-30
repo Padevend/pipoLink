@@ -9,13 +9,18 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000,
-      gcTime: 24 * 60 * 60 * 1000,
+      gcTime: 2 * 24 * 60 * 60 * 1000,
       retry: 3,
       refetchOnReconnect: true,
       refetchOnWindowFocus: false,
+      networkMode: "offlineFirst",
+      refetchOnMount: false,
+      refetchInterval: false,
+      structuralSharing: true
     },
     mutations: {
-      retry: 1,
+      retry: 3,
+      networkMode: "offlineFirst"
     },
   },
 });
