@@ -115,7 +115,7 @@ model Device {
 model RefreshToken {
   id        String    @id @default(uuid()) @db.Uuid
   user_id   String    @db.Uuid
-  device_id String? 
+  device_id String?   @db.Uuid
   tokenHash String    @unique
   revokedAt DateTime? @db.Timestamptz
   expiresAt DateTime  @db.Timestamptz

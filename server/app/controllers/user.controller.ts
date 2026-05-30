@@ -1,7 +1,7 @@
 import { HttpContext } from "../../config/app.js";
 import { UserService } from "../services/user.service.js";
 import { ApiResponse } from "../helpers/api-response.js";
-import { onboardingValidator, updateProfileValidator } from "../validators/user.validator.js";
+import { deleteAccountValidator, onboardingValidator, updateProfileValidator } from "../validators/user.validator.js";
 import { AuthService } from "../services/auth.service.js";
 
 export class UserController {
@@ -58,6 +58,17 @@ export class UserController {
 
   async deleteAccount(c: HttpContext) {
     const userId = c.get("userId") as string;
+    const { email } = await c.validateUsing(deleteAccountValidator);
+    
+    if (!email) {
+      return ApiResponse.error(c, "VALIDATION_ERROR", "Email requis pour la suppression.", 400);
+    }
+
+    const user = await this.service.getMe(userId);
+    if (!user || user.email !== email) {
+      return ApiResponse.error(c, "VALIDATION_ERROR", "L'email ne correspond pas à votre compte.", 400);
+    }
+
     await this.service.deleteAccount(userId);
     return ApiResponse.success(c, null, "Compte supprimé.");
   }

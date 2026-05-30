@@ -1,0 +1,771 @@
+{
+  "messages": [
+    {
+      "id": "f1f956be-905a-422b-845d-9c17a5a2697b",
+      "chat_id": "04d8de52-36ed-45ea-a327-c9aab85e8d4f",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "VA2U+iuEVUD1WoYJOxpWY2nP257dtZM=",
+      "iv": "eLzq6xTRbGayYQR3",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T12:25:48.505Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "10f83b5a-dbab-4024-a388-5799b9306e9d",
+      "chat_id": "04d8de52-36ed-45ea-a327-c9aab85e8d4f",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "g0rxtrbAxuuGdC5WjVz9cPfnTiGa3Q==",
+      "iv": "W/ENaOB1o7RAWHn1",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T12:25:47.092Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "28189a06-0254-4d32-8b92-cd8209e31edb",
+      "chat_id": "04d8de52-36ed-45ea-a327-c9aab85e8d4f",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "OJOB5kPpaDkKejHkSuB5qrDul3baVlo=",
+      "iv": "hbD2KIlAgOwBMAX0",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T12:25:45.946Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "7fa24bb8-402d-4f44-8500-5bfc3f2a3c96",
+      "chat_id": "04d8de52-36ed-45ea-a327-c9aab85e8d4f",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "aBCGSJbjMJ/PbZDRWzSTRMeKCUgE1wgb",
+      "iv": "QLmtXkhInz0j4f0z",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T12:25:44.613Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "0ba8c551-664f-4e39-885b-cca10d83275d",
+      "chat_id": "04d8de52-36ed-45ea-a327-c9aab85e8d4f",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "pR5+c1/P6M6Ha9wgXMKfYGm+JqN6Fo79",
+      "iv": "y3V84Ulca6wh8o/D",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T12:25:43.286Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "444473b0-917a-4a81-b943-7f88a2ae291f",
+      "chat_id": "04d8de52-36ed-45ea-a327-c9aab85e8d4f",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "io//HeexSwKs35P6eovcRfGNS2DHJZBr",
+      "iv": "KNzebPZTAmmU83TH",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T12:25:41.949Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "1f33829b-590b-4293-94aa-04ca121ef54e",
+      "chat_id": "04d8de52-36ed-45ea-a327-c9aab85e8d4f",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "XgkFHz3k68PRUQtj3H6fMTxzdc4Fli8=",
+      "iv": "8J4V77yy5Xg5PFwq",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T12:25:40.499Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "ed9e9a49-0a9b-4f32-a3c7-bbea0ab8c1de",
+      "chat_id": "04d8de52-36ed-45ea-a327-c9aab85e8d4f",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "zbuGxc0HNRn/nmd9lvQEeIn3k3XUbbv4K4EJ",
+      "iv": "xojE+caceRJ524Bc",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T12:25:39.134Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "0284b386-8ede-4474-a7f3-dcd4a49dc20a",
+      "chat_id": "04d8de52-36ed-45ea-a327-c9aab85e8d4f",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "0NAQUMM5pZQSvrH0tp9PnFQWOAerSw==",
+      "iv": "p9y32Hv8p202lDtu",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T12:25:36.750Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "a811d991-348a-4ef8-9331-cd3148c15d68",
+      "chat_id": "04d8de52-36ed-45ea-a327-c9aab85e8d4f",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "ZNGbKGZ9bjaDAvBP2RfQ/UFyp56s",
+      "iv": "56HWoy0Y7PBKXLbO",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T12:25:35.405Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "6d8e9c55-97ac-4167-ab10-7926ba80e054",
+      "chat_id": "04d8de52-36ed-45ea-a327-c9aab85e8d4f",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "cKMwAhjBhCC+/WhtCNnR5fQPYZZR",
+      "iv": "3a99qq+GHnoXg8La",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T12:25:34.394Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "52390ded-207b-4a47-be27-13bb1458bc37",
+      "chat_id": "04d8de52-36ed-45ea-a327-c9aab85e8d4f",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "ygT9NW0KksFYsEkW0ukTHGh3jbMPiA==",
+      "iv": "XXvv7weo+SuPYoxY",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T12:25:33.462Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "aff2d534-f2ca-48ad-8eb1-4d02f210a50b",
+      "chat_id": "04d8de52-36ed-45ea-a327-c9aab85e8d4f",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "RsJrSbFHXl3NZklE7TNCKV9XOaG5",
+      "iv": "mzK64OgW4e7ee8vT",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T12:25:32.205Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "c1bbc252-3ee5-406f-bc92-3d9cdbec1e39",
+      "chat_id": "04d8de52-36ed-45ea-a327-c9aab85e8d4f",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "B8BnTgteNi/z2f3zws+5SnC5hNmC",
+      "iv": "TrawF0/RifuBXFBu",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T12:25:11.040Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "3c2cbcaa-292e-40ba-a0fb-f783a47450d6",
+      "chat_id": "04d8de52-36ed-45ea-a327-c9aab85e8d4f",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "Kd42CVUQQFeWEAsC6TjnfTC8nZXlQg==",
+      "iv": "itZ8Wj/pTJnf/WXr",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T12:25:09.702Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "46b69275-f8b7-4ccc-8cb0-ad342a1d0de9",
+      "chat_id": "04d8de52-36ed-45ea-a327-c9aab85e8d4f",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "a31YH5WWTCTdFcHN2Xo5Zuni+u3h2Q==",
+      "iv": "TKjRP7IfPraIY3D5",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T12:25:07.722Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "4b693b7e-6f64-4b0b-838f-23b00518e08c",
+      "chat_id": "04d8de52-36ed-45ea-a327-c9aab85e8d4f",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "a9za4Uh2Y/qd1KvBM7D50OY9ilxI94IX",
+      "iv": "imdTv33nzwj3WVpy",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T12:25:06.374Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "5e50e95f-50f4-4f4f-9efc-54dc3b6b1dcf",
+      "chat_id": "04d8de52-36ed-45ea-a327-c9aab85e8d4f",
+      "sender_id": "a3b51d3d-5760-4ba3-8c32-cd32682c4449",
+      "cipherText": "1vZROUc1osKoLfA7u8eNqwmnnM9x",
+      "iv": "3EiNiQ9I4HdcPKvl",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T12:24:23.979Z",
+      "attachments": [],
+      "sender": {
+        "id": "a3b51d3d-5760-4ba3-8c32-cd32682c4449",
+        "username": "La_legende💜",
+        "profile": {
+          "avatarUrl": "/storage/avatars/a3b51d3d-5760-4ba3-8c32-cd32682c4449.webp"
+        }
+      }
+    },
+    {
+      "id": "c194aadf-53aa-4098-aa7e-2180d6b2bbd1",
+      "chat_id": "04d8de52-36ed-45ea-a327-c9aab85e8d4f",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "peB6+jIZuhKhxinJJBxlckU/ZWkOE4puUqnVWGjHnW8=",
+      "iv": "i1Q3if4GES1jgh4N",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T11:19:03.473Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "1b41b114-91c2-49a1-b9a6-67e1452c462e",
+      "chat_id": "04d8de52-36ed-45ea-a327-c9aab85e8d4f",
+      "sender_id": "a3b51d3d-5760-4ba3-8c32-cd32682c4449",
+      "cipherText": "wvWOnF23E0XuBuFUDHutoXQ=",
+      "iv": "THci1IMGEMEGW40W",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T01:11:30.889Z",
+      "attachments": [],
+      "sender": {
+        "id": "a3b51d3d-5760-4ba3-8c32-cd32682c4449",
+        "username": "La_legende💜",
+        "profile": {
+          "avatarUrl": "/storage/avatars/a3b51d3d-5760-4ba3-8c32-cd32682c4449.webp"
+        }
+      }
+    },
+    {
+      "id": "53c73915-f118-42e2-9d60-10c27af0257c",
+      "chat_id": "04d8de52-36ed-45ea-a327-c9aab85e8d4f",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "ezewjpquYXu9LojA7sHV+AWLWggfo0V6",
+      "iv": "InbOCWNlGO47oVz1",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T00:55:30.919Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "e2c3dc82-b6f9-4e53-8f34-bc92f0a2929d",
+      "chat_id": "04d8de52-36ed-45ea-a327-c9aab85e8d4f",
+      "sender_id": "a3b51d3d-5760-4ba3-8c32-cd32682c4449",
+      "cipherText": "cSer92xT3sJo5SUnX/VZ6OMf4ue3gp9x+i1kgMAR23rhCSI=",
+      "iv": "j7reVo8SfG79cu/N",
+      "status": "read",
+      "type": "IMAGE",
+      "created_at": "2026-05-27T00:44:01.054Z",
+      "attachments": [
+        {
+          "id": "cf0ffc44-1b00-40f0-b74b-f8b15223c3b5",
+          "fileUrl": "/storage/message-attachments/1779842640991-yfwzdqdkcq.enc",
+          "iv": "VIuVa1b9g1FBNUo6",
+          "fileName": "1000006506.jpg",
+          "fileSize": 82772,
+          "mimeType": "image/jpeg"
+        }
+      ],
+      "sender": {
+        "id": "a3b51d3d-5760-4ba3-8c32-cd32682c4449",
+        "username": "La_legende💜",
+        "profile": {
+          "avatarUrl": "/storage/avatars/a3b51d3d-5760-4ba3-8c32-cd32682c4449.webp"
+        }
+      }
+    },
+    {
+      "id": "7f78b508-6ac7-4a07-9f63-e514d3b28ec8",
+      "chat_id": "04d8de52-36ed-45ea-a327-c9aab85e8d4f",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "NK0S0J0UVvqNGdpOy4gxaYrkdA==",
+      "iv": "3127MvOUXJxKkvuB",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T00:43:24.281Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "3b206ba2-1265-4b1a-b7ee-5754acde2297",
+      "chat_id": "04d8de52-36ed-45ea-a327-c9aab85e8d4f",
+      "sender_id": "a3b51d3d-5760-4ba3-8c32-cd32682c4449",
+      "cipherText": "Hq92u3lNEDQ1m5UK6FlE+JYv",
+      "iv": "VELMNxA9yJESj8FO",
+      "status": "read",
+      "type": "TEXT",
+      "created_at": "2026-05-27T00:43:13.196Z",
+      "attachments": [],
+      "sender": {
+        "id": "a3b51d3d-5760-4ba3-8c32-cd32682c4449",
+        "username": "La_legende💜",
+        "profile": {
+          "avatarUrl": "/storage/avatars/a3b51d3d-5760-4ba3-8c32-cd32682c4449.webp"
+        }
+      }
+    }
+  ],
+  "total": 24
+}
+{
+  "messages": [
+    {
+      "id": "215caadd-43fb-4285-9691-73dbcf3b3499",
+      "chat_id": "9f83f807-2c4a-4e73-9caf-a15bc9b01b36",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "LEooqTcFdw/GfkqqAW5y08LtD0KITU7sqpWwCfLqBnlJQ/8=",
+      "iv": "h/WGGeG97R9hO39O",
+      "status": "send",
+      "type": "IMAGE",
+      "created_at": "2026-05-25T22:30:58.384Z",
+      "attachments": [
+        {
+          "id": "a2c6b26a-4e55-4dfd-bc21-47cb6037e0c3",
+          "fileUrl": "/storage/message-attachments/1779748258317-q40xap5ycrm.enc",
+          "iv": "K4lK+r5HqFIxHF0j",
+          "fileName": "1000054798.jpg",
+          "fileSize": 44660,
+          "mimeType": "image/jpeg"
+        }
+      ],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "bcc92332-56dc-494d-bedc-2a9a0b31a872",
+      "chat_id": "9f83f807-2c4a-4e73-9caf-a15bc9b01b36",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "zYa1zg44k8FZH1TXogkHtPbwqObA1aUOnL+5ehQez7qW9RuiQz3OaUF1pHTh4Dab/7AG2zOE3IIgwlEr7fni5n9TIoLnbWDrI+4CBplfjvyOTyCrqIqvZOhagtRrDW4AGTbRPAhe+D6MKsFaLdvz1tVPJqaJNwDD+IeVUPmPxUABwkHx6ejsnPIQH8YCBNI10ZU+qPGoWbASTRehzsYtiru9Jc0awBc3laE4SbcA8WBBT92CJjAu5yDVqsgTWISUWMZGnrmIj7KOAAtcHWp9VsduUej+l7K4gliolq4d6ILChHc95m2KiqpeeMl9vy5xEPU1hA==",
+      "iv": "oh/bSCGdTRNh6tQh",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-25T22:30:38.845Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    }
+  ],
+  "total": 2
+}
+{
+  "messages": [
+    {
+      "id": "b2297f22-3d84-4285-a2a4-fa0ea4c9b7e9",
+      "chat_id": "1278c703-66ad-47bf-af26-bf78dd6f62f7",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "4I5/lbPYRAbodXjoz6/bY6N3",
+      "iv": "Wj+aO1oVDcbrZNwm",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T16:43:49.571Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "69b453f7-1b3b-47d7-aa00-30cbb6f5afd0",
+      "chat_id": "1278c703-66ad-47bf-af26-bf78dd6f62f7",
+      "sender_id": "a3b51d3d-5760-4ba3-8c32-cd32682c4449",
+      "cipherText": "JTrOlYnskdWzb6t9puBgdtC1kHT5I2jBRvYzqaMveX00rLHr7R7GbXWDrtbzqThUh9A/4NLLNgdWICbJhr6X7PqAgjMg9jnl7uE=",
+      "iv": "7GP4+R7mGSWmBB+A",
+      "status": "send",
+      "type": "DOCUMENT",
+      "created_at": "2026-05-27T13:01:14.495Z",
+      "attachments": [
+        {
+          "id": "989649f0-150c-47ed-b259-dcbd3472eafd",
+          "fileUrl": "/storage/message-attachments/1779886874412-012rw0j3eor6.enc",
+          "iv": "12sAyp8z6tpUiIuk",
+          "fileName": "EXPOSE DE RESPONSABILITE SOCIALE DES ENTREPRISES.docx",
+          "fileSize": 24398,
+          "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        }
+      ],
+      "sender": {
+        "id": "a3b51d3d-5760-4ba3-8c32-cd32682c4449",
+        "username": "La_legende💜",
+        "profile": {
+          "avatarUrl": "/storage/avatars/a3b51d3d-5760-4ba3-8c32-cd32682c4449.webp"
+        }
+      }
+    },
+    {
+      "id": "225d4eee-dbf8-4340-9a10-3d28bda24b6a",
+      "chat_id": "1278c703-66ad-47bf-af26-bf78dd6f62f7",
+      "sender_id": "a3b51d3d-5760-4ba3-8c32-cd32682c4449",
+      "cipherText": "Wz7TYcFUU4mmQIg/tOxGRbDdJbar",
+      "iv": "kJOeGEgNFXT9coHa",
+      "status": "send",
+      "type": "MIXED",
+      "created_at": "2026-05-27T13:00:39.168Z",
+      "attachments": [
+        {
+          "id": "1f749de8-e192-4bc4-ba54-13a9a3ac45b9",
+          "fileUrl": "/storage/message-attachments/1779886839083-svk9eff4kee.enc",
+          "iv": "rvk+PJ6E0mHtg+ub",
+          "fileName": "IMG-20260520-WA0000.jpg",
+          "fileSize": 82772,
+          "mimeType": "image/jpeg"
+        }
+      ],
+      "sender": {
+        "id": "a3b51d3d-5760-4ba3-8c32-cd32682c4449",
+        "username": "La_legende💜",
+        "profile": {
+          "avatarUrl": "/storage/avatars/a3b51d3d-5760-4ba3-8c32-cd32682c4449.webp"
+        }
+      }
+    },
+    {
+      "id": "dece6e59-f847-4cb8-9817-377bf1f1df29",
+      "chat_id": "1278c703-66ad-47bf-af26-bf78dd6f62f7",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "p69CCIZlfthlqRIV4JmSYS/s",
+      "iv": "fbwOj/0DUwiMmTeZ",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T12:51:51.418Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "89bd72d5-4261-4ade-a63a-341d7a30e5e5",
+      "chat_id": "1278c703-66ad-47bf-af26-bf78dd6f62f7",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "9mk7576BnQ9O4Q4TgFOdtqWm",
+      "iv": "Np29fMk4ngHRyxIz",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T12:51:12.366Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "e78f140d-dc07-49c9-a13a-580dbbc7ec4c",
+      "chat_id": "1278c703-66ad-47bf-af26-bf78dd6f62f7",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "Nx4HAW5Fm6BmHS4waBCCuA4y",
+      "iv": "Di12JP4/S1vaDG3p",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T12:50:48.246Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "8b4125d7-0815-4b3f-8777-13b89f65ddbd",
+      "chat_id": "1278c703-66ad-47bf-af26-bf78dd6f62f7",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "pY+IiMcl+kV9X+F4JBAUextv",
+      "iv": "8LIWTILeMsqBoZ1V",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T12:50:35.888Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "72c93f8d-6510-46ab-bb72-17e98b20f0c0",
+      "chat_id": "1278c703-66ad-47bf-af26-bf78dd6f62f7",
+      "sender_id": "a3b51d3d-5760-4ba3-8c32-cd32682c4449",
+      "cipherText": "iqjB2P24jEHCV102OBVYJRD+",
+      "iv": "mEwOSZnytA7gQqkT",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T12:35:50.837Z",
+      "attachments": [],
+      "sender": {
+        "id": "a3b51d3d-5760-4ba3-8c32-cd32682c4449",
+        "username": "La_legende💜",
+        "profile": {
+          "avatarUrl": "/storage/avatars/a3b51d3d-5760-4ba3-8c32-cd32682c4449.webp"
+        }
+      }
+    },
+    {
+      "id": "d9d1c8e4-5250-487d-942e-8e2df3375e2f",
+      "chat_id": "1278c703-66ad-47bf-af26-bf78dd6f62f7",
+      "sender_id": "a3b51d3d-5760-4ba3-8c32-cd32682c4449",
+      "cipherText": "SjBrvXp8KWPEQuEGXpGieuff",
+      "iv": "h4nwfBidwAdnG20B",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T12:27:38.276Z",
+      "attachments": [],
+      "sender": {
+        "id": "a3b51d3d-5760-4ba3-8c32-cd32682c4449",
+        "username": "La_legende💜",
+        "profile": {
+          "avatarUrl": "/storage/avatars/a3b51d3d-5760-4ba3-8c32-cd32682c4449.webp"
+        }
+      }
+    },
+    {
+      "id": "e11783aa-ced1-4a31-8789-d78f66ecba0c",
+      "chat_id": "1278c703-66ad-47bf-af26-bf78dd6f62f7",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "G6mDKWFDmXDF1v3dsP08xwC+",
+      "iv": "hvmTDdRhUSRtYJWk",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T00:49:17.754Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "95b376ea-d634-4b6f-968d-072b2f18a5f7",
+      "chat_id": "1278c703-66ad-47bf-af26-bf78dd6f62f7",
+      "sender_id": "a3b51d3d-5760-4ba3-8c32-cd32682c4449",
+      "cipherText": "syAvD/E5PaGezCySDH2jJR6I",
+      "iv": "UGn9TuhLNoq9jsY0",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T00:49:11.041Z",
+      "attachments": [],
+      "sender": {
+        "id": "a3b51d3d-5760-4ba3-8c32-cd32682c4449",
+        "username": "La_legende💜",
+        "profile": {
+          "avatarUrl": "/storage/avatars/a3b51d3d-5760-4ba3-8c32-cd32682c4449.webp"
+        }
+      }
+    },
+    {
+      "id": "8c5c67e2-bf5c-4bd6-a893-91a09c9b8181",
+      "chat_id": "1278c703-66ad-47bf-af26-bf78dd6f62f7",
+      "sender_id": "a3b51d3d-5760-4ba3-8c32-cd32682c4449",
+      "cipherText": "X3mvh6m7+1E0kPP5mGyI3QcM1rQ=",
+      "iv": "xK2C/9KnHgB+3GoE",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T00:49:04.222Z",
+      "attachments": [],
+      "sender": {
+        "id": "a3b51d3d-5760-4ba3-8c32-cd32682c4449",
+        "username": "La_legende💜",
+        "profile": {
+          "avatarUrl": "/storage/avatars/a3b51d3d-5760-4ba3-8c32-cd32682c4449.webp"
+        }
+      }
+    },
+    {
+      "id": "73b62c93-9c1e-454f-ac13-d5e8f31d7a2a",
+      "chat_id": "1278c703-66ad-47bf-af26-bf78dd6f62f7",
+      "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+      "cipherText": "g5XUzYNp15S7IilISN/vhUO1HqxGlCS7",
+      "iv": "mLC+SmAkAKP8z401",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T00:47:17.349Z",
+      "attachments": [],
+      "sender": {
+        "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
+        "username": "Pavel",
+        "profile": {
+          "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
+        }
+      }
+    },
+    {
+      "id": "773696d2-be76-4db5-a4e8-26b67a9e809e",
+      "chat_id": "1278c703-66ad-47bf-af26-bf78dd6f62f7",
+      "sender_id": "a3b51d3d-5760-4ba3-8c32-cd32682c4449",
+      "cipherText": "TSKCWlLH2JdRD4eSKB+RJVIpEaeLsiYZFKc=",
+      "iv": "yxvQHhosbx7Pbkh2",
+      "status": "send",
+      "type": "TEXT",
+      "created_at": "2026-05-27T00:47:08.513Z",
+      "attachments": [],
+      "sender": {
+        "id": "a3b51d3d-5760-4ba3-8c32-cd32682c4449",
+        "username": "La_legende💜",
+        "profile": {
+          "avatarUrl": "/storage/avatars/a3b51d3d-5760-4ba3-8c32-cd32682c4449.webp"
+        }
+      }
+    }
+  ],
+  "total": 14
+}

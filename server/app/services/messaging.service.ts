@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 
 import { prisma } from "../../config/database.js";
 import { ErrorCode } from "../helpers/error-codes.js";
+import { Message } from "../../generated/prisma/index.js";
 
 export type CreateChatPayload = {
   name: string | null;
@@ -255,7 +256,7 @@ export class MessagingService {
     const skip = (page - 1) * limit;
     const [messages, total] = await Promise.all([
       prisma.message.findMany({
-        where: { chat_id: conversationId, deletedAt: null },
+        where: { chat_id: conversationId },
         skip,
         take: limit,
         orderBy: { created_at: "desc" },
@@ -264,7 +265,7 @@ export class MessagingService {
             select: {
               id: true,
               username: true,
-              profile:{
+              profile: {
                 select: {
                   avatarUrl: true
                 }
@@ -279,30 +280,13 @@ export class MessagingService {
           }
         },
       }),
-      prisma.message.count({ where: { chat_id: conversationId, deletedAt: null } }),
+      prisma.message.count({ where: { chat_id: conversationId } }),
     ]);
 
-    return { messages: messages.map((m) => this._formatMessage(m)), total };
+    return { messages: messages.map((m) => this._formatMessage(m as any)), total };
   }
 
-  private _formatMessage(m: {
-    id: string;
-    chat_id: string;
-    sender_id: string;
-    cipherText: string;
-    iv: string;
-    status: string;
-    type: string;
-    created_at: Date;
-    attachments?: {
-      id: string;
-      file_url: string;
-      iv: string;
-      file_name: string;
-      file_size: number;
-      mime_type: string;
-    }[];
-  }) {
+  private _formatMessage(m: any) {
     return {
       id: m.id,
       chat_id: m.chat_id,
@@ -312,7 +296,8 @@ export class MessagingService {
       status: m.status,
       type: m.type,
       created_at: m.created_at,
-      attachments: (m.attachments ?? []).map((a) => ({
+      is_deleted: !!m.deletedAt,
+      attachments: (m.attachments ?? []).map((a: any) => ({
         id: a.id,
         fileUrl: a.file_url,
         iv: a.iv,
@@ -320,6 +305,28 @@ export class MessagingService {
         fileSize: a.file_size,
         mimeType: a.mime_type,
       })),
+      sender: {
+        id: m.sender?.id ?? "",
+        username: m.sender?.username ?? "",
+        profile: {
+          avatarUrl: m.sender?.profile?.avatarUrl ?? undefined,
+        }
+      },
+      responseTo: m.responseTo ? {
+        id: m.responseTo.id,
+        chat_id: m.responseTo.chat_id,
+        sender_id: m.responseTo.sender_id,
+        cipherText: m.responseTo.cipherText,
+        iv: m.responseTo.iv,
+        status: m.responseTo.status,
+        type: m.responseTo.type,
+        created_at: m.responseTo.created_at,
+        is_deleted: !!m.responseTo.deletedAt,
+        sender: m.responseTo.sender ? {
+          id: m.responseTo.sender.id,
+          username: m.responseTo.sender.username,
+        } : undefined
+      } : undefined
     };
   }
 
@@ -330,7 +337,7 @@ export class MessagingService {
       content: string;
       iv: string;
       type?: string;
-      response_to?: string;
+      replyToId?: string;
       attachments?: { fileUrl: string; iv: string; fileName: string; fileSize: number; mimeType: string }[];
     },
   ) {
@@ -344,7 +351,7 @@ export class MessagingService {
         cipherText: payload.content,
         iv: payload.iv,
         status: "send",
-        response_to: payload.response_to,
+        response_to: payload.replyToId,
         type: (payload.type ?? "TEXT") as any,
         attachments: {
           create: (payload.attachments ?? []).map((a) => ({
@@ -436,6 +443,31 @@ export class MessagingService {
         deletedAt: null,
       },
     });
+  }
+
+  async leaveGroup(userId: string, conversationId: string) {
+    const member = await prisma.conversationMember.findFirst({
+      where: { user_id: userId, conversation_id: conversationId },
+      include: { conversation: true },
+    });
+    if (!member) throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Vous n'êtes pas membre de ce groupe." };
+    if (member.conversation.type !== "group") throw { code: ErrorCode.VALIDATION_ERROR, status: 400, message: "Action réservée aux groupes." };
+
+    await prisma.conversationMember.delete({ where: { id: member.id } });
+    
+    const remaining = await prisma.conversationMember.count({ where: { conversation_id: conversationId } });
+    if (remaining === 0) {
+      await prisma.chat.delete({ where: { id: conversationId } });
+    }
+  }
+
+  async deleteChat(userId: string, conversationId: string) {
+    const member = await prisma.conversationMember.findFirst({
+      where: { user_id: userId, conversation_id: conversationId },
+    });
+    if (!member) throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Chat introuvable." };
+    
+    await prisma.conversationMember.delete({ where: { id: member.id } });
   }
 
   private async _assertMember(userId: string, conversationId: string) {

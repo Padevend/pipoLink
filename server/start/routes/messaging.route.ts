@@ -18,4 +18,7 @@ MessagingRouter
   .post("/:id/messages", ...msgAuth, callAction(MessagingController, "sendMessage"))
   .post("/:id/messages/upload", ...msgAuth, callAction(MessagingController, "uploadFile"))
   .post("/:id/messages/upload-attachment", ...msgAuth, callAction(MessagingController, "uploadAttachment"))
-  .post("/:id/read", ...msgAuth, callAction(MessagingController, "markAsRead"));
+  .post("/:id/read", ...msgAuth, callAction(MessagingController, "markAsRead"))
+  .post("/:id/leave", ...msgAuth, callAction(MessagingController, "leaveGroup"))
+  .delete("/:id", ...msgAuth, callAction(MessagingController, "deleteChat"))
+  .delete("/:id/messages/:messageId", ...msgAuth, callAction(MessagingController, "deleteMessage"));

@@ -81,6 +81,7 @@ export class MessagingController {
     const userId = c.get("userId") as string;
     const conversationId = c.req.param("id")!;
     const payload = await c.validateUsing(sendMessageValidator);
+    console.log(payload)
     const message = await this.service.sendMessage(userId, conversationId, payload);
     const members = await this.service.getConversationMembers(conversationId);
     const lastMessage = await this.service.getMessageSummary(message.id);
@@ -102,6 +103,17 @@ export class MessagingController {
     }
 
     return ApiResponse.success(c, message, "Message envoyé.", 201);
+  }
+  async deleteMessage(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const conversationId = c.req.param("id")!;
+    const messageId = c.req.param("messageId")!;
+
+    await this.service.deleteMessage(userId, messageId);
+
+    RealtimeBus.emit(WsEventName.MessageDeleted, { conversationId, messageId }, { conversationId });
+
+    return ApiResponse.success(c, null, "Message supprimé.");
   }
 
   async uploadFile(c: HttpContext) {
@@ -146,5 +158,21 @@ export class MessagingController {
     await this.service.markAsRead(userId, conversationId);
     RealtimeBus.emit(WsEventName.MessageRead, { conversationId, userId }, { conversationId });
     return ApiResponse.success(c, null, "Messages marqués comme lus.");
+  }
+
+  async leaveGroup(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const conversationId = c.req.param("id")!;
+    await this.service.leaveGroup(userId, conversationId);
+    RealtimeBus.emit(WsEventName.ConversationUpdated, { conversationId }, { conversationId });
+    return ApiResponse.success(c, null, "Vous avez quitté le groupe.");
+  }
+
+  async deleteChat(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const conversationId = c.req.param("id")!;
+    await this.service.deleteChat(userId, conversationId);
+    RealtimeBus.emit(WsEventName.ConversationUpdated, { conversationId }, { userId });
+    return ApiResponse.success(c, null, "Chat supprimé.");
   }
 }

@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 
 import { prisma } from "../../config/database.js";
-import { hash }   from "../../config/hash.js";
+import { hash } from "../../config/hash.js";
 import { OtpService } from "./otp.service.js";
 import { MailerService } from "./mailer.service.js";
 import { ErrorCode } from "../helpers/error-codes.js";
@@ -17,7 +17,7 @@ import {
 import { consumeQrLinkResult, storeQrLinkResult } from "../helpers/qr-link-pending.js";
 
 export class AuthService {
-  private otp    = new OtpService();
+  private otp = new OtpService();
   private mailer = new MailerService();
 
   async register(payload: { email: string; password: string }) {
@@ -28,11 +28,11 @@ export class AuthService {
 
     const user = await prisma.user.create({
       data: {
-        email:    payload.email,
+        email: payload.email,
         password: passwordHash,
         username: payload.email.split("@")[0],
         matricule: `STU-${Date.now()}`,
-        role:      "student",
+        role: "student",
         is_active: false,
       },
     });
@@ -108,8 +108,8 @@ export class AuthService {
           where: { id: primary.id },
           data: {
             fingerprint: payload.deviceFingerprint,
-            name:        payload.deviceName ?? primary.name,
-            platform:    payload.devicePlatform ?? primary.platform,
+            name: payload.deviceName ?? primary.name,
+            platform: payload.devicePlatform ?? primary.platform,
             lastActiveAt: new Date(),
           },
         });
@@ -144,7 +144,7 @@ export class AuthService {
     if (record.revokedAt) {
       await prisma.refreshToken.updateMany({
         where: { user_id: record.user_id },
-        data:  { revokedAt: new Date() },
+        data: { revokedAt: new Date() },
       });
       throw { code: ErrorCode.TOKEN_REUSE_DETECTED, status: 401, message: "Session compromise. Reconnectez-vous." };
     }
@@ -161,14 +161,14 @@ export class AuthService {
     const tokenHash = await hash.sha512(refreshToken);
     await prisma.refreshToken.updateMany({
       where: { tokenHash },
-      data:  { revokedAt: new Date() },
+      data: { revokedAt: new Date() },
     });
   }
 
   async logoutAll(userId: string) {
     await prisma.refreshToken.updateMany({
       where: { user_id: userId, revokedAt: null },
-      data:  { revokedAt: new Date() },
+      data: { revokedAt: new Date() },
     });
     await prisma.auditLog.create({ data: { user_id: userId, action: "LOGOUT" } });
   }
@@ -220,18 +220,18 @@ export class AuthService {
       throw { code: ErrorCode.CONFLICT, status: 409, message: "Cet appareil est déjà enregistré." };
     }
 
-    const token     = hash.generateRandomString(32);
+    const token = hash.generateRandomString(32);
     const shortCode = hash.generateRandomString(6, "numeric");
     const expiresAt = DateTime.utc().plus({ minutes: 5 }).toMillis();
 
     const session: DevicePairingSession = {
       token,
       shortCode,
-      deviceName:    payload.deviceName,
-      platform:      payload.platform,
-      fingerprint:   payload.fingerprint,
-      publicKey:     payload.publicKey,
-      keySignature:  payload.keySignature,
+      deviceName: payload.deviceName,
+      platform: payload.platform,
+      fingerprint: payload.fingerprint,
+      publicKey: payload.publicKey,
+      keySignature: payload.keySignature,
       expiresAt,
     };
     storePairingSession(session);
@@ -255,12 +255,12 @@ export class AuthService {
       throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Demande introuvable ou expirée." };
     }
     return {
-      token:      session.token,
-      shortCode:  session.shortCode,
+      token: session.token,
+      shortCode: session.shortCode,
       deviceName: session.deviceName,
-      platform:   session.platform,
-      publicKey:  session.publicKey,
-      expiresAt:  new Date(session.expiresAt).toISOString(),
+      platform: session.platform,
+      publicKey: session.publicKey,
+      expiresAt: new Date(session.expiresAt).toISOString(),
     };
   }
 
@@ -313,24 +313,24 @@ export class AuthService {
 
     const device = await prisma.device.create({
       data: {
-        user_id:       userId,
-        name:          consumed.deviceName,
-        platform:      consumed.platform,
-        fingerprint:   consumed.fingerprint,
-        isPrimary:     false,
-        public_key:    consumed.publicKey,
+        user_id: userId,
+        name: consumed.deviceName,
+        platform: consumed.platform,
+        fingerprint: consumed.fingerprint,
+        isPrimary: false,
+        public_key: consumed.publicKey,
         key_signature: consumed.keySignature,
-        keyCreatedAt:  now,
-        keyExpiresAt:  keyExpires,
+        keyCreatedAt: now,
+        keyExpiresAt: keyExpires,
       },
     });
 
     if (payload.chatKeyBundle?.length) {
       await prisma.chatMemberKey.createMany({
         data: payload.chatKeyBundle.map((row) => ({
-          id:                 crypto.randomUUID(),
-          chat_id:            row.chatId,
-          device_id:          device.id,
+          id: crypto.randomUUID(),
+          chat_id: row.chatId,
+          device_id: device.id,
           encrypted_chat_key: row.encryptedKey,
         })),
         skipDuplicates: true,
@@ -342,12 +342,12 @@ export class AuthService {
     const tokens = await this._generateTokens(user, device.id);
     const expiresAtMs = tokens.expiresAt instanceof Date ? tokens.expiresAt.getTime() : Number(tokens.expiresAt);
     const linkResult = {
-      accessToken:  tokens.accessToken,
+      accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
-      expiresAt:    expiresAtMs,
-      deviceId:     device.id,
-      user:         { id: user.id, email: user.email, username: user.username, role: user.role, is_configured: user.is_configured },
-      device:       { id: device.id, name: device.name, platform: device.platform },
+      expiresAt: expiresAtMs,
+      deviceId: device.id,
+      user: { id: user.id, email: user.email, username: user.username, role: user.role, is_configured: user.is_configured },
+      device: { id: device.id, name: device.name, platform: device.platform },
     };
     storeQrLinkResult(consumed.token, linkResult);
     return { device, user: linkResult.user };
@@ -364,17 +364,31 @@ export class AuthService {
 
   public async _generateTokens(user: any, deviceId?: string) {
     const accessToken = await hash.jwt.encode({
-      sub:             user.id,
-      deviceId:        deviceId ?? null,
-      role:            user.role,
-      is_configured:   user.is_configured,
+      sub: user.id,
+      deviceId: deviceId ?? null,
+      role: user.role,
+      is_configured: user.is_configured,
     });
     const rawRefreshToken = hash.generateRandomString(64);
-    const tokenHash       = await hash.sha512(rawRefreshToken);
-    const expiresAt       = DateTime.utc().plus({ days: 30 }).toJSDate();
+    const tokenHash = await hash.sha512(rawRefreshToken);
+    const expiresAt = DateTime.utc().plus({ days: 30 }).toJSDate();
+
+    let resolvedDeviceId: string | null = null;
+
+    if (deviceId) {
+      const exists = await prisma.device.findUnique({
+        where: { id: deviceId },
+        select: { id: true },
+      });
+      resolvedDeviceId = exists?.id ?? null;
+    }
 
     await prisma.refreshToken.create({
-      data: { user_id: user.id, device_id: deviceId ?? null, tokenHash, expiresAt },
+      data: {
+        user_id: user.id,
+        device_id: resolvedDeviceId,
+        tokenHash, expiresAt
+      },
     });
 
     return {
