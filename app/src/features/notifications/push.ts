@@ -1,8 +1,16 @@
 import { Platform } from 'react-native';
 
-import { AsyncStorageService } from '@/shared/lib/storage';
+import type { RawMessage } from '@/shared/api/normalize-message';
+import { normalizeMessage } from '@/shared/api/normalize-message';
 import { WS_EVENTS } from '@/shared/constants/ws-events';
+import { decryptMessage } from '@/shared/crypto/message';
+import { AsyncStorageService, ASYNC_STORAGE_KEYS } from '@/shared/lib/storage';
 import { on } from '@/shared/websocket/manager';
+import Constants from 'expo-constants';
+
+import { ensureChatKeyForChat } from '@/features/messaging/lib/ensure-chat-key';
+
+import { DEFAULT_CHANNEL_SETTINGS, type NotificationChannelSettings } from './types';
 
 const ENABLED_KEY = 'notifications_enabled';
 
@@ -14,8 +22,6 @@ let handlerConfigured = false;
 /** Expo Go (SDK 53+) ne supporte plus les push distantes Android — éviter le chargement du module natif. */
 function isExpoGo(): boolean {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const Constants = require('expo-constants').default as { appOwnership?: string };
     return Constants.appOwnership === 'expo';
   } catch {
     return false;
@@ -43,6 +49,7 @@ function getNotifications(): NotificationsModule | null {
           shouldSetBadge: true,
           shouldShowBanner: true,
           shouldShowList: true,
+          
         }),
       });
       handlerConfigured = true;
@@ -65,6 +72,14 @@ export async function isPushEnabled(): Promise<boolean> {
   return (await AsyncStorageService.get<boolean>(ENABLED_KEY)) ?? true;
 }
 
+/** Load the persisted channel settings (or fall back to built-in defaults). */
+async function loadChannelSettings(): Promise<NotificationChannelSettings> {
+  const stored = await AsyncStorageService.get<NotificationChannelSettings>(
+    ASYNC_STORAGE_KEYS.NOTIFICATION_CHANNEL_SETTINGS,
+  );
+  return stored ? { ...DEFAULT_CHANNEL_SETTINGS, ...stored } : DEFAULT_CHANNEL_SETTINGS;
+}
+
 export async function registerForPushNotifications(): Promise<string | null> {
   const Notifications = getNotifications();
   if (!Notifications || !(await isPushEnabled())) return null;
@@ -79,10 +94,21 @@ export async function registerForPushNotifications(): Promise<string | null> {
     if (final !== 'granted') return null;
 
     if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('default', {
-        name: 'PipoLink',
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
+      const cfg = await loadChannelSettings();
+
+      await Notifications.setNotificationChannelAsync(cfg.id, {
+        name: cfg.name ?? 'PipoLink',
+        importance: cfg.importance as unknown as import('expo-notifications').AndroidImportance,
+        vibrationPattern: cfg.enableVibrate ? (cfg.vibrationPattern ?? [0, 250, 250, 250]) : null,
+        sound: cfg.sound === 'default' ? 'default' : undefined,
+        showBadge: true,
+        description: 'Notifications pour les nouveaux messages et annonces',
+        groupId: 'pipolink',
+        bypassDnd: cfg.bypassDnd,
+        lightColor: cfg.lightColor,
+        lockscreenVisibility: cfg.lockscreenVisibility as unknown as import('expo-notifications').AndroidNotificationVisibility,
+        enableLights: cfg.enableLights,
+        enableVibrate: cfg.enableVibrate,
       });
     }
 
@@ -120,10 +146,53 @@ export async function showLocalNotification(
   }
 }
 
-export function setupPushFromWebSocket(): () => void {
+/** Try to decrypt a message's cipherText, returning the plaintext or a fallback. */
+async function tryDecryptBody(
+  conversationId: string,
+  cipherText: string,
+  iv: string,
+): Promise<string> {
+  try {
+    const chatKey = await ensureChatKeyForChat(conversationId);
+    const text = await decryptMessage(cipherText, iv, chatKey);
+    return text ?? 'Nouveau message';
+  } catch {
+    return 'Nouveau message';
+  }
+}
+
+type MessageCreatedPayload = {
+  conversationId: string;
+  message: RawMessage;
+};
+
+/**
+ * Wire push notifications to incoming WebSocket events.
+ *
+ * @param currentUserId  The logged-in user's ID — messages sent by this user
+ *                       will NOT trigger a local notification.
+ */
+export function setupPushFromWebSocket(currentUserId: string): () => void {
   const unsubs = [
-    on<{ conversationId: string }>(WS_EVENTS.MESSAGE_CREATED, async () => {
-      await showLocalNotification('PipoLink', 'New message received');
+    on<MessageCreatedPayload>(WS_EVENTS.MESSAGE_CREATED, async (payload) => {
+      const message = normalizeMessage({ ...payload.message, chat_id: payload.conversationId });
+
+      // ── Ne jamais notifier l'envoyeur lui-même ─────────────────────
+      if (message.sender_id === currentUserId) return;
+
+      // ── Déchiffrer le contenu du message ──────────────────────────
+      const body = await tryDecryptBody(
+        payload.conversationId,
+        message.cipherText,
+        message.iv,
+      );
+
+      const senderName = message.sender?.username ?? 'PipoLink';
+
+      await showLocalNotification(senderName, body, {
+        conversationId: payload.conversationId,
+        messageId: message.id,
+      });
     }),
     on(WS_EVENTS.NOTIFICATION_CREATED, async () => {
       await showLocalNotification('PipoLink', 'You have a new notification');

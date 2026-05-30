@@ -49,7 +49,7 @@ export function MessageBubble({
     if (rep.decryptedContent) return rep.decryptedContent;
     if (rep.attachments && rep.attachments.length > 0) {
       if (rep.attachments[0].mimeType.startsWith('image/')) return '📷 Photo';
-      return '📎 Document';
+      return 'Document';
     }
     return 'Message';
   };
@@ -131,7 +131,7 @@ export function MessageBubble({
               )}
             >
               {message.is_deleted ? (
-                <Text className="text-[14px] italic text-white dark:text-text-secondary-dark">
+                <Text className={cn("text-[12px] italic", isMine ? "text-white" : "text-text-secondary-light dark:text-text-secondary-dark")}>
                   Ce message a été supprimé
                 </Text>
               ) : (

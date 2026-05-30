@@ -46,7 +46,6 @@ export default function UploadFileModal() {
           size: file.size,
         },
       });
-      showToast({ type: 'success', message: 'Document envoyé dans la conversation.' });
       router.back();
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Échec de l’envoi';

@@ -14,4 +14,5 @@ export const ASYNC_STORAGE_KEYS = {
   THEME_PREFERENCE: 'theme_preference',
   APP_LANGUAGE: 'app_language',
   ONBOARDING_COMPLETED: 'onboarding_completed',
+  NOTIFICATION_CHANNEL_SETTINGS: 'notification_channel_settings',
 } as const;

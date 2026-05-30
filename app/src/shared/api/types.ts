@@ -1,3 +1,5 @@
+import { Conversation } from "./messaging";
+
 /**
  * Core API response wrapper
  */
@@ -48,6 +50,8 @@ export interface User {
   role: UserRole;
   is_active: boolean;
   is_configured: boolean;
+  profile?: UserProfile | null;
+  converstions?: Conversation[];
 }
 
 /**

@@ -67,7 +67,7 @@ export default function ProfileSettingsScreen(): JSX.Element {
         filiere,
         bio,
       });
-      if (avatarUri && !avatarUri.startsWith("http")) {
+      if (avatarUri && !avatarUri.startsWith("/storage")) {
         const { avatarUrl } = await userApi.uploadAvatar(avatarUri);
         patchCurrentUserAvatar(queryClient, avatarUrl);
       }

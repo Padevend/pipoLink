@@ -82,21 +82,6 @@ export async function initializeSqlite(): Promise<void> {
     );
   `);
 
-  /**
-   * Attachment download lifecycle table.
-   *
-   * Each row tracks a single chat attachment through its full download and
-   * decryption lifecycle. Rows persist across app restarts enabling:
-   *   - Resume of paused/interrupted downloads on next launch
-   *   - Cache hit detection (completed rows with valid decrypted_local_uri)
-   *   - Progress restoration in the UI
-   *
-   * State machine for the `status` column:
-   *   idle → queued → downloading → decrypting → completed
-   *                      ↓ (pause)    ↑ (resume)
-   *                   paused ─────────┘
-   *                → failed | cancelled
-   */
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS attachment_downloads (
       id TEXT PRIMARY KEY NOT NULL,

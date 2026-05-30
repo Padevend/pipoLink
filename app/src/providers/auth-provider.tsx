@@ -2,8 +2,8 @@ import { authApi } from '@/shared/api/auth';
 import { normalizeUser, type UserWithProfile } from '@/shared/api/normalize-user';
 import type { User } from '@/shared/api/types';
 import { userApi } from '@/shared/api/user';
+import { ASYNC_STORAGE_KEYS, AsyncStorageService, SECURE_STORAGE_KEYS, SecureStorageService } from '@/shared/lib/storage';
 import { disconnect } from '@/shared/websocket/manager';
-import { SecureStorageService, AsyncStorageService, SECURE_STORAGE_KEYS, ASYNC_STORAGE_KEYS } from '@/shared/lib/storage';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 interface AuthContextValue {

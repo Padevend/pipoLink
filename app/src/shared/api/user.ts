@@ -57,7 +57,7 @@ export const userApi = {
   listDevicePublicKeys: (userId: string) =>
     api.get<{ deviceId: string; publicKey: string }[]>(`/users/${userId}/devices/public-keys`),
 
-  getUser: (id: string) => api.get<User>(`/users/${id}`),
+  getUser: (id: string) => api.get<User>(`/users/get/${id}`),
 
   search: (query: string) => api.get<User[]>('/users/search', { params: { q: query } }),
 };

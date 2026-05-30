@@ -2,8 +2,8 @@ import { cn } from '@/shared/utils/cn';
 import { Reply, Trash2 } from "lucide-react-native";
 import { Pressable, Text, View } from 'react-native';
 import Animated, {
-    FadeInDown,
-    FadeOutDown
+  FadeInDown,
+  FadeOutDown
 } from "react-native-reanimated";
 
 interface BubbleMenuProps {
@@ -32,8 +32,7 @@ export default function BubbleMenu({ isMine, onReply, onDelete, onClose }: Bubbl
           'bg-surface-light/95 dark:bg-surface-dark/95',
           'border border-border-light/30 dark:border-border-dark/10',
           'shadow-2xl shadow-black/10 dark:shadow-black/30',
-          // Positionnement au-dessus de la bulle avec décalage naturel
-          'top-[-88px]', 
+          isMine ? 'top-[-88px]' : 'top-[-45px]',
           isMine ? 'right-1' : 'left-1'
         )}
       >
@@ -48,19 +47,22 @@ export default function BubbleMenu({ isMine, onReply, onDelete, onClose }: Bubbl
           <Reply size={14} color="#64748B" strokeWidth={2.5} />
         </Pressable>
 
-        {/* SÉPARATEUR HORIZONTAL FIN (Style iOS/Satiné) */}
-        <View className="h-[0.5px] my-1 mx-1 bg-border-light/40 dark:bg-border-dark/10" />
-
         {/* ACTION : SUPPRIMER */}
-        <Pressable
-          onPress={() => { onDelete(); onClose(); }}
-          className="flex-row items-center justify-between px-3 py-2 rounded-lg active:bg-red-500/10 transition-colors"
-        >
-          <Text className="text-[12px] font-bold tracking-tight text-red-500 dark:text-red-400">
-            Supprimer
-          </Text>
-          <Trash2 size={14} color="red" strokeWidth={2.5} />
-        </Pressable>
+        {isMine && (
+          <>
+            {/* SÉPARATEUR HORIZONTAL FIN (Style iOS/Satiné) */}
+            <View className="h-[0.5px] my-1 mx-1 bg-border-light/40 dark:bg-border-dark/10" />
+            <Pressable
+              onPress={() => { onDelete(); onClose(); }}
+              className="flex-row items-center justify-between px-3 py-2 rounded-lg active:bg-red-500/10 transition-colors"
+            >
+              <Text className="text-[12px] font-bold tracking-tight text-red-500 dark:text-red-400">
+                Supprimer
+              </Text>
+              <Trash2 size={14} color="red" strokeWidth={2.5} />
+            </Pressable>
+          </>
+        )}
       </Animated.View>
     </>
   );

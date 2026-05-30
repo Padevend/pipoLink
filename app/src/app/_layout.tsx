@@ -23,6 +23,7 @@ import {
 } from '@/providers';
 import { I18nProvider } from '@/providers/i18n-provider';
 import { useKeyboardBehavior } from '@/shared/hooks/use-keyboardBehavior';
+import { ASYNC_STORAGE_KEYS, AsyncStorageService } from '@/shared/lib/storage';
 import { KeyboardAvoidingView } from 'react-native';
 import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
 
@@ -69,12 +70,19 @@ function AppStartup() {
   useEffect(() => {
     void runAppStartup();
     void registerForPushNotifications().catch(() => undefined);
+
     let stopPush: () => void = () => { };
-    try {
-      stopPush = setupPushFromWebSocket();
-    } catch {
-      // WebSocket listeners optional at boot
-    }
+
+    // Resolve the current user ID so push notifications skip the sender
+    AsyncStorageService.get<{ id: string }>(ASYNC_STORAGE_KEYS.USER_DATA)
+      .then((user) => {
+        try {
+          stopPush = setupPushFromWebSocket(user?.id ?? '');
+        } catch {
+        }
+      })
+      .catch(() => { });
+
     return () => stopPush();
   }, []);
 

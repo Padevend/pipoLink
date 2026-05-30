@@ -3,19 +3,17 @@ import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useConversations } from '@/entities/conversation/hooks';
+import { conversationKeys, useConversations } from '@/entities/conversation/hooks';
 import { ChatInfoSheet } from '@/features/messaging/components/chat-info-sheet';
 import { ChatView } from '@/features/messaging/components/chat-view';
-import { useAuth } from '@/providers';
+import { queryClient, useAuth } from '@/providers';
+import { messagingApi } from '@/shared/api/messaging';
 import { BRAND } from '@/shared/config/brand';
 import { Avatar } from '@/shared/ui/avatar';
 import { cn } from '@/shared/utils/cn';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
-import { messagingApi } from '@/shared/api/messaging';
-import { queryClient } from '@/providers';
-import { conversationKeys } from '@/entities/conversation/hooks';
-import { ArrowLeft, EllipsisVertical, MessageSquareOff, Phone, Info, LogOut, Trash2 } from 'lucide-react-native';
+import { ArrowLeft, EllipsisVertical, Info, LogOut, MessageSquareOff, Phone, Trash2 } from 'lucide-react-native';
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -23,6 +21,12 @@ export default function ChatScreen() {
   const { data: conversations } = useConversations();
   const [infoOpen, setInfoOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const otherMembers = useMemo(() => {
+    const conversation = conversations?.find((c) => c.id === id);
+    if (!conversation) return [];
+    return conversation.members.filter(m => m.id !== user?.id);
+  }, [conversations, id, user?.id]);
 
   const conversation = conversations?.find((c) => c.id === id);
 
@@ -32,13 +36,13 @@ export default function ChatScreen() {
     if (conversation.type === "group") {
       return conversation.name || 'Groupe';
     }
-    const otherMember = conversation.members.find(m => m.id !== user?.id);
+    const otherMember = otherMembers[0];
     return otherMember?.username || 'Privé';
-  }, [conversation?.name, conversation?.members, conversation?.type, user?.id]);
+  }, [conversation?.name, otherMembers, conversation?.type, user?.id]);
 
   const userPhone = useMemo(() => {
     if (!conversation || conversation.type === "group") return null;
-    const otherMember = conversation.members.find(m => m.id !== user?.id);
+    const otherMember = otherMembers[0];
     return otherMember?.phone || null;
   }, [conversation?.members, conversation?.type, user?.id]);
 
@@ -48,9 +52,9 @@ export default function ChatScreen() {
     if (conversation.type === "group") {
       return conversation.avatarUrl;
     }
-    const otherMember = conversation.members.find(m => m.id !== user?.id);
+    const otherMember = otherMembers[0];
     return otherMember?.avatarUrl;
-  }, [conversation?.avatarUrl, conversation?.members, conversation?.type, user?.id]);
+  }, [conversation?.avatarUrl, otherMembers, conversation?.type, user?.id]);
 
   const isAdmin = user?.role === 'admin' || user?.role === 'staff';
 
@@ -164,7 +168,14 @@ export default function ChatScreen() {
                 />
                 <View className="absolute right-0 top-12 z-50 w-48 rounded-xl border border-border-light/40 bg-surface-light/95 p-1 shadow-lg dark:border-border-dark/40 dark:bg-surface-dark/95 backdrop-blur-xl">
                   <Pressable
-                    onPress={() => { setMenuOpen(false); setInfoOpen(true); }}
+                    onPress={() => {
+                      setMenuOpen(false);
+                      if (conversation.type === 'group') {
+                        setInfoOpen(true);
+                      } else {
+                        router.push(`/user/${otherMembers[0]?.id}`);
+                      }
+                    }}
                     className="flex-row items-center gap-2 rounded-lg px-3 py-2 active:bg-neutral-100 dark:active:bg-neutral-800"
                   >
                     <Info size={16} color="#64748B" />

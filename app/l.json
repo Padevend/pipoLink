@@ -1,61 +1,23 @@
 {
-    "items": [
+    "username": "⚡_Keranos_⚡",
+    "matricule": "STU-1780006090699",
+    "email": "mbpavel21@gmail.com",
+    "role": "admin",
+    "profile": {
+        "firstname": "Pavel",
+        "lastname": "MBAH-NDAM",
+        "phone": "+237671941782",
+        "gender": "M",
+        "niveau": "2",
+        "filiere": "Mathématiques sciences physiques",
+        "bio": "Passionné de tech et de nouvelles technologies",
+        "avatarUrl": "/storage/avatars/473ead36-dccf-4878-83c6-1c07605fb67c.webp"
+    },
+    "conversations": [
         {
-            "id": "215caadd-43fb-4285-9691-73dbcf3b3499",
-            "chat_id": "9f83f807-2c4a-4e73-9caf-a15bc9b01b36",
-            "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
-            "cipherText": "LEooqTcFdw/GfkqqAW5y08LtD0KITU7sqpWwCfLqBnlJQ/8=",
-            "iv": "h/WGGeG97R9hO39O",
-            "status": "send",
-            "type": "IMAGE",
-            "created_at": "2026-05-25T22:30:58.384Z",
-            "attachments": [
-                {
-                    "id": "a2c6b26a-4e55-4dfd-bc21-47cb6037e0c3",
-                    "fileUrl": "/storage/message-attachments/1779748258317-q40xap5ycrm.enc",
-                    "iv": "K4lK+r5HqFIxHF0j",
-                    "fileName": "1000054798.jpg",
-                    "fileSize": 44660,
-                    "mimeType": "image/jpeg"
-                }
-            ],
-            "sender": {
-                "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
-                "username": "Pavel",
-                "profile": {
-                    "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
-                }
-            },
-            "reply_to_id": null,
-            "reply_to": null,
-            "is_deleted": false
-        },
-        {
-            "id": "bcc92332-56dc-494d-bedc-2a9a0b31a872",
-            "chat_id": "9f83f807-2c4a-4e73-9caf-a15bc9b01b36",
-            "sender_id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
-            "cipherText": "zYa1zg44k8FZH1TXogkHtPbwqObA1aUOnL+5ehQez7qW9RuiQz3OaUF1pHTh4Dab/7AG2zOE3IIgwlEr7fni5n9TIoLnbWDrI+4CBplfjvyOTyCrqIqvZOhagtRrDW4AGTbRPAhe+D6MKsFaLdvz1tVPJqaJNwDD+IeVUPmPxUABwkHx6ejsnPIQH8YCBNI10ZU+qPGoWbASTRehzsYtiru9Jc0awBc3laE4SbcA8WBBT92CJjAu5yDVqsgTWISUWMZGnrmIj7KOAAtcHWp9VsduUej+l7K4gliolq4d6ILChHc95m2KiqpeeMl9vy5xEPU1hA==",
-            "iv": "oh/bSCGdTRNh6tQh",
-            "status": "send",
-            "type": "TEXT",
-            "created_at": "2026-05-25T22:30:38.845Z",
-            "attachments": [],
-            "sender": {
-                "id": "62329864-ec90-4c38-a7c7-6fcf332e5476",
-                "username": "Pavel",
-                "profile": {
-                    "avatarUrl": "/storage/avatars/62329864-ec90-4c38-a7c7-6fcf332e5476.webp"
-                }
-            },
-            "reply_to_id": null,
-            "reply_to": null,
-            "is_deleted": false
+            "id": "bab7d4f0-8c24-47dd-a19c-6e39a1469249",
+            "type": "private",
+            "name": null
         }
-    ],
-    "total": 2,
-    "page": 1,
-    "limit": 40,
-    "totalPages": 1,
-    "hasNextPage": false,
-    "hasPreviousPage": false
+    ]
 }
