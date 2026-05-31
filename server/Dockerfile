@@ -59,4 +59,4 @@ RUN mkdir -p logs
 
 EXPOSE 2654
 
-CMD npx prisma migrate deploy && pm2-runtime start ecosystem.config.cjs
+CMD node_modules/.bin/prisma migrate deploy && pm2-runtime start ecosystem.config.cjs
