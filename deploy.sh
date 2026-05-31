@@ -9,8 +9,10 @@ echo "🚀 Début du déploiement..."
 
 # ── 1. Mise à jour du code ────────────────────────────────────────────────────
 echo "📥 Pull branche main..."
+git fetch origin main
 git checkout main
-git pull origin main
+git stash
+git reset --hard origin/main
 
 # ── 2. Build et lancement des conteneurs ─────────────────────────────────────
 echo "🏗️  Build Docker Compose..."
