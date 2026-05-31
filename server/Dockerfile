@@ -14,8 +14,7 @@ WORKDIR /app
 FROM base AS deps
 
 COPY package.json ./ 
-COPY pnpm-lock.yaml ./ 
-COPY pnpm-workspace.yaml ./ 
+COPY pnpm-lock.yaml ./
 COPY prisma.config.ts ./ 
 COPY prisma ./prisma/
 
