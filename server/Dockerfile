@@ -1,5 +1,9 @@
 FROM node:22-alpine AS base
 
+# Définir le PATH avant d'installer pnpm et pm2
+ENV PNPM_HOME="/root/.local/share/pnpm"
+ENV PATH="${PNPM_HOME}:${PATH}"
+
 # Installer pnpm
 RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
 
