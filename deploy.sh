@@ -23,8 +23,8 @@ echo "🏗️  Build Docker Compose..."
 docker-compose up -d --build
 
 # ── 3. Migrations Prisma ──────────────────────────────────────────────────────
-echo "🗄️  Exécution des migrations Prisma..."
-docker-compose exec -T backend npx prisma migrate deploy
+# echo "🗄️  Exécution des migrations Prisma..."
+# docker-compose exec -T backend npx prisma migrate deploy
 
 # ── 4. Vérification du conteneur ─────────────────────────────────────────────
 echo "🔍 Vérification du statut..."
