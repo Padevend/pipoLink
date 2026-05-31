@@ -1,43 +1,56 @@
+# ── Base ──────────────────────────────────────────────────────────────────────
 FROM node:22-alpine AS base
+
+# Variables pnpm
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+
+# Installer pnpm via npm — PATH /pnpm toujours accessible
+RUN npm install -g pnpm@9.15.4
 
 WORKDIR /app
 
-# Dependencies 
+# ── Dependencies ──────────────────────────────────────────────────────────────
 FROM base AS deps
 
-COPY package.json package-lock.json ./
+COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma/
 
-RUN npm ci
+RUN pnpm install --frozen-lockfile
 
-# Builder 
+# ── Builder ───────────────────────────────────────────────────────────────────
 FROM base AS builder
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-RUN npm run db:generate
-RUN npm run build
+# Générer le client Prisma
+RUN pnpm db:generate
 
-# Garder uniquement les dépendances de production
-RUN npm ci --omit=dev
+# Compiler TypeScript
+RUN pnpm build
 
-# Runner 
+# Dépendances production uniquement
+RUN pnpm install --frozen-lockfile --prod
+
+# ── Runner ────────────────────────────────────────────────────────────────────
 FROM node:22-alpine AS runner
 
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
 ENV NODE_ENV=production
 ENV PORT=2654
 
-# PM2 via npm — PATH géré automatiquement
-RUN npm install -g pm2
+# pnpm + pm2
+RUN npm install -g pnpm@9.15.4 pm2
 
 WORKDIR /app
 
-COPY --from=builder /app/node_modules    ./node_modules
-COPY --from=builder /app/dist            ./dist
-COPY --from=builder /app/package.json    ./package.json
-COPY --from=builder /app/prisma          ./prisma
-COPY ecosystem.config.cjs                ./ecosystem.config.cjs
+COPY --from=builder /app/node_modules      ./node_modules
+COPY --from=builder /app/dist              ./dist
+COPY --from=builder /app/package.json      ./package.json
+COPY --from=builder /app/prisma            ./prisma
+COPY ecosystem.config.cjs                  ./ecosystem.config.cjs
 
 RUN mkdir -p logs
 
