@@ -2,6 +2,10 @@
 # deploy.sh — Script de déploiement PipoLink
 set -e
 
+if ! docker ps > /dev/null 2>&1; then
+    exec sg docker "$0" "$@"
+fi
+
 PROJECT_DIR=~/Documents/pipolink
 cd "$PROJECT_DIR" || { echo "❌ Dossier $PROJECT_DIR introuvable"; exit 1; }
 
