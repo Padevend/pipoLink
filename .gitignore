@@ -1,0 +1,5 @@
+.claude/
+.pnpm-store/
+
+./server/.env
+./node_modules/

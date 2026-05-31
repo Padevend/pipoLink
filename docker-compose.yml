@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    image: pipolink-backend
+    container_name: pipolink-backend
+    restart: unless-stopped
+    env_file:
+      - ./server/.env
+    ports:
+      - "2654:2654"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./server/storage:/app/storage
+
