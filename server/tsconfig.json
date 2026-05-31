@@ -9,6 +9,6 @@
     "skipLibCheck": true,
     "outDir": "./dist"
   },
-  "include": ["**/*.ts"],
+  "include": ["**/*.ts", "prisma.config.js"],
   "exclude": ["node_modules", "dist", "generated"]
 }
