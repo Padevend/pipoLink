@@ -32,9 +32,6 @@ RUN pnpm db:generate
 # Compiler TypeScript
 RUN pnpm build
 
-# Dépendances production uniquement
-RUN pnpm install --frozen-lockfile --prod
-
 # ── Runner ────────────────────────────────────────────────────────────────────
 FROM node:22-alpine AS runner
 
@@ -54,9 +51,10 @@ COPY --from=builder /app/package.json      ./package.json
 COPY --from=builder /app/prisma            ./prisma
 COPY --from=builder /app/prisma.config.js ./prisma.config.js
 COPY ecosystem.config.cjs                  ./ecosystem.config.cjs
+COPY entrypoint.sh                         ./entrypoint.sh
 
-RUN mkdir -p logs
+RUN mkdir -p logs && chmod +x entrypoint.sh
 
 EXPOSE 2654
 
-CMD node_modules/.bin/prisma migrate deploy && pm2-runtime start ecosystem.config.cjs
+ENTRYPOINT ["./entrypoint.sh"]
