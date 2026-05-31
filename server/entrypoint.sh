@@ -3,7 +3,7 @@
 set -e
 
 echo "🗄️  Migration Prisma..."
-node_modules/.bin/prisma migrate deploy
+pnpm db:migrate-deploy
 
 echo "🚀 Démarrage PM2..."
 exec pm2-runtime start ecosystem.config.cjs
