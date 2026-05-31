@@ -36,7 +36,7 @@ async function bootstrap() {
   const server = serve({
     fetch: app.fetch,
     port: Number(env.get("PORT")),
-    hostname: env.get("HOST"),
+    hostname: env.get("HOST") ?? "0.0.0.0",
   }, (info) => {
     console.log(`🚀 Serveur PipoLink démarré sur http://${info.address}:${info.port}`);
   });
