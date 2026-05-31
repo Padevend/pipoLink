@@ -18,7 +18,7 @@ git pull origin main
 
 # 2. Rebuild et redémarrage via Docker Compose
 echo "🏗️  Construction et lancement des conteneurs avec Docker Compose..."
-docker compose up -d --build
+docker-compose up -d --build
 
 # 3. Initialiser/redémarrer l'application avec PM2 dans le conteneur
 echo "⚙️  Configuration de PM2 (cluster mode - 2 instances)..."
