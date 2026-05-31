@@ -17,6 +17,11 @@ export class PaymentController {
 
   async confirmSimulated(c: HttpContext) {
     const paymentId = c.req.param("id");
+
+    if(!paymentId) {
+      return ApiResponse.error(c, "ID_REQUIRED", "L'ID du paiement est requis.", 400);
+    }
+
     const result = await this.service.confirmSimulated(paymentId);
     RealtimeBus.emit(WsEventName.SubscriptionUpdated, result.subscription, { userId: result.payment.user_id });
     return ApiResponse.success(c, null, "Paiement simulé avec succès.");
@@ -24,6 +29,11 @@ export class PaymentController {
 
   async getStatus(c: HttpContext) {
     const paymentId = c.req.param("id");
+
+    if(!paymentId) {
+      return ApiResponse.error(c, "ID_REQUIRED", "L'ID du paiement est requis.", 400);
+    }
+    
     const payment = await this.service.getStatus(paymentId);
     return ApiResponse.success(c, payment, "Statut du paiement récupéré.");
   }

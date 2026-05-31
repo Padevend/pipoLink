@@ -1,6 +1,7 @@
 import { Context, Next } from "hono";
 import { ApiResponse } from "../helpers/api-response.js";
 import { ErrorCode } from "../helpers/error-codes.js";
+import { HttpContext } from "../../config/app.js";
 
 /**
  * Middleware de contrôle de rôle.
@@ -20,7 +21,7 @@ export function roleMiddleware(allowedRoles: string[]) {
     const role = c.get("role") as string;
 
     if (!allowedRoles.includes(role)) {
-      return ApiResponse.error(c, ErrorCode.FORBIDDEN, "Vous n'avez pas les droits pour effectuer cette action.", 403);
+      return ApiResponse.error(c as HttpContext, ErrorCode.FORBIDDEN, "Vous n'avez pas les droits pour effectuer cette action.", 403);
     }
 
     await next();

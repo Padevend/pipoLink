@@ -14,6 +14,11 @@ export class NotificationController {
   async markAsRead(c: HttpContext) {
     const userId = c.get("userId") as string;
     const notificationId = c.req.param("id");
+    
+    if(!notificationId) {
+      return ApiResponse.error(c, "ID_REQUIRED", "L'ID de la notification est requis.", 400);
+    }
+
     await this.service.markAsRead(userId, notificationId);
     return ApiResponse.success(c, null, "Notification lue.");
   }
