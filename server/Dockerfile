@@ -13,7 +13,10 @@ WORKDIR /app
 # ── Dependencies ──────────────────────────────────────────────────────────────
 FROM base AS deps
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml prisma.config.ts ./ 
+COPY package.json ./ 
+COPY pnpm-lock.yaml ./ 
+COPY pnpm-workspace.yaml ./ 
+COPY prisma.config.ts ./ 
 COPY prisma ./prisma/
 
 RUN pnpm install --frozen-lockfile
