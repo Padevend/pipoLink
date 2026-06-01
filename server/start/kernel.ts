@@ -11,7 +11,6 @@ import { NotificationRouter } from "./routes/notification.route.js";
 import { AnnouncementRouter } from "./routes/announcement.route.js";
 import { UpdatesRouter } from "./routes/updates.route.js";
 import { env } from "../config/envManager.js";
-import { connect } from "http2";
 import { prisma } from "../config/database.js";
 
 export function createRouter() {
