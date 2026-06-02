@@ -1,4 +1,4 @@
-import { SecureStorageService, SECURE_STORAGE_KEYS } from '@/shared/lib/storage';
+import { SECURE_STORAGE_KEYS, SecureStorageService } from '@/shared/lib/storage';
 import { ApiResponse, ErrorResponse, PaginatedResponse } from './types';
 
 function envUrl(key: 'EXPO_PUBLIC_API_URL' | 'EXPO_PUBLIC_WS_URL', fallback: string): string {
@@ -7,7 +7,7 @@ function envUrl(key: 'EXPO_PUBLIC_API_URL' | 'EXPO_PUBLIC_WS_URL', fallback: str
   return value || fallback;
 }
 
-const API_BASE_URL = envUrl('EXPO_PUBLIC_API_URL', 'http://192.168.1.147:3000');
+const API_BASE_URL = envUrl('EXPO_PUBLIC_API_URL', 'https://api-plink.lyrastudio.org');
 
 export class ApiError extends Error {
   constructor(
@@ -177,6 +177,7 @@ export const api = {
       method: 'POST',
       body: formData,
       headers: {
+        'Content-Type': 'multipart/form-data',
         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         ...(options?.headers as any),
       },

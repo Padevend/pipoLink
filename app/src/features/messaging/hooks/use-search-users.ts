@@ -6,7 +6,7 @@ export function useSearchUsers(query: string) {
   return useQuery({
     queryKey: ['users', 'search', query],
     queryFn: () => userApi.searchUsers(query),
-    enabled: query.trim().length >= 1,
+    enabled: true,
     staleTime: 30_000,
   });
 }

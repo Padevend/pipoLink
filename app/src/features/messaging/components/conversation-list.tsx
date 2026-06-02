@@ -17,6 +17,8 @@ type ListRow =
   | { kind: 'announcements'; id: typeof ANNOUNCEMENTS_ENTRY_ID }
   | { kind: 'conversation'; id: string; conversation: Conversation };
 
+const ItemSeparator = () => <View className="h-[1px] mx-5 bg-border-light/20 dark:bg-border-dark/10" />;
+
 export function ConversationList() {
   const { data: conversations, isLoading, refetch, isRefetching } = useConversations();
   const { data: announcements } = useAnnouncements();
@@ -80,9 +82,7 @@ export function ConversationList() {
         keyExtractor={(item) => item.id}
       contentContainerStyle={{ paddingBottom: 40 }}
       showsVerticalScrollIndicator={false}
-      ItemSeparatorComponent={() => (
-        <View className="h-[1px] mx-5 bg-border-light/20 dark:bg-border-dark/10" />
-      )}
+      ItemSeparatorComponent={ItemSeparator}
       renderItem={({ item }) => {
         if (item.kind === 'announcements') {
           return (

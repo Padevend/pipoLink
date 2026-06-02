@@ -109,7 +109,7 @@ export default function NewGroupScreen(): JSX.Element {
         />
 
         {/* Indicateur de chargement */}
-        {isLoading && query.length > 0 && (
+        {isLoading && (
           <View className="py-4 items-center">
             <ActivityIndicator size="small" color={BRAND.primary} />
           </View>
@@ -165,7 +165,7 @@ export default function NewGroupScreen(): JSX.Element {
             })}
           </View>
         ) : (
-          query.length > 0 && !isLoading && (
+          !isLoading && (
             <View className="items-center justify-center py-8 rounded-2xl border border-border-light/40 bg-surface-light/30 dark:border-border-dark/10 dark:bg-surface-dark/20 backdrop-blur-sm mb-6">
               <View className="h-9 w-9 items-center justify-center rounded-xl bg-text-secondary-light/5 border border-border-light/10 mb-2">
                 <Search size={16} color="#64748B" />

@@ -90,15 +90,21 @@ export default function DocumentDetailPage() {
 
   const handleDownload = async () => {
     try {
+      if (!document?.id) return;
       setIsDownloading(true);
-      const result = await libraryApi.downloadDocument(document.id);
-      if (result?.fileUrl) {
-        // Ouvrir le lien dans le navigateur
-        // À implémenter selon la plateforme
-        Alert.alert("Téléchargement", "Lien de téléchargement généré avec succès");
-      }
+      
+      const { downloadManager } = await import('@/features/downloads/services/download.manager');
+      const { getStaticUri } = await import('@/shared/lib/static');
+      
+      await downloadManager.start({
+        filename: document.fileName || document.title + ".pdf",
+        url: getStaticUri(document.fileUrl),
+        documentId: document.id,
+      });
+
+      Alert.alert("Téléchargement lancé", "Vous pouvez suivre la progression dans l'onglet Bibliothèque.");
     } catch (error) {
-      Alert.alert("Erreur", "Impossible de télécharger le document");
+      Alert.alert("Erreur", "Impossible de lancer le téléchargement");
     } finally {
       setIsDownloading(false);
     }

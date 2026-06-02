@@ -58,12 +58,8 @@ const PERMISSIONS: Permission[] = [
     required: true,
     icon:      FolderOpen,
     request:  async () => {
-      try {
-        const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
-        return permissions.granted ? "granted" : "denied";
-      } catch (error) {
-        return "denied";
-      }
+      // Plus besoin de permission SAF, on sauvegarde dans documentDirectory
+      return "granted";
     },
   },
   // {

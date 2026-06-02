@@ -5,7 +5,7 @@ import { decryptMessage } from '@/shared/crypto';
 import { Avatar } from '@/shared/ui/avatar';
 import { cn } from '@/shared/utils/cn';
 import { formatDistanceToNow } from 'date-fns';
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 export interface ConversationItemProps {
@@ -13,7 +13,7 @@ export interface ConversationItemProps {
   onPress: () => void;
 }
 
-export function ConversationItem({ conversation, onPress }: ConversationItemProps) {
+export const ConversationItem = React.memo(function ConversationItem({ conversation, onPress }: ConversationItemProps) {
   const { user } = useAuth();
 
   const lastMessage = conversation.lastMessage;
@@ -124,4 +124,8 @@ export function ConversationItem({ conversation, onPress }: ConversationItemProp
       </View>
     </Pressable>
   );
-}
+}, (prev, next) => {
+  return prev.conversation.id === next.conversation.id &&
+         prev.conversation.updatedAt === next.conversation.updatedAt &&
+         prev.conversation.unreadCount === next.conversation.unreadCount;
+});

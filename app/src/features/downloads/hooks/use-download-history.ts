@@ -30,8 +30,17 @@ export function useDownloadHistory() {
         downloadManager.cancel(id);
     }
 
+    // Rafraîchissement en temps réel
     useEffect(() => {
         refresh();
+        const interval = setInterval(() => {
+            const data = localDb.getDownloadRepository();
+            setHistory(prev => {
+                if (JSON.stringify(prev) !== JSON.stringify(data)) return data;
+                return prev;
+            });
+        }, 500);
+        return () => clearInterval(interval);
     }, []);
 
     return {

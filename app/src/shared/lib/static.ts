@@ -1,5 +1,5 @@
 export function getStaticUri(path: string): string {
-    if (path.startsWith('http') || path.startsWith('data:')) {
+    if (path.startsWith("https://") || path.startsWith("http://") || path.startsWith('data:')) {
         return path;
     }
 

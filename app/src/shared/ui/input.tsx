@@ -81,6 +81,7 @@ export function Input({
           onFocus={handleFocus}
           onBlur={handleBlur}
           placeholderTextColor="#64748B"
+          
           textAlignVertical={props.multiline ? 'top' : 'center'}
           style={props.multiline ? { paddingTop: 5, paddingBottom: 0 } : undefined}
           className={cn(
@@ -92,6 +93,9 @@ export function Input({
           onChangeText={props.onChangeText}
           value={props.value}
           multiline={props.multiline}
+          secureTextEntry={props.secureTextEntry}
+          keyboardType={props.keyboardType}
+          autoCapitalize={props.autoCapitalize}
         />
         
         {/* Icône Droite (Ajustement de marge si multiline) */}

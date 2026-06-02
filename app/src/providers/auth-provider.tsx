@@ -3,6 +3,7 @@ import { normalizeUser, type UserWithProfile } from '@/shared/api/normalize-user
 import type { User } from '@/shared/api/types';
 import { userApi } from '@/shared/api/user';
 import { ASYNC_STORAGE_KEYS, AsyncStorageService, SECURE_STORAGE_KEYS, SecureStorageService } from '@/shared/lib/storage';
+import { db } from '@/shared/storage/sqlite';
 import { disconnect } from '@/shared/websocket/manager';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
@@ -81,6 +82,19 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
     await SecureStorageService.remove(SECURE_STORAGE_KEYS.EXPIRES_AT);
     await SecureStorageService.remove(SECURE_STORAGE_KEYS.DEVICE_ID);
     await AsyncStorageService.remove(ASYNC_STORAGE_KEYS.USER_DATA);
+
+    // clear sqlite
+    db.runSync(`
+    DROP TABLE IF EXISTS messages;
+    DROP TABLE IF EXISTS conversations;
+    DROP TABLE IF EXISTS pending_messages;
+    DROP TABLE IF EXISTS ai_sessions;
+    DROP TABLE IF EXISTS ai_messages;
+    DROP TABLE IF EXISTS documents;
+    DROP TABLE IF EXISTS folders;
+    DROP TABLE IF EXISTS downloads;
+    DROP TABLE IF EXISTS attachment_downloads;
+      `)
     setUser(null);
   };
 

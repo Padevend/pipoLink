@@ -6,7 +6,7 @@ import { Avatar } from "@/shared/ui/avatar";
 import { cn } from '@/shared/utils/cn';
 import { format } from "date-fns";
 import { Check, CheckCheck, Clock } from "lucide-react-native";
-import { useCallback, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { Pressable, Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -32,7 +32,7 @@ interface MessageBubbleProps {
   onPressReplyQuote?: (messageId: string) => void;
 }
 
-export function MessageBubble({
+export const MessageBubble = React.memo(function MessageBubble({
   message,
   isMine,
   hasAttachments,
@@ -216,4 +216,11 @@ export function MessageBubble({
       </View>
     </View>
   );
-}
+}, (prev, next) => {
+  return prev.message.id === next.message.id &&
+         prev.message.status === next.message.status &&
+         prev.message.is_deleted === next.message.is_deleted &&
+         prev.message.cipherText === next.message.cipherText &&
+         prev.isMine === next.isMine &&
+         prev.isGroup === next.isGroup;
+});

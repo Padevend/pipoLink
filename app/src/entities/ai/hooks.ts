@@ -47,19 +47,18 @@ export const useAiChat = () => {
 
   return useMutation({
     mutationFn: (payload: { message: string; sessionId?: string }) =>{
-      // add msg to view
-      queryClient.setQueryData(aiKeys.history(payload.sessionId || ''), (old: any) => {
-        const existing = old || [];
-        const tempId = `temp-${Date.now()}`;
-        if (!existing.some((msg: any) => msg.id === tempId)) {
+      // add msg to view (optimistic)
+      if (payload.sessionId) {
+        queryClient.setQueryData(aiKeys.history(payload.sessionId), (old: any) => {
+          const existing = old || [];
+          const tempId = `temp-${Date.now()}`;
           return [...existing, { id: tempId, role: 'user', content: payload.message }];
-        }
-        return existing;
-      })
+        });
+      }
 
       return aiApi.sendMessage(payload)
     },
-    onSuccess: (data) => {
+    onSuccess: (data, payload) => {
       queryClient.setQueryData(aiKeys.sessions(), (old: any) => {
         const existing = old || [];
         if (!existing.some((s: any) => s.id === data.session.id)) {
@@ -70,12 +69,20 @@ export const useAiChat = () => {
 
       if (data.session.id) {
         queryClient.setQueryData(aiKeys.history(data.session.id), (old: any) => {
-          const existing = old || [];
-          // Éviter les doublons en vérifiant l'ID du message
-          if (!existing.some((msg: any) => msg.id === data.message.id)) {
-            return [...existing, data.message];
+          let existing = old || [];
+          
+          // Nettoyer les messages temporaires optimistes
+          existing = existing.filter((msg: any) => !msg.id.startsWith('temp-'));
+          
+          const newMessages = [];
+          if (data.request && !existing.some((msg: any) => msg.id === data.request.id)) {
+            newMessages.push(data.request);
           }
-          return existing;
+          if (data.message && !existing.some((msg: any) => msg.id === data.message.id)) {
+            newMessages.push(data.message);
+          }
+          
+          return [...existing, ...newMessages];
         });
       }
     },

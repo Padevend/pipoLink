@@ -83,7 +83,10 @@ export const libraryApi = {
         description: metadata.description,
       }),
     );
-    return api.upload<Document>("/library/documents", formData);
+
+    return api.upload<Document>("/library/documents", formData, {
+      
+    });
   },
 
   deleteDocument: (id: string) => api.delete<void>(`/library/documents/${id}`),

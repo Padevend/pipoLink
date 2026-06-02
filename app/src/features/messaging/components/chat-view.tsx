@@ -106,13 +106,19 @@ export function ChatView({ conversation }: ChatViewProps) {
     });
   };
 
+  const contextRef = useRef({ conversationId, userId: user?.id });
+  useEffect(() => {
+    contextRef.current = { conversationId, userId: user?.id };
+  }, [conversationId, user?.id]);
+
   // onViewableItemsChanged to detect when unread messages from other users become visible
   const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
+    const { conversationId, userId } = contextRef.current;
     let unreadVisible = false;
     for (const { item } of viewableItems) {
       if (item.type === 'message') {
         const msg = item.message;
-        if (msg.sender_id !== user?.id && msg.status !== 'read') {
+        if (msg.sender_id !== userId && msg.status !== 'read') {
           unreadVisible = true;
           break;
         }

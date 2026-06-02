@@ -72,17 +72,8 @@ class DownloadManager {
                 throw new Error(`Téléchargement échoué (HTTP ${result?.status})`);
             }
 
-            // save to documents
-            const publicPath = await saveToPublicDocuments({
-                sourceUri: result.uri,
-                filename,
-                mimeType: result.mimeType,
-            });
-            task.local_uri = publicPath;
+            task.local_uri = result.uri;
             localDb.saveDownloadRepository(task);
-
-            // Supprimer le temp
-            await FileSystemLegacy.deleteAsync(result.uri, { idempotent: true });
 
             this.queue.next();
         } catch (e) {

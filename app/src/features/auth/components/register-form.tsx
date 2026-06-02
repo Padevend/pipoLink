@@ -4,9 +4,16 @@ import { BRAND } from '@/shared/config/brand';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { router } from 'expo-router';
-import { ArrowRight, Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
-import { useState } from 'react';
+import { ArrowRight, Check, Circle, Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
+import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
+
+interface PasswordCriterion {
+  id: string;
+  label: string;
+  isValid: boolean;
+}
+
 
 export function RegisterForm() {
   const { register } = useAuth();
@@ -18,6 +25,31 @@ export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const passwordCriteria = useMemo<PasswordCriterion[]>(() => {
+    return [
+      {
+        id: 'length',
+        label: 'Au moins 8 caractères',
+        isValid: password.length >= 8
+      },
+      {
+        id: 'uppercase',
+        label: 'Une lettre majuscule',
+        isValid: /[A-Z]/.test(password)
+      },
+      {
+        id: 'number',
+        label: 'Au moins un chiffre',
+        isValid: /\d/.test(password)
+      },
+    ];
+  }, [password]);
+
+  // Détermine si le mot de passe est entièrement valide
+  const isPasswordValid = useMemo<boolean>(() => {
+    return passwordCriteria.every(criterion => criterion.isValid);
+  }, [passwordCriteria]);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -82,6 +114,31 @@ export function RegisterForm() {
           onRightIconPress={() => setShowPassword(!showPassword)}
           containerClassName="bg-transparent"
         />
+        <View
+          className="p-3.5 rounded-xl border border-border-light/20 bg-surface-light/20 dark:border-border-dark/10 dark:bg-surface-dark/20 backdrop-blur-sm gap-y-2"
+        >
+          <Text className="text-[10px] font-bold text-text-secondary-light/50 dark:text-text-secondary-dark/50 uppercase tracking-widest mb-1">
+            Critères requis de sécurité
+          </Text>
+
+          {passwordCriteria.map((criterion) => (
+            <View key={criterion.id} className="flex-row items-center gap-x-2.5">
+              {criterion.isValid ? (
+                <Check size={14} className="text-emerald-500" strokeWidth={3} />
+              ) : (
+                <Circle size={8} className="text-text-secondary-light/30 dark:text-text-secondary-dark/30 mx-0.5" strokeWidth={3} />
+              )}
+              <Text
+                className={`text-[13px] font-medium transition-colors ${criterion.isValid
+                    ? 'text-emerald-600 dark:text-emerald-400 opacity-60 line-through'
+                    : 'text-text-secondary-light/70 dark:text-text-secondary-dark/60 no-underline'
+                  }`}
+              >
+                {criterion.label}
+              </Text>
+            </View>
+          ))}
+        </View>
 
         <Input
           label="Confirmation du mot de passe"

@@ -80,7 +80,7 @@ export default function NewChatScreen(): JSX.Element {
 
       {/* Corps de l'Écran / Résultats */}
       <View className="flex-1 px-5 pt-2">
-        {isLoading && query.length > 0 ? (
+        {isLoading ? (
           <View className="flex-1 items-center justify-center pb-24">
             <ActivityIndicator size="small" color={BRAND.primary} />
           </View>
@@ -118,16 +118,14 @@ export default function NewChatScreen(): JSX.Element {
             />
           </View>
         ) : (
-          query.length > 0 && (
-            <View className="flex-1 items-center justify-center pb-24">
-              <View className="h-11 w-11 items-center justify-center rounded-xl bg-text-secondary-light/5 border border-border-light/10 mb-3">
-                <Search size={18} color="#64748B" />
-              </View>
-              <Text className="text-center text-[12px] font-medium text-text-secondary-light/60 dark:text-text-secondary-dark/60">
-                Aucun utilisateur trouvé
-              </Text>
+          <View className="flex-1 items-center justify-center pb-24">
+            <View className="h-11 w-11 items-center justify-center rounded-xl bg-text-secondary-light/5 border border-border-light/10 mb-3">
+              <Search size={18} color="#64748B" />
             </View>
-          )
+            <Text className="text-center text-[12px] font-medium text-text-secondary-light/60 dark:text-text-secondary-dark/60">
+              Aucun utilisateur trouvé
+            </Text>
+          </View>
         )}
       </View>
     </SafeAreaView>

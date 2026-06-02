@@ -77,10 +77,8 @@ export default function UploadDocumentModal() {
       });
       router.back();
     } catch (e: unknown) {
-      const message =
-        e instanceof Error
-          ? e.message
-          : 'Échec de l’upload — vérifiez votre connexion.';
+      console.log(e);
+      const message = 'Échec de l’upload — vérifiez votre connexion.';
       showToast({ type: 'error', message });
     }
   };
