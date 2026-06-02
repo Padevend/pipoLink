@@ -159,22 +159,26 @@ export class UserService {
 
   async searchUsers(requesterId: string, query: string) {
     const q = query.trim();
-    if (q.length < 1) return [];
+
+    const whereClause: any = {
+      id: { not: requesterId },
+      is_active: true,
+      is_configured: true,
+      is_excluded: false,
+    };
+
+    if (q.length > 0) {
+      whereClause.OR = [
+        { username: { contains: q, mode: "insensitive" } },
+        { matricule: { contains: q, mode: "insensitive" } },
+        { email: { contains: q, mode: "insensitive" } },
+        { profile: { firstname: { contains: q, mode: "insensitive" } } },
+        { profile: { lastname: { contains: q, mode: "insensitive" } } },
+      ];
+    }
 
     return prisma.user.findMany({
-      where: {
-        id: { not: requesterId },
-        is_active: true,
-        is_configured: true,
-        is_excluded: false,
-        OR: [
-          { username: { contains: q, mode: "insensitive" } },
-          { matricule: { contains: q, mode: "insensitive" } },
-          { email: { contains: q, mode: "insensitive" } },
-          { profile: { firstname: { contains: q, mode: "insensitive" } } },
-          { profile: { lastname: { contains: q, mode: "insensitive" } } },
-        ],
-      },
+      where: whereClause,
       select: {
         id: true,
         username: true,
@@ -239,6 +243,11 @@ export class UserService {
       where: { user_id: userId },
       data: { revokedAt: new Date() },
     });
+
+    await prisma.device.deleteMany({
+      where: { user_id: userId }
+    });
+
     await prisma.user.update({ where: { id: userId }, data: { is_excluded: true } });
     await prisma.auditLog.create({ data: { user_id: userId, action: "ACCOUNT_DELETED" } });
   }
