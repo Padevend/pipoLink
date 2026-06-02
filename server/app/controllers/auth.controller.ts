@@ -65,7 +65,10 @@ export class AuthController {
   }
 
   async forgotPassword(c: HttpContext) {
-    const { email } = await c.req.json();
+    let { email } = await c.req.json();
+    if (typeof email === "string") {
+      email = email.trim().toLowerCase();
+    }
     await this.service.forgotPassword(email).catch(() => {});
     return ApiResponse.success(c, null, "Si cet email existe, un code vous a été envoyé.");
   }

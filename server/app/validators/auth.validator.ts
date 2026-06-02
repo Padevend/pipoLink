@@ -17,7 +17,7 @@ export const registerValidator = vine.compile(
  */
 export const loginValidator = vine.compile(
   vine.object({
-    email:              vine.string().email(),
+    email:              vine.string().email().normalizeEmail(),
     password:           vine.string().minLength(1),
     deviceFingerprint:  vine.string().minLength(4).maxLength(200).optional(),
     deviceName:         vine.string().maxLength(120).optional(),
@@ -58,7 +58,7 @@ export const approvePairingValidator = vine.compile(
  */
 export const verifyOtpValidator = vine.compile(
   vine.object({
-    email:   vine.string().email(),
+    email:   vine.string().email().normalizeEmail(),
     code:    vine.string().fixedLength(6),
     purpose: vine.enum(["EMAIL_VERIFY", "PASSWORD_RESET"]),
   })
@@ -69,7 +69,7 @@ export const verifyOtpValidator = vine.compile(
  */
 export const resendOtpValidator = vine.compile(
   vine.object({
-    email:   vine.string().email(),
+    email:   vine.string().email().normalizeEmail(),
     purpose: vine.enum(["EMAIL_VERIFY", "PASSWORD_RESET"]),
   })
 );
@@ -89,7 +89,7 @@ export const changePasswordValidator = vine.compile(
  */
 export const resetPasswordValidator = vine.compile(
   vine.object({
-    email:       vine.string().email(),
+    email:       vine.string().email().normalizeEmail(),
     code:        vine.string().fixedLength(6),
     newPassword: vine.string().minLength(8).regex(/^(?=.*[A-Z])(?=.*\d).+$/),
   })

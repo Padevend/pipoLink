@@ -237,6 +237,7 @@ export class LibraryService {
         mimeType: meta.mimeType,
         isPublic: (payload.isPublic as boolean) ?? true,
         tags: { connect: tagConnections.map((t) => ({ id: t.id })) },
+        moderationStatus: "APPROVED",
       },
       include: docInclude,
     });
