@@ -343,6 +343,7 @@ export class LibraryService {
     };
 
     const docs = await prisma.document.findMany({
+      where,
       include: docInclude,
       orderBy: { createdAt: "desc" },
       take: 10,

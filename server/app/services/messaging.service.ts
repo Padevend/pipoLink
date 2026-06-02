@@ -213,12 +213,21 @@ export class MessagingService {
     return Promise.all(
       members.map(async (m) => {
         const chat = m.conversation;
+        const since = m.lastReadAt ?? new Date(0);
+        
         const [lastMessage, unreadCount] = await Promise.all([
           prisma.message.findFirst({
             where: { chat_id: chat.id, deletedAt: null },
             orderBy: { created_at: "desc" },
           }),
-          this.getUnreadCount(userId, chat.id),
+          prisma.message.count({
+            where: {
+              chat_id: chat.id,
+              sender_id: { not: userId },
+              created_at: { gt: since },
+              deletedAt: null,
+            },
+          }),
         ]);
 
         return {

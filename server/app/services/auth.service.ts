@@ -22,23 +22,38 @@ export class AuthService {
 
   async register(payload: { email: string; password: string }) {
     const existing = await prisma.user.findUnique({ where: { email: payload.email } });
-    if (existing) throw { code: ErrorCode.EMAIL_TAKEN, status: 409, message: "Cet email est déjà utilisé." };
-
     const passwordHash = await hash.make(payload.password);
+    
+    let userId: string;
 
-    const user = await prisma.user.create({
-      data: {
-        email: payload.email,
-        password: passwordHash,
-        username: payload.email.split("@")[0],
-        matricule: `STU-${Date.now()}`,
-        role: "student",
-        is_active: false,
-      },
-    });
+    if (existing) {
+      if (existing.is_active) {
+        throw { code: ErrorCode.EMAIL_TAKEN, status: 409, message: "Cet email est déjà utilisé." };
+      } else {
+        // Le compte existe mais n'a jamais été vérifié.
+        // On met à jour le mot de passe et on renverra un OTP.
+        await prisma.user.update({
+          where: { id: existing.id },
+          data: { password: passwordHash }
+        });
+        userId = existing.id;
+      }
+    } else {
+      const user = await prisma.user.create({
+        data: {
+          email: payload.email,
+          password: passwordHash,
+          username: payload.email.split("@")[0],
+          matricule: `STU-${Date.now()}`,
+          role: "student",
+          is_active: false,
+        },
+      });
+      userId = user.id;
+    }
 
-    await this.otp.sendOtp(user.id, user.email!, "EMAIL_VERIFY");
-    return { userId: user.id };
+    await this.otp.sendOtp(userId, payload.email, "EMAIL_VERIFY");
+    return { userId };
   }
 
   async verifyOtp(payload: { email: string; code: string; purpose: string }) {
@@ -293,13 +308,11 @@ export class AuthService {
 
     if (payload.chatKeyBundle?.length) {
       const chatIds = [...new Set(payload.chatKeyBundle.map((b) => b.chatId))];
-      for (const chatId of chatIds) {
-        const member = await prisma.conversationMember.findFirst({
-          where: { conversation_id: chatId, user_id: userId },
-        });
-        if (!member) {
-          throw { code: ErrorCode.FORBIDDEN, status: 403, message: "Chat non autorisé dans le lot de clés." };
-        }
+      const authorizedMemberships = await prisma.conversationMember.findMany({
+        where: { user_id: userId, conversation_id: { in: chatIds } },
+      });
+      if (authorizedMemberships.length !== chatIds.length) {
+        throw { code: ErrorCode.FORBIDDEN, status: 403, message: "Chat non autorisé dans le lot de clés." };
       }
     }
 

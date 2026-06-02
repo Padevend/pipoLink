@@ -207,14 +207,16 @@ export class UserService {
     const { username, ...profile } = payload;
 
     try {
-      if (username !== undefined) {
-        await prisma.user.update({ where: { id: userId }, data: { username } });
-      }
+      await prisma.$transaction(async (trx) => {
+        if (username !== undefined) {
+          await trx.user.update({ where: { id: userId }, data: { username } });
+        }
 
-      await prisma.userProfile.upsert({
-        where: { user_id: userId },
-        update: profile,
-        create: { user_id: userId, firstname: profile.firstname ?? "", lastname: profile.lastname ?? "", ...profile },
+        await trx.userProfile.upsert({
+          where: { user_id: userId },
+          update: profile,
+          create: { user_id: userId, firstname: profile.firstname ?? "", lastname: profile.lastname ?? "", ...profile },
+        });
       });
     } catch (e) {
       console.error("Error updating profile:", e);

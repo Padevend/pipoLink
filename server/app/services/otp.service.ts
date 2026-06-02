@@ -58,6 +58,7 @@ export class OtpService {
     });
 
     if (!otp) throw { code: ErrorCode.INVALID_OTP, status: 400, message: "Code OTP invalide." };
+    if (otp.usedAt) throw { code: ErrorCode.INVALID_OTP, status: 400, message: "Ce code a déjà été utilisé." };
 
     if (otp.attempts >= 3) {
       throw { code: ErrorCode.OTP_ATTEMPTS_EXCEEDED, status: 400, message: "Trop de tentatives échouées." };
