@@ -52,8 +52,8 @@ COPY --from=builder /app/generated         ./dist/generated
 COPY --from=builder /app/src/templates     ./src/templates
 COPY --from=builder /app/prisma            ./prisma
 COPY --from=builder /app/prisma.config.js  ./prisma.config.js
-COPY .service-account.json                 ./service-account.json
-COPY .google-drive-credentials.json        ./google-drive-credentials.json
+COPY service-account.json                 ./service-account.json
+COPY google-drive-credentials.json        ./google-drive-credentials.json
 COPY ecosystem.config.cjs                  ./ecosystem.config.cjs
 COPY entrypoint.sh                         ./entrypoint.sh
 
