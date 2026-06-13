@@ -101,6 +101,7 @@ model Device {
   key_signature String?
   keyCreatedAt  DateTime? @db.Timestamptz
   keyExpiresAt  DateTime? @db.Timestamptz
+  fcm_token     String?
   revokedAt     DateTime? @db.Timestamptz
   lastActiveAt  DateTime  @default(now()) @db.Timestamptz
   createdAt     DateTime  @default(now()) @db.Timestamptz

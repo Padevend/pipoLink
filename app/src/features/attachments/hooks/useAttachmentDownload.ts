@@ -24,7 +24,7 @@
  */
 
 import type { MessageAttachment } from '@/shared/api/types';
-import * as Linking from 'expo-linking';
+import { openLocalFile } from '@/shared/lib/open-local-file';
 import { useCallback } from 'react';
 import { attachmentDownloadManager } from '../lib/attachment-download.manager';
 import { useAttachmentState } from './useAttachmentState';
@@ -138,15 +138,8 @@ export function useAttachmentDownload({
 
   const openFile = useCallback(async () => {
     if (status !== 'completed' || !decryptedUri) return;
-    try {
-      const canOpen = await Linking.canOpenURL(decryptedUri);
-      if (canOpen) {
-        await Linking.openURL(decryptedUri);
-      }
-    } catch (err) {
-      console.warn('[useAttachmentDownload] openFile failed:', err);
-    }
-  }, [status, decryptedUri]);
+    await openLocalFile(decryptedUri, attachment.mimeType);
+  }, [status, decryptedUri, attachment.mimeType]);
 
   return {
     state,

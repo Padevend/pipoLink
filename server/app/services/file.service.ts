@@ -4,14 +4,16 @@ import path from "path";
 import mime from "mime-types";
 import { env } from "../../config/envManager.js";
 import { ErrorCode } from "../helpers/error-codes.js";
+import { GoogleDriveService } from "./google-drive.service.js";
 
 /**
  * Service de gestion des fichiers uploadés.
  * Validation MIME, taille, extension.
  * Traitement des images via Sharp.
- * Stockage local dans le dossier STORAGE_PATH.
+ * Stockage local dans le dossier STORAGE_PATH ou Google Drive.
  */
 export class FileService {
+  private driveService = new GoogleDriveService();
 
   // Extensions et MIME types autorisés par catégorie
   private readonly ALLOWED_DOCUMENTS = [
@@ -48,6 +50,8 @@ export class FileService {
   /**
    * Valide et enregistre un document académique.
    * Vérifie le type MIME, la taille maximale.
+   * Si Google Drive est configuré, sauvegarde le fichier sur Drive.
+   * Sinon, stocke localement en mode fallback.
    *
    * @param buffer       - Buffer du fichier
    * @param originalName - Nom original du fichier
@@ -55,12 +59,23 @@ export class FileService {
    * @returns            - { url, size }
    * @throws             - INVALID_FILE_TYPE, FILE_TOO_LARGE
    */
-  async storeDocument(buffer: Buffer, mimeType: string): Promise<{ url: string; size: number }> {
+  async storeDocument(buffer: Buffer, mimeType: string, originalName?: string): Promise<{ url: string; size: number }> {
     this._validateMime(mimeType, [...this.ALLOWED_DOCUMENTS, ...this.ALLOWED_IMAGES]);
     this._validateSize(buffer.length, env.get("MAX_FILE_SIZE_MB") * 1024 * 1024);
 
     const ext      = mime.extension(mimeType) || "bin";
     const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const driveName = originalName ? `${Date.now()}-${originalName}` : fileName;
+
+    if (this.driveService.isConfigured) {
+      try {
+        const driveResult = await this.driveService.uploadFile(buffer, driveName, mimeType);
+        return { url: driveResult.url, size: driveResult.size };
+      } catch (error) {
+        console.error("Google Drive upload failed, falling back to local storage:", error);
+      }
+    }
+
     const dir      = this._ensureDir("documents");
     const filePath = path.join(dir, fileName);
 

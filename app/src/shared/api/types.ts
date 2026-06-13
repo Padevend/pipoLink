@@ -251,7 +251,7 @@ export interface downloadTask {
   filename: string;
   remote_uri: string;
   local_uri: string;
-  mineType?: string;
+  mimeType?: string;
   progress: number;
   totalBytes: number;
   writtenBytes: number;

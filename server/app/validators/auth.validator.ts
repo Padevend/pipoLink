@@ -24,6 +24,7 @@ export const loginValidator = vine.compile(
     devicePlatform:     vine.string().maxLength(40).optional(),
     /** primary = connexion appareil principal ; device = connexion appareil déjà associé */
     loginMode:          vine.enum(["primary", "device"]).optional(),
+    fcmToken:           vine.string().optional(),
   })
 );
 

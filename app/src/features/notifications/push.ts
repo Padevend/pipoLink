@@ -11,6 +11,7 @@ import Constants from 'expo-constants';
 import { ensureChatKeyForChat } from '@/features/messaging/lib/ensure-chat-key';
 
 import { DEFAULT_CHANNEL_SETTINGS, type NotificationChannelSettings } from './types';
+import { fetchJson } from '@/shared/api/fetch';
 
 const ENABLED_KEY = 'notifications_enabled';
 
@@ -49,7 +50,6 @@ function getNotifications(): NotificationsModule | null {
           shouldSetBadge: true,
           shouldShowBanner: true,
           shouldShowList: true,
-          
         }),
       });
       handlerConfigured = true;
@@ -80,6 +80,23 @@ async function loadChannelSettings(): Promise<NotificationChannelSettings> {
   return stored ? { ...DEFAULT_CHANNEL_SETTINGS, ...stored } : DEFAULT_CHANNEL_SETTINGS;
 }
 
+/**
+ * Silently updates the FCM token on the backend if a token is provided.
+ * Called after obtaining a push token (Expo or native FCM).
+ */
+async function syncFcmTokenToBackend(token: string): Promise<void> {
+  try {
+    await fetchJson('/devices/fcm-token', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    });
+  } catch (e) {
+    if (__DEV__) {
+      console.warn('[push] syncFcmTokenToBackend failed:', e);
+    }
+  }
+}
+
 export async function registerForPushNotifications(): Promise<string | null> {
   const Notifications = getNotifications();
   if (!Notifications || !(await isPushEnabled())) return null;
@@ -106,7 +123,8 @@ export async function registerForPushNotifications(): Promise<string | null> {
         groupId: 'pipolink',
         bypassDnd: cfg.bypassDnd,
         lightColor: cfg.lightColor,
-        lockscreenVisibility: cfg.lockscreenVisibility as unknown as import('expo-notifications').AndroidNotificationVisibility,
+        lockscreenVisibility:
+          cfg.lockscreenVisibility as unknown as import('expo-notifications').AndroidNotificationVisibility,
         enableLights: cfg.enableLights,
         enableVibrate: cfg.enableVibrate,
       });
@@ -115,7 +133,12 @@ export async function registerForPushNotifications(): Promise<string | null> {
     // Token distant : development build uniquement (pas Expo Go)
     if (!isExpoGo()) {
       const token = await Notifications.getExpoPushTokenAsync().catch(() => null);
-      return token?.data ?? null;
+      const tokenData = token?.data ?? null;
+      // Sync the push token to backend asynchronously (fire & forget)
+      if (tokenData) {
+        syncFcmTokenToBackend(tokenData);
+      }
+      return tokenData;
     }
     return null;
   } catch (e) {

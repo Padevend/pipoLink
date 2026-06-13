@@ -9,6 +9,66 @@ class DownloadManager {
     private queue = new DownloadQueue();
     private downlaods = new Map<string, FileSystemLegacy.DownloadResumable>();
 
+    private createProgressCallback(task: downloadTask) {
+        return (progress: FileSystemLegacy.DownloadProgressData) => {
+            task.progress = progress.totalBytesWritten / progress.totalBytesExpectedToWrite;
+            task.totalBytes = progress.totalBytesExpectedToWrite;
+            task.writtenBytes = progress.totalBytesWritten;
+            task.status = "downloading";
+            task.updated_at = Date.now();
+            localDb.saveDownloadRepository(task);
+        };
+    }
+
+    private async handleDownloadResult(
+        task: downloadTask, 
+        resultPromise: Promise<FileSystemLegacy.FileSystemDownloadResult | undefined>
+    ) {
+        try {
+            const result = await resultPromise;
+            
+            // If result is undefined, it means the download was paused or cancelled.
+            // We should just return without marking it as completed or failed.
+            if (!result) return;
+            console.log("start fixing")
+
+            if (result.status !== 200) {
+                throw new Error(`Téléchargement échoué (HTTP ${result.status})`);
+            }
+
+            task.status = "completed";
+            task.progress = 1;
+            console.log("task update process")
+
+            let dest_uri = await saveToPublicDocuments({
+                sourceUri: result.uri, 
+                filename: task.filename,
+                mimeType: result.mimeType ?? null
+            });
+
+            task.local_uri = dest_uri;
+            localDb.saveDownloadRepository(task);
+
+            // Delete tmp
+            await FileSystemLegacy.deleteAsync(result.uri, { idempotent: true }).catch(err => {
+                console.log("Failed to delete tmp file:", err);
+            });
+
+            this.queue.next();
+        } catch (e) {
+            // Check if it's already marked as paused or cancelled
+            const currentTask = localDb.getDownloadRepositoryById(task.id);
+            if (currentTask && (currentTask.status === "paused" || currentTask.status === "cancelled")) {
+                return;
+            }
+
+            task.status = "failed";
+            localDb.saveDownloadRepository(task);
+
+            this.queue.next();
+        }
+    }
+
     public async start({
         documentId,
         filename,
@@ -19,7 +79,6 @@ class DownloadManager {
         filename: string;
     }) {
         const id = generateUUID();
-
         const localUri = FileSystemLegacy.documentDirectory + "documents/pipolink/" + filename;
 
         // verifie si le dossier existe sinon le cree
@@ -34,7 +93,7 @@ class DownloadManager {
             filename,
             remote_uri: url,
             local_uri: localUri,
-            mineType: undefined,
+            mimeType: undefined,
             progress: 0,
             totalBytes: 0,
             writtenBytes: 0,
@@ -49,54 +108,28 @@ class DownloadManager {
             url,
             localUri,
             {},
-            (progress) => {
-                task.progress =
-                    progress.totalBytesWritten / progress.totalBytesExpectedToWrite;
-                task.totalBytes = progress.totalBytesExpectedToWrite;
-                task.writtenBytes = progress.totalBytesWritten;
-                task.status = "downloading";
-                task.updated_at = Date.now();
-
-                localDb.saveDownloadRepository(task);
-            }
+            this.createProgressCallback(task)
         );
 
         this.downlaods.set(id, download);
 
-        try {
-            const result = await download.downloadAsync();
-            task.status = "completed";
-            task.progress = 1;
-
-            if (!result || result.status !== 200) {
-                throw new Error(`Téléchargement échoué (HTTP ${result?.status})`);
-            }
-
-            task.local_uri = result.uri;
-            localDb.saveDownloadRepository(task);
-
-            this.queue.next();
-        } catch (e) {
-            task.status = "failed";
-            localDb.saveDownloadRepository(task);
-
-            this.queue.next();
-        }
+        await this.handleDownloadResult(task, download.downloadAsync());
     }
 
     public async pause(id: string) {
         const download = this.downlaods.get(id);
-
         if (!download) return;
 
-        const pausedData = await download.pauseAsync();
-
         const task = localDb.getDownloadRepositoryById(id);
-
         if (!task) return;
-        task.status = "paused";
-        task.resume_data = pausedData.resumeData;
 
+        // Set status before pausing so that catch blocks know it was intentionally paused
+        task.status = "paused";
+        localDb.saveDownloadRepository(task);
+
+        const pausedData = await download.pauseAsync();
+        
+        task.resume_data = pausedData.resumeData;
         localDb.saveDownloadRepository(task);
     }
 
@@ -108,28 +141,34 @@ class DownloadManager {
             task.remote_uri,
             task.local_uri,
             {},
-            undefined,
+            this.createProgressCallback(task),
             task.resume_data || undefined,
         );
         this.downlaods.set(id, resumable);
         task.status = "downloading";
 
         localDb.saveDownloadRepository(task);
-        await resumable.resumeAsync();
+        
+        await this.handleDownloadResult(task, resumable.resumeAsync());
     }
 
     public async cancel(id: string) {
         const download = this.downlaods.get(id);
 
-        if (download) {
-            await download.cancelAsync();
+        const task = localDb.getDownloadRepositoryById(id);
+        if (task) {
+            task.status = "cancelled";
+            localDb.saveDownloadRepository(task);
         }
 
-        const task = localDb.getDownloadRepositoryById(id);
+        if (download) {
+            await download.cancelAsync().catch(() => {});
+        }
+
         if (task) {
             await FileSystemLegacy.deleteAsync(task.local_uri, {
                 idempotent: true,
-            });
+            }).catch(() => {});
         }
 
         localDb.deleteDownloadRepository(id);

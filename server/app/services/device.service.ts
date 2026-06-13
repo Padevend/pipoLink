@@ -134,4 +134,11 @@ export class DeviceService {
       await trx.auditLog.create({ data: { user_id: userId, action: "KEY_ROTATED", targetId: deviceId } });
     });
   }
+
+  async updateFcmToken(deviceId: string, fcmToken: string) {
+    await prisma.device.update({
+      where: { id: deviceId },
+      data: { fcm_token: fcmToken }
+    });
+  }
 }

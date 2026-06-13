@@ -1,4 +1,5 @@
 import * as SQLite from 'expo-sqlite';
+import { exists } from 'i18next';
 
 const db = SQLite.openDatabaseSync('pipolink.db');
 
@@ -81,6 +82,20 @@ export async function initializeSqlite(): Promise<void> {
       updated_at INTEGER NOT NULL
     );
   `);
+
+  const columns = await db.getAllSync(
+    `PRAGMA table_info(downloads)`,
+  );
+
+  const exists = columns.some(
+    (column: any) => column.name === "mineType"
+  )
+
+  if (exists) {
+    await db.execAsync(`
+      ALTER TABLE downloads RENAME COLUMN mineType TO mimeType;
+    `);
+  }
 
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS attachment_downloads (

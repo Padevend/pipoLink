@@ -106,14 +106,17 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
 
         if (token && savedUser) {
           setUser(normalizeUser(savedUser));
-          try {
-            const freshUser = await fetchFullUser();
-            await persistUser(freshUser);
-          } catch (e) {
-            if ((e as { status?: number }).status === 401) {
-              await clearAuthData();
-            }
-          }
+          
+          // Execute background refresh without awaiting
+          fetchFullUser()
+            .then(async (freshUser) => {
+              await persistUser(freshUser);
+            })
+            .catch(async (e) => {
+              if ((e as { status?: number }).status === 401) {
+                await clearAuthData();
+              }
+            });
         }
       } catch (e) {
       } finally {

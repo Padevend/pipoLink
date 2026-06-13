@@ -14,6 +14,7 @@ import { OfflineQueueService } from "../services/offline-queue.service.js";
 import { TokenService } from "../auth/token.service.js";
 import { RealtimeBus } from "./realtime-bus.js";
 import { createHandlers } from "../handlers/index.js";
+import { RedisAdapter } from "./redis-adapter.js";
 
 export type GatewayContext = {
   connectionId: string;
@@ -34,8 +35,14 @@ export class WebSocketGateway {
   private tokenService = new TokenService();
   private handlers = createHandlers();
   private heartbeatInterval?: NodeJS.Timeout;
+  private redisAdapter?: RedisAdapter;
 
   constructor(private server: WebSocketServer) {
+    if (process.env.REDIS_URL) {
+      this.redisAdapter = new RedisAdapter(process.env.REDIS_URL);
+      this.redisAdapter.setGateway(this);
+    }
+
     RealtimeBus.setEmitter({
       emit: (event, payload, target) => this.emit(event, payload, target),
       addUserToConversationRoom: (userId, conversationId) => this.addUserToConversationRoom(userId, conversationId),
@@ -160,9 +167,20 @@ export class WebSocketGateway {
   }
 
   /**
-   * Emits a realtime event to a target (user, device, or conversation).
+   * Emits a realtime event to a target via Redis Pub/Sub.
    */
   emit(event: string, payload: unknown, target: GatewayEmitTarget) {
+    if (this.redisAdapter) {
+      this.redisAdapter.publish(event, payload, target);
+    } else {
+      this.localEmit(event, payload, target);
+    }
+  }
+
+  /**
+   * Emits a realtime event locally to the connected clients on this instance.
+   */
+  localEmit(event: string, payload: unknown, target: GatewayEmitTarget) {
     const envelope = this.buildEvent(event, payload);
     if (target.userId) {
       const connections = this.registry.getUserConnections(target.userId);
@@ -218,6 +236,14 @@ export class WebSocketGateway {
   }
 
   addUserToConversationRoom(userId: string, conversationId: string) {
+    if (this.redisAdapter) {
+      this.redisAdapter.publishJoinRoom(userId, conversationId);
+    } else {
+      this.localAddUserToConversationRoom(userId, conversationId);
+    }
+  }
+
+  localAddUserToConversationRoom(userId: string, conversationId: string) {
     const room = this.roomName("conversation", conversationId);
     for (const conn of this.registry.getUserConnections(userId)) {
       this.rooms.join(room, conn.id);

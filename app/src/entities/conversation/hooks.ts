@@ -25,6 +25,10 @@ export const useConversations = () => {
         throw new Error('Hors ligne — aucune conversation en cache.');
       }
     },
+    initialData: () => {
+      const cached = localDb.getConversations();
+      return cached.length > 0 ? cached : undefined;
+    },
   });
 };
 

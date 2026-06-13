@@ -12,4 +12,5 @@ const devAuth = [authMiddleware, requireOnboardingMiddleware, requireDeviceWithP
 DeviceRouter
   .get("/", ...devAuth, callAction(DeviceController, "list"))
   .post("/:id/rotate-keys", ...devAuth, callAction(DeviceController, "rotateKeys"))
+  .post("/fcm-token", ...devAuth, callAction(DeviceController, "updateFcmToken"))
   .delete("/:id", ...devAuth, callAction(DeviceController, "revoke"));

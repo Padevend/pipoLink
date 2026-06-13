@@ -209,7 +209,7 @@ export class LibraryService {
     }
 
     const folderId = await this.folderResolver.resolveFolderId(userId, filiere, niveau, ue);
-    const { url, size } = await this.fileService.storeDocument(file, meta.mimeType);
+    const { url, size } = await this.fileService.storeDocument(file, meta.mimeType, meta.originalName);
 
     const tags = payload.tags as string[] | undefined;
     const tagConnections = tags
@@ -350,6 +350,6 @@ export class LibraryService {
       take: 10,
     });
 
-    return {documents: docs.map(formatDocument) };
+    return { documents: docs.map(formatDocument) };
   }
 }

@@ -16,7 +16,7 @@ export const onboardingSchema = z.object({
     .string()
     .optional()
     .refine((v) => !v || /^\+\d{8,15}$/.test(v.replace(/\s/g, '')), 'Numéro invalide'),
-  gender: z.enum(['M', 'F', 'OTHER']).optional(),
+  gender: z.enum(['M', 'F', 'I']).optional(),
   niveau: z.enum(NIVEAUX).optional(),
   filiere: z
     .string()

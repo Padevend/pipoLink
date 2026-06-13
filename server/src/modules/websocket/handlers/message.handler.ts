@@ -4,9 +4,11 @@ import { messageSendValidator, messageUpdateValidator, messageDeleteValidator, m
 import type { HandlerContext } from "./index.js";
 import { MessagingService } from "../../../../app/services/messaging.service.js";
 import { NotificationService } from "../../../../app/services/notification.service.js";
+import { FCMService } from "../../../app/services/fcm.service.js";
 
 const messaging = new MessagingService();
 const notifications = new NotificationService();
+const fcmService = new FCMService();
 
 export async function handleMessageSend(ctx: HandlerContext, payload: unknown, requestId?: string) {
   const state = ctx.gateway.getConnectionState(ctx.connectionId);
@@ -44,6 +46,27 @@ export async function handleMessageSend(ctx: HandlerContext, payload: unknown, r
     ctx.gateway.emit(WsEventName.NotificationCreated, { conversationId: data.conversationId, messageId: message.id }, {
       userId: member.user_id,
     });
+
+    // Send FCM push notification
+    const { prisma } = await import("../../../../config/database.js");
+    const userDevices = await prisma.device.findMany({
+      where: { user_id: member.user_id, fcm_token: { not: null } },
+      select: { fcm_token: true }
+    });
+    const tokens = userDevices.map(d => d.fcm_token as string);
+    
+    if (tokens.length > 0) {
+      // Send data-only so the app can handle it and decrypt if needed, 
+      // or standard notification
+      await fcmService.sendPushNotification(tokens, "PipoLink", "Nouveau message", {
+        type: "MESSAGE",
+        conversationId: data.conversationId,
+        messageId: message.id,
+        cipherText: message.cipherText,
+        iv: message.iv,
+        senderId: message.sender_id
+      });
+    }
   }
 
   ctx.gateway.emit(WsEventName.MessageDelivered, { messageId: message.id, conversationId: data.conversationId }, {

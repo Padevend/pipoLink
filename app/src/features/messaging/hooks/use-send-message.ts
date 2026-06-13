@@ -123,12 +123,45 @@ export function useSendMessage(conversationId: string) {
       return { previous, tempId };
     },
     onError: (_error, _input, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(['messages', conversationId], context.previous);
+      // Au lieu de rollback tout le cache (ce qui écrase les autres messages en cours),
+      // on supprime simplement le message temporaire qui a échoué.
+      if (context?.tempId) {
+        queryClient.setQueryData<InfiniteData<PaginatedResponse<DecryptedMessage>>>(
+          ['messages', conversationId],
+          (old) => {
+            if (!old?.pages) return old;
+            return {
+              ...old,
+              pages: old.pages.map((page) => ({
+                ...page,
+                items: page.items.filter((m) => m.id !== context.tempId),
+              })),
+            };
+          }
+        );
       }
     },
     onSuccess: (result, _input, context) => {
-      if (result && 'queued' in result) return;
+      if (result && 'queued' in result) {
+        // En mode hors ligne, on garde le tempId mais on change son statut
+        queryClient.setQueryData<InfiniteData<PaginatedResponse<DecryptedMessage>>>(
+          ['messages', conversationId],
+          (old: any) => {
+            if (!old?.pages) return old;
+            return {
+              ...old,
+              pages: old.pages.map((page: any) => ({
+                ...page,
+                items: page.items.map((m: any) => 
+                  m.id === context?.tempId ? { ...m, status: 'error' } : m
+                ),
+              })),
+            };
+          }
+        );
+        return;
+      }
+      
       const message = result as Message;
       localDb.upsertMessages(conversationId, [message]);
 
@@ -137,6 +170,7 @@ export function useSendMessage(conversationId: string) {
         (old) => {
           if (!old?.pages) return old;
 
+          // 1. Vérifier si le message réel existe déjà (via WS)
           let realExists = false;
           old.pages.forEach((p) => {
             if (p.items.some((m) => m.id === message.id)) {
@@ -144,22 +178,31 @@ export function useSendMessage(conversationId: string) {
             }
           });
 
-          return {
-            ...old,
-            pages: old.pages.map((page) => ({
-              ...page,
-              items: page.items.reduce<DecryptedMessage[]>((acc, m) => {
-                if (m.id === context?.tempId) {
-                  if (!realExists) {
-                    acc.push({ ...m, ...message, id: message.id, status: 'send' });
-                  }
-                } else {
-                  acc.push(m);
-                }
-                return acc;
-              }, []),
-            })),
-          };
+          // 2. Nettoyer le tempId et insérer le message réel s'il manque
+          const newPages = old.pages.map((page, index) => {
+            let newItems = page.items.filter((m) => m.id !== context?.tempId);
+            
+            // On insère le message dans la première page s'il n'existe nulle part
+            if (index === 0 && !realExists) {
+              // Retrouver le message optimiste pour préserver decryptedContent
+              const optimisticMsg = page.items.find(m => m.id === context?.tempId);
+              newItems.push({
+                ...(optimisticMsg || {}),
+                ...message,
+                id: message.id,
+                status: 'send',
+              } as DecryptedMessage);
+            }
+            
+            // Si c'est la première page, on la trie pour éviter les sauts temporels
+            if (index === 0) {
+              newItems.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+            }
+            
+            return { ...page, items: newItems };
+          });
+
+          return { ...old, pages: newPages };
         },
       );
 

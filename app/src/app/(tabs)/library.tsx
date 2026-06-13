@@ -5,7 +5,7 @@ import { Button } from "@/shared/ui/button";
 import DataUIProvider from "@/shared/ui/data-ui-provider";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { router } from "expo-router";
-import { ArrowDownToLine, BookOpen, FolderOpen, Upload, User } from "lucide-react-native";
+import { ArrowDownToLine, BookOpen, FolderOpen, RefreshCcw, RefreshCcwDot, RefreshCw, Upload, User } from "lucide-react-native";
 import { useCallback } from "react";
 import {
   ImageBackground,
@@ -14,6 +14,7 @@ import {
   Text,
   View
 } from "react-native";
+import { RefreshControl } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function LibraryScreen() {
@@ -26,6 +27,9 @@ export default function LibraryScreen() {
 
     recommendedDocuments,
     popularDocuments,
+
+    refetchPopular,
+    refetchRecommended
   } = useInitLibrary()
 
   const openDocument = useCallback(
@@ -108,9 +112,18 @@ export default function LibraryScreen() {
           />
 
           {/* section des plus telecharges */}
-          <Text className="mb-2.5 ml-3 text-[10px] font-bold uppercase tracking-widest text-text-secondary-light/60 dark:text-text-secondary-dark/60">
+          
+          <View className="flex-row justify-between items-center px-3">
+            <Text className="mb-2.5 ml-3 text-[10px] font-bold uppercase tracking-widest text-text-secondary-light/60 dark:text-text-secondary-dark/60">
             Les plus telecharges
           </Text>
+            <Pressable
+              onPress={() => refetchPopular()}
+              className="h-10 w-10 items-center justify-center rounded-full bg-background-light/40 dark:bg-background-dark/30 active:opacity-80"
+            >
+              <RefreshCcw size={18} color="#64748b9a" />
+            </Pressable>
+          </View>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -159,9 +172,18 @@ export default function LibraryScreen() {
           </ScrollView>
 
           {/* section des recommandations */}
-          <Text className="mb-2.5 ml-3 text-[10px] font-bold uppercase tracking-widest text-text-secondary-light/60 dark:text-text-secondary-dark/60">
-            Pour vous
-          </Text>
+
+          <View className="flex-row justify-between items-center px-3">
+            <Text className="mb-2.5 ml-3 text-[10px] font-bold uppercase tracking-widest text-text-secondary-light/60 dark:text-text-secondary-dark/60">
+              Pour vous
+            </Text>
+            <Pressable
+              onPress={() => refetchRecommended()}
+              className="h-10 w-10 items-center justify-center rounded-full bg-background-light/40 dark:bg-background-dark/30 active:opacity-80"
+            >
+              <RefreshCcw size={18} color="#64748b9a" />
+            </Pressable>
+          </View>
           <View className="py-4 gap-5 flex">
             <DataUIProvider
               data={recommendedDocuments}

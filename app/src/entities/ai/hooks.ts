@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { aiApi } from '@/shared/api/ai';
+import { localDb } from '@/shared/storage/local-db';
 
 export const aiKeys = {
   all: ['ai'] as const,
@@ -13,13 +14,15 @@ export const useAiSessions = () => {
     queryFn: async () => {
       try {
         const remote = await aiApi.getSessions();
-        const { localDb } = await import('@/shared/storage/local-db');
         localDb.upsertAiSessions(remote);
         return remote;
       } catch {
-        const { localDb } = await import('@/shared/storage/local-db');
         return localDb.getAiSessions();
       }
+    },
+    initialData: () => {
+      const cached = localDb.getAiSessions();
+      return cached.length > 0 ? cached : undefined;
     },
   });
 };
@@ -30,15 +33,18 @@ export const useAiHistory = (sessionId: string) => {
     queryFn: async () => {
       try {
         const remote = await aiApi.getSessionHistory(sessionId);
-        const { localDb } = await import('@/shared/storage/local-db');
         localDb.upsertAiMessages(sessionId, remote.messages);
         return remote.messages;
       } catch (e) {
-        const { localDb } = await import('@/shared/storage/local-db');
         return localDb.getAiMessages(sessionId);
       }
     },
     enabled: !!sessionId,
+    initialData: () => {
+      if (!sessionId) return undefined;
+      const cached = localDb.getAiMessages(sessionId);
+      return cached.length > 0 ? cached : undefined;
+    },
   });
 };
 

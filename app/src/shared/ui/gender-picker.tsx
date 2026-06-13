@@ -5,7 +5,7 @@ import { cn } from '@/shared/utils/cn';
 export const GENDERS = [
   { id: 'M', label: 'Homme' },
   { id: 'F', label: 'Femme' },
-  { id: 'OTHER', label: 'Autre' },
+  { id: 'I', label: 'Non Précisé' },
 ] as const;
 
 export type GenderId = (typeof GENDERS)[number]['id'];

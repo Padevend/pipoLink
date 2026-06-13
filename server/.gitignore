@@ -4,3 +4,11 @@ dist
 storage
 generated
 migrations
+agents.md
+google-drive-credentials.json
+service-account.json
+FCM_SETUP.md
+DRIVE_SETUP.md
+REDIS_SETUP.md
+agents.md
+*.md

@@ -16,6 +16,11 @@ export function fileExt(name: string): string {
   return parts.at(-1)?.toLowerCase() ?? '';
 }
 
+import { AsyncStorageService } from "./storage";
+import { Alert } from "react-native";
+
+export const SAF_URI_KEY = 'saf_documents_dir_uri';
+
 export async function saveToPublicDocuments({
   sourceUri,
   filename,
@@ -25,20 +30,67 @@ export async function saveToPublicDocuments({
   filename: string,
   mimeType: string | null
 }): Promise<string> {
-  const destDir = FileSystem.documentDirectory + "documents/pipolink/";
-  const info = await FileSystem.getInfoAsync(destDir);
-  
-  if (!info.exists) {
-    await FileSystem.makeDirectoryAsync(destDir, { intermediates: true });
-  }
+  if (Platform.OS === 'android') {
+    let dirUri = await AsyncStorageService.get<string>(SAF_URI_KEY);
+    
+    // Check if we still have permission
+    let hasPermission = false;
+    if (dirUri) {
+      try {
+        await FileSystem.StorageAccessFramework.readDirectoryAsync(dirUri);
+        hasPermission = true;
+      } catch {
+        hasPermission = false;
+      }
+    }
 
-  const destUri = destDir + filename;
-  
-  if (sourceUri !== destUri) {
-    await FileSystem.copyAsync({ from: sourceUri, to: destUri });
+    if (!hasPermission) {
+      // Ask user to pick a folder
+      await new Promise<void>((resolve) => {
+        Alert.alert(
+          "Dossier de téléchargement",
+          "Pour sauvegarder les documents de la bibliothèque dans votre téléphone, veuillez sélectionner ou créer un dossier (ex: PipoLink) dans la page suivante.",
+          [{ text: "Compris", onPress: () => resolve() }]
+        );
+      });
+
+      const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+      if (!permissions.granted) {
+        throw new Error("Permission refusée pour accéder au stockage public.");
+      }
+      dirUri = permissions.directoryUri;
+      await AsyncStorageService.set(SAF_URI_KEY, dirUri);
+    }
+
+    // We have dirUri, create the file in that directory
+    const destUri = await FileSystem.StorageAccessFramework.createFileAsync(
+      dirUri!,
+      filename,
+      mimeType || "application/octet-stream"
+    );
+    
+    // Lecture et écriture en Base64 (copyAsync ne supporte pas les content:// en destination)
+    const content = await FileSystem.readAsStringAsync(sourceUri, { encoding: FileSystem.EncodingType.Base64 });
+    await FileSystem.writeAsStringAsync(destUri, content, { encoding: FileSystem.EncodingType.Base64 });
+    
+    return destUri;
+  } else {
+    // iOS: saving to documentDirectory makes it visible in the Files app (with UIFileSharingEnabled in app.json)
+    const destDir = FileSystem.documentDirectory + "documents/pipolink/";
+    const info = await FileSystem.getInfoAsync(destDir);
+    
+    if (!info.exists) {
+      await FileSystem.makeDirectoryAsync(destDir, { intermediates: true });
+    }
+
+    const destUri = destDir + filename;
+    
+    if (sourceUri !== destUri) {
+      await FileSystem.copyAsync({ from: sourceUri, to: destUri });
+    }
+    
+    return destUri;
   }
-  
-  return destUri;
 }
 
 const ALBUM_NAME = 'PipolinkImages';

@@ -83,6 +83,7 @@ export class AuthService {
     deviceName?: string;
     devicePlatform?: string;
     loginMode?: "primary" | "device";
+    fcmToken?: string;
   }) {
     const user = await prisma.user.findUnique({ where: { email: payload.email } });
     if (!user) throw { code: ErrorCode.INVALID_CREDENTIALS, status: 401, message: "Email ou mot de passe incorrect." };
@@ -106,6 +107,14 @@ export class AuthService {
       if (known) {
         deviceId = known.id;
         if (!known.public_key) requiresKeySetup = true;
+        
+        // Mettre à jour le fcmToken s'il est fourni
+        if (payload.fcmToken && known.fcm_token !== payload.fcmToken) {
+          await prisma.device.update({
+            where: { id: known.id },
+            data: { fcm_token: payload.fcmToken, lastActiveAt: new Date() }
+          });
+        }
       } else if (!user.is_configured) {
         // Onboarding créera l'appareil principal
       } else if (loginMode === "primary") {
@@ -125,6 +134,7 @@ export class AuthService {
             fingerprint: payload.deviceFingerprint,
             name: payload.deviceName ?? primary.name,
             platform: payload.devicePlatform ?? primary.platform,
+            fcm_token: payload.fcmToken ?? primary.fcm_token,
             lastActiveAt: new Date(),
           },
         });

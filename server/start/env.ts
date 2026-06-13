@@ -29,6 +29,8 @@ const EnvSchema = {
   // ── Stockage fichiers ─────────────────────────────────
   STORAGE_PATH:    vine.string(),
   MAX_FILE_SIZE_MB: vine.number(),
+  GOOGLE_DRIVE_CREDENTIALS_PATH: vine.string().optional(),
+  GOOGLE_DRIVE_FOLDER_ID: vine.string().optional(),
 
   // ── OTA Updates ──────────────────────────────────────
   APP_VERSION:       vine.string(),

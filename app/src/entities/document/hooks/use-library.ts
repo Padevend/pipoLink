@@ -7,6 +7,7 @@ export function useInitLibrary(user?: UserProfile) {
         data: popularDocuments,
         isLoading: isLoadingPopular,
         isError: isErrorPopular,
+        refetch: refetchPopular
     } = useQuery({
         queryKey: ["library", "init", "popular"],
         queryFn: () => libraryApi.getPopular(),
@@ -16,10 +17,10 @@ export function useInitLibrary(user?: UserProfile) {
         data: recommendedDocuments,
         isLoading: isLoadingRecommended,
         isError: isErrorRecommended,
+        refetch: refetchRecommended,
     } = useQuery({
         queryKey: ["library", "init", "recommended"],
-        queryFn: () => libraryApi.getRecommendations(user && user.niveau ? user.niveau : undefined),
-        enabled: !!user,
+        queryFn: () => libraryApi.getRecommendations(user && user.niveau ? user.niveau : undefined)
     })
 
     return {
@@ -28,5 +29,8 @@ export function useInitLibrary(user?: UserProfile) {
 
         isLoadingPopular, isErrorPopular,
         isLoadingRecommended, isErrorRecommended,
+
+        refetchPopular,
+        refetchRecommended
     }
 }

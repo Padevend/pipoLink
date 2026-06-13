@@ -29,4 +29,13 @@ export class DeviceController {
     await this.service.rotateDeviceKey(userId, deviceId, payload);
     return ApiResponse.success(c, null, "Clés de l'appareil mises à jour. Reconnectez-vous sur cet appareil.");
   }
+  async updateFcmToken(c: HttpContext) {
+    const deviceId = c.get("deviceId") as string;
+    const body = await c.req.json();
+    if (!body.token || typeof body.token !== "string") {
+      return ApiResponse.error(c, "VALIDATION_ERROR", "Token FCM requis", 400);
+    }
+    await this.service.updateFcmToken(deviceId, body.token);
+    return ApiResponse.success(c, null, "Token FCM mis à jour.");
+  }
 }
