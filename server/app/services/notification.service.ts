@@ -1,8 +1,11 @@
 import { prisma } from "../../config/database.js";
+import { MailerService } from "./mailer.service.js";
+
+const mailer = new MailerService();
 
 export class NotificationService {
   async createNotification(userId: string, payload: { title: string; body: string; type: string; data?: any }) {
-    return await prisma.notification.create({
+    const notif = await prisma.notification.create({
       data: {
         user_id: userId,
         title: payload.title,
@@ -10,7 +13,16 @@ export class NotificationService {
         type: payload.type,
         data: payload.data ?? undefined,
       },
+      include: {
+        user: {
+          select: {
+            email: true,
+          }
+        }
+      }
     });
+
+    return notif;
   }
 
   async listNotifications(userId: string) {

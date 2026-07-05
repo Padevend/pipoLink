@@ -63,3 +63,19 @@ export type TypingPayload = {
 export type PresencePayload = {
   status: "online" | "offline" | "away";
 };
+
+export type AccountDeletedPayload = {
+  userId: string;
+  message: string;
+};
+
+export type UserLeftGroupPayload = {
+  groupId: string;
+  userId: string;
+  systemMessage: string;
+};
+
+export type UserStatusChangedPayload = {
+  userId: string;
+  status: string;
+};

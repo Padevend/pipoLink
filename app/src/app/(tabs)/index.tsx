@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Plus } from 'lucide-react-native';
+import { Plus, MessageSquare } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
@@ -16,47 +16,48 @@ export default function HomeScreen() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top']}>
+    // Fond technique radical : Blanc pur en light, Zinc noir le plus sombre en dark
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
       
-      {/* Header Style Glassmorphism Épuré */}
-      <View className="z-10 flex-row items-center justify-between border-b border-border-light/20 bg-surface-light/75 px-6 py-3.5 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl ">
-        <View className="flex-row items-center gap-3">
-          <View className=" opacity-95">
-            <AppLogo size="sm" />
-          </View>
+      {/* Header : Découpe nette, sans fioritures rétro, inspiré des interfaces de dev */}
+      <View className="z-10 flex-row items-center justify-between border-b border-zinc-100 dark:border-zinc-900 bg-white dark:bg-zinc-950 px-6 py-4">
+        
+        <View className="flex-row items-center gap-4">
+          <AppLogo size="sm" />
+          
           <View className="justify-center">
-            <Text className="text-xl font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+            {/* Titre : Ultra-gras, serré, style industriel */}
+            <Text className="text-xl font-black uppercase tracking-tighter text-zinc-900 dark:text-zinc-50">
               Messages
             </Text>
             
-            {/* Tag utilisateur style badge minimaliste */}
-            <View className="flex-row mt-0.5">
-              <View className="rounded-full bg-text-secondary-light/5 px-2 py-0.5 dark:bg-text-secondary-dark/5 border border-border-light/10 dark:border-border-dark/10">
-                <Text className="text-[10px] font-semibold tracking-wide text-text-secondary-light/80 dark:text-text-secondary-dark/80">
-                  {user?.username ?? 'PipoLink'}
-                </Text>
-              </View>
+            {/* Tag Utilisateur : Format Métadonnée / Code avec point Orange Électrique */}
+            <View className="flex-row items-center gap-1.5 mt-0.5">
+              <View className="h-1.5 w-1.5 rounded-full bg-orange-500" />
+              <Text className="text-[10px] font-mono tracking-widest text-zinc-400 dark:text-zinc-500">
+                {user?.username ?? 'PipoLink'}
+              </Text>
             </View>
           </View>
         </View>
 
-        {/* Bouton d'action de création de chat */}
+        {/* Bouton d'action : Carré technique, focus Orange Électrique puissant */}
         <View className="flex-row items-center">
           <Pressable
             onPress={() => setMenuOpen(true)}
-            className="h-10 w-10 items-center justify-center rounded-full bg-primary active:opacity-75"
+            className="h-10 w-10 items-center justify-center rounded-xl bg-orange-500 dark:bg-orange-600 active:opacity-90 transition-all"
           >
-            <Plus size={22} color="#FFFFFF" />
+            <Plus size={18} color="#FFFFFF" strokeWidth={3} />
           </Pressable>
         </View>
       </View>
 
-      {/* Liste des conversations */}
-      <View className="flex-1">
+      {/* Zone de Contenu : Continuité parfaite du fond pour éviter l'effet "blocs empilés" */}
+      <View className="flex-1 bg-white dark:bg-zinc-950">
         <ConversationList />
       </View>
 
-      {/* Menu d'actions contextuel */}
+      {/* Menu d'actions : Structure épurée passée à la modale */}
       <ActionMenu
         visible={menuOpen}
         onClose={() => setMenuOpen(false)}
@@ -72,6 +73,12 @@ export default function HomeScreen() {
             label: t('newGroup'),
             subtitle: t('selectMembers'),
             onPress: () => router.push('/messaging/new-group' as any),
+          },
+          {
+            id: 'invite_link',
+            label: "Utiliser un lien d'invitation",
+            subtitle: "Rejoindre un groupe avec un lien ou un jeton",
+            onPress: () => router.push('/join-group' as any),
           },
         ]}
       />

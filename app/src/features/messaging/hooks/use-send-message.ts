@@ -1,11 +1,12 @@
 import { useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
+import { router } from 'expo-router';
 
 import { conversationKeys } from '@/entities/conversation/hooks';
 import type { DecryptedMessage } from '@/features/messaging/hooks/use-messages';
 import {
   sendMessageToServer,
   type PickedFile,
-  type SendMessageInput,
+  type SendMessageInput as BaseSendMessageInput,
 } from '@/features/messaging/lib/send-message-pipeline';
 import { useAuth } from '@/providers';
 import type { Conversation } from '@/shared/api/messaging';
@@ -13,7 +14,12 @@ import type { Message, MessageType, PaginatedResponse } from '@/shared/api/types
 import { localDb } from '@/shared/storage/local-db';
 import { generateUUID } from '@/shared/utils/uuid';
 
-export type { PickedFile, SendMessageInput };
+export type SendMessageInput = BaseSendMessageInput & {
+  isPending?: boolean;
+  recipientUserId?: string;
+};
+
+export type { PickedFile };
 
 function appendOptimisticMessage(
   pages: PaginatedResponse<DecryptedMessage>[] | undefined,
@@ -55,6 +61,9 @@ export function useSendMessage(conversationId: string) {
       }
 
       if (!online) {
+        if (input.isPending) {
+          throw new Error('Impossible d’ouvrir une nouvelle discussion hors ligne.');
+        }
         const id = generateUUID();
         
         localDb.queuePendingMessage({
@@ -66,7 +75,54 @@ export function useSendMessage(conversationId: string) {
         });
         return { queued: true, id } as const;
       }
-      return sendMessageToServer(conversationId, input);
+
+      let activeConversationId = conversationId;
+      let newChatId: string | undefined;
+
+      if (input.isPending && input.recipientUserId) {
+        const meId = user?.id;
+        if (!meId) throw new Error('Session invalide.');
+
+        const unique = Array.from(new Set([meId, input.recipientUserId]));
+        const deviceRows: { deviceId: string; publicKey: string }[] = [];
+
+        // Dynamic imports to avoid dependency cycles if any
+        const { userApi } = require('@/shared/api/user');
+        const { generateChatKey, encryptChatKeyForDevice, cacheChatKey } = require('@/shared/crypto/chat-key');
+        const { messagingApi } = require('@/shared/api/messaging');
+
+        for (const uid of unique) {
+          const param = uid === meId ? 'me' : uid;
+          const keys = await userApi.listDevicePublicKeys(param);
+          for (const k of keys) {
+            deviceRows.push(k);
+          }
+        }
+
+        const chatKey = generateChatKey();
+        const encryptedKeys = await Promise.all(
+          deviceRows.map(async ({ deviceId, publicKey }) => ({
+            deviceId,
+            encryptedKey: await encryptChatKeyForDevice(chatKey, publicKey),
+          })),
+        );
+
+        const chat = await messagingApi.createChat({
+          type: 'private',
+          name: null,
+          memberUserIds: unique,
+          encryptedKeys,
+        });
+
+        await cacheChatKey(chat.id, chatKey);
+        chatKey.fill(0);
+
+        activeConversationId = chat.id;
+        newChatId = chat.id;
+      }
+
+      const message = await sendMessageToServer(activeConversationId, input);
+      return { message, newChatId };
     },
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: ['messages', conversationId] });
@@ -162,11 +218,25 @@ export function useSendMessage(conversationId: string) {
         return;
       }
       
-      const message = result as Message;
-      localDb.upsertMessages(conversationId, [message]);
+      const { message, newChatId } = result as { message: Message; newChatId?: string };
+      const targetChatId = newChatId || conversationId;
+
+      if (newChatId) {
+        // Copier les données de la clé temporaire vers la nouvelle clé de discussion réelle
+        const tempQueryKey = ['messages', conversationId];
+        const newQueryKey = ['messages', newChatId];
+        
+        const tempCache = queryClient.getQueryData<InfiniteData<PaginatedResponse<DecryptedMessage>>>(tempQueryKey);
+        if (tempCache) {
+          queryClient.setQueryData<InfiniteData<PaginatedResponse<DecryptedMessage>>>(newQueryKey, tempCache);
+        }
+        queryClient.removeQueries({ queryKey: tempQueryKey });
+      }
+
+      localDb.upsertMessages(targetChatId, [message]);
 
       queryClient.setQueryData<InfiniteData<PaginatedResponse<DecryptedMessage>>>(
-        ['messages', conversationId],
+        ['messages', targetChatId],
         (old) => {
           if (!old?.pages) return old;
 
@@ -209,6 +279,13 @@ export function useSendMessage(conversationId: string) {
       queryClient.setQueryData<Conversation[]>(conversationKeys.list(), (prev) => {
         if (!prev) return prev;
         const now = new Date().toISOString();
+        
+        // Si c'est une nouvelle conversation, on invalide la liste entière pour la recharger
+        if (newChatId) {
+          void queryClient.invalidateQueries({ queryKey: conversationKeys.list() });
+          return prev;
+        }
+
         return prev.map((c) =>
           c.id === conversationId
             ? {
@@ -219,6 +296,12 @@ export function useSendMessage(conversationId: string) {
             : c,
         );
       });
+
+      if (newChatId) {
+        setTimeout(() => {
+          router.replace(`/chat/${newChatId}`);
+        }, 100);
+      }
     },
   });
 }

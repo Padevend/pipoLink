@@ -174,4 +174,94 @@ export class MessagingController {
     RealtimeBus.emit(WsEventName.ConversationUpdated, { conversationId }, { userId });
     return ApiResponse.success(c, null, "Chat supprimé.");
   }
+
+  async updateChatDetails(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const chatId = c.req.param("id")!;
+    const body = await c.req.json();
+    const chat = await this.service.updateChatDetails(userId, chatId, body);
+    const members = await this.service.getConversationMembers(chatId);
+    for (const m of members) {
+      RealtimeBus.emit(WsEventName.ConversationUpdated, { conversationId: chatId, conversation: chat }, { userId: m.user_id });
+    }
+    return ApiResponse.success(c, chat, "Groupe mis à jour.");
+  }
+
+  async promoteMember(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const chatId = c.req.param("id")!;
+    const { targetUserId } = await c.req.json();
+    const member = await this.service.promoteMember(userId, chatId, targetUserId);
+    const members = await this.service.getConversationMembers(chatId);
+    for (const m of members) {
+      RealtimeBus.emit(WsEventName.ConversationUpdated, { conversationId: chatId }, { userId: m.user_id });
+    }
+    return ApiResponse.success(c, member, "Membre promu au rang d'administrateur.");
+  }
+
+  async demoteMember(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const chatId = c.req.param("id")!;
+    const { targetUserId } = await c.req.json();
+    const member = await this.service.demoteMember(userId, chatId, targetUserId);
+    const members = await this.service.getConversationMembers(chatId);
+    for (const m of members) {
+      RealtimeBus.emit(WsEventName.ConversationUpdated, { conversationId: chatId }, { userId: m.user_id });
+    }
+    return ApiResponse.success(c, member, "Administrateur destitué.");
+  }
+
+  async kickMember(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const chatId = c.req.param("id")!;
+    const { targetUserId } = await c.req.json();
+    await this.service.kickMember(userId, chatId, targetUserId);
+    const members = await this.service.getConversationMembers(chatId);
+    for (const m of members) {
+      RealtimeBus.emit(WsEventName.ConversationUpdated, { conversationId: chatId }, { userId: m.user_id });
+    }
+    RealtimeBus.emit(WsEventName.ConversationUpdated, { conversationId: chatId }, { userId: targetUserId });
+    return ApiResponse.success(c, null, "Membre exclu du groupe.");
+  }
+
+  async createInvitation(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const chatId = c.req.param("id")!;
+    const body = await c.req.json();
+    const invitation = await this.service.createInvitation(userId, chatId, body);
+    return ApiResponse.success(c, invitation, "Lien d'invitation généré.", 201);
+  }
+
+  async getInvitationDetails(c: HttpContext) {
+    const token = c.req.param("token")!;
+    const details = await this.service.getInvitationDetails(token);
+    return ApiResponse.success(c, details, "Détails de l'invitation.");
+  }
+
+  async joinViaInvitation(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const token = c.req.param("token")!;
+    const body = await c.req.json();
+    const chat = await this.service.joinViaInvitation(userId, token, body);
+    RealtimeBus.addUserToConversationRoom(userId, chat.id);
+    const members = await this.service.getConversationMembers(chat.id);
+    for (const m of members) {
+      RealtimeBus.emit(WsEventName.ConversationUpdated, { conversationId: chat.id }, { userId: m.user_id });
+    }
+    return ApiResponse.success(c, chat, "Vous avez rejoint le groupe.");
+  }
+
+  async listInvitations(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const chatId = c.req.param("id")!;
+    const invitations = await this.service.listInvitations(userId, chatId);
+    return ApiResponse.success(c, invitations, "Invitations récupérées.");
+  }
+
+  async revokeInvitation(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const invitationId = c.req.param("invitationId")!;
+    const invitation = await this.service.revokeInvitation(userId, invitationId);
+    return ApiResponse.success(c, invitation, "Lien d'invitation révoqué.");
+  }
 }

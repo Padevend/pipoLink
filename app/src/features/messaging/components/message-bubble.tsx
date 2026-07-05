@@ -1,7 +1,6 @@
 import { AttachmentDocument } from "@/features/attachments/components/attachment-document";
 import { AttachmentImage } from "@/features/attachments/components/attachment-image";
 import { MessageAttachment } from "@/shared/api/types";
-import { BRAND } from "@/shared/config/brand";
 import { Avatar } from "@/shared/ui/avatar";
 import { cn } from '@/shared/utils/cn';
 import { format } from "date-fns";
@@ -16,12 +15,6 @@ import Animated, {
 import { DecryptedMessage } from "../hooks/use-messages";
 import BubbleMenu from "./Bubble-menu";
 
-// ─── COMPOSANT : MENU CONTEXTUEL (SATINÉ ET SUBTILE) ──────────────────────────
-
-
-
-// ─── COMPOSANT PRINCIPAL : BULLE DE MESSAGE ──────────────────────────────────
-
 interface MessageBubbleProps {
   isGroup?: boolean;
   message: DecryptedMessage;
@@ -31,6 +24,9 @@ interface MessageBubbleProps {
   onDelete?: (messageId: string) => void;
   onPressReplyQuote?: (messageId: string) => void;
 }
+
+const ORANGE_PRINCIPAL = '#FF6B00';
+const GRIS_VALIDATION = '#A1A1AA';
 
 export const MessageBubble = React.memo(function MessageBubble({
   message,
@@ -54,7 +50,7 @@ export const MessageBubble = React.memo(function MessageBubble({
     return 'Message';
   };
 
-  // Animation élastique premium lors de l'interaction longue
+  // Animation de pression rigoureuse
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -62,8 +58,8 @@ export const MessageBubble = React.memo(function MessageBubble({
 
   const handleLongPress = useCallback(() => {
     if (message.is_deleted) return;
-    scale.value = withSpring(0.97, { damping: 20, stiffness: 300 }, () => {
-      scale.value = withSpring(1, { damping: 20, stiffness: 300 });
+    scale.value = withSpring(0.98, { damping: 25, stiffness: 350 }, () => {
+      scale.value = withSpring(1, { damping: 25, stiffness: 350 });
     });
     setMenuVisible(true);
   }, [message.is_deleted]);
@@ -71,16 +67,14 @@ export const MessageBubble = React.memo(function MessageBubble({
   const renderStatusIcon = () => {
     if (!isMine) return null;
     if (message.id.startsWith('temp-')) {
-      return <Clock size={11} strokeWidth={2.5} color="#64748B" />;
+      return <Clock size={11} strokeWidth={2.5} color={GRIS_VALIDATION} />;
     }
-    if (message.status === 'read') {
-      return <CheckCheck size={11} strokeWidth={2.5} color={BRAND.secondary} />;
-    }
-    if (message.status === 'delivered') {
-      return <CheckCheck size={11} strokeWidth={2.5} color={BRAND.secondary} />;
+    if (message.status === 'read' || message.status === 'delivered') {
+      // Blanc sur fond orange ou blanc sur fond sombre
+      return <CheckCheck size={11} strokeWidth={2.5} color={isMine ? '#FFFFFF' : ORANGE_PRINCIPAL} />;
     }
 
-    return <Check size={11} strokeWidth={2.5} color="#64748B" />;
+    return <Check size={11} strokeWidth={2.5} color={GRIS_VALIDATION} />;
   };
 
   const isSingleImageOnly =
@@ -90,10 +84,10 @@ export const MessageBubble = React.memo(function MessageBubble({
     !message.decryptedContent;
 
   return (
-    <View className={cn('mb-1.5 w-full flex-row', isMine ? 'justify-end pl-12' : 'justify-start pr-12')}>
+    <View className={cn('mb-2 w-full flex-row', isMine ? 'justify-end pl-10' : 'justify-start pr-10')}>
       <View className={cn('max-w-[85%] items-start relative z-10', isMine ? 'items-end' : 'items-start')}>
 
-        {/* Menu Contextuel Flottant */}
+        {/* Menu flottant technique */}
         {menuVisible && (
           <BubbleMenu
             isMine={isMine}
@@ -103,7 +97,6 @@ export const MessageBubble = React.memo(function MessageBubble({
           />
         )}
 
-        {/* Structure de la Bulle */}
         <Pressable
           onLongPress={handleLongPress}
           delayLongPress={240}
@@ -111,32 +104,34 @@ export const MessageBubble = React.memo(function MessageBubble({
           className="active:opacity-95 flex-row items-end"
         >
           {isGroup && !isMine && (
-            <Pressable onPress={() => { }} className="rounded-full mx-2">
+            <View className="rounded-xl border border-zinc-100 dark:border-zinc-900 overflow-hidden mr-2 mb-1">
               <Avatar
                 name={message.sender?.username || 'Inconnu'}
                 uri={message.sender?.profile?.avatarUrl ?? undefined}
-                size="md"
+                size="sm"
               />
-            </Pressable>
+            </View>
           )}
+          
           <Animated.View style={animStyle} className="flex flex-col">
             <View
               className={cn(
-                'rounded-2xl px-3.5 py-2.5',
+                'rounded-xl px-3.5 py-2.5 border',
                 isMine
-                  ? `rounded-br-sm ${message.is_deleted ? 'bg-primary/20' : 'bg-primary'}`
-                  : 'rounded-bl-sm border border-border-light/30 bg-surface-light dark:border-border-dark/10 dark:bg-surface-dark/40 faceblur',
-                isSingleImageOnly && 'bg-transparent border-0 dark:bg-transparent p-0',
-
+                  ? message.is_deleted 
+                    ? 'bg-zinc-100 border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800' 
+                    : 'bg-orange-500 border-orange-600 dark:bg-orange-600 dark:border-orange-700'
+                  : 'border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/40',
+                isSingleImageOnly && 'bg-transparent border-0 dark:bg-transparent p-0'
               )}
             >
               {message.is_deleted ? (
-                <Text className={cn("text-[12px] italic", isMine ? "text-white" : "text-text-secondary-light dark:text-text-secondary-dark")}>
+                <Text className={cn("text-xs italic font-medium", isMine ? "text-zinc-400" : "text-zinc-400 dark:text-zinc-500")}>
                   Ce message a été supprimé
                 </Text>
               ) : (
                 <>
-                  {/* Référence de la réponse (Blockquote) */}
+                  {/* Bloc de Citation (Réponse) technique */}
                   {message.responseToDecrypted && (
                     <Pressable
                       onPress={() => {
@@ -145,24 +140,25 @@ export const MessageBubble = React.memo(function MessageBubble({
                         }
                       }}
                       className={cn(
-                        'mb-2 border-l-2 pl-2 rounded-sm',
-                        isMine ? 'border-white/50 bg-white/10' : 'border-primary/50 bg-primary/5',
-                        'py-1 px-2'
+                        'mb-2 border-l-2 pl-2 rounded-md py-1 px-2',
+                        isMine 
+                          ? 'border-white/40 bg-white/10' 
+                          : 'border-orange-500/40 bg-orange-500/5'
                       )}
                     >
-                      <Text className={cn("text-[11px] font-bold mb-0.5", isMine ? "text-white/80" : "text-primary")}>
-                        {message.responseToDecrypted.sender?.username || 'Utilisateur'}
+                      <Text className={cn("font-mono text-[9px] font-bold uppercase tracking-wider mb-0.5", isMine ? "text-white/80" : "text-orange-500")}>
+                        @{message.responseToDecrypted.sender?.username || 'Utilisateur'}
                       </Text>
                       <Text
-                        className={cn("text-[12px]", isMine ? "text-white/90" : "text-text-primary-light dark:text-text-primary-dark")}
-                        numberOfLines={2}
+                        className={cn("text-[11px] font-medium", isMine ? "text-white/90" : "text-zinc-600 dark:text-zinc-400")}
+                        numberOfLines={1}
                       >
                         {getReplyPreview(message.responseToDecrypted)}
                       </Text>
                     </Pressable>
                   )}
 
-                  {/* Pièces Jointes / Attachements */}
+                  {/* Pièces Jointes */}
                   {hasAttachments && message.attachments && (
                     <View className={cn('w-full gap-y-1.5', hasText && 'mb-2')}>
                       {message.attachments.map((att: MessageAttachment) => {
@@ -180,34 +176,36 @@ export const MessageBubble = React.memo(function MessageBubble({
                     </View>
                   )}
 
-                  {/* Contenu textuel */}
+                  {/* Corps du Texte */}
                   {hasText && (
                     <Text
                       className={cn(
-                        'text-[14px] leading-[20px] tracking-tight',
-                        isMine ? 'text-white font-normal' : 'text-text-primary-light dark:text-text-primary-dark',
-                        message.decryptFailed && 'text-[12.5px] italic text-red-500/80 dark:text-red-400/80 font-medium'
+                        'text-xs leading-relaxed font-medium tracking-tight',
+                        isMine ? 'text-white' : 'text-zinc-900 dark:text-zinc-50',
+                        message.decryptFailed && 'font-mono text-[11px] text-red-500 dark:text-red-400 font-bold'
                       )}
                     >
                       {message.decryptFailed
-                        ? 'Message chiffré corrompu ou clé introuvable'
+                        ? '// ERREUR_DECHIFFREMENT_CLE_INTROUVABLE'
                         : message.decryptedContent ?? message.cipherText}
                     </Text>
                   )}
                 </>
               )}
             </View>
+
+            {/* Auteur sous le message en mode groupe */}
             {isGroup && !isMine && message.sender?.username && (
-              <Text className="text-sm text-text-primary-light/40 dark:text-text-primary-dark/40 mt-0.5 ml-1">
+              <Text className="font-mono text-[9px] font-bold text-zinc-400 dark:text-zinc-500 mt-1 ml-1 tracking-wider">
                 @{message.sender.username}
               </Text>
             )}
           </Animated.View>
         </Pressable>
 
-        {/* Section Métadonnées et Validation de lecture */}
+        {/* Métadonnées temporelles et statut */}
         <View className="mt-1 flex-row items-center gap-x-1 px-1">
-          <Text className="text-[9px] font-bold uppercase tracking-widest text-text-secondary-light/30 dark:text-text-secondary-dark/40">
+          <Text className="font-mono text-[9px] font-bold text-zinc-400 dark:text-zinc-500/70">
             {format(new Date(message.created_at), 'HH:mm')}
           </Text>
           {renderStatusIcon()}

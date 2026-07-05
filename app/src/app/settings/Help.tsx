@@ -17,7 +17,7 @@ export default function HelpsAndCommentScreen() {
             const updateData = await UpdateManager.checkAndHandleUpdates();
             
             if (updateData) {
-                router.replace('/updates');
+                router.replace('/updates/changelog');
             } else {
                 Alert.alert("Mise à jour", "Votre application est déjà à jour.");
             }
@@ -30,37 +30,40 @@ export default function HelpsAndCommentScreen() {
 
     return (
         <SafeAreaView
-            className="flex-1 bg-background-light dark:bg-background-dark"
+            className="flex-1 bg-white dark:bg-zinc-950"
             edges={["top"]}
         >
-            {/* Header Chat épuré */}
-            <View className="z-10 flex-row items-center justify-left border-b border-border-light/30 bg-surface-light/75 px-4 py-3 dark:border-border-dark/20 dark:bg-surface-dark/75 backdrop-blur-xl ">
+            {/* HEADER : Panneau Mat Solide */}
+            <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
                 <Pressable
                     onPress={() => router.back()}
-                    className="flex-row items-center gap-1 h-9 pl-2 pr-3 active:opacity-80"
+                    className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
                 >
-                    <ArrowLeft size={20} color="#64748B" />
+                    <ArrowLeft size={14} color="#71717A" />
                 </Pressable>
 
-                <View className="flex-row items-center">
-                    <Text className="font-semibold tracking-tight text-text-primary-light dark:text-text-primary-dark text-xl">Aide & Support</Text>
-                </View>
+                <Text className="flex-1 ml-3 text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                    Aide & Support
+                </Text>
             </View>
 
-            <View className="px-4 py-6">
-                <View className="mb-6 overflow-hidden backdrop-blur-md py-6">
+            {/* CONTENU : Liste de paramètres opaque mate */}
+            <View className="flex-1 px-4 py-5">
+                <View className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-900 dark:bg-zinc-950">
                     <SettingItem
                         icon={MessageCircle}
                         label="Feedback & Suggestions"
-                        value="Votre avis compte ! Envoyez-nous vos commentaires et suggestions."
-                        onPress={()=>router.push("/settings/abouts/comment")}
+                        value="Votre avis compte ! Envoyez-nous vos commentaires."
+                        onPress={() => router.push("/settings/abouts/comment")}
                     />
+                    <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-900" />
                     <SettingItem
                         icon={Info}
                         label="À propos"
                         value="Informations sur l'application"
                         onPress={() => router.push("/settings/abouts/about")}
                     />
+                    <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-900" />
                     <SettingItem
                         icon={RefreshCw}
                         label="Vérifier la mise à jour"
@@ -70,15 +73,17 @@ export default function HelpsAndCommentScreen() {
                 </View>
             </View>
 
-            {/* Loading Modal */}
+            {/* LOADER OVERLAY : Mat et sans ombre portée */}
             <Modal transparent visible={isChecking} animationType="fade">
                 <View className="flex-1 items-center justify-center bg-black/50">
-                    <View className="bg-surface-light dark:bg-surface-dark p-6 rounded-2xl items-center flex-row gap-4 shadow-lg">
-                        <ActivityIndicator size="large" color="#007AFF" />
-                        <Text className="text-text-primary-light dark:text-text-primary-dark font-medium text-lg">Recherche en cours...</Text>
+                    <View className="p-5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl flex-row items-center gap-x-3.5 max-w-[80%]">
+                        <ActivityIndicator size="small" color="#F97316" />
+                        <Text className="text-xs font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+                            Recherche en cours...
+                        </Text>
                     </View>
                 </View>
             </Modal>
         </SafeAreaView>
-    )
+    );
 }

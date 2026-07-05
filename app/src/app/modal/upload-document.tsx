@@ -9,7 +9,6 @@ import { useUploadDocument } from '@/entities/document/hooks';
 import { useToast } from '@/providers';
 import type { PickedLibraryFile } from '@/shared/api/library';
 import type { DocumentType } from '@/shared/api/types';
-import { BRAND } from '@/shared/config/brand';
 import { AcademicPathPicker, type AcademicPath } from '@/shared/ui/academic-path-picker';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
@@ -84,54 +83,53 @@ export default function UploadDocumentModal() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
       
-      {/* Header Translucide Style Glassmorphism Solide */}
-      <View className="z-10 flex-row items-center justify-between border-b border-border-light/20 bg-surface-light/75 px-5 py-3.5 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl">
-        <Text className="text-[17px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+      {/* HEADER : Panneau Mat Solide */}
+      <View className="flex-row items-center justify-between border-b border-zinc-100 bg-white px-5 py-3 dark:border-zinc-900 dark:bg-zinc-950">
+        <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
           Publier un document
         </Text>
         
         <Pressable
           onPress={() => router.back()}
-          className="h-9 w-9 items-center justify-center rounded-full bg-background-light/40 border border-border-light/20 dark:bg-background-dark/30 active:opacity-80"
+          className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
         >
-          <X size={16} color="#64748B" />
+          <X size={14} color="#71717A" />
         </Pressable>
       </View>
 
-      <ScrollView className="flex-1 px-5 pt-5" keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        <View className="gap-5 pb-10">
+      <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <View className="gap-4 pb-10">
           
-          {/* Zone de Dépôt / Sélecteur de fichier Glassmorphic */}
+          {/* ZONE DE DÉPÔT : Aplat Mat Unifié */}
           <Pressable 
             onPress={handlePickDocument} 
             disabled={uploadMutation.isPending}
-            className="active:opacity-90"
           >
             <View
               className={cn(
-                'h-36 items-center justify-center gap-2.5 rounded-2xl border backdrop-blur-md ',
+                'h-32 items-center justify-center gap-2 rounded-xl border active:bg-zinc-100 dark:active:bg-zinc-900/60 transition-colors',
                 file 
-                  ? 'border-success/30 bg-success/5 dark:border-success/20' 
-                  : 'border-border-light/40 bg-surface-light/50 dark:border-border-dark/20 dark:bg-surface-dark/40',
+                  ? 'border-green-200 bg-green-50/50 dark:border-green-950/30 dark:bg-green-950/10' 
+                  : 'border-zinc-200 bg-zinc-50 border-dashed dark:border-zinc-800 dark:bg-zinc-900/40',
               )}
             >
               {file ? (
                 <>
-                  <View className="p-2.5 rounded-xl bg-success/10">
-                    <CheckCircle2 size={22} color="#22C55E" />
+                  <View className="h-9 w-9 items-center justify-center rounded-lg bg-green-100 dark:bg-green-950/50">
+                    <CheckCircle2 size={16} color="#22C55E" />
                   </View>
-                  <Text className="font-semibold text-sm text-success text-center px-6" numberOfLines={1}>
+                  <Text className="font-bold text-xs text-green-700 dark:text-green-400 text-center px-6" numberOfLines={1}>
                     {file.name}
                   </Text>
                 </>
               ) : (
                 <>
-                  <View className="p-2.5 rounded-xl bg-primary/10">
-                    <Upload size={22} color={BRAND.primary} />
+                  <View className="h-9 w-9 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-950/30">
+                    <Upload size={15} color="#F97316" />
                   </View>
-                  <Text className="font-semibold text-sm text-text-primary-light/90 dark:text-text-primary-dark/90">
+                  <Text className="font-bold text-xs text-zinc-700 dark:text-zinc-300">
                     Sélectionner un document
                   </Text>
                 </>
@@ -139,26 +137,26 @@ export default function UploadDocumentModal() {
             </View>
           </Pressable>
 
-          {/* Input du Titre (Style Input Épuré Intégré) */}
-          <View className="bg-surface-light/30 dark:bg-surface-dark/20 rounded-2xl p-0.5">
+          {/* INPUT DU TITRE : Intégration Mate Complète */}
+          <View className="my-5">
             <Input
               label="Titre du document"
               placeholder="ex. Polycopié de cours - Chapitre 3"
               value={title}
               onChangeText={setTitle}
               leftIcon={FileText}
-              containerClassName="bg-transparent border-0"
-              className="text-[14px] text-text-primary-light dark:text-text-primary-dark"
+              containerClassName="bg-transparent border-0 px-2 h-12"
+              className="text-xs p-4 text-zinc-900 dark:text-zinc-50"
             />
           </View>
 
-          {/* Section Sélection Type de Document */}
-          <View className="gap-2">
-            <Text className="ml-1 text-[11px] font-bold uppercase tracking-wider text-text-secondary-light/60 dark:text-text-secondary-dark/60">
+          {/* SECTION : Types de Document (Capsules Rectangulaires Mates) */}
+          <View className="gap-1.5">
+            <Text className="ml-1 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
               Type de document
             </Text>
             
-            <View className="flex-row flex-wrap gap-2">
+            <View className="flex-row flex-wrap gap-1.5">
               {DOC_TYPES.map((t) => {
                 const isSelected = docType === t.value;
                 return (
@@ -166,16 +164,16 @@ export default function UploadDocumentModal() {
                     key={t.value}
                     onPress={() => setDocType(t.value)}
                     className={cn(
-                      'rounded-full px-3.5 py-1.5 border active:opacity-80',
+                      'rounded-lg px-3 py-1.5 border',
                       isSelected 
-                        ? 'bg-primary border-primary' 
-                        : 'bg-surface-light/50 border-border-light/40 dark:bg-surface-dark/40 dark:border-border-dark/20',
+                        ? 'bg-orange-500 border-orange-500 active:bg-orange-600' 
+                        : 'bg-zinc-50 border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800',
                     )}
                   >
                     <Text
                       className={cn(
-                        'text-[12px] font-semibold tracking-wide',
-                        isSelected ? 'text-white' : 'text-text-secondary-light dark:text-text-secondary-dark',
+                        'text-[11px] font-bold tracking-wide uppercase',
+                        isSelected ? 'text-white' : 'text-zinc-500 dark:text-zinc-400',
                       )}
                     >
                       {t.label}
@@ -186,19 +184,19 @@ export default function UploadDocumentModal() {
             </View>
           </View>
 
-          {/* Sélecteur de Parcours Académique */}
-          <View className="p-1">
+          {/* SÉLECTEUR DE PARCOURS ACADÉMIQUE */}
+          <View className="p-0.5">
             <AcademicPathPicker value={path ?? {}} onChange={handlePathChange} />
           </View>
 
-          {/* Bouton Principal Soumettre */}
+          {/* BOUTON PRINCIPAL : Orange Mat Solide */}
           <Button
             label="Publier sur la bibliothèque"
             size="lg"
             onPress={() => void handleUpload()}
             loading={uploadMutation.isPending}
             disabled={!canSubmit}
-            className="rounded-2xl h-12  mt-2 active:opacity-90"
+            className="rounded-xl h-11 bg-orange-500 active:bg-orange-600 mt-2"
           />
           
         </View>

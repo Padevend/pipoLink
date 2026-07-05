@@ -1,81 +1,79 @@
 import { ArrowLeft, GitCommit, Sparkles } from 'lucide-react-native';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View, Pressable } from 'react-native';
 
 import { useOtaUpdate } from '@/features/updates/hooks/use-ota-update';
-import { BRAND } from '@/shared/config/brand';
 import { Loader } from '@/shared/ui/loader';
 import { router } from 'expo-router';
-import { TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ChangelogScreen(): JSX.Element {
   const { data, isLoading } = useOtaUpdate();
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
+      
+      {/* HEADER : Panneau Mat Solide */}
+      <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
+        <Pressable 
+          onPress={() => router.back()} 
+          className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
+        >
+          <ArrowLeft size={14} color="#71717A" />
+        </Pressable>
+        <Text className="flex-1 ml-3 text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+          Notes de version
+        </Text>
+      </View>
+
       <ScrollView
-        className="flex-1 bg-background-light dark:bg-background-dark"
+        className="flex-1"
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-200">
-          <TouchableOpacity onPress={() => router.back()}>
-            <ArrowLeft size={20} color="#000" />
-          </TouchableOpacity>
-          <Text className="text-lg font-semibold text-gray-900">Détails du document</Text>
-          <View className="w-6" />
-        </View>
+        {isLoading ? (
+          <View className="py-12 items-center justify-center">
+            <Loader />
+          </View>
+        ) : null}
 
-        <View className="px-5 py-4">
-          {isLoading ? (
-            <View className="py-12 items-center justify-center">
-              <Loader />
-            </View>
-          ) : null}
+        {/* CONTENEUR DES NOTES DE VERSION MAT */}
+        {!isLoading && data ? (
+          <View className="w-full rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-900 dark:bg-zinc-950">
 
-          {/* Affichage des Notes de Version */}
-          {!isLoading && data ? (
-            <View className="w-full rounded-2xl border border-border-light/40 bg-surface-light/50 p-5 dark:border-border-dark/20 dark:bg-surface-dark/40 backdrop-blur-md">
-
-              {/* Badge de Version Stylisé */}
-              <View className="flex-row items-center justify-between border-b border-border-light/40 pb-4 mb-4 dark:border-border-dark/20">
-                <View className="flex-row items-center gap-2.5">
-                  <View
-                    className="h-7 w-7 items-center justify-center rounded-lg"
-                    style={{ backgroundColor: `${BRAND.primary}15` }}
-                  >
-                    <GitCommit size={15} color={BRAND.primary} />
-                  </View>
-                  <Text className="text-[16px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
-                    Version {data.version}
-                  </Text>
+            {/* EN-TÊTE DU BLOC */}
+            <View className="flex-row items-center justify-between border-b border-zinc-100 pb-3 mb-3 dark:border-zinc-900">
+              <View className="flex-row items-center gap-2">
+                <View className="h-7 w-7 items-center justify-center rounded-lg bg-orange-50 border border-orange-200 dark:bg-orange-950/30 dark:border-orange-900/50">
+                  <GitCommit size={14} color="#F97316" />
                 </View>
-
-                {/* Indicateur de version actuelle */}
-                <View className="flex-row items-center gap-1 bg-emerald-500/10 px-2.5 py-1 rounded-full">
-                  <Sparkles size={10} className="text-emerald-500" />
-                  <Text className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
-                    Actuelle
-                  </Text>
-                </View>
+                <Text className="text-xs font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                  Version {data.version}
+                </Text>
               </View>
 
-              {/* Liste des Changements sous forme de lignes fluides */}
-              <View className="gap-y-3.5">
-                {data.changelog?.map((item) => (
-                  <View key={item} className="flex-row items-start gap-3">
-                    {/* Puce customisée style ligne temporelle mini */}
-                    <View className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5" style={{ backgroundColor: BRAND.primary }} />
-
-                    <Text className="flex-1 text-[13px] leading-[20px] font-medium text-text-secondary-light/80 dark:text-text-secondary-dark/70">
-                      {item}
-                    </Text>
-                  </View>
-                ))}
+              {/* Indicateur version actuelle plat */}
+              <View className="flex-row items-center gap-1 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md dark:bg-emerald-950/30 dark:border-emerald-900/50">
+                <Sparkles size={10} color="#10B981" />
+                <Text className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
+                  Actuelle
+                </Text>
               </View>
-
             </View>
-          ) : null}
-        </View>
+
+            {/* LISTE DES CHANGEMENTS */}
+            <View className="gap-y-3">
+              {data.changelog?.map((item) => (
+                <View key={item} className="flex-row items-start gap-x-2.5">
+                  <View className="h-1.5 w-1.5 rounded-full bg-orange-500 mt-1.5" />
+                  <Text className="flex-1 text-xs leading-5 font-semibold text-zinc-400 dark:text-zinc-500">
+                    {item}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+          </View>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );

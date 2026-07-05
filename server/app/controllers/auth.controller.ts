@@ -10,6 +10,7 @@ import {
 } from "../validators/auth.validator.js";
 import { RealtimeBus } from "../../src/modules/websocket/gateway/realtime-bus.js";
 import { WsEventName } from "../../src/modules/websocket/events/event-names.js";
+import { getConnInfo } from "@hono/node-server/conninfo";
 
 export class AuthController {
   private service = new AuthService();
@@ -35,7 +36,29 @@ export class AuthController {
 
   async login(c: HttpContext) {
     const payload = await c.validateUsing(loginValidator);
-    const result  = await this.service.login(payload);
+    
+    const userAgent = c.req.header("user-agent") || "Inconnu";
+    let ip = "127.0.0.1";
+    try {
+      const conn = getConnInfo(c);
+      ip = conn.remote.address || c.req.header("x-forwarded-for") || c.req.header("x-real-ip") || "127.0.0.1";
+    } catch (e) {
+      ip = c.req.header("x-forwarded-for") || c.req.header("x-real-ip") || "127.0.0.1";
+    }
+
+    if (ip.includes(",")) {
+      ip = ip.split(",")[0].trim();
+    }
+
+    const { getLocationFromIp } = await import("../helpers/ip-lookup.js");
+    const location = await getLocationFromIp(ip);
+
+    const result  = await this.service.login({
+      ...payload,
+      ip,
+      userAgent,
+      location,
+    });
     return ApiResponse.success(c, result, "Connexion réussie.");
   }
 
@@ -90,7 +113,7 @@ export class AuthController {
     const userId = c.get("userId") as string;
     const token = c.req.query("token");
     const shortCode = c.req.query("shortCode");
-    const result = this.service.previewPairing(userId, {
+    const result = this.service.previewPairing({
       token: token ?? undefined,
       shortCode: shortCode ?? undefined,
     });

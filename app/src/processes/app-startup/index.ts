@@ -1,6 +1,7 @@
 import { attachmentDownloadManager } from '@/features/attachments/lib/attachment-download.manager';
 import { setupOfflineSync } from '@/processes/offline-sync';
 import { setupRealtimeSync } from '@/processes/realtime-sync';
+import { syncContactProfilesSilently } from '@/processes/contact-sync';
 import { updatesApi } from '@/shared/api/updates';
 import { initializeSqlite } from '@/shared/storage/sqlite';
 import { router, usePathname } from 'expo-router';
@@ -17,7 +18,10 @@ export async function runAppStartup(): Promise<void> {
   stopRealtimeSync?.();
   stopRealtimeSync = setupRealtimeSync();
 
-  await attachmentDownloadManager.initialize()
+  // Run silent contact sync in the background
+  void syncContactProfilesSilently();
+
+  await attachmentDownloadManager.initialize();
 
   // Non-blocking update check
   UpdateManager.checkAndHandleUpdates().then((updateData) => {

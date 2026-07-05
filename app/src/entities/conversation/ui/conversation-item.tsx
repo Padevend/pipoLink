@@ -50,7 +50,7 @@ export const ConversationItem = React.memo(function ConversationItem({ conversat
     getKey();
   }, [conversation.id]);
 
-  // Déchiffrement mémoïsé du dernier message
+  // Déchiffrement du dernier message (Logique métier préservée)
   const decryptedLastMessage = useMemo(() => {
     if (!lastMessage) return 'Aucun message';
     if (!chatKey) return 'Message sécurisé';
@@ -64,58 +64,58 @@ export const ConversationItem = React.memo(function ConversationItem({ conversat
   return (
     <Pressable
       onPress={onPress}
-      className={cn(
-        'flex-row items-center px-5 py-4 transition-all active:opacity-90',
-        isUnread 
-          ? 'bg-primary/5 dark:bg-primary/5' 
-          : 'active:bg-surface-light/40 dark:active:bg-surface-dark/30'
-      )}
+      className="flex-row items-center px-6 py-4 bg-white dark:bg-zinc-950 active:bg-zinc-50 dark:active:bg-zinc-900/40"
     >
-      {/* Conteneur Avatar avec légère ombre diffuse */}
-      <View className="">
+      {/* Conteneur de la photo de profil : Forme carrée moderne aux angles nets, sans ombre */}
+      <View className="overflow-hidden rounded-xl border border-zinc-100 dark:border-zinc-900">
         <Avatar name={chatName} uri={chatAvatar} size="lg" />
       </View>
 
-      {/* Contenu textuel épuré (sans border-b intrusif) */}
+      {/* Zone de contenu textuel */}
       <View className="flex-1 ml-4 justify-center">
         <View className="flex-row justify-between items-baseline mb-1">
+          
+          {/* Nom de l'interlocuteur ou du groupe */}
           <Text 
             className={cn(
-              'text-[15px] tracking-tight text-text-primary-light dark:text-text-primary-dark',
-              isUnread ? 'font-semibold' : 'font-medium'
+              'text-sm tracking-tighter text-zinc-900 dark:text-zinc-50',
+              isUnread ? 'font-black' : 'font-medium'
             )}
             numberOfLines={1}
           >
             {chatName}
           </Text>
           
+          {/* Indicateur temporel : Orange électrique si non lu, gris sobre si lu */}
           <Text className={cn(
-            'text-[11px] font-medium tracking-wide',
+            'text-[10px] uppercase font-bold tracking-wider ml-2',
             isUnread 
-              ? 'text-primary font-semibold' 
-              : 'text-text-secondary-light/60 dark:text-text-secondary-dark/60'
+              ? 'text-orange-500' 
+              : 'text-zinc-400 dark:text-zinc-500'
           )}>
             {formatDistanceToNow(new Date(conversation.updatedAt), { addSuffix: false })}
           </Text>
         </View>
 
-        <View className="flex-row items-center justify-between gap-2">
+        <View className="flex-row items-center justify-between gap-4">
+          
+          {/* Aperçu du dernier message échangé */}
           <Text
             numberOfLines={1}
             className={cn(
-              'flex-1 text-[13px] leading-4 tracking-wide',
+              'flex-1 text-xs leading-relaxed',
               isUnread
-                ? 'text-text-primary-light dark:text-text-primary-dark font-medium'
-                : 'text-text-secondary-light/70 dark:text-text-secondary-dark/70'
+                ? 'text-zinc-900 dark:text-zinc-200 font-bold'
+                : 'text-zinc-400 dark:text-zinc-500'
             )}
           >
             {decryptedLastMessage}
           </Text>
 
-          {/* Badge de notification style capsule moderne */}
+          {/* Pastille de notification : Format technique, carré adouci et orange vif sans ombre */}
           {isUnread && (
-            <View className="bg-primary rounded-full min-w-[20px] h-[20px] px-1.5 items-center justify-center shadow-sm">
-              <Text className="text-white text-[11px] font-bold tracking-tighter">
+            <View className="bg-orange-500 rounded-lg px-2 h-5 min-w-[20px] items-center justify-center">
+              <Text className="text-white text-[10px] font-black tracking-tighter">
                 {safeUnreadCount}
               </Text>
             </View>

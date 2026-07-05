@@ -5,64 +5,63 @@ import { ShieldCheck, X } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/shared/ui/button';
-import { BRAND } from '@/shared/config/brand';
 
 /**
  * Confirmation visuelle après liaison d'un nouvel appareil.
- * Style épuré Glassmorphism sans ombrage.
+ * Style mat épuré et solide, s'alignant sur l'identité Zinc / Orange.
  */
 export default function DeviceConfirmModal() {
   const { name } = useLocalSearchParams<{ qrToken?: string; name?: string }>();
 
   return (
-    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top', 'bottom']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'bottom']}>
       
-      {/* Header Translucide Style Glassmorphism (Sans Shadow) */}
-      <View className="z-10 flex-row items-center justify-between border-b border-border-light/20 bg-surface-light/75 px-5 py-4 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl">
-        <Text className="text-[17px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+      {/* Header Minimaliste et Mat */}
+      <View className="flex-row items-center justify-between border-b border-zinc-100 px-6 py-4 dark:border-zinc-900">
+        <Text className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
           Appareil lié
         </Text>
         
         <Pressable 
           onPress={() => router.back()} 
-          className="h-9 w-9 items-center justify-center rounded-full bg-background-light/40 border border-border-light/20 dark:bg-background-dark/30 active:scale-95 transition-transform"
+          className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 dark:bg-zinc-900 active:bg-zinc-100 dark:active:bg-zinc-800"
         >
-          <X size={18} color="#64748B" />
+          <X size={16} color="#71717A" />
         </Pressable>
       </View>
 
-      {/* Zone de Contenu Principale */}
+      {/* Zone de Contenu Principale Centrée */}
       <View className="flex-1 items-center justify-center px-6 pb-12">
         
-        {/* Conteneur Central Satiné */}
-        <View className="w-full max-w-sm items-center rounded-3xl border border-border-light/40 bg-surface-light/50 p-8 dark:border-border-dark/20 dark:bg-surface-dark/40 backdrop-blur-md">
+        {/* Conteneur Central Opaque et Net */}
+        <View className="w-full max-w-sm items-center rounded-2xl border border-zinc-100 bg-zinc-50 p-6 dark:border-zinc-900 dark:bg-zinc-900/40">
           
-          {/* Badge d'état de Sécurité */}
-          <View className="h-20 w-20 items-center justify-center rounded-[24px] bg-primary/10 border border-primary/20 mb-6">
-            <ShieldCheck size={38} color={BRAND.primary} />
+          {/* Badge d'état de Sécurité - Teintes Vertes d'Opération Réussie */}
+          <View className="h-16 w-16 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 mb-5">
+            <ShieldCheck size={28} color="#10B981" />
           </View>
 
           {/* Titre d'état */}
-          <Text className="text-center text-[18px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark mb-3">
+          <Text className="text-center text-base font-bold text-zinc-900 dark:text-zinc-50 mb-2">
             Association réussie !
           </Text>
 
-          {/* Description textuelle */}
-          <Text className="text-center text-[13px] leading-[20px] font-medium text-text-secondary-light/70 dark:text-text-secondary-dark/60 mb-8 px-2">
+          {/* Description textuelle épurée */}
+          <Text className="text-center text-xs leading-5 text-zinc-500 dark:text-zinc-400 mb-6 px-1">
             L’appareil{' '}
-            <Text className="font-bold text-primary">
+            <Text className="font-bold text-zinc-900 dark:text-zinc-50">
               {name || 'Nouvel Appareil'}
             </Text>{' '}
             a été configuré et associé de manière sécurisée à votre compte universitaire.
           </Text>
 
-          {/* Bouton d'action principal de fermeture */}
+          {/* Bouton de Fermeture Orange Principal */}
           <View className="w-full">
             <Button 
               label="Terminer" 
               onPress={() => router.back()} 
               size="xl"
-              className="w-full rounded-xl"
+              className="w-full h-12 rounded-xl bg-orange-500 active:bg-orange-600"
             />
           </View>
           

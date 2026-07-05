@@ -8,7 +8,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCreateChat } from '@/features/messaging/hooks/use-create-chat';
 import { useSearchUsers, type SearchUserResult } from '@/features/messaging/hooks/use-search-users';
 import { useAuth, useToast } from '@/providers';
-import { BRAND } from '@/shared/config/brand';
 import { Avatar } from '@/shared/ui/avatar';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
@@ -47,115 +46,124 @@ export default function NewGroupScreen(): JSX.Element {
       { type: 'group', name: name.trim(), memberUserIds: selected },
       {
         onSuccess: (chat) => {
-          showToast({ type: 'success', message: t('groupCreated') });
+          showToast({ type: 'success', message: 'Le groupe a été créé avec succès.' });
           router.replace(`/chat/${chat.id}` as any);
         },
         onError: (e) => {
-          showToast({ type: 'error', message: e instanceof Error ? e.message : 'Error' });
+          showToast({ type: 'error', message: e instanceof Error ? e.message : 'Impossible de créer le groupe.' });
         },
       },
     );
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-zinc-50 dark:bg-zinc-950" edges={['top']}>
 
-      {/* Header Translucide Style Glassmorphism (Sans Shadow) */}
-      <View className="z-10 flex-row items-center border-b border-border-light/20 bg-surface-light/75 px-4 py-3.5 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl">
+      {/* Barre supérieure simple et claire */}
+      <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-4 dark:border-zinc-900 dark:bg-zinc-900">
         <Pressable
           onPress={() => router.back()}
-          className="h-9 w-9 items-center justify-center active:scale-95 transition-transform"
+          hitSlop={12}
+          className="h-9 w-9 items-center justify-center rounded-full bg-zinc-50 dark:bg-zinc-800 active:opacity-70"
         >
-          <ArrowLeft size={20} color="#64748B" />
+          <ArrowLeft size={18} color="#71717A" />
         </Pressable>
 
         <View className="flex-1 ml-3">
-          <Text className="text-[17px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+          <Text className="text-base font-bold text-zinc-900 dark:text-zinc-50">
             Nouveau groupe
           </Text>
-          <Text className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary-light/50 dark:text-text-secondary-dark/50 mt-0.5">
-            Espace collaboratif
+          <Text className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+            Créer un espace de discussion à plusieurs
           </Text>
         </View>
       </View>
 
-      <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingTop: 20, paddingBottom: 40 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        className="flex-1 px-4" 
+        contentContainerStyle={{ paddingTop: 20, paddingBottom: 40 }} 
+        keyboardShouldPersistTaps="handled" 
+        showsVerticalScrollIndicator={false}
+      >
 
-        {/* Section 1 : Informations du groupe */}
-        <Input
-          label="Nouveau groupe"
-          placeholder="Ex. 3GI — TD"
-          value={name}
-          onChangeText={setName}
-          containerClassName="mb-6 bg-surface-light/50 dark:bg-surface-dark/40 border-border-light/40 dark:border-border-dark/20"
-        />
+        {/* Formulaire : Nom du groupe */}
+        <View className="mb-6">
+          <Input
+            label="Nom du groupe"
+            placeholder="Exemple : Groupe de révision Informatique"
+            value={name}
+            onChangeText={setName}
+            className='text-xs h-50'
+          />
+        </View>
 
-        {/* Section 2 : Recherche des membres */}
-        <View className="flex-row items-center justify-between mb-3 ml-2">
-          <Text className="text-[10px] font-bold uppercase tracking-widest text-text-secondary-light/60 dark:text-text-secondary-dark/60">
-            Sélectionner les membres
+        {/* Titre de la recherche de membres */}
+        <View className="flex-row items-center justify-between mb-2 ml-1">
+          <Text className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+            Ajouter des personnes
           </Text>
           {selected.length > 0 && (
-            <Text className="text-[11px] font-bold text-primary">
-              {selected.length} sélectionné{selected.length > 1 ? 's' : ''}
+            <Text className="text-xs font-bold text-orange-500">
+              {selected.length} personne{selected.length > 1 ? 's' : ''} sélectionnée{selected.length > 1 ? 's' : ''}
             </Text>
           )}
         </View>
 
+        {/* Barre de recherche */}
         <SearchBar
           value={query}
           onChangeText={setQuery}
-          placeholder="Rechercher par nom, pseudo ou matricule"
+          placeholder="Écrivez un nom, un prénom ou un identifiant..."
         />
 
-        {/* Indicateur de chargement */}
+        {/* Icône d'attente circulaire pendant le chargement */}
         {isLoading && (
           <View className="py-4 items-center">
-            <ActivityIndicator size="small" color={BRAND.primary} />
+            <ActivityIndicator size="small" color="#FF7A00" />
           </View>
         )}
 
-        {/* Liste des résultats encapsulée */}
+        {/* Liste des contacts trouvés */}
         {results.length > 0 ? (
-          <View className="overflow-hidden rounded-2xl border border-border-light/40 bg-surface-light/50 dark:border-border-dark/20 dark:bg-surface-dark/40 backdrop-blur-md mb-6 mt-3">
+          <View className="overflow-hidden rounded-xl border border-zinc-100 bg-white dark:border-zinc-900 dark:bg-zinc-900 mb-6 mt-4">
             {results.map((item, index) => {
               const isSelected = selected.includes(item.id);
               return (
                 <View key={item.id}>
-                  {index > 0 && <View className="mx-4 h-[0.5px] bg-border-light/10 dark:bg-border-dark/5" />}
+                  {index > 0 && <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-800" />}
 
                   <Pressable
                     onPress={() => toggle(item.id)}
                     className={cn(
-                      "flex-row items-center justify-between px-4 py-3.5 transition-all active:scale-[0.99]",
-                      isSelected ? "bg-primary/5 dark:bg-primary/10" : "active:bg-text-secondary-light/5 dark:active:bg-text-secondary-dark/5"
+                      "flex-row items-center justify-between px-4 py-4 active:bg-zinc-50 dark:active:bg-zinc-800/50",
+                      isSelected && "bg-orange-500/5 dark:bg-orange-500/10"
                     )}
                   >
-                    <View className="flex-row items-center gap-3.5 flex-1">
+                    <View className="flex-row items-center gap-3 flex-1">
                       <Avatar name={displayName(item)} uri={item.profile?.avatarUrl} size="sm" />
 
                       <View className="flex-1 justify-center">
                         <Text className={cn(
-                          "text-[14px] font-semibold tracking-tight",
-                          isSelected ? "text-primary" : "text-text-primary-light dark:text-text-primary-dark"
+                          "text-sm font-bold",
+                          isSelected ? "text-orange-500" : "text-zinc-900 dark:text-zinc-50"
                         )}>
                           {displayName(item)}
                         </Text>
-                        <View className="flex-row items-center gap-1.5 mt-0.5">
-                          <GraduationCap size={11} className="text-text-secondary-light/40" />
-                          <Text className="text-[11px] font-medium text-text-secondary-light/50 dark:text-text-secondary-dark/50">
+                        <View className="flex-row items-center gap-1.5 mt-1">
+                          <GraduationCap size={13} color="#A1A1AA" />
+                          <Text className="text-xs text-zinc-500 dark:text-zinc-400">
                             {item.username ?? 'Étudiant'}
                           </Text>
                         </View>
                       </View>
                     </View>
 
-                    {/* Case à cocher / Checkbox circulaire sur mesure */}
+                    {/* Case à cocher ronde et colorée */}
                     <View className={cn(
-                      "h-5 w-5 items-center justify-center rounded-full border transition-all",
+                      "h-5 w-5 items-center justify-center rounded-full border",
                       isSelected
-                        ? "border-primary bg-primary"
-                        : "border-border-light/60 dark:border-border-dark/40 bg-transparent"
+                        ? "border-orange-500 bg-orange-500"
+                        : "border-zinc-200 dark:border-zinc-800 bg-transparent"
                     )}>
                       {isSelected && <Check size={11} color="#FFFFFF" strokeWidth={3} />}
                     </View>
@@ -165,25 +173,26 @@ export default function NewGroupScreen(): JSX.Element {
             })}
           </View>
         ) : (
+          /* Zone vide si rien n'est trouvé */
           !isLoading && (
-            <View className="items-center justify-center py-8 rounded-2xl border border-border-light/40 bg-surface-light/30 dark:border-border-dark/10 dark:bg-surface-dark/20 backdrop-blur-sm mb-6">
-              <View className="h-9 w-9 items-center justify-center rounded-xl bg-text-secondary-light/5 border border-border-light/10 mb-2">
-                <Search size={16} color="#64748B" />
+            <View className="items-center justify-center py-8 rounded-xl border border-zinc-100 bg-white dark:border-zinc-900 mb-6 mt-4">
+              <View className="h-12 w-12 items-center justify-center rounded-full bg-zinc-50 dark:bg-zinc-800 mb-3">
+                <Search size={18} color="#A1A1AA" />
               </View>
-              <Text className="text-center text-[12px] font-medium text-text-secondary-light/60 dark:text-text-secondary-dark/60">
-                Aucun utilisateur trouvé
+              <Text className="text-center text-xs text-zinc-500 dark:text-zinc-400">
+                Aucun utilisateur ne correspond à votre recherche.
               </Text>
             </View>
           )
         )}
 
-        {/* Bouton de validation inférieur */}
+        {/* Grand bouton de création en bas */}
         <Button
-          label="Créer le groupe"
+          label="Créer le groupe maintenant"
           onPress={() => void create()}
           loading={createChat.isPending}
           disabled={!name.trim() || selected.length < 1}
-          className="rounded-xl h-12 mt-2"
+          className="rounded-xl h-12 bg-orange-500 active:bg-orange-600 mt-2"
         />
       </ScrollView>
     </SafeAreaView>

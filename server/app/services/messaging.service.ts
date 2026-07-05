@@ -26,6 +26,35 @@ export class MessagingService {
     if (payload.type === "private" && uniqueMembers.length !== 2) {
       throw { code: ErrorCode.VALIDATION_ERROR, status: 400, message: "Un chat privé doit avoir exactement 2 membres." };
     }
+
+    if (payload.type === "private") {
+      const existingChat = await prisma.chat.findFirst({
+        where: {
+          type: "private",
+          AND: [
+            { members: { some: { user_id: uniqueMembers[0] } } },
+            { members: { some: { user_id: uniqueMembers[1] } } },
+          ],
+        },
+        include: {
+          members: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                  profile: { select: { firstname: true, lastname: true, avatarUrl: true } },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (existingChat) {
+        return existingChat;
+      }
+    }
     if (payload.type === "group" && (!payload.name || !payload.name.trim())) {
       throw { code: ErrorCode.VALIDATION_ERROR, status: 400, message: "Un groupe doit avoir un nom." };
     }
@@ -135,12 +164,26 @@ export class MessagingService {
     }
 
     await prisma.$transaction(async (trx) => {
+      await trx.conversationMember.deleteMany({
+        where: {
+          user_id: payload.userId,
+          conversation_id: chatId,
+        },
+      });
       await trx.conversationMember.create({
         data: {
           id: crypto.randomUUID(),
           user_id: payload.userId,
           conversation_id: chatId,
           role: "member",
+        },
+      });
+
+      const deviceIds = payload.encryptedKeys.map((e) => e.deviceId);
+      await trx.chatMemberKey.deleteMany({
+        where: {
+          chat_id: chatId,
+          device_id: { in: deviceIds },
         },
       });
       await trx.chatMemberKey.createMany({
@@ -253,6 +296,7 @@ export class MessagingService {
             username: cm.user.username,
             avatarUrl: cm.user.profile?.avatarUrl ?? undefined,
             phone: cm.user.profile?.phone ?? undefined,
+            role: cm.role
           })),
         };
       }),
@@ -491,6 +535,183 @@ export class MessagingService {
     if (!member) throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Chat introuvable." };
 
     await prisma.conversationMember.delete({ where: { id: member.id } });
+  }
+
+  async updateChatDetails(userId: string, conversationId: string, payload: { name: string }) {
+    await this._assertAdmin(userId, conversationId);
+    return await prisma.chat.update({
+      where: { id: conversationId },
+      data: { name: payload.name.trim() },
+    });
+  }
+
+  async promoteMember(adminUserId: string, conversationId: string, targetUserId: string) {
+    const chat = await prisma.chat.findUnique({ where: { id: conversationId } });
+    if (!chat || chat.created_by_id !== adminUserId) {
+      throw { code: ErrorCode.FORBIDDEN, status: 403, message: "Seul le créateur du groupe peut promouvoir un membre." };
+    }
+    const member = await prisma.conversationMember.findFirst({
+      where: { conversation_id: conversationId, user_id: targetUserId }
+    });
+    if (!member) throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Membre introuvable." };
+    return await prisma.conversationMember.update({
+      where: { id: member.id },
+      data: { role: 'admin' }
+    });
+  }
+
+  async demoteMember(adminUserId: string, conversationId: string, targetUserId: string) {
+    const chat = await prisma.chat.findUnique({ where: { id: conversationId } });
+    if (!chat || chat.created_by_id !== adminUserId) {
+      throw { code: ErrorCode.FORBIDDEN, status: 403, message: "Seul le créateur du groupe peut destituer un administrateur." };
+    }
+    if (targetUserId === adminUserId) {
+      throw { code: ErrorCode.VALIDATION_ERROR, status: 400, message: "Vous ne pouvez pas vous destituer vous-même." };
+    }
+    const member = await prisma.conversationMember.findFirst({
+      where: { conversation_id: conversationId, user_id: targetUserId }
+    });
+    if (!member) throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Membre introuvable." };
+    return await prisma.conversationMember.update({
+      where: { id: member.id },
+      data: { role: 'member' }
+    });
+  }
+
+  async kickMember(adminUserId: string, conversationId: string, targetUserId: string) {
+    const chat = await prisma.chat.findUnique({ where: { id: conversationId } });
+    if (!chat) throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Groupe introuvable." };
+    await this._assertAdmin(adminUserId, conversationId);
+
+    const targetMember = await prisma.conversationMember.findFirst({
+      where: { conversation_id: conversationId, user_id: targetUserId }
+    });
+    if (!targetMember) throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Membre introuvable." };
+
+    const isSuperAdmin = chat.created_by_id === adminUserId;
+    if (targetMember.user_id === chat.created_by_id) {
+      throw { code: ErrorCode.FORBIDDEN, status: 403, message: "Impossible de bannir le créateur du groupe." };
+    }
+    if (targetMember.role === "admin" && !isSuperAdmin) {
+      throw { code: ErrorCode.FORBIDDEN, status: 403, message: "Seul le créateur du groupe peut exclure un administrateur." };
+    }
+
+    await prisma.conversationMember.delete({ where: { id: targetMember.id } });
+  }
+
+  async createInvitation(adminUserId: string, conversationId: string, payload: { maxUses?: number, expiresAt?: string, encryptedChatKey?: string }) {
+    await this._assertAdmin(adminUserId, conversationId);
+    const token = crypto.randomUUID();
+    const invitation = await prisma.groupInvitation.create({
+      data: {
+        chat_id: conversationId,
+        token,
+        max_uses: payload.maxUses ?? null,
+        expires_at: payload.expiresAt ? new Date(payload.expiresAt) : null,
+        created_by_id: adminUserId,
+        encrypted_chat_key: payload.encryptedChatKey ?? null,
+      }
+    });
+    return invitation;
+  }
+
+  async getInvitationDetails(token: string) {
+    const invitation = await prisma.groupInvitation.findUnique({
+      where: { token },
+      include: {
+        chat: {
+          include: {
+            _count: { select: { members: true } }
+          }
+        }
+      }
+    });
+    if (!invitation || invitation.revoked_at) {
+      throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Lien d'invitation invalide ou expiré." };
+    }
+    if (invitation.expires_at && invitation.expires_at < new Date()) {
+      throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Lien d'invitation expiré." };
+    }
+    if (invitation.max_uses !== null && invitation.uses >= invitation.max_uses) {
+      throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Nombre maximal d'utilisations atteint." };
+    }
+    return {
+      id: invitation.id,
+      chatId: invitation.chat_id,
+      chatName: invitation.chat.name,
+      memberCount: invitation.chat._count.members,
+      encryptedChatKey: invitation.encrypted_chat_key,
+    };
+  }
+
+  async joinViaInvitation(userId: string, token: string, payload: { encryptedKeys: { deviceId: string, encryptedKey: string }[] }) {
+    const details = await prisma.groupInvitation.findUnique({
+      where: { token },
+      include: { chat: true }
+    });
+    if (!details || details.revoked_at) {
+      throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Lien d'invitation invalide." };
+    }
+    if (details.expires_at && details.expires_at < new Date()) {
+      throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Lien d'invitation expiré." };
+    }
+    if (details.max_uses !== null && details.uses >= details.max_uses) {
+      throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Lien d'invitation expiré (utilisation maximale atteinte)." };
+    }
+
+    const existing = await prisma.conversationMember.findUnique({
+      where: { user_id_conversation_id: { user_id: userId, conversation_id: details.chat_id } }
+    });
+    if (existing) {
+      return details.chat;
+    }
+
+    return await prisma.$transaction(async (trx) => {
+      await trx.groupInvitation.update({
+        where: { id: details.id },
+        data: { uses: { increment: 1 } }
+      });
+
+      const member = await trx.conversationMember.create({
+        data: {
+          user_id: userId,
+          conversation_id: details.chat_id,
+          role: 'member',
+        }
+      });
+
+      if (payload.encryptedKeys && payload.encryptedKeys.length > 0) {
+        await trx.chatMemberKey.createMany({
+          data: payload.encryptedKeys.map((e) => ({
+            chat_id: details.chat_id,
+            device_id: e.deviceId,
+            encrypted_chat_key: e.encryptedKey,
+          }))
+        });
+      }
+
+      return details.chat;
+    });
+  }
+
+  async listInvitations(userId: string, conversationId: string) {
+    await this._assertAdmin(userId, conversationId);
+    return await prisma.groupInvitation.findMany({
+      where: { chat_id: conversationId, revoked_at: null },
+      orderBy: { created_at: 'desc' }
+    });
+  }
+
+  async revokeInvitation(userId: string, invitationId: string) {
+    const invitation = await prisma.groupInvitation.findUnique({
+      where: { id: invitationId }
+    });
+    if (!invitation) throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Lien d'invitation introuvable." };
+    await this._assertAdmin(userId, invitation.chat_id);
+    return await prisma.groupInvitation.update({
+      where: { id: invitationId },
+      data: { revoked_at: new Date() }
+    });
   }
 
   private async _assertMember(userId: string, conversationId: string) {

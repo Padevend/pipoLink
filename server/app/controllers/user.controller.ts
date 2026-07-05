@@ -1,11 +1,13 @@
 import { HttpContext } from "../../config/app.js";
 import { UserService } from "../services/user.service.js";
 import { ApiResponse } from "../helpers/api-response.js";
-import { deleteAccountValidator, onboardingValidator, updateProfileValidator } from "../validators/user.validator.js";
-import { AuthService } from "../services/auth.service.js";
+import { onboardingValidator, updateProfileValidator } from "../validators/user.validator.js";
+import { deleteAccountValidator } from "../validators/account-deletion.validator.js";
+import { AccountDeletionService } from "../services/account-deletion.service.js";
 
 export class UserController {
   private service = new UserService();
+  private deletionService = new AccountDeletionService();
 
   async getUser(c: HttpContext) {
     const authUserId = c.get("userId") as string;
@@ -74,20 +76,15 @@ export class UserController {
     return ApiResponse.error(c, "VALIDATION_ERROR", "Fichier invalide.", 400);
   }
 
+  /**
+   * Suppression de compte — contrôleur fin.
+   * Validation d'entrée (mot de passe) + délégation au service métier.
+   */
   async deleteAccount(c: HttpContext) {
     const userId = c.get("userId") as string;
-    const { email } = await c.validateUsing(deleteAccountValidator);
-    
-    if (!email) {
-      return ApiResponse.error(c, "VALIDATION_ERROR", "Email requis pour la suppression.", 400);
-    }
+    const { password } = await c.validateUsing(deleteAccountValidator);
 
-    const user = await this.service.getMe(userId);
-    if (!user || user.email !== email) {
-      return ApiResponse.error(c, "VALIDATION_ERROR", "L'email ne correspond pas à votre compte.", 400);
-    }
-
-    await this.service.deleteAccount(userId);
-    return ApiResponse.success(c, null, "Compte supprimé.");
+    const result = await this.deletionService.execute(userId, password);
+    return ApiResponse.success(c, result, "Compte supprimé avec succès.");
   }
 }

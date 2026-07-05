@@ -46,3 +46,36 @@ export async function getCachedChatKey(chatId: string): Promise<Uint8Array | nul
   if (!b64) return null;
   return naclUtil.decodeBase64(b64);
 }
+
+export function encryptChatKeyWithToken(chatKey: Uint8Array, token: string): string {
+  const tokenBytes = naclUtil.decodeUTF8(token);
+  const key = new Uint8Array(32);
+  // Pad or slice tokenBytes to fit 32 bytes
+  for (let i = 0; i < 32; i++) {
+    key[i] = tokenBytes[i % tokenBytes.length] ?? 0;
+  }
+
+  const nonce = nacl.randomBytes(24);
+  const boxed = nacl.secretbox(chatKey, nonce, key);
+
+  const payload = new Uint8Array(nonce.length + boxed.length);
+  payload.set(nonce, 0);
+  payload.set(boxed, nonce.length);
+  return naclUtil.encodeBase64(payload);
+}
+
+export function decryptChatKeyWithToken(encryptedChatKey: string, token: string): Uint8Array | null {
+  const tokenBytes = naclUtil.decodeUTF8(token);
+  const key = new Uint8Array(32);
+  for (let i = 0; i < 32; i++) {
+    key[i] = tokenBytes[i % tokenBytes.length] ?? 0;
+  }
+
+  const raw = naclUtil.decodeBase64(encryptedChatKey);
+  if (raw.length < 24 + 16) return null;
+
+  const nonce = raw.subarray(0, 24);
+  const box = raw.subarray(24);
+  const opened = nacl.secretbox.open(box, nonce, key);
+  return opened ?? null;
+}

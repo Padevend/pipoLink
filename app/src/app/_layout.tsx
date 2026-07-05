@@ -27,6 +27,7 @@ import { ASYNC_STORAGE_KEYS, AsyncStorageService } from '@/shared/lib/storage';
 import { KeyboardAvoidingView } from 'react-native';
 import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
 
+
 export const unstable_settings = {
   anchor: '(tabs)',
 };

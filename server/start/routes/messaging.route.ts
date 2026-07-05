@@ -21,4 +21,13 @@ MessagingRouter
   .post("/:id/read", ...msgAuth, callAction(MessagingController, "markAsRead"))
   .post("/:id/leave", ...msgAuth, callAction(MessagingController, "leaveGroup"))
   .delete("/:id", ...msgAuth, callAction(MessagingController, "deleteChat"))
-  .delete("/:id/messages/:messageId", ...msgAuth, callAction(MessagingController, "deleteMessage"));
+  .delete("/:id/messages/:messageId", ...msgAuth, callAction(MessagingController, "deleteMessage"))
+  .put("/:id", ...msgAuth, callAction(MessagingController, "updateChatDetails"))
+  .post("/:id/members/promote", ...msgAuth, callAction(MessagingController, "promoteMember"))
+  .post("/:id/members/demote", ...msgAuth, callAction(MessagingController, "demoteMember"))
+  .post("/:id/members/kick", ...msgAuth, callAction(MessagingController, "kickMember"))
+  .post("/:id/invitations", ...msgAuth, callAction(MessagingController, "createInvitation"))
+  .get("/:id/invitations", ...msgAuth, callAction(MessagingController, "listInvitations"))
+  .get("/invitations/:token", ...msgAuth, callAction(MessagingController, "getInvitationDetails"))
+  .post("/invitations/:token/join", ...msgAuth, callAction(MessagingController, "joinViaInvitation"))
+  .post("/invitations/:invitationId/revoke", ...msgAuth, callAction(MessagingController, "revokeInvitation"));

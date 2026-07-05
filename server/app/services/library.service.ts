@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { prisma } from "../../config/database.js";
 import { ErrorCode } from "../helpers/error-codes.js";
 import { FileService } from "./file.service.js";
@@ -209,7 +210,24 @@ export class LibraryService {
     }
 
     const folderId = await this.folderResolver.resolveFolderId(userId, filiere, niveau, ue);
-    const { url, size } = await this.fileService.storeDocument(file, meta.mimeType, meta.originalName);
+
+    // --- Hash Deduplication Check ---
+    const hash = crypto.createHash("sha256").update(file).digest("hex");
+    const existingDoc = await prisma.document.findFirst({
+      where: { hash }
+    });
+
+    let url: string;
+    let size: number;
+
+    if (existingDoc) {
+      url = existingDoc.fileUrl;
+      size = existingDoc.fileSize;
+    } else {
+      const stored = await this.fileService.storeDocument(file, meta.mimeType, meta.originalName);
+      url = stored.url;
+      size = stored.size;
+    }
 
     const tags = payload.tags as string[] | undefined;
     const tagConnections = tags
@@ -238,6 +256,7 @@ export class LibraryService {
         isPublic: (payload.isPublic as boolean) ?? true,
         tags: { connect: tagConnections.map((t) => ({ id: t.id })) },
         moderationStatus: "APPROVED",
+        hash,
       },
       include: docInclude,
     });

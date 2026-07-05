@@ -49,22 +49,22 @@ export function AttachmentDocument({
     }
   }
 
-  // Helper to determine the status text below the filename
+  // Libellés système normalisés en police à espacement fixe
   const getSubtext = () => {
     switch (status) {
       case 'downloading':
-        return `Téléchargement… ${Math.round(progress * 100)}%`;
+        return `${Math.round(progress * 100)}%`;
       case 'decrypting':
-        return 'Déchiffrement…';
+        return 'DECRYPTING_DATA…';
       case 'paused':
-        return 'En pause';
+        return 'PAUSED';
       case 'queued':
-        return 'En file…';
+        return 'QUEUED';
       case 'failed':
-        return 'Échec — Réessayer';
+        return 'ERROR // TAP TO RETRY';
       case 'completed':
       default:
-        return formatBytes(attachment.fileSize);
+        return `${formatBytes(attachment.fileSize)}`;
     }
   };
 
@@ -72,16 +72,21 @@ export function AttachmentDocument({
     <Pressable
       onPress={handleAction}
       className={cn(
-        'flex-row items-center gap-x-3 rounded-xl px-3 py-2.5 border w-full max-w-[260px]',
+        'flex-row items-center gap-x-3 rounded-xl px-3 py-2.5 border w-full max-w-[260px] active:opacity-90',
         isMine
-          ? 'bg-white/10 border-white/10'
-          : 'bg-background-light/40 border-border-light/20 dark:bg-background-dark/30 dark:border-border-dark/10',
+          ? 'bg-orange-600/20 border-white/20'
+          : 'bg-zinc-100 border-zinc-200 dark:bg-zinc-900/60 dark:border-zinc-800',
       )}
     >
-      {/* Circle Icon Indicator / Progress */}
+      {/* Indicateur de statut / Icône Fichier Géométrique */}
       {status === 'completed' ? (
-        <View className={cn('h-8 w-8 items-center justify-center rounded-lg', isMine ? 'bg-white/15' : 'bg-primary/10')}>
-          <FileText size={14} className={isMine ? 'text-white' : 'text-primary'} strokeWidth={2.5} />
+        <View className={cn(
+          'h-8 w-8 items-center justify-center rounded-lg border',
+          isMine 
+            ? 'bg-orange-500 border-orange-400/30' 
+            : 'bg-white border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800'
+        )}>
+          <FileText size={14} color={isMine ? '#FFFFFF' : '#71717A'} strokeWidth={2.5} />
         </View>
       ) : (
         <AttachmentProgressCircle
@@ -93,26 +98,27 @@ export function AttachmentDocument({
         />
       )}
 
-      {/* Details */}
+      {/* Métadonnées du document */}
       <View className="flex-1">
         <Text
           className={cn(
-            'text-[13px] font-bold tracking-tight',
-            isMine ? 'text-white' : 'text-text-primary-light dark:text-text-primary-dark',
+            'text-xs font-bold tracking-tight',
+            isMine ? 'text-white' : 'text-zinc-900 dark:text-zinc-50',
           )}
           numberOfLines={1}
           ellipsizeMode="middle"
         >
           {attachment.fileName}
         </Text>
+        
         <Text
           className={cn(
-            'text-[10px] font-medium mt-0.5',
+            'font-mono text-[9px] font-bold uppercase tracking-wider mt-0.5',
             status === 'failed'
-              ? 'text-red-400 dark:text-red-300'
+              ? 'text-red-500 dark:text-red-400'
               : isMine
-              ? 'text-white/60'
-              : 'text-text-secondary-light/40 dark:text-text-secondary-dark/40',
+              ? 'text-orange-200/70'
+              : 'text-zinc-400 dark:text-zinc-500',
           )}
         >
           {getSubtext()}

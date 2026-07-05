@@ -1,5 +1,4 @@
 import { cn } from '@/shared/utils/cn';
-import { BRAND } from '@/shared/config/brand';
 import { LucideIcon } from 'lucide-react-native';
 import { useState } from 'react';
 import {
@@ -18,6 +17,9 @@ export interface InputProps extends TextInputProps {
   onRightIconPress?: () => void;
   containerClassName?: string;
 }
+
+const ORANGE_PRINCIPAL = '#FF6B00';
+const GRIS_NEUTRE = '#71717A';
 
 export function Input({
   label,
@@ -44,49 +46,46 @@ export function Input({
   };
 
   return (
-    <View className={cn('w-full gap-1.5', containerClassName)}>
-      {/* Label Épuré aux dimensions de l'application */}
+    <View className={cn('w-full gap-1', containerClassName)}>
+      {/* Label technique style terminal */}
       {label && (
-        <Text className="text-[11px] font-bold uppercase tracking-wide text-text-secondary-light/60 dark:text-text-secondary-dark/60 ml-1">
+        <Text className="font-mono text-[9px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 ml-1">
           {label}
         </Text>
       )}
       
-      {/* Conteneur adaptatif Style Glassmorphism */}
+      {/* Conteneur brut à géométrie stricte */}
       <View 
         className={cn(
-          'w-full flex-row rounded-xl bg-surface-light/50 dark:bg-surface-dark/40 border px-4 transition-all',
-          // Gestion des hauteurs et alignements selon le mode d'affichage
+          'w-full flex-row rounded-lg bg-zinc-100 dark:bg-zinc-900/40 border px-3 transition-all',
           props.multiline 
-            ? 'items-start py-3.5 min-h-[40px] max-h-[200px]' 
-            : 'items-center h-16',
+            ? 'items-start py-2 min-h-[40px] max-h-[160px]' 
+            : 'items-center min-h-15',
           error 
-            ? 'border-error/40 bg-error/5 dark:border-error/30' 
+            ? 'border-red-500 bg-red-500/5 dark:border-red-500/30' 
             : isFocused 
-              ? 'border-primary bg-surface-light dark:border-primary dark:bg-surface-dark' 
-              : 'border-border-light/40 dark:border-border-dark/20'
+              ? 'border-orange-500 bg-white dark:border-orange-600 dark:bg-zinc-900' 
+              : 'border-zinc-100 dark:border-zinc-900'
         )}
       >
-        {/* Icône Gauche (Ajustement de marge si multiline) */}
+        {/* Icône Gauche */}
         {LeftIcon && (
           <LeftIcon 
-            size={16} 
-            color={isFocused ? BRAND.primary : '#64748B'} 
-            className={cn(props.multiline ? 'mr-3 mt-0.5' : 'mr-3')}
+            size={14} 
+            color={isFocused ? ORANGE_PRINCIPAL : GRIS_NEUTRE} 
+            className={cn(props.multiline ? 'mr-2.5 mt-1' : 'mr-2.5')}
           />
         )}
         
-        {/* Champ de Saisie Natif */}
+        {/* Champ de Saisie Natif Rectifié */}
         <TextInput
           onFocus={handleFocus}
           onBlur={handleBlur}
-          placeholderTextColor="#64748B"
-          
+          placeholderTextColor="#A1A1AA"
           textAlignVertical={props.multiline ? 'top' : 'center'}
-          style={props.multiline ? { paddingTop: 5, paddingBottom: 0 } : undefined}
+          style={props.multiline ? { paddingTop: 2, paddingBottom: 2 } : undefined}
           className={cn(
-            'flex-1 text-[13px] font-medium text-text-primary-light dark:text-text-primary-dark',
-            props.multiline ? 'h-full text-start' : 'h-full',
+            'flex-1 text-sm font-medium text-zinc-900 dark:text-zinc-50 py-0 min-h-[40px] max-h-[160px]',
             className
           )}
           placeholder={props.placeholder}
@@ -96,26 +95,27 @@ export function Input({
           secureTextEntry={props.secureTextEntry}
           keyboardType={props.keyboardType}
           autoCapitalize={props.autoCapitalize}
+          {...props}
         />
         
-        {/* Icône Droite (Ajustement de marge si multiline) */}
+        {/* Icône Droite */}
         {RightIcon && (
           <Pressable 
             onPress={onRightIconPress} 
-            hitSlop={10}
-            className={cn(props.multiline ? 'ml-3 mt-0.5' : 'ml-3')}
+            hitSlop={12}
+            className={cn(props.multiline ? 'ml-2.5 mt-1' : 'ml-2.5')}
           >
             <RightIcon 
-              size={16} 
-              color="#64748B" 
+              size={14} 
+              color={GRIS_NEUTRE} 
             />
           </Pressable>
         )}
       </View>
       
-      {/* Message d'erreur micro-ajusté */}
+      {/* Alerte système d'erreur */}
       {error && (
-        <Text className="text-[11px] font-semibold text-error ml-1.5 mt-0.5">
+        <Text className="font-mono text-[9px] font-bold uppercase tracking-wider text-red-500 dark:text-red-400 ml-1 mt-0.5">
           {error}
         </Text>
       )}

@@ -1,28 +1,37 @@
 import { router } from "expo-router";
-import { ArrowLeft } from "lucide-react-native";
+import { ArrowLeft, Toolbox } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ChangeEmailScreen() {
     return (
         <SafeAreaView
-            className="flex-1 bg-background-light dark:bg-background-dark"
+            className="flex-1 bg-white dark:bg-zinc-950"
             edges={["top"]}
         >
-            {/* Header Chat épuré */}
-            <View className="z-10 flex-row items-center justify-left border-b border-border-light/30 bg-surface-light/75 px-4 py-3 dark:border-border-dark/20 dark:bg-surface-dark/75 backdrop-blur-xl ">
+            {/* HEADER : Panneau Mat Solide */}
+            <View className="flex-row items-center gap-2 border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
                 <Pressable
                     onPress={() => router.back()}
-                    className="flex-row items-center gap-1 h-9 pl-2 pr-3 active:opacity-80"
+                    className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
                 >
-                    <ArrowLeft size={20} color="#64748B" />
+                    <ArrowLeft size={14} color="#71717A" />
                 </Pressable>
 
-                <View className="flex-row items-center">
-                    <Text className="font-semibold tracking-tight text-text-primary-light dark:text-text-primary-dark text-xl">Changer d'email</Text>
-                </View>
+                <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                    Changer d'email
+                </Text>
             </View>
 
+            {/* Contenu de la page à intégrer ici */}
+            <View className="flex-1 flex items-center justify-center gap-5">
+                <View className="flex items-center justify-center bg-zinc-50 dark:bg-zinc-900 p-4 rounded-full">
+                    <Toolbox size={30} color="#71717A" />
+                </View>
+                <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                    Fonctionnalites en cours de conception
+                </Text>
+            </View>
         </SafeAreaView>
-    )
+    );
 }

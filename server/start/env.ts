@@ -32,6 +32,14 @@ const EnvSchema = {
   GOOGLE_DRIVE_CREDENTIALS_PATH: vine.string().optional(),
   GOOGLE_DRIVE_FOLDER_ID: vine.string().optional(),
 
+  // ── Redis ───────────────────────────────────────────
+  REDIS_URL: vine.string().optional(),
+
+  // ── MeSomb ──────────────────────────────────────────
+  MESOMB_APP_KEY: vine.string(),
+  MESOMB_ACCESS_KEY: vine.string(),
+  MESOMB_SECRET_KEY: vine.string(),
+
   // ── OTA Updates ──────────────────────────────────────
   APP_VERSION:       vine.string(),
   APP_BUILD_NUMBER:  vine.number(),

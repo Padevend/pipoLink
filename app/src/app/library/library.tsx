@@ -6,8 +6,7 @@ import {
 import { ExplorerFileRow } from '@/features/library/components/explorer-file-row';
 import { ExplorerFolderRow } from '@/features/library/components/explorer-folder-row';
 import type { Document, LibraryFolder } from '@/shared/api/types';
-import { BRAND } from '@/shared/config/brand';
-import { Input } from '@/shared/ui/input';
+import { SearchBar } from '@/shared/ui/search-bar';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { router } from 'expo-router';
 import { ArrowDownToLine, ArrowLeft, FolderOpen, Search, Upload, User } from 'lucide-react-native';
@@ -69,7 +68,7 @@ export default function LibraryExplorerScreen() {
         (id: string) => {
             router.push({ pathname: '/library/document/[id]', params: { id } } as never);
         },
-        [router],
+        [],
     );
 
     const renderItem = useCallback(
@@ -85,71 +84,71 @@ export default function LibraryExplorerScreen() {
     );
 
     return (
-        <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top']}>
-            {/* En-tête Translucide Style Glassmorphism Solide */}
-            <View className="z-10 border-b border-border-light/20 bg-surface-light/75 px-5 pb-0 pt-4 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl ">
+        <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
+
+            {/* En-tête Mat Épuré */}
+            <View className="border-b border-zinc-100 bg-white px-5 pt-4 pb-3 dark:border-zinc-900 dark:bg-zinc-950">
                 <View className="mb-4 flex-row items-center justify-between">
 
                     <Pressable
                         onPress={() => router.back()}
-                        hitSlop={8}
-                        className="h-9 w-9 items-center justify-center rounded-xl bg-background-light/40 dark:bg-background-dark/30 active:scale-95 transition-transform"
+                        className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 dark:bg-zinc-900 active:bg-zinc-100 dark:active:bg-zinc-800"
                     >
-                        <ArrowLeft size={18} color="#64748B" />
+                        <ArrowLeft size={16} color="#71717A" />
                     </Pressable>
 
-                    <View className="flex-1 pl-4">
-                        <Text className="text-xl font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+                    <View className="flex-1 pl-3">
+                        <Text className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
                             Bibliothèque
                         </Text>
                     </View>
 
+                    {/* Actions secondaires rectangulaires + Action principale orange */}
                     <View className="flex-row items-center gap-2">
                         <Pressable
                             onPress={() => router.push("/library/history")}
-                            className="h-10 w-10 items-center justify-center rounded-full bg-background-light/40 dark:bg-background-dark/30 active:opacity-80"
+                            className="h-10 w-10 items-center justify-center rounded-xl border border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/40 active:opacity-70"
                         >
-                            <ArrowDownToLine size={22} color="#64748B" />
+                            <ArrowDownToLine size={18} color="#A1A1AA" />
                         </Pressable>
 
                         <Pressable
                             onPress={() => router.push("/library/my-documents")}
-                            className="h-10 w-10 items-center justify-center rounded-full bg-background-light/40 dark:bg-background-dark/30 active:opacity-80"
+                            className="h-10 w-10 items-center justify-center rounded-xl border border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/40 active:opacity-70"
                         >
-                            <User size={22} color="#64748B" />
+                            <User size={18} color="#A1A1AA" />
                         </Pressable>
 
                         <Pressable
-                            onPress={() => router.push('/modal/upload-document')}
-                            className="h-12 w-12 items-center justify-center rounded-full bg-primary active:opacity-80"
+                            onPress={() => router.push("/modal/upload-document")}
+                            className="h-10 w-10 items-center justify-center rounded-xl bg-orange-500 dark:bg-orange-600 active:opacity-90"
                         >
-                            <Upload size={22} color="#FFFFFF" />
+                            <Upload size={18} color="#FFFFFF" strokeWidth={2.5} />
                         </Pressable>
                     </View>
                 </View>
 
-                <View className="bg-surface-light/50 dark:bg-surface-dark/40 border border-border-light dark:border-border-dark/20 rounded-2xl p-1 ">
-                    <Input
-                        placeholder="Rechercher un document, une UE…"
+                {/* Barre de Recherche Mate */}
+                <View>
+                    <SearchBar
+                        placeholder='Rechercher un document, une UE…'
                         value={search}
                         onChangeText={setSearch}
-                        leftIcon={Search}
-                        containerClassName="bg-transparent border-0 h-9"
-                        className="text-[14px] text-text-primary-light dark:text-text-primary-dark"
                     />
                 </View>
 
-                <View className="mt-5">
+                {/* Fil d'Ariane */}
+                <View className="mt-3.5">
                     <ExplorerBreadcrumb items={trail} onNavigate={navigateBreadcrumb} />
                 </View>
             </View>
 
-            {/* Zone du contenu de l'explorateur */}
-            <View className="flex-1 px-5 pt-4">
+            {/* Liste de l'Explorateur */}
+            <View className="flex-1 px-4 pt-3">
                 {isLoading ? (
-                    <View className="gap-3">
+                    <View className="gap-2.5">
                         {[1, 2, 3, 4, 5].map((i) => (
-                            <Skeleton key={i} className="p-10 w-full rounded-2xl opacity-70" />
+                            <Skeleton key={i} className="h-14 w-full rounded-xl" />
                         ))}
                     </View>
                 ) : (
@@ -159,7 +158,7 @@ export default function LibraryExplorerScreen() {
                         renderItem={renderItem}
                         showsVerticalScrollIndicator={false}
                         contentContainerStyle={{ paddingBottom: 40 }}
-                        ItemSeparatorComponent={() => <View className="h-2.5" />}
+                        ItemSeparatorComponent={() => <View className="h-2" />}
                         refreshing={isFetching}
                         onRefresh={() => {
                             if (isSearching) {
@@ -169,17 +168,15 @@ export default function LibraryExplorerScreen() {
                             }
                         }}
                         ListEmptyComponent={
-                            <View className="items-center justify-center py-20 px-6">
-                                {/* Icône enveloppée dans un conteneur Soft Glassmorphism */}
-                                <View className="h-16 w-16 items-center justify-center rounded-2xl border border-border-light/40 bg-surface-light/40 dark:border-border-dark/20 dark:bg-surface-dark/30 backdrop-blur-xl  mb-4">
-                                    <View className="p-2.5 rounded-xl bg-primary/10">
-                                        <FolderOpen size={26} color={BRAND.primary} />
-                                    </View>
+                            <View className="items-center justify-center py-16 px-6">
+                                {/* Conteneur d'icône Mat */}
+                                <View className="h-12 w-12 items-center justify-center rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 mb-3">
+                                    <FolderOpen size={20} color="#F97316" />
                                 </View>
-                                <Text className="text-base font-semibold tracking-tight text-text-primary-light dark:text-text-primary-dark text-center">
+                                <Text className="text-sm font-bold tracking-tight text-zinc-800 dark:text-zinc-200 text-center">
                                     {isSearching ? 'Aucun résultat' : 'Dossier vide'}
                                 </Text>
-                                <Text className="mt-1.5 text-center text-sm leading-5 text-text-secondary-light/80 dark:text-text-secondary-dark/80 px-4">
+                                <Text className="mt-1 text-center text-xs leading-4 text-zinc-400 dark:text-zinc-500 px-6">
                                     {isSearching
                                         ? "Nous n'avons trouvé aucun document correspondant à votre recherche."
                                         : parentId

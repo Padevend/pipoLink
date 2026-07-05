@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text} from 'react-native';
+import { View, Text } from 'react-native';
 import * as Updates from 'expo-updates';
 import { router } from 'expo-router';
 import { useOtaUpdate } from '@/features/updates/hooks/use-ota-update';
@@ -24,34 +24,31 @@ export default function UpdateAvailableModal() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark">
-      <View className="flex-1 px-6 items-center justify-center gap-y-8">
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'bottom']}>
+      <View className="flex-1 px-6 items-center justify-center gap-y-6">
         
-        {/* Badge d'icône Fusée Stylisé (Zéro Ombre) */}
-        <View 
-          className="w-18 h-18 rounded-[22px] items-center justify-center border border-emerald-500/10"
-          style={{ backgroundColor: '#10B98115' }}
-        >
-          <Rocket size={32} color="#10B981" />
+        {/* Badge d'icône Fusée - Mat & Marque */}
+        <View className="w-16 h-16 rounded-2xl items-center justify-center bg-orange-50 dark:bg-orange-950/20 border border-orange-100/60 dark:border-orange-900/30">
+          <Rocket size={26} color="#F97316" />
         </View>
 
         {/* Section Textuelle & Présentation de la Version */}
         <View className="items-center w-full">
-          <Text className="text-[24px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark text-center">
+          <Text className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 text-center">
             Mise à jour disponible !
           </Text>
           
-          <Text className="text-text-secondary-light/70 dark:text-text-secondary-dark/60 text-center text-[13px] leading-[20px] font-medium mt-2 px-4">
-            La version <Text className="font-bold text-text-primary-light dark:text-text-primary-dark">{data?.version || '1.1.0'}</Text> est prête à être installée pour optimiser la sécurité et la stabilité de vos services.
+          <Text className="text-zinc-500 dark:text-zinc-400 text-center text-xs leading-5 mt-2 px-4">
+            La version <Text className="font-bold text-zinc-900 dark:text-zinc-50">{data?.version || '1.1.0'}</Text> est prête à être installée pour optimiser la sécurité et la stabilité de vos services.
           </Text>
 
-          {/* Notes de mise à jour (Style Satiné / Glassmorphic) */}
+          {/* Notes de mise à jour (Îlot Mat Opaque) */}
           {data?.changelog && data.changelog.length > 0 && (
-            <View className="mt-6 w-full rounded-2xl border border-border-light/40 bg-surface-light/50 p-4 dark:border-border-dark/20 dark:bg-surface-dark/40 backdrop-blur-md">
-              <Text className="text-[10px] font-bold text-text-secondary-light/50 dark:text-text-secondary-dark/50 uppercase tracking-wider mb-2">
+            <View className="mt-5 w-full rounded-xl border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-900 dark:bg-zinc-900/50">
+              <Text className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-2">
                 Au programme :
               </Text>
-              <Text className="text-[13px] leading-[20px] font-medium text-text-primary-light dark:text-text-primary-dark">
+              <Text className="text-xs leading-5 font-medium text-zinc-700 dark:text-zinc-300">
                 {data.changelog.join('\n')}
               </Text>
             </View>
@@ -59,14 +56,14 @@ export default function UpdateAvailableModal() {
         </View>
 
         {/* Bloc d'Actions Épuré */}
-        <View className="w-full gap-y-2.5 mt-4">
+        <View className="w-full gap-y-2 mt-4">
           <Button 
             label="Installer et redémarrer"
             onPress={() => void handleInstall()}
             loading={isInstalling}
             size="xl"
-            className="rounded-xl h-12"
-            rightIcon={!isInstalling ? <Download size={16} color="#FFFFFF" /> : undefined}
+            className="rounded-xl h-12 bg-orange-500 active:bg-orange-600"
+            rightIcon={!isInstalling ? <Download size={15} color="#FFFFFF" /> : undefined}
           />
           
           <Button 
@@ -74,7 +71,7 @@ export default function UpdateAvailableModal() {
             variant="ghost"
             onPress={() => router.back()}
             disabled={isInstalling}
-            className="h-10 text-text-secondary-light dark:text-text-secondary-dark"
+            className="h-11 rounded-xl text-zinc-500 dark:text-zinc-400 active:bg-zinc-50 dark:active:bg-zinc-900"
           />
         </View>
 

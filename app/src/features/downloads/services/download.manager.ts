@@ -30,7 +30,6 @@ class DownloadManager {
             // If result is undefined, it means the download was paused or cancelled.
             // We should just return without marking it as completed or failed.
             if (!result) return;
-            console.log("start fixing")
 
             if (result.status !== 200) {
                 throw new Error(`Téléchargement échoué (HTTP ${result.status})`);
@@ -38,7 +37,6 @@ class DownloadManager {
 
             task.status = "completed";
             task.progress = 1;
-            console.log("task update process")
 
             let dest_uri = await saveToPublicDocuments({
                 sourceUri: result.uri, 

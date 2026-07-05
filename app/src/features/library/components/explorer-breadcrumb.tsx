@@ -16,30 +16,41 @@ export function ExplorerBreadcrumb({ items, onNavigate }: ExplorerBreadcrumbProp
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ alignItems: 'center', paddingVertical: 4 }}
-      className="mb-3"
+      contentContainerStyle={{ alignItems: 'center' }}
+      className="py-1"
     >
       {items.map((item, index) => {
         const isLast = index === items.length - 1;
+        
         return (
           <View key={`${item.id ?? 'root'}-${index}`} className="flex-row items-center">
-            {index > 0 ? (
-              <ChevronRight size={14} color="#94A3B8" style={{ marginHorizontal: 4 }} />
-            ) : null}
+            {/* Séparateur géométrique mat */}
+            {index > 0 && (
+              <View className="mx-1">
+                <ChevronRight size={12} color="#A1A1AA" />
+              </View>
+            )}
+            
             <Pressable
               disabled={isLast}
               onPress={() => onNavigate(index)}
-              className="max-w-[160px] flex-row items-center gap-1 rounded-lg px-1 py-0.5"
+              className="max-w-[140px] flex-row items-center gap-1 rounded-md px-1.5 py-1 active:bg-zinc-100 dark:active:bg-zinc-900"
             >
-              {index === 0 ? (
-                <Home size={14} color={isLast ? '#FF7A00' : '#64748B'} />
-              ) : null}
+              {/* Icône Home adaptée à l'état actif/inactif */}
+              {index === 0 && (
+                <Home 
+                  size={13} 
+                  color={isLast ? '#F97316' : '#71717A'} 
+                  strokeWidth={isLast ? 2.5 : 2}
+                />
+              )}
+              
               <Text
                 numberOfLines={1}
                 className={
                   isLast
-                    ? 'text-sm font-bold text-primary'
-                    : 'text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark'
+                    ? 'text-xs font-bold text-orange-500'
+                    : 'text-xs font-semibold text-zinc-500 dark:text-zinc-400'
                 }
               >
                 {item.name}

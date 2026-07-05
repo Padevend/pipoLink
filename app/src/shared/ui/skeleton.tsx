@@ -18,30 +18,30 @@ export function Skeleton({
   const animated = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Pulsation fluide et premium (1200ms pour un rythme plus calme)
+    // Pulsation fluide et linéaire, sans à-coups
     Animated.loop(
       Animated.sequence([
         Animated.timing(animated, { 
           toValue: 1, 
-          duration: 1200, 
+          duration: 1000, 
           useNativeDriver: true 
         }),
         Animated.timing(animated, { 
           toValue: 0, 
-          duration: 1200, 
+          duration: 1000, 
           useNativeDriver: true 
         }),
       ]),
     ).start();
   }, [animated]);
 
-  // Opacité subtile s'adaptant parfaitement aux superpositions de verre (Glassmorphism)
+  // Changement d'opacité subtil sur une base de couleur mate
   const opacity = animated.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.35, 0.75],
+    outputRange: [0.4, 0.8],
   });
 
-  // Détection intelligente des classes de dimensions Tailwind pour éviter les conflits de styles
+  // Vérification des styles appliqués pour éviter les chevauchements
   const hasHeightClass = className?.split(' ').some(c => c.startsWith('h-'));
   const hasWidthClass = className?.split(' ').some(c => c.startsWith('w-'));
   const hasRadiusClass = className?.split(' ').some(c => c.startsWith('rounded'));
@@ -49,16 +49,14 @@ export function Skeleton({
   return (
     <Animated.View 
       className={cn(
-        // Arrière-plan translucide s'adaptant nativement au mode clair et sombre (sans shadow)
-        'bg-slate-200/70 dark:bg-slate-800/50', 
+        'bg-zinc-100 dark:bg-zinc-900', 
         className
       )} 
       style={[
         { opacity },
-        // On n'applique les styles en ligne que s'ils ne sont pas définis via Tailwind
         !hasWidthClass && { width: width ?? '100%' },
-        !hasHeightClass && { height: height ?? 20 },
-        !hasRadiusClass && { borderRadius: radius ?? 8 },
+        !hasHeightClass && { height: height ?? 16 },
+        !hasRadiusClass && { borderRadius: radius ?? 12 },
       ] as any} 
     />
   );

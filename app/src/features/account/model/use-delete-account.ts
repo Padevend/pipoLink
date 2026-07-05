@@ -6,7 +6,7 @@ import { accountApi, type DeleteAccountPayload } from '@/shared/api/account-api'
  *
  * Usage:
  *   const { mutate, isPending, error } = useDeleteAccount();
- *   mutate({ email });
+ *   mutate({ password });
  */
 export function useDeleteAccount() {
   return useMutation({

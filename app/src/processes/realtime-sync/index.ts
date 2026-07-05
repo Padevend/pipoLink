@@ -17,6 +17,7 @@ import { conversationKeys } from '@/entities/conversation/hooks';
 import { activeChat } from '@/features/messaging/lib/active-chat';
 import { AsyncStorageService, ASYNC_STORAGE_KEYS } from '@/shared/lib/storage';
 import type { UserWithProfile } from '@/shared/api/normalize-user';
+import { syncContactProfilesSilently } from '@/processes/contact-sync';
 
 type MessageCreatedPayload = {
   conversationId: string;
@@ -238,6 +239,12 @@ export function setupRealtimeSync(): () => void {
 
     on<void>(WS_EVENTS.NOTIFICATION_CREATED, () => {
       void queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    }),
+
+    on<string>('status.change', (status) => {
+      if (status === 'connected') {
+        void syncContactProfilesSilently();
+      }
     }),
   ];
 

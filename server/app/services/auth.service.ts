@@ -15,6 +15,7 @@ import {
   type DevicePairingSession,
 } from "../helpers/device-pairing-pending.js";
 import { consumeQrLinkResult, storeQrLinkResult } from "../helpers/qr-link-pending.js";
+import { HttpContext } from "../../config/app.js";
 
 export class AuthService {
   private otp = new OtpService();
@@ -84,6 +85,9 @@ export class AuthService {
     devicePlatform?: string;
     loginMode?: "primary" | "device";
     fcmToken?: string;
+    ip?: string;
+    userAgent?: string;
+    location?: string;
   }) {
     const user = await prisma.user.findUnique({ where: { email: payload.email } });
     if (!user) throw { code: ErrorCode.INVALID_CREDENTIALS, status: 401, message: "Email ou mot de passe incorrect." };
@@ -92,6 +96,7 @@ export class AuthService {
     if (!valid) throw { code: ErrorCode.INVALID_CREDENTIALS, status: 401, message: "Email ou mot de passe incorrect." };
 
     if (!user.is_active) throw { code: ErrorCode.ACCOUNT_NOT_VERIFIED, status: 403, message: "Veuillez vérifier votre email avant de vous connecter." };
+    if (user.status === "DELETED" || user.isAnonymized) throw { code: ErrorCode.ACCOUNT_INACTIVE, status: 403, message: "Ce compte a été supprimé." };
     if (user.is_excluded) throw { code: ErrorCode.ACCOUNT_INACTIVE, status: 403, message: "Votre compte a été suspendu." };
 
     let deviceId: string | undefined;
@@ -150,7 +155,15 @@ export class AuthService {
       }
     }
 
-    await prisma.auditLog.create({ data: { user_id: user.id, action: "LOGIN" } });
+    await prisma.auditLog.create({
+      data: {
+        user_id: user.id,
+        action: "LOGIN",
+        ip: payload.ip || null,
+        userAgent: payload.userAgent || null,
+        location: payload.location || null
+      }
+    });
 
     const tokens = await this._generateTokens(user, deviceId);
     return {
@@ -269,7 +282,7 @@ export class AuthService {
   }
 
   /** Appareil principal : récupère les infos d'une demande avant approbation (code manuel). */
-  previewPairing(userId: string, query: { token?: string; shortCode?: string }) {
+  previewPairing(query: { token?: string; shortCode?: string }) {
     if (!query.token && !query.shortCode) {
       throw { code: ErrorCode.VALIDATION_ERROR, status: 400, message: "token ou shortCode requis." };
     }

@@ -10,50 +10,50 @@ export default function KeyRecoveryScreen(): JSX.Element {
   const { keyMissing } = useKeyRecovery();
 
   return (
-    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
 
-      {/* Header Style Glassmorphism Translucide */}
-      <View className="z-10 flex-row items-center border-b border-border-light/20 bg-surface-light/75 px-4 py-3.5 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl ">
+      {/* HEADER : Panneau Mat Solide */}
+      <View className="flex-row items-center border-b border-zinc-150 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
         <Pressable
           onPress={() => router.back()}
-          className="h-9 w-9 items-center justify-center rounded-full active:scale-95 transition-transform"
+          className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
         >
-          <ArrowLeft size={20} className="text-text-primary-light dark:text-text-primary-dark" />
+          <ArrowLeft size={14} color="#71717A" />
         </Pressable>
 
         <View className="flex-1 ml-3">
-          <Text className="text-[17px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+          <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
             Récupération des clés
           </Text>
-          <Text className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary-light/50 dark:text-text-secondary-dark/50 mt-0.5">
+          <Text className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mt-0.5">
             Sécurité du protocole
           </Text>
         </View>
       </View>
 
-      <View className="flex-1 justify-between p-5 pb-8">
+      <View className="flex-1 justify-between p-4 pb-6">
 
-        {/* Conteneur Central : Statut & Carte d'explication Satinée */}
+        {/* CONTENU CENTRAL MAT */}
         <View className="flex-1 justify-center max-w-md w-full mx-auto">
 
-          {/* Icône d'état dynamique et épurée */}
+          {/* Badge d'état géométrique et épuré */}
           <View className="items-center mb-6">
-            <View className={`h-14 w-14 items-center justify-center rounded-2xl border ${keyMissing === true
-                ? 'bg-error/10 border-error/10'
+            <View className={`h-12 w-12 items-center justify-center rounded-xl border ${keyMissing === true
+                ? 'bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-900'
                 : keyMissing === false
-                  ? 'bg-success/10 border-success/10'
-                  : 'bg-primary/10 border-primary/10'
+                  ? 'bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-900'
+                  : 'bg-orange-50 border-orange-200 dark:bg-orange-950/30 dark:border-orange-900'
               }`}>
               {keyMissing === true ? (
-                <ShieldAlert size={24} color="#EF4444" />
+                <ShieldAlert size={18} color="#EF4444" />
               ) : keyMissing === false ? (
-                <ShieldCheck size={24} color="#22C55E" />
+                <ShieldCheck size={18} color="#22C55E" />
               ) : (
-                <Activity size={24} color="#FF7A00" />
+                <Activity size={18} color="#F97316" />
               )}
             </View>
 
-            <Text className="mt-3 text-[16px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+            <Text className="mt-3 text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
               {keyMissing === true
                 ? 'Clés introuvables'
                 : keyMissing === false
@@ -62,9 +62,9 @@ export default function KeyRecoveryScreen(): JSX.Element {
             </Text>
           </View>
 
-          {/* Fiche explicative en verre poli */}
-          <View className="rounded-2xl border border-border-light/40 bg-surface-light/50 p-5 dark:border-border-dark/20 dark:bg-surface-dark/40 backdrop-blur-md ">
-            <Text className="text-[13px] leading-[22px] tracking-wide text-text-primary-light/80 dark:text-text-primary-dark/80 text-center">
+          {/* Fiche explicative en bloc mat solide */}
+          <View className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-5 dark:border-zinc-800 dark:bg-zinc-900/20">
+            <Text className="text-xs font-semibold leading-5 text-zinc-500 dark:text-zinc-400 text-center">
               {keyMissing === true
                 ? 'Vos clés cryptographiques sont introuvables sur cet appareil. Pour des raisons de sécurité, elles ne peuvent pas être récupérées à distance. Affichez un QR sur cet appareil, puis scannez-le depuis un autre appareil déjà configuré pour redistribuer les clés de vos conversations.'
                 : keyMissing === false
@@ -74,27 +74,27 @@ export default function KeyRecoveryScreen(): JSX.Element {
           </View>
         </View>
 
-        {/* Section Actions & Boutons inférieurs */}
-        <View className="gap-3 max-w-md w-full mx-auto mt-4">
+        {/* SECTION ACTIONS : Boutons géométriques mats */}
+        <View className="gap-y-2.5 max-w-md w-full mx-auto mt-4">
           {keyMissing === true ? (
             <>
               <Button
                 label="Afficher un QR (cet appareil)"
                 onPress={() => router.push('/devices/add' as any)}
-                className="rounded-2xl h-12  active:scale-[0.98] transition-transform"
+                className="bg-orange-500 rounded-xl h-11"
               />
               <Button
                 label="Scanner un QR (appareil principal)"
                 variant="outline"
                 onPress={() => router.push('/devices/scan' as any)}
-                className="rounded-2xl h-12 border-border-light/60 dark:border-border-dark/30 active:scale-[0.98] transition-transform bg-surface-light/30 dark:bg-surface-dark/20"
+                className="rounded-xl h-11 border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 active:bg-zinc-100 dark:active:bg-zinc-800"
               />
             </>
           ) : keyMissing === false ? (
             <Button
               label="Retour à l’accueil"
               onPress={() => router.replace('/(tabs)' as any)}
-              className="rounded-2xl h-12 active:scale-[0.98] transition-transform"
+              className="bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-950 rounded-xl h-11"
             />
           ) : null}
         </View>

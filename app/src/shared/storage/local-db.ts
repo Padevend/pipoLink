@@ -15,6 +15,22 @@ export type PendingMessageRow = {
 };
 
 export const localDb = {
+  // global
+  resetDb(): void {
+    return db.execSync(`
+      DELETE FROM messages;
+      DELETE FROM conversations;
+      DELETE FROM pending_messages;
+      DELETE FROM ai_sessions;
+      DELETE FROM ai_messages;
+      DELETE FROM documents;
+      DELETE FROM folders;
+      DELETE FROM downloads;
+      DELETE FROM users;
+      DELETE FROM attachment_downloads;
+    `)
+  },
+
   // gestion des conversations
   // ============================================================================================
   upsertConversations(items: Conversation[]): void {
@@ -41,7 +57,6 @@ export const localDb = {
     );
     return rows.map((r) => normalizeConversation(JSON.parse(r.payload_json) as Conversation));
   },
-  // ============================================================================================
 
   // gestion des messages de chats
   // ============================================================================================
@@ -213,7 +228,51 @@ export const localDb = {
   clearDownlaodHistory(): void {
     db.runAsync(
       'DELETE FROM downloads WHERE status IN [completed, failed, cancelled]'
-    )
+    );
+  },
+  // ============================================================================================
+
+  // gestionnaire des profils utilisateurs
+  // ============================================================================================
+  upsertUsers(users: any[]): void {
+    for (const u of users) {
+      db.runSync(
+        `INSERT OR REPLACE INTO users (id, username, email, matricule, role, profile_json, conversations_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          u.id,
+          u.username || '',
+          u.email || '',
+          u.matricule || null,
+          u.role || 'student',
+          JSON.stringify(u.profile || {}),
+          JSON.stringify(u.conversations || []),
+        ],
+      );
+    }
+  },
+
+  getUser(id: string): any | null {
+    const row = db.getFirstSync<{
+      id: string;
+      username: string;
+      email: string;
+      matricule: string | null;
+      role: string;
+      profile_json: string;
+      conversations_json: string;
+    }>('SELECT * FROM users WHERE id = ?', [id]);
+
+    if (!row) return null;
+    return {
+      id: row.id,
+      username: row.username,
+      email: row.email,
+      matricule: row.matricule,
+      role: row.role,
+      profile: JSON.parse(row.profile_json),
+      conversations: JSON.parse(row.conversations_json),
+    };
   }
   // ============================================================================================
 };

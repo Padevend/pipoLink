@@ -7,5 +7,5 @@ export const PaymentRouter = new Hono();
 
 PaymentRouter
   .post("/initiate", authMiddleware, callAction(PaymentController, "initiate"))
-  .post("/:id/confirm-simulate", authMiddleware, callAction(PaymentController, "confirmSimulated"))
+  .post("/webhook", callAction(PaymentController, "handleWebhook"))
   .get("/:id/status", authMiddleware, callAction(PaymentController, "getStatus"));

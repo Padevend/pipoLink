@@ -13,6 +13,4 @@ export const devicesApi = {
   getDevices: () => api.get<Device[]>('/devices'),
   
   removeDevice: (id: string) => api.delete<void>(`/devices/${id}`),
-  
-
 };

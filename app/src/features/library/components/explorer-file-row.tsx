@@ -1,8 +1,7 @@
 import { ChevronRight, DownloadCloud, FileText } from 'lucide-react-native';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import type { Document } from '@/shared/api/types';
-import { BRAND } from '@/shared/config/brand';
 import { formatBytes } from '@/shared/lib/file';
 
 export interface ExplorerFileRowProps {
@@ -14,54 +13,43 @@ export function ExplorerFileRow({ document, onPress }: ExplorerFileRowProps): JS
   return (
     <Pressable
       onPress={onPress}
-      className="w-full flex-row items-center justify-between rounded-xl border border-border-light/40 bg-surface-light/50 p-3.5 dark:border-border-dark/20 dark:bg-surface-dark/40 backdrop-blur-md active:scale-[0.99] transition-all"
+      className="w-full flex-row items-center justify-between rounded-xl border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-900 dark:bg-zinc-900/40 active:bg-zinc-100 dark:active:bg-zinc-900"
     >
-      
       <View className="flex-1 flex-row items-center pr-3">
         
-        <View 
-          className="h-10 w-10 items-center justify-center rounded-lg border border-primary/5 mr-3.5"
-          style={{ backgroundColor: `${BRAND.primary}12` }}
-        >
-          <FileText size={18} color={BRAND.primary} />
+        {/* Conteneur d'icône épuré - Mat */}
+        <View className="h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 mr-3">
+          <FileText size={15} color="#F97316" />
         </View>
         
-        {/* Métadonnées et Titre */}
+        {/* Informations sur le fichier */}
         <View className="flex-1 justify-center">
           <Text
             numberOfLines={1}
-            className="text-[14px] font-semibold tracking-tight text-text-primary-light dark:text-text-primary-dark"
+            className="text-xs font-bold tracking-tight text-zinc-900 dark:text-zinc-50"
           >
             {document.fileName}
           </Text>
           
           <View className="flex-row items-center mt-1 gap-x-2">
-            <View 
-              className="rounded-md border px-1.5 py-0.5"
-              style={{ backgroundColor: `${BRAND.primary}08`, borderColor: `${BRAND.primary}15` }}
-            >
-              <Text 
-                className="text-[9px] font-bold tracking-wide uppercase" 
-                numberOfLines={1}
-                style={{ color: BRAND.primary }}
-              >
+            {/* Badge de format technique - Mat Opaque */}
+            <View className="rounded bg-zinc-200/60 dark:bg-zinc-800 px-1.5 py-0.5">
+              <Text className="font-mono text-[9px] font-bold tracking-wider text-zinc-600 dark:text-zinc-400 uppercase" numberOfLines={1}>
                 {document.type || 'DOC'}
               </Text>
             </View>
             
-            <Text className="text-[11px] font-medium text-text-secondary-light/50 dark:text-text-secondary-dark/50">
+            <Text className="font-mono text-[10px] text-zinc-400 dark:text-zinc-500">
               {formatBytes(document.fileSize)}
             </Text>
           </View>
         </View>
-
       </View>
 
-      {/* RIGHT: Action Indicator Block */}
+      {/* Flèche d'action minimale */}
       <View className="pl-1 items-center justify-center">
-        <ChevronRight size={16} className="text-text-secondary-light/40 dark:text-text-secondary-dark/40" />
+        <ChevronRight size={14} color="#71717A" />
       </View>
-
     </Pressable>
   );
 }
@@ -70,53 +58,43 @@ export function RenderDocumentItem({ item, onPress }: { item: Document, onPress:
   return (
     <Pressable 
       onPress={onPress}
-      className="w-[170px] h-[105px] m-1.5 p-3 rounded-xl border border-border-light/40 bg-surface-light/40 dark:border-border-dark/20 dark:bg-surface-dark/30 backdrop-blur-md justify-between active:scale-[0.98] transition-all"
+      className="w-[155px] h-[115px] m-1 p-3 rounded-xl border border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/40 justify-between active:bg-zinc-100 dark:active:bg-zinc-900"
     >
-      {/* Ligne Supérieure : Icône Type & Métadonnées (Taille / UE) */}
+      {/* Ligne Supérieure : Icône Type & Métadonnées */}
       <View className="flex-row items-start justify-between w-full">
-        <View 
-          className="h-8 w-8 items-center justify-center rounded-lg"
-          style={{ backgroundColor: `${BRAND.primary}12` }}
-        >
-          <FileText size={16} color={BRAND.primary} />
+        <View className="h-7 w-7 items-center justify-center rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+          <FileText size={13} color="#F97316" />
         </View>
         
-        <View className="items-end">
-          <Text className="text-[10px] font-bold text-primary tracking-wide uppercase max-w-[100px]" numberOfLines={1} style={{ color: BRAND.primary }}>
+        <View className="items-end flex-1 pl-2">
+          <Text className="text-[10px] font-bold text-orange-500 uppercase max-w-full" numberOfLines={1}>
             {item.ue || item.type || 'DOC'}
           </Text>
-          <Text className="text-[9px] font-medium text-text-secondary-light/40 dark:text-text-secondary-dark/50 mt-0.5">
+          <Text className="font-mono text-[9px] text-zinc-400 dark:text-zinc-500 mt-0.5">
             {item.fileSize ? formatBytes(item.fileSize) : 'N/A'}
           </Text>
         </View>
       </View>
 
-      {/* Ligne Centrale : Titre ou FileName avec défilement horizontal si trop long */}
+      {/* Ligne Centrale : Titre fixe épuré (Suppression du ScrollView horizontal horizontal instable) */}
       <View className="w-full my-1">
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          bounces={true}
-          contentContainerStyle={{ alignItems: 'center' }}
+        <Text 
+          className="text-xs font-bold tracking-tight text-zinc-800 dark:text-zinc-100"
+          numberOfLines={2}
         >
-          <Text 
-            className="text-[12px] font-semibold tracking-tight text-text-primary-light dark:text-text-primary-dark whitespace-nowrap"
-            numberOfLines={1}
-          >
-            {item.title || item.fileName}
-          </Text>
-        </ScrollView>
+          {item.title || item.fileName}
+        </Text>
       </View>
 
       {/* Ligne Inférieure : Auteur & Compteur de téléchargements */}
-      <View className="flex-row items-center justify-between w-full pt-1 border-t border-border-light/20 dark:border-border-dark/10">
-        <Text className="text-[9px] font-medium text-text-secondary-light/60 dark:text-text-secondary-dark/50 max-w-[95px]" numberOfLines={1}>
-          par @{item.uploadedBy?.username || 'Anonyme'}
+      <View className="flex-row items-center justify-between w-full pt-1.5 border-t border-zinc-150 dark:border-zinc-800">
+        <Text className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 max-w-[85px]" numberOfLines={1}>
+          @{item.uploadedBy?.username || 'Anonyme'}
         </Text>
         
-        <View className="flex-row items-center gap-0.5">
-          <DownloadCloud size={10} className="text-text-secondary-light/40 dark:text-text-secondary-dark/40" />
-          <Text className="text-[9px] font-bold text-text-secondary-light/50 dark:text-text-secondary-dark/50">
+        <View className="flex-row items-center gap-1">
+          <DownloadCloud size={11} color="#71717A" />
+          <Text className="font-mono text-[9px] font-bold text-zinc-400 dark:text-zinc-500">
             {item.downloadCount || 0}
           </Text>
         </View>

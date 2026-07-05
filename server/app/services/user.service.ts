@@ -61,6 +61,9 @@ export class UserService {
 
     if (!user) return null;
 
+    // Ne pas exposer les comptes supprimés via getUser
+    if (user.email?.endsWith("@deleted.local")) return null;
+
     const conversations = await prisma.chat.findMany({
       where: {
         AND: [
@@ -143,6 +146,15 @@ export class UserService {
       const tokens = await this.authService._generateTokens(user, device.id);
       const expiresAtMs = tokens.expiresAt instanceof Date ? tokens.expiresAt.getTime() : Number(tokens.expiresAt);
 
+      // create subscription
+      await prisma.subscription.create({
+        data: {
+          user_id: userId,
+          plan: "FREE",
+          status: "ACTIVE",
+        },
+      });
+
       return {
         user,
         device,
@@ -165,6 +177,7 @@ export class UserService {
       is_active: true,
       is_configured: true,
       is_excluded: false,
+      isAnonymized: false,
     };
 
     if (q.length > 0) {
@@ -236,19 +249,5 @@ export class UserService {
       create: { user_id: userId, firstname: "", lastname: "", avatarUrl: url },
     });
     return { avatarUrl: url };
-  }
-
-  async deleteAccount(userId: string) {
-    await prisma.refreshToken.updateMany({
-      where: { user_id: userId },
-      data: { revokedAt: new Date() },
-    });
-
-    await prisma.device.deleteMany({
-      where: { user_id: userId }
-    });
-
-    await prisma.user.update({ where: { id: userId }, data: { is_excluded: true } });
-    await prisma.auditLog.create({ data: { user_id: userId, action: "ACCOUNT_DELETED" } });
   }
 }

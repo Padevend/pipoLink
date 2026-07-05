@@ -10,8 +10,11 @@ export interface Conversation {
   avatarUrl?: string;
   lastMessage?: Message;
   unreadCount: number;
-  members: { id: string; username: string; avatarUrl?: string, phone?: string | undefined }[];
+  members: { id: string; username: string; avatarUrl?: string, phone?: string | undefined, role?: 'admin' | 'member' }[];
   updatedAt: string;
+  isPending?: boolean;
+  recipientUserId?: string;
+  created_by_id?: string;
 }
 
 export const messagingApi = {
@@ -83,4 +86,35 @@ export const messagingApi = {
 
   deleteChat: (conversationId: string) => 
     api.delete<void>(`/messaging/${conversationId}`),
+
+  updateChatDetails: (chatId: string, body: { name: string }) =>
+    api.put<Conversation>(`/messaging/${chatId}`, body),
+
+  promoteMember: (chatId: string, targetUserId: string) =>
+    api.post<any>(`/messaging/${chatId}/members/promote`, { targetUserId }),
+
+  demoteMember: (chatId: string, targetUserId: string) =>
+    api.post<any>(`/messaging/${chatId}/members/demote`, { targetUserId }),
+
+  kickMember: (chatId: string, targetUserId: string) =>
+    api.post<any>(`/messaging/${chatId}/members/kick`, { targetUserId }),
+
+  createInvitation: (
+    chatId: string,
+    body: { maxUses?: number; expiresAt?: string; encryptedChatKey?: string },
+  ) => api.post<any>(`/messaging/${chatId}/invitations`, body),
+
+  listInvitations: (chatId: string) =>
+    api.get<any[]>(`/messaging/${chatId}/invitations`),
+
+  getInvitationDetails: (token: string) =>
+    api.get<any>(`/messaging/invitations/${token}`),
+
+  joinViaInvitation: (
+    token: string,
+    body: { encryptedKeys: { deviceId: string; encryptedKey: string }[] },
+  ) => api.post<Conversation>(`/messaging/invitations/${token}/join`, body),
+
+  revokeInvitation: (invitationId: string) =>
+    api.post<any>(`/messaging/invitations/${invitationId}/revoke`),
 };

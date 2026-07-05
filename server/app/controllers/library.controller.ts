@@ -4,6 +4,7 @@ import { ApiResponse } from "../helpers/api-response.js";
 import { uploadDocumentValidator, moderateDocumentValidator } from "../validators/library.validator.js";
 import { RealtimeBus } from "../../src/modules/websocket/gateway/realtime-bus.js";
 import { WsEventName } from "../../src/modules/websocket/events/event-names.js";
+import { prisma } from "../../config/database.js";
 
 export class LibraryController {
   private service = new LibraryService();
@@ -51,6 +52,7 @@ export class LibraryController {
 
   async uploadDocument(c: HttpContext) {
     const userId = c.get("userId") as string;
+    const plan = c.get("plan") as string || "FREE";
     const body = await c.req.parseBody();
     const file = body["file"];
     const payloadRaw = body["payload"] ? JSON.parse(body["payload"] as string) : {};
@@ -58,6 +60,31 @@ export class LibraryController {
     await uploadDocumentValidator.validate(payloadRaw);
 
     if (file instanceof File) {
+      if (plan === "FREE") {
+        // Enforce 5MB limit for free users
+        if (file.size > 5 * 1024 * 1024) {
+          return ApiResponse.error(
+            c,
+            "LIMIT_EXCEEDED",
+            "Les comptes GRATUITS sont limités à 5 Mo par fichier. Passez en PREMIUM pour uploader jusqu'à 50 Mo.",
+            402
+          );
+        }
+
+        // Enforce 5 documents limit for free users
+        const count = await prisma.document.count({
+          where: { uploaded_by_id: userId },
+        });
+        if (count >= 5) {
+          return ApiResponse.error(
+            c,
+            "LIMIT_EXCEEDED",
+            "Les comptes GRATUITS sont limités à 5 documents dans leur bibliothèque. Veuillez en supprimer ou passer en PREMIUM.",
+            402
+          );
+        }
+      }
+
       const buffer = Buffer.from(await file.arrayBuffer());
       const meta = { originalName: file.name, mimeType: file.type };
       const doc = await this.service.uploadDocument(userId, payloadRaw, buffer, meta);
