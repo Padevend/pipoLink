@@ -5,6 +5,7 @@ import {
     Plus,
     Trash2,
     FileText,
+    Upload,
 } from 'lucide-react-native';
 import {
     ActivityIndicator,
@@ -14,6 +15,8 @@ import {
     View,
 } from 'react-native';
 import { Document } from '@/shared/api/types';
+import * as DocumentPicker from 'expo-document-picker';
+import { useUploadDocument } from '@/entities/document/hooks';
 
 interface SourceModalProps {
     setSourcesModalVisible: (visible: boolean) => void;
@@ -22,6 +25,7 @@ interface SourceModalProps {
     handleRemoveDocument: (documentId: string) => void;
     setAddSourceVisible: (visible: boolean) => void;
     removeDocMutation: any;
+    handleAddDocument: (documentId: string) => void;
 }
 
 export default function SourceModal(
@@ -31,8 +35,52 @@ export default function SourceModal(
         activeDocs,
         handleRemoveDocument,
         setAddSourceVisible,
-        removeDocMutation
+        removeDocMutation,
+        handleAddDocument
     }: SourceModalProps) {
+
+    const uploadMutation = useUploadDocument();
+
+    const handleUploadFromFile = async () => {
+        try {
+            const result = await DocumentPicker.getDocumentAsync({
+                type: '*/*',
+                copyToCacheDirectory: true,
+            });
+
+            if (result.canceled) return;
+
+            const asset = result.assets[0];
+            const file = {
+                uri: asset.uri,
+                name: asset.name,
+                mimeType: asset.mimeType ?? 'application/octet-stream',
+                size: asset.size,
+            };
+
+            const title = asset.name.replace(/\.[^.]+$/, '');
+
+            // Ingestion en tâche de fond non-bloquante
+            uploadMutation.mutate({
+                file,
+                metadata: {
+                    title: title || 'Fichier importé',
+                    type: 'COURS',
+                    filiere: 'Général',
+                    niveau: 'L1',
+                    ue: 'Général',
+                }
+            }, {
+                onSuccess: (newDoc) => {
+                    // Associe directement le document au notebook/chat en cours
+                    handleAddDocument(newDoc.id);
+                }
+            });
+        } catch (err) {
+            console.error('[SourceModalUpload] error picking/uploading file:', err);
+        }
+    };
+
     return (
         <View className="flex-1 justify-end bg-black/40">
             <View className="bg-white dark:bg-zinc-950 h-[75%] rounded-t-2xl border-t border-zinc-100 dark:border-zinc-900 flex-col">
@@ -62,13 +110,25 @@ export default function SourceModal(
                     </View>
                 ) : (
                     <View className="flex-1 p-4">
-                        <Pressable
-                            onPress={() => setAddSourceVisible(true)}
-                            className="flex-row items-center justify-center gap-2 w-full h-11 bg-orange-500 rounded-xl mb-4 active:bg-orange-600"
-                        >
-                            <Plus size={16} color="#FFFFFF" strokeWidth={2.5} />
-                            <Text className="text-xs font-bold text-white uppercase tracking-wide">Associer un document</Text>
-                        </Pressable>
+                        
+                        {/* Association & Upload Row */}
+                        <View className="flex-row gap-2 mb-4">
+                            <Pressable
+                                onPress={() => setAddSourceVisible(true)}
+                                className="flex-1 flex-row items-center justify-center gap-2 h-11 bg-orange-500 rounded-xl active:bg-orange-600"
+                            >
+                                <Plus size={15} color="#FFFFFF" strokeWidth={2.5} />
+                                <Text className="text-[11px] font-bold text-white uppercase tracking-wider">Associer un doc</Text>
+                            </Pressable>
+
+                            <Pressable
+                                onPress={handleUploadFromFile}
+                                className="flex-1 flex-row items-center justify-center gap-2 h-11 border border-orange-500 bg-white dark:bg-zinc-900 rounded-xl active:bg-orange-50 dark:active:bg-orange-950/10"
+                            >
+                                <Upload size={15} color="#F97316" strokeWidth={2.5} />
+                                <Text className="text-[11px] font-bold text-orange-500 uppercase tracking-wider">Uploader un fichier</Text>
+                            </Pressable>
+                        </View>
 
                         <FlatList
                             data={activeDocs}

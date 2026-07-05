@@ -320,6 +320,7 @@ export default function AiChatScreen() {
           handleRemoveDocument={handleRemoveDocument}
           setAddSourceVisible={setAddSourceVisible}
           removeDocMutation={removeDocMutation}
+          handleAddDocument={handleAddDocument}
         />
       </Modal>
 

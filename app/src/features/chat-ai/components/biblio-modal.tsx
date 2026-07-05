@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Document } from '@/shared/api/types';
 import { formatBytes } from '@/shared/lib/file';
+import { SearchBar } from '@/shared/ui/search-bar';
 import {
   X,
   FileText,
@@ -28,6 +30,14 @@ export default function LibraryModal({
     handleAddDocument,
     myDocsLoading
 }: modalprops){
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const filteredDocs = libraryDocs.filter(d => {
+      const notAlreadyActive = !activeDocs?.some(ad => ad.id === d.id);
+      const matchesSearch = d.title.toLowerCase().includes(searchQuery.toLowerCase());
+      return notAlreadyActive && matchesSearch;
+    });
+
     return (
         <View className="flex-1 justify-end bg-black/50">
           <View className="bg-white dark:bg-zinc-950 h-[65%] rounded-t-2xl border-t border-zinc-100 dark:border-zinc-900 flex-col">
@@ -50,6 +60,15 @@ export default function LibraryModal({
               </Pressable>
             </View>
 
+            {/* Search Input Bar */}
+            <View className="px-4 py-2 border-b border-zinc-100 dark:border-zinc-900 bg-zinc-50/50 dark:bg-zinc-900/10">
+              <SearchBar
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholder="Rechercher un document..."
+              />
+            </View>
+
             {/* Modal Body */}
             {myDocsLoading ? (
               <View className="flex-1 justify-center items-center">
@@ -57,7 +76,7 @@ export default function LibraryModal({
               </View>
             ) : (
               <FlatList
-                data={libraryDocs.filter(d => !activeDocs?.some(ad => ad.id === d.id))}
+                data={filteredDocs}
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={{ padding: 16 }}
                 ItemSeparatorComponent={() => <View className="h-2" />}
@@ -84,10 +103,12 @@ export default function LibraryModal({
                   <View className="items-center py-16 px-6">
                     <FileText size={26} color="#A1A1AA" className="mb-2" />
                     <Text className="text-xs font-bold text-zinc-400 dark:text-zinc-500 text-center">
-                      Aucun document disponible
+                      {searchQuery ? "Aucun document correspondant" : "Aucun document disponible"}
                     </Text>
                     <Text className="text-[11px] text-zinc-400 dark:text-zinc-500 text-center mt-1 px-4 leading-4">
-                      Tous les documents de votre bibliothèque sont déjà inclus ou celle-ci est vide.
+                      {searchQuery 
+                        ? `Aucun fichier de votre bibliothèque ne correspond à "${searchQuery}"`
+                        : "Tous les documents de votre bibliothèque sont déjà inclus ou celle-ci est vide."}
                     </Text>
                   </View>
                 }
