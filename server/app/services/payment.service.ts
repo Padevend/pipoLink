@@ -4,11 +4,7 @@ import { env } from "../../config/envManager.js";
 import { MailerService } from "./mailer.service.js";
 import { RealtimeBus } from "../../src/modules/websocket/gateway/realtime-bus.js";
 import { WsEventName } from "../../src/modules/websocket/events/event-names.js";
-import mesombPkg from "@hachther/mesomb";
-
-// Dynamically resolve MeSomb classes to handle various module formats safely
-const PaymentOperation = (mesombPkg as any).PaymentOperation || (mesombPkg as any).default?.PaymentOperation;
-const RandomGenerator = (mesombPkg as any).RandomGenerator || (mesombPkg as any).default?.RandomGenerator;
+import {PaymentOperation,RandomGenerator} from "@hachther/mesomb";
 
 export class PaymentService {
   /**
