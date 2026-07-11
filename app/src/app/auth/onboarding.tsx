@@ -7,7 +7,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useOnboarding } from "@/features/auth/hooks/use-onboarding";
 import {
@@ -25,6 +25,7 @@ import { PhoneInput } from "@/shared/ui/phone-input";
 
 export default function OnboardingScreen(): JSX.Element {
   const [firstname, setFirstname] = useState("");
+  const insets = useSafeAreaInsets();
   const [lastname, setLastname] = useState("");
   const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
@@ -89,7 +90,7 @@ export default function OnboardingScreen(): JSX.Element {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
 
       {/* HEADER : Panneau Mat Solide */}
       <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
@@ -110,11 +111,17 @@ export default function OnboardingScreen(): JSX.Element {
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={insets.top}
         className="flex-1"
       >
         <ScrollView
           className="flex-1"
-          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: 40 }}
+          contentContainerStyle={{
+            paddingTop: 20,
+            paddingBottom: insets.bottom + 24,
+            paddingLeft: insets.left + 16,
+            paddingRight: insets.right + 16
+          }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >

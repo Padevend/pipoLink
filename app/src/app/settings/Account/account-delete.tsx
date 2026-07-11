@@ -29,9 +29,8 @@ import {
   View,
 } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeOut } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { localDb } from '@/shared/storage/local-db';
-import { useSafeArea } from '@/shared/hooks/use-safe-area';
 
 const CONSEQUENCES = [
   {
@@ -53,7 +52,7 @@ const CONSEQUENCES = [
 ] as const;
 
 export default function DeleteAccountScreen() {
-  const insets = useSafeArea();
+  const insets = useSafeAreaInsets();
   const { logout } = useAuth();
   const queryClient = useQueryClient();
   const { mutate, isPending } = useDeleteAccount();
@@ -109,7 +108,7 @@ export default function DeleteAccountScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
       {/* LOADER OVERLAY : Mat et sans ombre portée */}
       <Modal transparent visible={isPending} animationType="fade">
         <Animated.View
@@ -145,7 +144,7 @@ export default function DeleteAccountScreen() {
       {/* CONTENU */}
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: Math.max(insets.bottom, 24) + 20 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: insets.bottom + 24 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >

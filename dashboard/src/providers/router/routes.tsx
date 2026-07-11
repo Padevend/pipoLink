@@ -1,4 +1,4 @@
-import Loader from "@/share/components/loader";
+import Loader from "@/components/loader";
 import { lazy } from "react";
 import { createBrowserRouter } from "react-router-dom";
 
@@ -7,12 +7,13 @@ const ErrorLoyout = lazy(() => import("../layouts/ErrorLoyout"));
 const RootLayout = lazy(() => import("../layouts/RootLayout"));
 
 // Pages
-const LoginPage = lazy(() => import("@/pages/login/ui/loginPage"));
-const HomePage = lazy(() => import("@/pages/home/ui/homePage"));
-const UsersPage = lazy(() => import("@/pages/users/ui/usersPage"));
-const DocumentsPage = lazy(() => import("@/pages/documents/ui/documentsPage"));
-const SubscriptionsPage = lazy(() => import("@/pages/subscriptions/ui/subscriptionsPage"));
-const PaymentsPage = lazy(() => import("@/pages/payments/ui/paymentsPage"));
+const LoginPage = lazy(() => import("@/pages/login/ui/login_page"));
+const HomePage = lazy(() => import("@/pages/home/ui/home_page"));
+const UsersPage = lazy(() => import("@/pages/users/ui/users_page"));
+const DocumentsPage = lazy(() => import("@/pages/documents/ui/documents_page"));
+const SubscriptionsPage = lazy(() => import("@/pages/subscriptions/ui/subscriptions_page"));
+const PaymentsPage = lazy(() => import("@/pages/payments/ui/payments_page"));
+const UpdatesPage = lazy(() => import("@/pages/updates/ui/updates_page"));
 
 const router = createBrowserRouter([
     {
@@ -47,6 +48,10 @@ const router = createBrowserRouter([
                     {
                         path: "payments",
                         element: <PaymentsPage />
+                    },
+                    {
+                        path: "updates",
+                        element: <UpdatesPage />
                     }
                 ]
             }

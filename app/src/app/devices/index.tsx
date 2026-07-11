@@ -2,7 +2,7 @@ import { router } from "expo-router";
 import { ArrowLeft, Laptop, Plus, ShieldAlert } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DeviceItem } from "@/features/devices/components/device-item";
 import { useDevices } from "@/features/devices/hooks/use-devices";
@@ -15,6 +15,7 @@ export default function DevicesScreen(): JSX.Element {
   const { data, isLoading } = useDevices();
   const { data: isPrimary, isLoading: checkingPrimary } = useIsPrimaryDevice();
   const removeMutation = useRemoveDevice();
+  const insets = useSafeAreaInsets();
 
   const secondaryDevices = (data ?? []).filter((d) => !d.isPrimary);
 
@@ -22,7 +23,7 @@ export default function DevicesScreen(): JSX.Element {
     return (
       <SafeAreaView
         className="flex-1 bg-white dark:bg-zinc-950"
-        edges={["top"]}
+        edges={["top", "left", "right"]}
       >
         <View className="flex-1 items-center justify-center">
           <Loader />
@@ -36,7 +37,7 @@ export default function DevicesScreen(): JSX.Element {
     return (
       <SafeAreaView
         className="flex-1 bg-white dark:bg-zinc-950"
-        edges={["top"]}
+        edges={["top", "left", "right"]}
       >
         {/* HEADER RESTREINT : Panneau Mat Solide */}
         <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
@@ -69,7 +70,7 @@ export default function DevicesScreen(): JSX.Element {
   return (
     <SafeAreaView
       className="flex-1 bg-white dark:bg-zinc-950"
-      edges={["top"]}
+      edges={["top", "left", "right"]}
     >
       {/* HEADER PRINCIPAL : Panneau Mat Solide */}
       <View className="flex-row items-center justify-between border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
@@ -99,7 +100,7 @@ export default function DevicesScreen(): JSX.Element {
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingTop: 20,
-          paddingBottom: 40,
+          paddingBottom: insets.bottom + 24,
         }}
         showsVerticalScrollIndicator={false}
       >

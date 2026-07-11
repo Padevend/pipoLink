@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { conversationKeys, useConversations } from '@/entities/conversation/hooks';
+import { useGetUser } from '@/features/auth/hooks/use-user';
 import { ChatView } from '@/features/messaging/components/chat-view';
 import { queryClient, useAuth } from '@/providers';
 import { messagingApi } from '@/shared/api/messaging';
@@ -12,7 +13,6 @@ import { cn } from '@/shared/utils/cn';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { ArrowLeft, EllipsisVertical, Info, LogOut, MessageSquareOff, Phone, Trash2 } from 'lucide-react-native';
-import { useGetUser } from '@/features/auth/hooks/use-user';
 
 const ORANGE_PRINCIPAL = '#FF6B00';
 
@@ -44,6 +44,7 @@ export default function ChatScreen() {
           username: targetUser.username ?? '',
           avatarUrl: targetUser.profile?.avatarUrl ?? undefined,
           phone: targetUser.profile?.phone ?? undefined,
+          accountRole: targetUser.accountRole,
         }
       ],
       unreadCount: 0,
@@ -83,6 +84,14 @@ export default function ChatScreen() {
     const otherMember = otherMembers[0];
     return otherMember?.avatarUrl;
   }, [activeConversation, otherMembers]);
+
+  const userAccountRole = useMemo(() => {
+    if (activeConversation?.type === 'group') {
+      return null;
+    }
+    const otherMember = activeConversation?.members.find((m) => m.id !== user?.id);
+    return otherMember?.accountRole;
+  }, [activeConversation, user?.id]);
 
   // ÉCRAN 1 : Attente du chargement
   if (!activeConversation && isUserLoading) {
@@ -143,8 +152,8 @@ export default function ChatScreen() {
             <ArrowLeft size={16} color="#A1A1AA" />
           </Pressable>
 
-          <View className="rounded-xl border border-zinc-100 dark:border-zinc-900 overflow-hidden">
-            <Avatar name={chatName} uri={chatAvatar} size="sm" />
+          <View className="">
+            <Avatar name={chatName} uri={chatAvatar} size="sm" role={userAccountRole} />
           </View>
 
           <View className="flex-1 justify-center">
@@ -210,7 +219,7 @@ export default function ChatScreen() {
                     <Info size={14} color="#A1A1AA" />
                     <Text className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Voir les informations</Text>
                   </Pressable>
-                  
+
                   {activeConversation?.type === 'group' ? (
                     <Pressable
                       onPress={async () => {

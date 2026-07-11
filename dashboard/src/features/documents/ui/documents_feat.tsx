@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { api } from "@/share/lib/api";
-import type { Document } from "@/share/lib/api";
+import { useState } from "react";
+import { useDocuments } from "../model/use_documents";
 import { useToast } from "@/providers/toast/toastContext";
+import type { Document } from "@/share/lib/api";
 import {
   Search,
   Trash2,
@@ -15,69 +15,45 @@ import {
   AlertTriangle
 } from "lucide-react";
 
-export default function DocumentsPage() {
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [total, setTotal] = useState(0);
+export function DocumentsFeat() {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Deletion Modal state
   const [docToDelete, setDocToDelete] = useState<Document | null>(null);
-  const [actionLoading, setActionLoading] = useState(false);
 
   const { showToast } = useToast();
-
-  const fetchDocs = async () => {
-    setLoading(true);
-    try {
-      const data = await api.getDocuments(page, limit, search.trim());
-      setDocuments(data.documents);
-      setTotal(data.total);
-      setTotalPages(data.totalPages);
-    } catch (err: any) {
-      showToast({
-        type: "error",
-        message: err.message || "Erreur de chargement des documents.",
-        duration: 4000,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchDocs();
-  }, [page]);
+  
+  const {
+    documents,
+    total,
+    totalPages,
+    loading,
+    error,
+    deleteDocument,
+    actionLoading,
+  } = useDocuments({ page, limit, search: searchQuery });
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(1);
-    fetchDocs();
+    setSearchQuery(search.trim());
   };
 
   const executeDelete = async () => {
     if (!docToDelete) return;
-    setActionLoading(true);
     try {
-      await api.deleteDocument(docToDelete.id);
+      await deleteDocument(docToDelete.id);
       showToast({
         type: "success",
         message: `Le document "${docToDelete.title}" a été supprimé et l'auteur notifié.`,
         duration: 4000,
       });
       setDocToDelete(null);
-      fetchDocs();
-    } catch (err: any) {
-      showToast({
-        type: "error",
-        message: err.message || "Erreur lors de la suppression du document.",
-        duration: 4000,
-      });
-    } finally {
-      setActionLoading(false);
+    } catch {
+      // Error handled by hook
     }
   };
 
@@ -100,7 +76,6 @@ export default function DocumentsPage() {
 
   return (
     <div className="space-y-8 select-none">
-      
       {/* HEADER */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-zinc-800">
@@ -111,7 +86,13 @@ export default function DocumentsPage() {
         </p>
       </div>
 
-      {/* SEARCH BAR (Glassmorphism Light) */}
+      {error && (
+        <div className="bg-red-50 border border-red-100 text-red-700 text-xs font-semibold p-4 rounded-xl">
+          Erreur lors du chargement des documents: {(error as any).message || "Problème réseau."}
+        </div>
+      )}
+
+      {/* SEARCH BAR */}
       <div className="bg-white/60 border border-white/80 rounded-2xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between shadow-sm shadow-zinc-200/40 backdrop-blur-xl">
         <form onSubmit={handleSearchSubmit} className="w-full md:max-w-md relative group">
           <input
@@ -132,7 +113,7 @@ export default function DocumentsPage() {
         </div>
       </div>
 
-      {/* DOCUMENTS TABLE CARD (Glassmorphism Table) */}
+      {/* DOCUMENTS TABLE CARD */}
       <div className="bg-white/60 border border-white/80 rounded-2xl overflow-hidden shadow-sm shadow-zinc-200/40 backdrop-blur-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -165,7 +146,6 @@ export default function DocumentsPage() {
               ) : (
                 documents.map((doc) => (
                   <tr key={doc.id} className="hover:bg-white/40 transition-colors duration-150">
-                    
                     <td className="px-6 py-4 max-w-sm">
                       <div className="flex items-start space-x-3">
                         <div className="mt-0.5 h-8 w-8 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-500 flex-shrink-0">
@@ -219,7 +199,6 @@ export default function DocumentsPage() {
                         <span>Supprimer</span>
                       </button>
                     </td>
-
                   </tr>
                 ))
               )}
@@ -253,7 +232,7 @@ export default function DocumentsPage() {
         )}
       </div>
 
-      {/* CONFIRMATION MODAL (Glassmorphic Light Popup) */}
+      {/* CONFIRMATION MODAL */}
       {docToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/20 backdrop-blur-md">
           <div className="w-full max-w-md bg-white/90 border border-white rounded-3xl p-6 shadow-2xl backdrop-blur-xl relative animate-in fade-in zoom-in-95 duration-150">

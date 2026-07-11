@@ -17,4 +17,7 @@ AdminRouter
   .get("/documents", callAction(AdminController, "getDocuments"))
   .delete("/documents/:id", callAction(AdminController, "deleteDocument"))
   .get("/subscriptions", callAction(AdminController, "getSubscriptions"))
-  .get("/payments", callAction(AdminController, "getPayments"));
+  .get("/payments", callAction(AdminController, "getPayments"))
+  .get("/updates", callAction(AdminController, "getUpdates"))
+  .post("/updates", callAction(AdminController, "createUpdate"))
+  .post("/users/:id/role", callAction(AdminController, "updateUserRole"));

@@ -1,108 +1,100 @@
-import { useState, useEffect } from "react";
-import { api } from "@/share/lib/api";
-import type { User } from "@/share/lib/api";
+import { useState } from "react";
+import { useUsers } from "../model/use_users";
+import { useAuth } from "@/providers/auth/authContext";
 import { useToast } from "@/providers/toast/toastContext";
+import type { User } from "@/share/lib/api";
 import {
   Search,
   UserX,
   UserCheck,
   ChevronLeft,
   ChevronRight,
-  Shield,
   Loader2,
   Calendar,
   Key,
   Mail,
-  AlertTriangle
+  AlertTriangle,
+  Shield,
 } from "lucide-react";
 
-export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [total, setTotal] = useState(0);
+export function UsersFeat() {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Confirmation Modals State
   const [userToBan, setUserToBan] = useState<User | null>(null);
   const [userToRestore, setUserToRestore] = useState<User | null>(null);
-  const [actionLoading, setActionLoading] = useState(false);
 
   const { showToast } = useToast();
-
-  const fetchUsers = async () => {
-    setLoading(true);
-    try {
-      const data = await api.getUsers(page, limit, search.trim());
-      setUsers(data.users);
-      setTotal(data.total);
-      setTotalPages(data.totalPages);
-    } catch (err: any) {
-      showToast({
-        type: "error",
-        message: err.message || "Erreur lors de la récupération des utilisateurs.",
-        duration: 4000,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  }, [page]);
+  const { user: currentUser } = useAuth();
+  
+  const {
+    users,
+    total,
+    totalPages,
+    loading,
+    banUser,
+    restoreUser,
+    updateUserRole,
+    actionLoading,
+  } = useUsers({ page, limit, search: searchQuery });
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(1);
-    fetchUsers();
+    setSearchQuery(search.trim());
+  };
+
+  const handleRoleChange = async (userId: string, targetUser: User, newRole: string) => {
+    if (userId === currentUser?.id) {
+      showToast({
+        type: "error",
+        message: "Vous ne pouvez pas modifier votre propre rôle.",
+        duration: 4000,
+      });
+      return;
+    }
+    try {
+      await updateUserRole({ userId, role: newRole });
+      showToast({
+        type: "success",
+        message: `Rôle de ${targetUser.displayName || targetUser.username} mis à jour en "${newRole}".`,
+        duration: 4000,
+      });
+    } catch {
+      // Error handled by query hook
+    }
   };
 
   const executeBan = async () => {
     if (!userToBan) return;
-    setActionLoading(true);
     try {
-      await api.banUser(userToBan.id);
+      await banUser(userToBan.id);
       showToast({
         type: "success",
         message: `L'utilisateur ${userToBan.displayName || userToBan.username} a été banni et notifié.`,
         duration: 4000,
       });
       setUserToBan(null);
-      fetchUsers();
-    } catch (err: any) {
-      showToast({
-        type: "error",
-        message: err.message || "Impossible de bannir l'utilisateur.",
-        duration: 4000,
-      });
-    } finally {
-      setActionLoading(false);
+    } catch {
+      // Error handled by query hook
     }
   };
 
   const executeRestore = async () => {
     if (!userToRestore) return;
-    setActionLoading(true);
     try {
-      await api.restoreUser(userToRestore.id);
+      await restoreUser(userToRestore.id);
       showToast({
         type: "success",
         message: `L'utilisateur ${userToRestore.displayName || userToRestore.username} a été rétabli.`,
         duration: 4000,
       });
       setUserToRestore(null);
-      fetchUsers();
-    } catch (err: any) {
-      showToast({
-        type: "error",
-        message: err.message || "Impossible de rétablir l'utilisateur.",
-        duration: 4000,
-      });
-    } finally {
-      setActionLoading(false);
+    } catch {
+      // Error handled by query hook
     }
   };
 
@@ -118,7 +110,6 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-8 select-none">
-      
       {/* HEADER */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-zinc-800">
@@ -129,7 +120,7 @@ export default function UsersPage() {
         </p>
       </div>
 
-      {/* SEARCH BAR (Glassmorphism Light) */}
+      {/* SEARCH BAR */}
       <div className="bg-white/60 border border-white/80 rounded-2xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between shadow-sm shadow-zinc-200/40 backdrop-blur-xl">
         <form onSubmit={handleSearchSubmit} className="w-full md:max-w-md relative group">
           <input
@@ -150,7 +141,7 @@ export default function UsersPage() {
         </div>
       </div>
 
-      {/* USERS TABLE CARD (Glassmorphism Table) */}
+      {/* USERS TABLE CARD */}
       <div className="bg-white/60 border border-white/80 rounded-2xl overflow-hidden shadow-sm shadow-zinc-200/40 backdrop-blur-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -158,7 +149,7 @@ export default function UsersPage() {
               <tr className="bg-zinc-50/50 border-b border-zinc-200/60 text-zinc-400 text-[10px] font-bold uppercase tracking-wider">
                 <th className="px-6 py-3.5">Utilisateur</th>
                 <th className="px-6 py-3.5">Matricule / ID</th>
-                <th className="px-6 py-3.5">Rôle</th>
+                <th className="px-6 py-3.5">Rôle (Promotion / Rétrogradation)</th>
                 <th className="px-6 py-3.5">Statut</th>
                 <th className="px-6 py-3.5">Date de Création</th>
                 <th className="px-6 py-3.5 text-right">Actions</th>
@@ -181,19 +172,18 @@ export default function UsersPage() {
                   </td>
                 </tr>
               ) : (
-                users.map((user) => (
-                  <tr key={user.id} className="hover:bg-white/40 transition-colors duration-150">
-                    
+                users.map((u) => (
+                  <tr key={u.id} className="hover:bg-white/40 transition-colors duration-150">
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
                         <div className="h-8 w-8 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-[11px] font-bold text-zinc-600 overflow-hidden flex-shrink-0">
-                          {user.displayName ? user.displayName.substring(0, 2).toUpperCase() : user.username.substring(0, 2).toUpperCase()}
+                          {u.displayName ? u.displayName.substring(0, 2).toUpperCase() : u.username.substring(0, 2).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs font-semibold text-zinc-800 truncate">{user.displayName || "Utilisateur"}</p>
+                          <p className="text-xs font-semibold text-zinc-800 truncate">{u.displayName || "Utilisateur"}</p>
                           <p className="text-[10px] font-medium text-zinc-400 truncate flex items-center gap-1 mt-0.5">
                             <Mail size={11} className="text-zinc-400" />
-                            {user.email}
+                            {u.email}
                           </p>
                         </div>
                       </div>
@@ -203,29 +193,34 @@ export default function UsersPage() {
                       <div className="space-y-0.5">
                         <div className="flex items-center space-x-1.5 text-zinc-600">
                           <Key size={12} className="text-zinc-400" />
-                          <span>{user.matricule || "Aucun matricule"}</span>
+                          <span>{u.matricule || "Aucun matricule"}</span>
                         </div>
-                        <p className="text-[10px] text-zinc-400 font-mono select-all">ID: {user.id}</p>
+                        <p className="text-[10px] text-zinc-400 font-mono select-all">ID: {u.id}</p>
                       </div>
                     </td>
 
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-bold border ${
-                        user.role === "admin"
-                          ? "bg-zinc-800 text-white border-zinc-900"
-                          : "bg-zinc-100 text-zinc-600 border-zinc-200/60"
-                      }`}>
-                        <Shield size={10} strokeWidth={2} />
-                        <span className="capitalize">{user.role}</span>
-                      </span>
+                      <div className="flex items-center space-x-2">
+                        <Shield size={13} className="text-zinc-400" />
+                        <select
+                          value={u.role}
+                          disabled={actionLoading || u.id === currentUser?.id}
+                          onChange={(e) => handleRoleChange(u.id, u, e.target.value)}
+                          className="bg-white/80 border border-zinc-200/80 rounded-xl px-2.5 py-1.5 text-xs font-bold text-zinc-700 focus:outline-none focus:ring-1 focus:ring-orange-500/20 focus:border-orange-500 cursor-pointer disabled:opacity-50 transition-all"
+                        >
+                          <option value="student">Student (Étudiant)</option>
+                          <option value="staff">Staff (Personnel)</option>
+                          <option value="admin">Admin (Administrateur)</option>
+                        </select>
+                      </div>
                     </td>
 
                     <td className="px-6 py-4">
-                      {user.isExcluded ? (
+                      {u.isExcluded ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border bg-orange-500/10 text-orange-600 border-orange-500/20">
                           Banni / Exclu
                         </span>
-                      ) : user.isActive ? (
+                      ) : u.isActive ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border bg-zinc-100 text-zinc-700 border-zinc-200">
                           Actif
                         </span>
@@ -239,32 +234,33 @@ export default function UsersPage() {
                     <td className="px-6 py-4 text-zinc-500 text-xs font-medium">
                       <div className="flex items-center space-x-1.5">
                         <Calendar size={13} className="text-zinc-400" />
-                        <span>{formatDate(user.createdAt)}</span>
+                        <span>{formatDate(u.createdAt)}</span>
                       </div>
                     </td>
 
                     <td className="px-6 py-4 text-right">
-                      {user.role === "admin" ? (
+                      {u.role === "admin" ? (
                         <span className="text-[11px] text-zinc-400 font-medium italic pr-2">Protégé</span>
-                      ) : user.isExcluded ? (
+                      ) : u.isExcluded ? (
                         <button
-                          onClick={() => setUserToRestore(user)}
-                          className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-bold text-zinc-700 bg-white border border-zinc-200 hover:border-zinc-300 shadow-sm transition-all duration-200 cursor-pointer active:scale-[0.97]"
+                          onClick={() => setUserToRestore(u)}
+                          disabled={actionLoading}
+                          className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-bold text-zinc-700 bg-white border border-zinc-200 hover:border-zinc-300 shadow-sm transition-all duration-200 cursor-pointer active:scale-[0.97] disabled:opacity-50"
                         >
                           <UserCheck size={13} className="text-zinc-500" />
                           <span>Rétablir</span>
                         </button>
                       ) : (
                         <button
-                          onClick={() => setUserToBan(user)}
-                          className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-bold text-orange-600 bg-orange-500/5 border border-orange-500/10 hover:bg-orange-500/10 hover:border-orange-500/20 transition-all duration-200 cursor-pointer active:scale-[0.97]"
+                          onClick={() => setUserToBan(u)}
+                          disabled={actionLoading}
+                          className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-bold text-orange-600 bg-orange-500/5 border border-orange-500/10 hover:bg-orange-500/10 hover:border-orange-500/20 transition-all duration-200 cursor-pointer active:scale-[0.97] disabled:opacity-50"
                         >
                           <UserX size={13} />
                           <span>Bannir</span>
                         </button>
                       )}
                     </td>
-
                   </tr>
                 ))
               )}
@@ -298,9 +294,9 @@ export default function UsersPage() {
         )}
       </div>
 
-      {/* CONFIRMATION MODALS (Glassmorphic Light Popups) */}
+      {/* CONFIRMATION MODALS */}
       {userToBan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/20 backdrop-blur-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/20 backdrop-blur-md animate-in fade-in duration-150">
           <div className="w-full max-w-md bg-white/90 border border-white rounded-3xl p-6 shadow-2xl backdrop-blur-xl relative animate-in fade-in zoom-in-95 duration-150">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-600 mb-4 border border-orange-500/20">
               <AlertTriangle size={20} />
@@ -336,7 +332,7 @@ export default function UsersPage() {
       )}
 
       {userToRestore && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/20 backdrop-blur-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/20 backdrop-blur-md animate-in fade-in duration-150">
           <div className="w-full max-w-md bg-white/90 border border-white rounded-3xl p-6 shadow-2xl backdrop-blur-xl relative animate-in fade-in zoom-in-95 duration-150">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-700 mb-4 border border-zinc-200">
               <UserCheck size={20} />

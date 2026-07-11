@@ -1,17 +1,7 @@
 const API_URL = "http://localhost:3000";
 
-export interface User {
-  id: string;
-  email: string;
-  username: string;
-  role: string;
-  matricule?: string;
-  isActive?: boolean;
-  isExcluded?: boolean;
-  status?: string;
-  createdAt?: string;
-  displayName?: string;
-}
+import type { User } from "@/entities/users";
+export type { User };
 
 export interface AuditLog {
   id: string;
@@ -73,41 +63,53 @@ export interface Payment {
   createdAt: string;
 }
 
-export const api = {
-  url: API_URL,
-  publicurl: API_URL,
-  getToken(): string | null {
-    return localStorage.getItem("pipolink_admin_token");
-  },
+export interface UpdateLink {
+  platform: "android" | "ios";
+  link: string;
+}
 
-  getUser(): User | null {
-    const data = localStorage.getItem("pipolink_admin_user");
-    return data ? JSON.parse(data) : null;
-  },
+export interface Update {
+  id: string;
+  version: string;
+  changelog: string[];
+  isRequired: boolean;
+  minSdkVersion: string;
+  severity: "low" | "medium" | "high" | "critical";
+  type: "auto" | "manual";
+  links: UpdateLink[];
+  createdAt: string;
+}
 
-  setSession(token: string, user: User) {
-    localStorage.setItem("pipolink_admin_token", token);
-    localStorage.setItem("pipolink_admin_user", JSON.stringify(user));
-  },
 
-  clearSession() {
-    localStorage.removeItem("pipolink_admin_token");
-    localStorage.removeItem("pipolink_admin_user");
-  },
+class APIServices{
+  public url: string;
+  public publicurl: string;
 
-  isAuthenticated(): boolean {
-    const token = this.getToken();
-    const user = this.getUser();
-    return !!token && !!user && user.role === "admin";
-  },
-
-  async request<T>(path: string, options: RequestInit = {}): Promise<T> {
-    const token = this.getToken();
-    const headers = new Headers(options.headers || {});
+  constructor() {
+    this.url = API_URL;
+    this.publicurl = API_URL;
     
-    if (token) {
-      headers.set("Authorization", `Bearer ${token}`);
-    }
+    // Bind all methods to ensure context is preserved in callbacks
+    this.sendRequest = this.sendRequest.bind(this);
+    this.login = this.login.bind(this);
+    this.logout = this.logout.bind(this);
+    this.getMe = this.getMe.bind(this);
+    this.getStats = this.getStats.bind(this);
+    this.getEvents = this.getEvents.bind(this);
+    this.getUsers = this.getUsers.bind(this);
+    this.banUser = this.banUser.bind(this);
+    this.restoreUser = this.restoreUser.bind(this);
+    this.updateUserRole = this.updateUserRole.bind(this);
+    this.getDocuments = this.getDocuments.bind(this);
+    this.deleteDocument = this.deleteDocument.bind(this);
+    this.getSubscriptions = this.getSubscriptions.bind(this);
+    this.getPayments = this.getPayments.bind(this);
+    this.getUpdates = this.getUpdates.bind(this);
+    this.createUpdate = this.createUpdate.bind(this);
+  }
+
+  async sendRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+    const headers = new Headers(options.headers || {});
     
     if (!(options.body instanceof FormData) && !headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");
@@ -116,10 +118,10 @@ export const api = {
     const response = await fetch(`${API_URL}${path}`, {
       ...options,
       headers,
+      credentials: "include",
     });
 
     if (response.status === 401) {
-      this.clearSession();
       if (window.location.pathname !== "/login") {
         window.location.href = "/login";
       }
@@ -132,11 +134,11 @@ export const api = {
       throw new Error(data.message || data.code || "Une erreur est survenue.");
     }
 
-    return data.data; // Le format standard ApiResponse.success renvoie { status, data, message }
-  },
+    return data.data;
+  }
 
-  async login(email: string, password: string): Promise<{ token: string; user: User }> {
-    const data: any = await this.request("/auth/login", {
+  async login(email: string, password: string): Promise<{ user: User }> {
+    const data: any = await this.sendRequest("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password, loginMode: "primary" }),
     });
@@ -146,43 +148,70 @@ export const api = {
       throw new Error("Accès refusé. Vous devez être administrateur pour vous connecter au Dashboard.");
     }
 
-    this.setSession(data.accessToken, user);
-    return { token: data.accessToken, user };
-  },
+    return { user };
+  }
+
+  async logout(): Promise<void> {
+    await this.sendRequest("/auth/logout", { method: "POST" });
+  }
+
+  async getMe(): Promise<User> {
+    return this.sendRequest("/users/me");
+  }
 
   async getStats(): Promise<{ stats: any; events: AuditLog[] }> {
-    return this.request("/admin/stats");
-  },
+    return this.sendRequest<{ stats: any; events: AuditLog[] }>("/admin/stats");
+  }
 
   async getEvents(page = 1, limit = 20): Promise<{ events: AuditLog[]; total: number; page: number; limit: number; totalPages: number }> {
-    return this.request(`/admin/events?page=${page}&limit=${limit}`);
-  },
+    return this.sendRequest(`/admin/events?page=${page}&limit=${limit}`);
+  }
 
   async getUsers(page = 1, limit = 10, search = ""): Promise<{ users: User[]; total: number; page: number; limit: number; totalPages: number }> {
-    return this.request(`/admin/users?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`);
-  },
+    return this.sendRequest(`/admin/users?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`);
+  }
 
   async banUser(id: string): Promise<void> {
-    return this.request(`/admin/users/${id}/ban`, { method: "POST" });
-  },
+    return this.sendRequest(`/admin/users/${id}/ban`, { method: "POST" });
+  }
 
   async restoreUser(id: string): Promise<void> {
-    return this.request(`/admin/users/${id}/restore`, { method: "POST" });
-  },
+    return this.sendRequest(`/admin/users/${id}/restore`, { method: "POST" });
+  }
+
+  async updateUserRole(id: string, role: string): Promise<void> {
+    return this.sendRequest(`/admin/users/${id}/role`, {
+      method: "POST",
+      body: JSON.stringify({ role }),
+    });
+  }
 
   async getDocuments(page = 1, limit = 10, search = ""): Promise<{ documents: Document[]; total: number; page: number; limit: number; totalPages: number }> {
-    return this.request(`/admin/documents?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`);
-  },
+    return this.sendRequest(`/admin/documents?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`);
+  }
 
   async deleteDocument(id: string): Promise<void> {
-    return this.request(`/admin/documents/${id}`, { method: "DELETE" });
-  },
+    return this.sendRequest(`/admin/documents/${id}`, { method: "DELETE" });
+  }
 
   async getSubscriptions(page = 1, limit = 10): Promise<{ subscriptions: Subscription[]; total: number; page: number; limit: number; totalPages: number }> {
-    return this.request(`/admin/subscriptions?page=${page}&limit=${limit}`);
-  },
+    return this.sendRequest(`/admin/subscriptions?page=${page}&limit=${limit}`);
+  }
 
   async getPayments(page = 1, limit = 10): Promise<{ payments: Payment[]; total: number; page: number; limit: number; totalPages: number }> {
-    return this.request(`/admin/payments?page=${page}&limit=${limit}`);
-  },
+    return this.sendRequest(`/admin/payments?page=${page}&limit=${limit}`);
+  }
+
+  async getUpdates(): Promise<Update[]> {
+    return this.sendRequest("/admin/updates");
+  }
+
+  async createUpdate(data: Partial<Update>): Promise<Update> {
+    return this.sendRequest("/admin/updates", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
 };
+
+export const api = new APIServices();

@@ -3,7 +3,6 @@ import { SecureStorageService, AsyncStorageService, SECURE_STORAGE_KEYS, ASYNC_S
 import { Platform } from 'react-native';
 
 import { useAuth } from '@/providers';
-import { queryClient } from '@/providers/query-provider';
 import { authApi } from '@/shared/api/auth';
 import { normalizeUser } from '@/shared/api/normalize-user';
 import { userApi } from '@/shared/api/user';
@@ -45,6 +44,19 @@ export function useOnboarding() {
 
       const { publicKey, signature } = await generateIdentityKeys({ forceNew: true });
 
+      try {
+        const tempPassword = await SecureStorageService.get('temp_login_password');
+        if (tempPassword) {
+          const { createKeyBackup } = await import('@/shared/crypto/backup');
+          const backup = await createKeyBackup(tempPassword);
+          if (backup) {
+            await authApi.backupKey(backup);
+          }
+        }
+      } catch (err) {
+        console.error('Silent key backup upload failed during onboarding:', err);
+      }
+
       const { avatarUri, ...rest } = profile;
       const result = await userApi.completeOnboarding({
         ...rest,
@@ -70,8 +82,7 @@ export function useOnboarding() {
       return result;
     },
     onSuccess: async (result) => {
-      const fullUser = await userApi.getMe().catch(() => normalizeUser(result.user));
-      setCurrentUser(queryClient, fullUser);
+      const basicUser = normalizeUser(result.user);
       await signInWithTokens(
         {
           accessToken: result.tokens.accessToken,
@@ -79,8 +90,10 @@ export function useOnboarding() {
           expiresAt: result.tokens.expiresAt,
           deviceId: result.device?.id,
         },
-        fullUser,
+        basicUser,
       );
+      const fullUser = await userApi.getMe().catch(() => basicUser);
+      setCurrentUser(queryClient, fullUser);
     },
   });
 }

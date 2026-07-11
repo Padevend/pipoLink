@@ -4,13 +4,14 @@ import { ScrollView, Text, View, Pressable } from 'react-native';
 import { useOtaUpdate } from '@/features/updates/hooks/use-ota-update';
 import { Loader } from '@/shared/ui/loader';
 import { router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ChangelogScreen(): JSX.Element {
   const { data, isLoading } = useOtaUpdate();
+  const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
       
       {/* HEADER : Panneau Mat Solide */}
       <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
@@ -27,7 +28,7 @@ export default function ChangelogScreen(): JSX.Element {
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: insets.bottom + 24 }}
         showsVerticalScrollIndicator={false}
       >
         {isLoading ? (

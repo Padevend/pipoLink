@@ -103,4 +103,37 @@ export class AiController {
     const result = await this.service.generateStudyAid(userId, sessionId, type);
     return ApiResponse.success(c, result, "Génération effectuée.");
   }
+
+  async uploadAttachment(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const body = await c.req.parseBody();
+    const file = body["file"];
+    const payloadRaw = body["payload"] ? JSON.parse(body["payload"] as string) : {};
+    
+    if (!(file instanceof File)) {
+      return ApiResponse.error(c, "FILE_REQUIRED", "Fichier requis.", 400);
+    }
+    
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const meta = { originalName: file.name, mimeType: file.type };
+    
+    const document = await this.service.uploadAttachment(userId, payloadRaw, buffer, meta);
+    return ApiResponse.success(c, document, "Pièce jointe IA uploadée.", 201);
+  }
+
+  async deleteAttachment(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const documentId = c.req.param("id");
+    if (!documentId) {
+      return ApiResponse.error(c, "ID_REQUIRED", "ID du document requis.", 400);
+    }
+    await this.service.deleteAttachment(userId, documentId);
+    return ApiResponse.success(c, null, "Pièce jointe IA supprimée.");
+  }
+
+  async getAttachments(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const docs = await this.service.getAttachments(userId);
+    return ApiResponse.success(c, docs, "Pièces jointes IA récupérées.");
+  }
 }

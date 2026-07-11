@@ -242,6 +242,7 @@ export class MessagingService {
                   select: {
                     id: true,
                     username: true,
+                    role: true,
                     profile: { select: { firstname: true, lastname: true, avatarUrl: true, phone: true } },
                   },
                 },
@@ -296,7 +297,8 @@ export class MessagingService {
             username: cm.user.username,
             avatarUrl: cm.user.profile?.avatarUrl ?? undefined,
             phone: cm.user.profile?.phone ?? undefined,
-            role: cm.role
+            role: cm.role,
+            accountRole: cm.user.role,
           })),
         };
       }),
@@ -520,12 +522,20 @@ export class MessagingService {
     if (!member) throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Vous n'êtes pas membre de ce groupe." };
     if (member.conversation.type !== "group") throw { code: ErrorCode.VALIDATION_ERROR, status: 400, message: "Action réservée aux groupes." };
 
-    await prisma.conversationMember.delete({ where: { id: member.id } });
-
-    const remaining = await prisma.conversationMember.count({ where: { conversation_id: conversationId } });
-    if (remaining === 0) {
-      await prisma.chat.delete({ where: { id: conversationId } });
-    }
+    await prisma.$transaction(async (trx) => {
+      await trx.conversationMember.delete({ where: { id: member.id } });
+      const deviceIds = (await trx.device.findMany({ where: { user_id: userId }, select: { id: true } })).map(d => d.id);
+      if (deviceIds.length > 0) {
+        await trx.chatMemberKey.deleteMany({
+          where: { chat_id: conversationId, device_id: { in: deviceIds } }
+        });
+      }
+      
+      const remaining = await trx.conversationMember.count({ where: { conversation_id: conversationId } });
+      if (remaining === 0) {
+        await trx.chat.delete({ where: { id: conversationId } });
+      }
+    });
   }
 
   async deleteChat(userId: string, conversationId: string) {
@@ -534,7 +544,15 @@ export class MessagingService {
     });
     if (!member) throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Chat introuvable." };
 
-    await prisma.conversationMember.delete({ where: { id: member.id } });
+    await prisma.$transaction(async (trx) => {
+      await trx.conversationMember.delete({ where: { id: member.id } });
+      const deviceIds = (await trx.device.findMany({ where: { user_id: userId }, select: { id: true } })).map(d => d.id);
+      if (deviceIds.length > 0) {
+        await trx.chatMemberKey.deleteMany({
+          where: { chat_id: conversationId, device_id: { in: deviceIds } }
+        });
+      }
+    });
   }
 
   async updateChatDetails(userId: string, conversationId: string, payload: { name: string }) {
@@ -664,6 +682,16 @@ export class MessagingService {
     });
     if (existing) {
       return details.chat;
+    }
+
+    const allUserDevices = await prisma.device.findMany({
+      where: { user_id: userId, revokedAt: null, public_key: { not: null } },
+      select: { id: true },
+    });
+    for (const d of allUserDevices) {
+      if (!payload.encryptedKeys || !payload.encryptedKeys.some((e) => e.deviceId === d.id)) {
+        throw { code: ErrorCode.VALIDATION_ERROR, status: 400, message: "Tous les appareils du membre doivent recevoir une clé." };
+      }
     }
 
     return await prisma.$transaction(async (trx) => {

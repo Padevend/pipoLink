@@ -73,6 +73,13 @@ export class OtpService {
       throw { code: ErrorCode.INVALID_OTP, status: 400, message: "Code OTP incorrect." };
     }
 
-    await prisma.otp.update({ where: { id: otp.id }, data: { usedAt: new Date() } });
+    const { count } = await prisma.otp.updateMany({ 
+      where: { id: otp.id, usedAt: null }, 
+      data: { usedAt: new Date() } 
+    });
+
+    if (count === 0) {
+      throw { code: ErrorCode.INVALID_OTP, status: 400, message: "Ce code a déjà été utilisé." };
+    }
   }
 }

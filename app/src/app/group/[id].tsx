@@ -1,3 +1,16 @@
+import * as Clipboard from 'expo-clipboard';
+import * as Linking from 'expo-linking';
+import { router, useLocalSearchParams } from 'expo-router';
+import {
+  ArrowLeft,
+  Check,
+  Link2,
+  Shield,
+  ShieldAlert,
+  UserMinus,
+  UserPlus,
+  Users,
+} from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -10,35 +23,22 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, router } from 'expo-router';
-import * as Clipboard from 'expo-clipboard';
-import * as Linking from 'expo-linking';
-import {
-  ArrowLeft,
-  Check,
-  Link2,
-  Shield,
-  ShieldAlert,
-  UserMinus,
-  UserPlus,
-  Users,
-} from 'lucide-react-native';
 
 import {
   useConversations,
-  useUpdateGroupDetails,
-  usePromoteMember,
-  useDemoteMember,
-  useKickMember,
-  useGroupInvitations,
   useCreateGroupInvitation,
+  useDemoteMember,
+  useGroupInvitations,
+  useKickMember,
+  usePromoteMember,
   useRevokeGroupInvitation,
+  useUpdateGroupDetails,
 } from '@/entities/conversation/hooks';
-import { useAuth, useToast } from '@/providers';
-import { getCachedChatKey, encryptChatKeyWithToken } from '@/shared/crypto/chat-key';
-import { Avatar } from '@/shared/ui/avatar';
-import AddLinkModal from '@/features/group/ui/modal';
 import InviationLinkCard from '@/features/group/ui/card';
+import AddLinkModal from '@/features/group/ui/modal';
+import { useAuth, useToast } from '@/providers';
+import { encryptChatKeyWithToken, getCachedChatKey } from '@/shared/crypto/chat-key';
+import { Avatar } from '@/shared/ui/avatar';
 import { cn } from '@/shared/utils/cn';
 
 export default function GroupDetailsScreen() {
@@ -457,6 +457,7 @@ export default function GroupDetailsScreen() {
       <Modal
         visible={inviteModalVisible}
         transparent
+        statusBarTranslucent
         animationType="fade"
         onRequestClose={() => setInviteModalVisible(false)}
       >

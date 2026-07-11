@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-
+import { router } from 'expo-router';
 import type { RawMessage } from '@/shared/api/normalize-message';
 import { normalizeMessage } from '@/shared/api/normalize-message';
 import { WS_EVENTS } from '@/shared/constants/ws-events';
@@ -130,23 +130,64 @@ export async function registerForPushNotifications(): Promise<string | null> {
       });
     }
 
-    // Token distant : development build uniquement (pas Expo Go)
-    if (!isExpoGo()) {
-      const token = await Notifications.getExpoPushTokenAsync().catch(() => null);
-      const tokenData = token?.data ?? null;
-      // Sync the push token to backend asynchronously (fire & forget)
-      if (tokenData) {
-        syncFcmTokenToBackend(tokenData);
+    // Si nous sommes dans Expo Go, on récupère uniquement le token Expo.
+    // Sinon (Dev Client ou Prod), on tente d'abord le FCM natif, puis fallback sur le token Expo.
+    let tokenData: string | null = null;
+    try {
+      if (isExpoGo()) {
+        const expoToken = await Notifications.getExpoPushTokenAsync().catch(() => null);
+        tokenData = expoToken?.data ?? null;
+      } else {
+        try {
+          const deviceToken = await Notifications.getDevicePushTokenAsync();
+          tokenData = deviceToken?.data ?? null;
+        } catch (err) {
+          if (__DEV__) {
+            console.warn('[push] Failed to get native device token, trying Expo push token:', err);
+          }
+          const expoToken = await Notifications.getExpoPushTokenAsync().catch(() => null);
+          tokenData = expoToken?.data ?? null;
+        }
       }
-      return tokenData;
+    } catch (e) {
+      if (__DEV__) {
+        console.warn('[push] Error getting token:', e);
+      }
     }
-    return null;
+
+    // Sync the push token to backend asynchronously (fire & forget)
+    if (tokenData) {
+      syncFcmTokenToBackend(tokenData);
+    }
+    return tokenData;
   } catch (e) {
     if (__DEV__) {
       console.warn('[push] registerForPushNotifications failed:', e);
     }
     return null;
   }
+}
+
+export function setupNotificationResponseListener(): () => void {
+  const Notifications = getNotifications();
+  if (!Notifications) return () => {};
+
+  const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+    try {
+      const data = response.notification.request.content.data;
+      if (data && data.conversationId) {
+        setTimeout(() => {
+          router.push(`/chat/${data.conversationId}` as any);
+        }, 300);
+      }
+    } catch (e) {
+      console.error('[push] Error handling notification response:', e);
+    }
+  });
+
+  return () => {
+    subscription.remove();
+  };
 }
 
 export async function showLocalNotification(

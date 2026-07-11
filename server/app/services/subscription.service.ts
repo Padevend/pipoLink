@@ -1,8 +1,6 @@
 import { prisma } from "../../config/database.js";
-import { MailerService } from "./mailer.service.js";
-
 export class SubscriptionService {
-  private mailer = new MailerService();
+
 
   async getSubscription(userId: string) {
     let sub = await prisma.subscription.findUnique({ where: { user_id: userId } });

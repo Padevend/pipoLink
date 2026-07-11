@@ -20,10 +20,11 @@ import {
   View,
 } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeOut } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ChangePasswordScreen() {
   const { mutate, isPending } = useChangePassword();
+  const insets = useSafeAreaInsets();
 
   const {
     control,
@@ -58,7 +59,7 @@ export default function ChangePasswordScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
       {/* LOADER OVERLAY : Mat et sans ombre portée */}
       <Modal transparent visible={isPending} animationType="fade">
         <Animated.View
@@ -94,7 +95,7 @@ export default function ChangePasswordScreen() {
       {/* FORMULAIRE */}
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: insets.bottom + 24 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >

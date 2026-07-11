@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { CheckCircle2, FileText, Upload, X } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useUploadDocument } from '@/entities/document/hooks';
 import { useToast } from '@/providers';
@@ -26,6 +26,7 @@ const DOC_TYPES: { label: string; value: DocumentType }[] = [
 export default function UploadDocumentModal() {
   const { showToast } = useToast();
   const uploadMutation = useUploadDocument();
+  const insets = useSafeAreaInsets();
 
   const [title, setTitle] = useState('');
   const [file, setFile] = useState<PickedLibraryFile | null>(null);
@@ -37,20 +38,25 @@ export default function UploadDocumentModal() {
   }, []);
 
   const handlePickDocument = async () => {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: '*/*',
-      copyToCacheDirectory: true,
-    });
-
-    if (!result.canceled) {
-      const asset = result.assets[0];
-      setFile({
-        uri: asset.uri,
-        name: asset.name,
-        mimeType: asset.mimeType ?? 'application/octet-stream',
-        size: asset.size,
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
       });
-      if (!title) setTitle(asset.name.replace(/\.[^.]+$/, ''));
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        setFile({
+          uri: asset.uri,
+          name: asset.name,
+          mimeType: asset.mimeType ?? 'application/octet-stream',
+          size: asset.size,
+        });
+        if (!title) setTitle(asset.name.replace(/\.[^.]+$/, ''));
+      }
+    } catch (error) {
+      console.error('DocumentPicker Error:', error);
+      showToast({ type: 'error', message: 'Erreur lors de la sélection du document' });
     }
   };
 
@@ -83,7 +89,7 @@ export default function UploadDocumentModal() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
       
       {/* HEADER : Panneau Mat Solide */}
       <View className="flex-row items-center justify-between border-b border-zinc-100 bg-white px-5 py-3 dark:border-zinc-900 dark:bg-zinc-950">
@@ -99,17 +105,28 @@ export default function UploadDocumentModal() {
         </Pressable>
       </View>
 
-      <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        <View className="gap-4 pb-10">
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{
+          paddingTop: 16,
+          paddingBottom: insets.bottom + 24,
+          paddingLeft: insets.left + 16,
+          paddingRight: insets.right + 16
+        }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="gap-4">
           
           {/* ZONE DE DÉPÔT : Aplat Mat Unifié */}
           <Pressable 
-            onPress={handlePickDocument} 
+            onPress={() => void handlePickDocument()} 
             disabled={uploadMutation.isPending}
+            className="active:opacity-80"
           >
             <View
               className={cn(
-                'h-32 items-center justify-center gap-2 rounded-xl border active:bg-zinc-100 dark:active:bg-zinc-900/60 transition-colors',
+                'h-32 items-center justify-center gap-2 rounded-xl border transition-colors',
                 file 
                   ? 'border-green-200 bg-green-50/50 dark:border-green-950/30 dark:bg-green-950/10' 
                   : 'border-zinc-200 bg-zinc-50 border-dashed dark:border-zinc-800 dark:bg-zinc-900/40',

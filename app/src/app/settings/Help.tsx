@@ -4,12 +4,13 @@ import { router } from "expo-router";
 import { ArrowLeft, Info, MessageCircle, RefreshCw } from "lucide-react-native";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Alert, Modal, Pressable, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, Text, View } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function HelpsAndCommentScreen() {
     const { t } = useTranslation("settings");
     const [isChecking, setIsChecking] = useState(false);
+    const insets = useSafeAreaInsets();
 
     const handleCheckUpdate = async () => {
         try {
@@ -31,7 +32,7 @@ export default function HelpsAndCommentScreen() {
     return (
         <SafeAreaView
             className="flex-1 bg-white dark:bg-zinc-950"
-            edges={["top"]}
+            edges={["top", "left", "right"]}
         >
             {/* HEADER : Panneau Mat Solide */}
             <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
@@ -48,7 +49,11 @@ export default function HelpsAndCommentScreen() {
             </View>
 
             {/* CONTENU : Liste de paramètres opaque mate */}
-            <View className="flex-1 px-4 py-5">
+            <ScrollView
+                className="flex-1"
+                contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: insets.bottom + 24 }}
+                showsVerticalScrollIndicator={false}
+            >
                 <View className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-900 dark:bg-zinc-950">
                     <SettingItem
                         icon={MessageCircle}
@@ -71,10 +76,10 @@ export default function HelpsAndCommentScreen() {
                         onPress={handleCheckUpdate}
                     />
                 </View>
-            </View>
+            </ScrollView>
 
             {/* LOADER OVERLAY : Mat et sans ombre portée */}
-            <Modal transparent visible={isChecking} animationType="fade">
+            <Modal statusBarTranslucent transparent visible={isChecking} animationType="fade">
                 <View className="flex-1 items-center justify-center bg-black/50">
                     <View className="p-5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl flex-row items-center gap-x-3.5 max-w-[80%]">
                         <ActivityIndicator size="small" color="#F97316" />

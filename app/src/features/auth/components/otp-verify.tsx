@@ -1,5 +1,6 @@
 import { useAuth, useToast } from '@/providers';
 import { Button } from '@/shared/ui/button';
+import { authApi } from '@/shared/api/auth';
 import { router, useLocalSearchParams } from 'expo-router';
 import { CheckCircle2, RotateCcw, Smartphone } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
@@ -152,7 +153,15 @@ export function OTPVerify() {
           </Text>
         ) : (
           <Pressable 
-            onPress={() => setTimer(60)} 
+            onPress={async () => {
+              try {
+                await authApi.resendOtp({ email: email!, purpose: (purpose as any) || 'EMAIL_VERIFY' });
+                setTimer(60);
+                showToast({ type: 'success', message: 'Nouveau code envoyé.' });
+              } catch (e: any) {
+                showToast({ type: 'error', message: e.message || 'Échec de l\'envoi' });
+              }
+            }} 
             className="flex-row items-center gap-x-1.5 py-1"
           >
             <RotateCcw size={12} color="#F97316" />

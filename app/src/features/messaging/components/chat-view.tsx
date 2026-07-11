@@ -1,9 +1,9 @@
+import { useSafeArea } from '@/shared/hooks/use-safe-area';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { ChevronDown, Image as ImageIcon, Paperclip, Send, X } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, Pressable, Text, View } from 'react-native';
-import { useSafeArea } from '@/shared/hooks/use-safe-area';
 
 import { useMessages, type DecryptedMessage } from '@/features/messaging/hooks/use-messages';
 import { useSendMessage } from '@/features/messaging/hooks/use-send-message';
@@ -21,8 +21,6 @@ interface ChatViewProps {
   conversation?: Conversation;
 }
 
-const ORANGE_PRINCIPAL = '#FF6B00';
-
 export function ChatView({ conversation }: ChatViewProps) {
   const insets = useSafeArea();
   const conversationId = conversation?.id ?? '';
@@ -39,8 +37,8 @@ export function ChatView({ conversation }: ChatViewProps) {
     if (rep.is_deleted) return 'Ce message a été supprimé';
     if (rep.decryptedContent) return rep.decryptedContent;
     if (rep.attachments && rep.attachments.length > 0) {
-      if (rep.attachments[0].mimeType.startsWith('image/')) return '📷 Photo';
-      return '📎 Document';
+      if (rep.attachments[0].mimeType.startsWith('image/')) return '[Image]';
+      return rep.attachments.map((att) => `${att.fileName}`).join(', ');
     }
     return 'Message';
   };
@@ -200,6 +198,10 @@ export function ChatView({ conversation }: ChatViewProps) {
         showsVerticalScrollIndicator={false}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
+        removeClippedSubviews={Platform.OS === 'android'}
+        initialNumToRender={15}
+        maxToRenderPerBatch={10}
+        windowSize={10}
         renderItem={({ item }) => {
           if (item.type === 'date' || item.type === 'unread-separator') {
             const isSeparator = item.type === 'unread-separator';

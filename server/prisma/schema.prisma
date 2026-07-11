@@ -26,6 +26,18 @@ enum MessageType {
   SYSTEM
 }
 
+enum UpdateSeverity {
+  low
+  medium
+  high
+  critical
+}
+
+enum UpdateType {
+  auto
+  manual
+}
+
 // model
 model User {
   id            String   @id @default(uuid()) @db.Uuid
@@ -48,6 +60,7 @@ model User {
   subscription  Subscription?
   devices       Device[]
   refreshTokens RefreshToken[]
+  keyBackup     KeyBackup?
   auditLogs     AuditLog[]
   qrTokens      QrToken[]
   messages      Message[]
@@ -147,6 +160,22 @@ model AuditLog {
 
   @@map("audit_logs")
 }
+
+model KeyBackup {
+  id                 String    @id @default(uuid()) @db.Uuid
+  user_id            String    @unique @db.Uuid
+  encrypted_key      String
+  salt               String
+  attemptsRemaining  Int       @default(5)
+  lockedUntil        DateTime? @db.Timestamptz
+  createdAt          DateTime  @default(now()) @db.Timestamptz
+  updatedAt          DateTime  @updatedAt @db.Timestamptz
+
+  user               User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("key_backups")
+}
+
 
 model Chat {
   id            String   @id @default(uuid()) @db.Uuid
@@ -415,4 +444,18 @@ model GroupInvitation {
   createdBy       User     @relation("CreatedInvitations", fields: [created_by_id], references: [id], onDelete: Cascade)
 
   @@map("group_invitations")
+}
+
+model UpdateVersioning {
+  id          String   @id @default(uuid()) @db.Uuid
+  version     String
+  createdAt   DateTime @default(now()) @db.Timestamptz
+  changelog   Json?
+  isRequired  Boolean  @default(false)
+  minSdkVersion String
+  severity    UpdateSeverity
+  type        UpdateType
+  links       Json?
+
+  @@map("update_versioning")
 }

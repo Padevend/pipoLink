@@ -6,10 +6,11 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, CheckCircle2, Eye, EyeOff, Lock } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ResetPasswordScreen() {
   const { showToast } = useToast();
+  const insets = useSafeAreaInsets();
   const { email, code } = useLocalSearchParams<{ email: string; code: string }>();
 
   const [password, setPassword] = useState('');
@@ -44,7 +45,7 @@ export default function ResetPasswordScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
 
       {/* HEADER : Panneau Mat Solide */}
       <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
@@ -69,7 +70,12 @@ export default function ResetPasswordScreen() {
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ flexGrow: 1 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingBottom: insets.bottom + 16,
+          paddingLeft: insets.left,
+          paddingRight: insets.right
+        }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >

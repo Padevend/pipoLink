@@ -13,6 +13,7 @@ import type {
   UserStatusChangedPayload,
 } from "../../src/modules/websocket/events/event-types.js";
 import { env } from "../../config/envManager.js";
+import { FileService } from "./file.service.js";
 
 /**
  * Audit event types — jamais de données sensibles.
@@ -39,6 +40,7 @@ interface PreTransactionData {
   avatarPath: string | null;
   groupMemberships: { conversation_id: string; chatName: string | null; chatType: string }[];
   directConversationUserIds: string[];
+  aiAttachmentUrls: string[];
 }
 
 /**
@@ -226,7 +228,13 @@ export class AccountDeletionService {
       }
     }
 
-    return { avatarPath, groupMemberships, directConversationUserIds };
+    const aiDocs = await prisma.document.findMany({
+      where: { uploaded_by_id: userId, type: "AI_ATTACHMENT" },
+      select: { fileUrl: true }
+    });
+    const aiAttachmentUrls = aiDocs.map(d => d.fileUrl);
+
+    return { avatarPath, groupMemberships, directConversationUserIds, aiAttachmentUrls };
   }
 
   /**
@@ -346,6 +354,11 @@ export class AccountDeletionService {
     await trx.aiSession.deleteMany({
       where: { user_id: userId },
     });
+
+    // Supprimer les documents personnels IA
+    await trx.document.deleteMany({
+      where: { uploaded_by_id: userId, type: "AI_ATTACHMENT" },
+    });
   }
 
   /**
@@ -446,6 +459,16 @@ export class AccountDeletionService {
         }
       } catch {
         console.warn(`[AccountDeletion] Échec suppression avatar : ${preData.avatarPath}`);
+      }
+    }
+
+    // Delete AI attachment physical files
+    if (preData.aiAttachmentUrls.length > 0) {
+      const fileService = new FileService();
+      for (const url of preData.aiAttachmentUrls) {
+        fileService.deleteFileByUrl(url).catch(() => {
+          console.warn(`[AccountDeletion] Échec suppression AI_ATTACHMENT : ${url}`);
+        });
       }
     }
   }

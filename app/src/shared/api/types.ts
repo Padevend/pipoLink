@@ -182,7 +182,8 @@ export type DocumentType =
   | "CC"
   | "EXAMEN"
   | "RESUME"
-  | "AUTRE";
+  | "AUTRE"
+  | "AI_ATTACHMENT";
 
 /**
  * Moderation status

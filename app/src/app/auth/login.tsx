@@ -5,9 +5,11 @@ import { LoginForm } from '@/features/auth/components/login-form';
 import { AppLogo } from '@/shared/ui/app-logo';
 import { useEffect } from 'react';
 import { useTheme } from '@/shared/hooks/use-theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function LoginScreen() {
   const {setMode} = useTheme()
+  const insets = useSafeAreaInsets();
 
   useEffect(()=>{
     setMode("dark")
@@ -31,13 +33,21 @@ export default function LoginScreen() {
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={insets.top}
         className="flex-1"
       >
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingVertical: 32 }}
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: 'center',
+            paddingTop: insets.top + 32,
+            paddingBottom: insets.bottom + 32,
+            paddingLeft: insets.left + 16,
+            paddingRight: insets.right + 16
+          }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          className="flex-1 px-4"
+          className="flex-1"
         >
           {/* IDENTITÉ VISUELLE GÉOMÉTRIQUE */}
           <View className="items-center mb-6">

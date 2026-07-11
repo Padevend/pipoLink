@@ -130,45 +130,62 @@ export class PaymentService {
    * Completes a payment, activates the premium subscription plan, sends an invoice email, and broadcasts a WS event.
    */
   async completePayment(paymentId: string) {
-    const payment = await prisma.payment.findUnique({ where: { id: paymentId } });
-    if (!payment) return null;
-    if (payment.status === "SUCCESS") return payment;
+    const trxResult = await prisma.$transaction(async (trx) => {
+      const payment = await trx.payment.findUnique({ where: { id: paymentId } });
+      if (!payment || payment.status === "SUCCESS") return { payment };
 
-    // Update payment status to SUCCESS
-    const updatedPayment = await prisma.payment.update({
-      where: { id: paymentId },
-      data: { status: "SUCCESS", paidAt: new Date() },
+      // Update payment status to SUCCESS
+      const updatedPayment = await trx.payment.update({
+        where: { id: paymentId },
+        data: { status: "SUCCESS", paidAt: new Date() },
+      });
+
+      const oldSub = await trx.subscription.findUnique({ where: { id: payment.subscription_id } });
+      let newPeriodEnd = DateTime.now().plus({ months: 1 }).toJSDate();
+      
+      if (oldSub && oldSub.status === "ACTIVE" && oldSub.plan === "PREMIUM" && oldSub.currentPeriodEnd) {
+        const currentEnd = DateTime.fromJSDate(oldSub.currentPeriodEnd);
+        if (currentEnd > DateTime.now()) {
+          newPeriodEnd = currentEnd.plus({ months: 1 }).toJSDate();
+        }
+      }
+
+      // Update subscription plan to PREMIUM
+      const subscription = await trx.subscription.update({
+        where: { id: payment.subscription_id },
+        data: {
+          plan: "PREMIUM",
+          status: "ACTIVE",
+          currentPeriodEnd: newPeriodEnd,
+        },
+      });
+
+      // Fetch user details for invoicing
+      const user = await trx.user.findUnique({ where: { id: payment.user_id } });
+
+      // Create Audit Logs
+      await trx.auditLog.create({
+        data: {
+          user_id: payment.user_id,
+          action: "PAYMENT_COMPLETED",
+          targetId: payment.id,
+        },
+      });
+
+      await trx.auditLog.create({
+        data: {
+          user_id: payment.user_id,
+          action: "SUBSCRIPTION_ACTIVATED",
+          targetId: subscription.id,
+        },
+      });
+
+      return { payment: updatedPayment, subscription, user };
     });
 
-    // Update subscription plan to PREMIUM
-    const subscription = await prisma.subscription.update({
-      where: { id: payment.subscription_id },
-      data: {
-        plan: "PREMIUM",
-        status: "ACTIVE",
-        currentPeriodEnd: DateTime.now().plus({ months: 1 }).toJSDate(),
-      },
-    });
+    if (!trxResult.payment || !trxResult.subscription) return trxResult.payment;
 
-    // Fetch user details for invoicing
-    const user = await prisma.user.findUnique({ where: { id: payment.user_id } });
-
-    // Create Audit Logs
-    await prisma.auditLog.create({
-      data: {
-        user_id: payment.user_id,
-        action: "PAYMENT_COMPLETED",
-        targetId: payment.id,
-      },
-    });
-
-    await prisma.auditLog.create({
-      data: {
-        user_id: payment.user_id,
-        action: "SUBSCRIPTION_ACTIVATED",
-        targetId: subscription.id,
-      },
-    });
+    const { payment, subscription, user } = trxResult;
 
     // Send invoice email asynchronously
     if (user?.email) {
@@ -194,7 +211,7 @@ export class PaymentService {
       console.error("[RealtimeBus] subscription sync emission failed:", wsErr);
     }
 
-    return updatedPayment;
+    return payment;
   }
 
   /**

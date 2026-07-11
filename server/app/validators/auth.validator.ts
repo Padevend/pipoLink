@@ -104,3 +104,22 @@ export const refreshValidator = vine.compile(
     refreshToken: vine.string().minLength(1),
   })
 );
+
+export const backupKeyValidator = vine.compile(
+  vine.object({
+    encryptedKey: vine.string().minLength(1),
+    salt:         vine.string().minLength(1),
+  })
+);
+
+export const completeRecoveryValidator = vine.compile(
+  vine.object({
+    deviceName:        vine.string().minLength(1).maxLength(120),
+    devicePlatform:    vine.string().minLength(1).maxLength(40),
+    deviceFingerprint: vine.string().minLength(4).maxLength(200),
+    devicePublicKey:   vine.string().minLength(32),
+    deviceKeySignature: vine.string().minLength(32),
+    isBypass:          vine.boolean().optional(),
+  })
+);
+

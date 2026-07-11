@@ -1,4 +1,4 @@
-import Sidebar from "@/share/components/sidebar";
+import Sidebar from "@/components/sidebar";
 import { useRouteError, Link } from "react-router-dom";
 import { Home } from "lucide-react";
 

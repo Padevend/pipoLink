@@ -32,10 +32,12 @@ if (getApps().length === 0) {
   }
 }
 
+import { prisma } from "../../../config/database.js";
+
 export class FCMService {
   /**
-   * Envoie une notification PUSH via FCM.
-   * @param tokens Liste des tokens FCM des destinataires
+   * Envoie une notification PUSH via FCM et/ou Expo Push API.
+   * @param tokens Liste des tokens FCM et/ou Expo des destinataires
    * @param title  Titre de la notification
    * @param body   Corps de la notification
    * @param data   Données silencieuses (conversationId, messageId, etc.)
@@ -46,43 +48,114 @@ export class FCMService {
     body: string,
     data?: Record<string, string>,
   ) {
-    if (getApps().length === 0) {
-      console.warn("Firebase non configuré, impossible d'envoyer la notification Push.");
-      return;
-    }
-
     if (!tokens || tokens.length === 0) return;
 
-    try {
-      const messaging = getMessaging();
+    const fcmTokens = tokens.filter(t => !t.startsWith('ExponentPushToken') && !t.startsWith('ExpoPushToken'));
+    const expoTokens = tokens.filter(t => t.startsWith('ExponentPushToken') || t.startsWith('ExpoPushToken'));
 
-      const response = await messaging.sendEachForMulticast({
-        tokens,
-        notification: { title, body },
-        data: data ?? {},
-        android: {
-          priority: "high",
-          notification: {
-            sound: "default",
-            channelId: "pipolink",
-          },
-        },
-        apns: {
-          payload: {
-            aps: {
-              sound: "default",
-              contentAvailable: true,
+    // --- 1. Envoi via Firebase Cloud Messaging ---
+    if (fcmTokens.length > 0) {
+      if (getApps().length === 0) {
+        console.warn("Firebase non configuré, impossible d'envoyer la notification Push aux tokens FCM.");
+      } else {
+        try {
+          const messaging = getMessaging();
+          const response = await messaging.sendEachForMulticast({
+            tokens: fcmTokens,
+            notification: { title, body },
+            data: data ?? {},
+            android: {
+              priority: "high",
+              notification: {
+                sound: "default",
+                channelId: "pipolink",
+              },
             },
-          },
-        },
-      });
+            apns: {
+              payload: {
+                aps: {
+                  sound: "default",
+                  contentAvailable: true,
+                },
+              },
+            },
+          });
 
-      if (response.failureCount > 0) {
-        console.warn(`[FCM] Échec pour ${response.failureCount} notification(s).`);
-        // TODO: supprimer les tokens expirés (messaging/invalid-registration-token)
+          if (response.failureCount > 0) {
+            console.warn(`[FCM] Échec pour ${response.failureCount} notification(s).`);
+            // Purge des tokens invalides/expirés de la base de données
+            void this.purgeInvalidTokens(fcmTokens, response.responses);
+          }
+        } catch (error) {
+          console.error("[FCM] Erreur lors de l'envoi de notification :", error);
+        }
       }
-    } catch (error) {
-      console.error("[FCM] Erreur lors de l'envoi de notification :", error);
+    }
+
+    // --- 2. Envoi via Expo Push API (pour Expo Go et Dev Clients) ---
+    if (expoTokens.length > 0) {
+      try {
+        const messages = expoTokens.map(token => ({
+          to: token,
+          sound: 'default',
+          title,
+          body,
+          data: data ?? {},
+          channelId: 'pipolink',
+        }));
+
+        const response = await fetch('https://exp.host/--/api/v2/push/send', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Accept-encoding': 'gzip, deflate',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(messages),
+        });
+
+        if (!response.ok) {
+          console.error('[Expo Push] Erreur API:', await response.text());
+        }
+      } catch (error) {
+        console.error('[Expo Push] Erreur d\'envoi:', error);
+      }
+    }
+  }
+
+  /**
+   * Purge les tokens FCM invalides ou expirés de la base de données.
+   * Appelé automatiquement après un envoi multicast qui contient des erreurs.
+   */
+  private async purgeInvalidTokens(
+    tokens: string[],
+    responses: Array<{ success: boolean; error?: { code: string } }>,
+  ): Promise<void> {
+    const INVALID_CODES = new Set([
+      'messaging/invalid-registration-token',
+      'messaging/registration-token-not-registered',
+      'messaging/invalid-argument',
+    ]);
+
+    const invalidTokens: string[] = [];
+
+    for (let i = 0; i < responses.length; i++) {
+      const res = responses[i];
+      if (!res.success && res.error && INVALID_CODES.has(res.error.code)) {
+        invalidTokens.push(tokens[i]);
+      }
+    }
+
+    if (invalidTokens.length === 0) return;
+
+    try {
+      const result = await prisma.device.updateMany({
+        where: { fcm_token: { in: invalidTokens } },
+        data: { fcm_token: null },
+      });
+      console.log(`[FCM] ${result.count} token(s) invalide(s) supprimé(s) de la base.`);
+    } catch (err) {
+      console.error('[FCM] Erreur lors de la purge des tokens invalides:', err);
     }
   }
 }

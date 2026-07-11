@@ -1,6 +1,7 @@
 import { SecureStorageService, SECURE_STORAGE_KEYS } from '@/shared/lib/storage';
 import { emitter } from './emitter';
 import { WS_EVENTS, WsEvent } from '../constants/ws-events';
+import { enqueueEvent, flushQueuedEvents, hasQueuedEvents } from './queue';
 
 function wsBaseUrl(): string {
   const raw = process.env.EXPO_PUBLIC_WS_URL;
@@ -42,6 +43,14 @@ class WebSocketManager {
       });
       
       emitter.emit('status.change', 'connected');
+
+      // Flush queued events
+      if (hasQueuedEvents()) {
+        const events = flushQueuedEvents();
+        events.forEach(({ event, payload }) => {
+          this.send(event, payload);
+        });
+      }
     };
 
     this.socket.onmessage = (event) => {
@@ -81,7 +90,10 @@ class WebSocketManager {
     if (this.socket?.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify({ event, payload }));
     } else {
-      console.warn(`WS Not connected. Dropping event: ${event}`);
+      if (event !== WS_EVENTS.AUTH_INIT) {
+        console.warn(`WS Not connected. Queuing event: ${event}`);
+        enqueueEvent(event, payload);
+      }
     }
   }
 
@@ -105,3 +117,4 @@ export const disconnect = () => wsManager.disconnect();
 export const send = (event: WsEvent | string, payload: any) => wsManager.send(event, payload);
 export const on = <T>(event: WsEvent | 'status.change' | string, handler: (payload: T) => void) => wsManager.on(event, handler);
 export const getStatus = () => wsManager.getStatus();
+

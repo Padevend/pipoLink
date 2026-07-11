@@ -104,8 +104,9 @@ export class LibraryController {
 
   async downloadDocument(c: HttpContext) {
     const userId = c.get("userId") as string;
+    const role = c.get("role") as string;
     const documentId = c.req.param("id") || "";
-    const result = await this.service.downloadDocument(documentId, userId);
+    const result = await this.service.downloadDocument(documentId, role, userId);
     return ApiResponse.success(c, result, "Lien de téléchargement généré.");
   }
 

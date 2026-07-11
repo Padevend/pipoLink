@@ -60,7 +60,7 @@ export default function UploadFileModal() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'bottom']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'bottom', 'left', 'right']}>
       
       {/* Header Épuré */}
       <View className="flex-row items-center justify-between border-b border-zinc-100 px-6 py-4 dark:border-zinc-900">

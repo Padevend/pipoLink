@@ -1,22 +1,24 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "@/share/lib/api";
+import { useLogin } from "../model/use_login";
+import { useAuth } from "@/providers/auth/authContext";
 import { useToast } from "@/providers/toast/toastContext";
 import { Lock, Mail, Loader2, Terminal, Eye, EyeOff } from "lucide-react";
 
-export default function LoginPage() {
+export function LoginFeat() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { isAuthenticated } = useAuth();
+  const { login, loading } = useLogin();
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    if (api.isAuthenticated()) {
+    if (isAuthenticated()) {
       navigate("/", { replace: true });
     }
-  }, [navigate]);
+  }, [navigate, isAuthenticated]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,36 +31,22 @@ export default function LoginPage() {
       return;
     }
 
-    setLoading(true);
     try {
-      await api.login(email.trim(), password);
-      showToast({
-        type: "success",
-        message: "Connexion réussie ! Bienvenue sur le Dashboard.",
-        duration: 3000,
-      });
+      await login({ email, password });
       navigate("/", { replace: true });
-    } catch (err: any) {
-      showToast({
-        type: "error",
-        message: err.message || "Erreur de connexion.",
-        duration: 4000,
-      });
-    } finally {
-      setLoading(false);
+    } catch {
+      // Errors handled by useLogin hook
     }
   };
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-zinc-50 px-4 py-12 text-zinc-900 overflow-hidden select-none">
-
-      {/* Éléments d'arrière-plan pour l'effet Glassmorphism (Monochrome + Orange) */}
+      {/* Background decoration */}
       <div className="absolute top-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-orange-500/15 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/3 translate-x-1/2 translate-y-1/2 w-96 h-96 bg-zinc-300/40 rounded-full blur-[140px] pointer-events-none" />
 
       <div className="relative w-full max-w-[420px] space-y-8 z-10">
-
-        {/* EN-TÊTE */}
+        {/* HEADER */}
         <div className="flex flex-col items-center text-center space-y-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/60 border border-white/80 backdrop-blur-md shadow-sm text-orange-500">
             <Terminal size={22} strokeWidth={1.5} />
@@ -74,10 +62,9 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* PANNEAU CENTRAL : Glassmorphism Card (Light Mode) */}
+        {/* MAIN PANEL */}
         <div className="bg-white/60 border border-white/80 rounded-2xl p-8 backdrop-blur-xl shadow-2xl shadow-zinc-200/50">
           <form className="space-y-6" onSubmit={handleSubmit}>
-
             <div className="space-y-4">
               {/* CHAMP : Email */}
               <div className="space-y-2">
@@ -130,7 +117,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* BOUTON D'ACTION */}
+            {/* BUTTON */}
             <button
               type="submit"
               disabled={loading}
@@ -148,11 +135,10 @@ export default function LoginPage() {
           </form>
         </div>
 
-        {/* PIED DE PAGE */}
+        {/* FOOTER */}
         <p className="text-center text-[11px] font-medium text-zinc-400 tracking-wide">
           Système sécurisé propriétaire • PipoLink 2026
         </p>
-
       </div>
     </div>
   );

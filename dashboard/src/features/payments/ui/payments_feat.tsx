@@ -1,7 +1,5 @@
-import { useState, useEffect } from "react";
-import { api } from "@/share/lib/api";
-import type { Payment } from "@/share/lib/api";
-import { useToast } from "@/providers/toast/toastContext";
+import { useState } from "react";
+import { usePayments } from "../model/use_payments";
 import {
   ChevronLeft,
   ChevronRight,
@@ -11,35 +9,11 @@ import {
   CreditCard
 } from "lucide-react";
 
-export default function PaymentsPage() {
-  const [payments, setPayments] = useState<Payment[]>([]);
+export function PaymentsFeat() {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
 
-  const { showToast } = useToast();
-
-  const fetchPayments = async () => {
-    setLoading(true);
-    try {
-      const data = await api.getPayments(page, limit);
-      setPayments(data.payments);
-      setTotalPages(data.totalPages);
-    } catch (err: any) {
-      showToast({
-        type: "error",
-        message: err.message || "Erreur de chargement des paiements.",
-        duration: 4000,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPayments();
-  }, [page]);
+  const { payments, totalPages, loading, error } = usePayments({ page, limit });
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "N/A";
@@ -85,7 +59,6 @@ export default function PaymentsPage() {
 
   return (
     <div className="space-y-8 select-none">
-      
       {/* HEADER */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-zinc-800">
@@ -96,7 +69,13 @@ export default function PaymentsPage() {
         </p>
       </div>
 
-      {/* PAYMENTS TABLE CARD (Glassmorphism Table) */}
+      {error && (
+        <div className="bg-red-50 border border-red-100 text-red-700 text-xs font-semibold p-4 rounded-xl">
+          Erreur lors du chargement des paiements: {(error as any).message || "Problème réseau."}
+        </div>
+      )}
+
+      {/* PAYMENTS TABLE CARD */}
       <div className="bg-white/60 border border-white/80 rounded-2xl overflow-hidden shadow-sm shadow-zinc-200/40 backdrop-blur-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -128,7 +107,6 @@ export default function PaymentsPage() {
               ) : (
                 payments.map((payment) => (
                   <tr key={payment.id} className="hover:bg-white/40 transition-colors duration-150">
-                    
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
                         <div className="h-8 w-8 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-[11px] font-bold text-zinc-600 overflow-hidden flex-shrink-0">
@@ -175,7 +153,6 @@ export default function PaymentsPage() {
                         <span>{formatDate(payment.paidAt || payment.createdAt)}</span>
                       </div>
                     </td>
-
                   </tr>
                 ))
               )}

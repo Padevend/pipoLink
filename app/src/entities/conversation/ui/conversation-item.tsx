@@ -39,6 +39,16 @@ export const ConversationItem = React.memo(function ConversationItem({ conversat
     return otherMember?.avatarUrl;
   }, [conversation.avatarUrl, conversation.members, user?.id]);
 
+  // Recuperation du user account role si echange prive
+  const userAccountRole = useMemo(() => {
+    if (conversation.type === 'group') {
+      return null;
+    }
+    const otherMember = conversation.members.find((m) => m.id !== user?.id);
+    console.log("role", JSON.stringify(otherMember, null, 2));
+    return otherMember?.accountRole;
+  }, [conversation.type, conversation.members, user?.id]);
+
   useEffect(() => {
     const getKey = async () => {
       try {
@@ -67,8 +77,8 @@ export const ConversationItem = React.memo(function ConversationItem({ conversat
       className="flex-row items-center px-6 py-4 bg-white dark:bg-zinc-950 active:bg-zinc-50 dark:active:bg-zinc-900/40"
     >
       {/* Conteneur de la photo de profil : Forme carrée moderne aux angles nets, sans ombre */}
-      <View className="overflow-hidden rounded-xl border border-zinc-100 dark:border-zinc-900">
-        <Avatar name={chatName} uri={chatAvatar} size="lg" />
+      <View>
+        <Avatar name={chatName} uri={chatAvatar} size="lg" role={userAccountRole as any} />
       </View>
 
       {/* Zone de contenu textuel */}

@@ -2,11 +2,13 @@ import { HttpContext } from "../../config/app.js";
 import { AuthService } from "../services/auth.service.js";
 import { DeviceService } from "../services/device.service.js";
 import { ApiResponse } from "../helpers/api-response.js";
+import { setCookie, deleteCookie } from "hono/cookie";
 import {
   registerValidator, loginValidator, verifyOtpValidator,
   resendOtpValidator, changePasswordValidator,
   resetPasswordValidator, refreshValidator,
   initiatePairingValidator, approvePairingValidator,
+  backupKeyValidator, completeRecoveryValidator,
 } from "../validators/auth.validator.js";
 import { RealtimeBus } from "../../src/modules/websocket/gateway/realtime-bus.js";
 import { WsEventName } from "../../src/modules/websocket/events/event-names.js";
@@ -59,6 +61,16 @@ export class AuthController {
       userAgent,
       location,
     });
+
+    // Enforce HTTPOnly cookie secure storage for sensitive credentials
+    setCookie(c, "pipolink_admin_token", result.accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    });
+
     return ApiResponse.success(c, result, "Connexion réussie.");
   }
 
@@ -69,8 +81,19 @@ export class AuthController {
   }
 
   async logout(c: HttpContext) {
-    const payload = await c.validateUsing(refreshValidator);
-    await this.service.logout(payload.refreshToken);
+    try {
+      const payload = await c.req.json().catch(() => ({}));
+      if (payload && payload.refreshToken) {
+        await this.service.logout(payload.refreshToken);
+      }
+    } catch (e) {
+      // safe fallback if JSON parse fails or token cannot be revoked
+    }
+    deleteCookie(c, "pipolink_admin_token", {
+      path: "/",
+      secure: true,
+      sameSite: "None",
+    });
     return ApiResponse.success(c, null, "Déconnexion réussie.");
   }
 
@@ -110,7 +133,6 @@ export class AuthController {
   }
 
   async previewPairing(c: HttpContext) {
-    const userId = c.get("userId") as string;
     const token = c.req.query("token");
     const shortCode = c.req.query("shortCode");
     const result = this.service.previewPairing({
@@ -124,7 +146,22 @@ export class AuthController {
   async approvePairing(c: HttpContext) {
     const userId  = c.get("userId") as string;
     const payload = await c.validateUsing(approvePairingValidator);
-    const result  = await this.service.approveDevicePairing(userId, payload);
+
+    const userAgent = c.req.header("user-agent") || "Inconnu";
+    let ip = "127.0.0.1";
+    try {
+      const conn = getConnInfo(c);
+      ip = conn.remote.address || c.req.header("x-forwarded-for") || c.req.header("x-real-ip") || "127.0.0.1";
+    } catch (e) {
+      ip = c.req.header("x-forwarded-for") || c.req.header("x-real-ip") || "127.0.0.1";
+    }
+    if (ip.includes(",")) {
+      ip = ip.split(",")[0].trim();
+    }
+    const { getLocationFromIp } = await import("../helpers/ip-lookup.js");
+    const location = await getLocationFromIp(ip);
+
+    const result  = await this.service.approveDevicePairing(userId, payload, { ip, userAgent, location });
     RealtimeBus.emit(WsEventName.DeviceLinked, result.device, { userId });
     return ApiResponse.success(c, { device: result.device }, "Appareil secondaire approuvé.", 201);
   }
@@ -145,5 +182,47 @@ export class AuthController {
     }
     const result = this.service.pollQrLink(token);
     return ApiResponse.success(c, result, result.status === "completed" ? "Liaison terminée." : "En attente.");
+  }
+
+  async backupKey(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const payload = await c.validateUsing(backupKeyValidator);
+    const result = await this.service.backupKey(userId, payload);
+    return ApiResponse.success(c, result, "Sauvegarde de clé réussie.");
+  }
+
+  async completeRecovery(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const payload = await c.validateUsing(completeRecoveryValidator);
+    
+    const userAgent = c.req.header("user-agent") || "Inconnu";
+    let ip = "127.0.0.1";
+    try {
+      const conn = getConnInfo(c);
+      ip = conn.remote.address || c.req.header("x-forwarded-for") || c.req.header("x-real-ip") || "127.0.0.1";
+    } catch (e) {
+      ip = c.req.header("x-forwarded-for") || c.req.header("x-real-ip") || "127.0.0.1";
+    }
+
+    if (ip.includes(",")) {
+      ip = ip.split(",")[0].trim();
+    }
+
+    const { getLocationFromIp } = await import("../helpers/ip-lookup.js");
+    const location = await getLocationFromIp(ip);
+
+    const result = await this.service.completeRecovery(userId, {
+      ...payload,
+      ip,
+      userAgent,
+      location,
+    });
+    return ApiResponse.success(c, result, "Récupération de clé terminée.");
+  }
+
+  async failedRecovery(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const result = await this.service.failedRecovery(userId);
+    return ApiResponse.success(c, result, "Tentative échouée enregistrée.");
   }
 }

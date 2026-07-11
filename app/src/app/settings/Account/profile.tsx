@@ -10,7 +10,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth, useToast } from "@/providers";
 import { queryClient } from "@/providers/query-provider";
@@ -25,6 +25,7 @@ import { PhoneInput } from "@/shared/ui/phone-input";
 
 export default function ProfileSettingsScreen(): JSX.Element {
   const { t } = useTranslation("common");
+  const insets = useSafeAreaInsets();
   
   const { user, refreshUser } = useAuth();
   const { showToast } = useToast();
@@ -91,7 +92,7 @@ export default function ProfileSettingsScreen(): JSX.Element {
   return (
     <SafeAreaView
       className="flex-1 bg-white dark:bg-zinc-950"
-      edges={["top"]}
+      edges={["top", "left", "right"]}
     >
       {/* HEADER : Panneau Mat Solide */}
       <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
@@ -109,11 +110,12 @@ export default function ProfileSettingsScreen(): JSX.Element {
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={insets.top}
         className="flex-1"
       >
         <ScrollView
           className="flex-1 px-4"
-          contentContainerStyle={{ paddingTop: 16, paddingBottom: 40 }}
+          contentContainerStyle={{ paddingTop: 16, paddingBottom: insets.bottom + 24 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >

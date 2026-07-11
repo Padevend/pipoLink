@@ -15,7 +15,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApproveByCode } from "@/features/devices/hooks/use-approve-by-code";
 import { useLinkDevice } from "@/features/devices/hooks/use-link-device";
@@ -38,6 +38,7 @@ export default function DeviceScanScreen() {
   const codeMutation = useApproveByCode();
   const { showToast } = useToast();
   const linkingRef = useRef(false);
+  const insets = useSafeAreaInsets();
 
   const handleLinkQr = useCallback(
     async (raw: string): Promise<void> => {
@@ -106,9 +107,10 @@ export default function DeviceScanScreen() {
       )}
 
       {/* Interface utilisateur solide */}
-      <SafeAreaView className="flex-1" edges={["top", "bottom"]}>
+      <SafeAreaView className="flex-1" edges={["top", "bottom", "left", "right"]}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={insets.top}
           className="flex-1 justify-between px-4 py-4"
         >
           {/* BARRE SUPÉRIEURE : Boîte Mat Solide */}

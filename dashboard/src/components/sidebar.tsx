@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { api } from "@/share/lib/api";
 import { useToast } from "@/providers/toast/toastContext";
+import { useAuth } from "@/providers/auth/authContext";
 import {
   LayoutDashboard,
   Users,
@@ -10,12 +10,13 @@ import {
   Layers,
   LogOut,
   Terminal,
+  RefreshCw,
 } from "lucide-react";
 
 export default function Sidebar() {
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const user = api.getUser();
+  const { user, logout } = useAuth();
 
   const routes = useMemo(() => {
     return [
@@ -44,11 +45,16 @@ export default function Sidebar() {
         name: "Paiements",
         icon: CreditCard,
       },
+      {
+        path: "/updates",
+        name: "Mises à Jour",
+        icon: RefreshCw,
+      },
     ];
   }, []);
 
   const handleLogout = () => {
-    api.clearSession();
+    logout();
     showToast({
       type: "success",
       message: "Déconnexion réussie.",
@@ -98,7 +104,7 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Footer Profile & Logout (Glass Card effect) */}
+      {/* Footer Profile & Logout */}
       <div className="p-4 border-t border-zinc-200/60 bg-zinc-100/30 space-y-4">
         {user && (
           <div className="flex items-center space-x-3 px-2 py-1">

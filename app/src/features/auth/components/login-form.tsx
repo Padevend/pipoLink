@@ -1,12 +1,12 @@
 import { useAuth, useToast } from '@/providers';
 import { authApi } from '@/shared/api/auth';
 import { ApiError } from '@/shared/api/client';
+import { SECURE_STORAGE_KEYS, SecureStorageService } from '@/shared/lib/storage';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { generateUUID } from '@/shared/utils/uuid';
 import { router } from 'expo-router';
-import { SecureStorageService, SECURE_STORAGE_KEYS } from '@/shared/lib/storage';
-import { ArrowLeft, ChevronRight, Eye, EyeOff, Laptop, Link2, Lock, Mail } from 'lucide-react-native';
+import { ArrowLeft, ChevronRight, Eye, EyeOff, Laptop, Link2, Lock, Mail, UserPlus } from 'lucide-react-native';
 import { useState } from 'react';
 import { Platform, Pressable, Text, View } from 'react-native';
 
@@ -62,6 +62,25 @@ export function LoginForm() {
         result.user,
       );
 
+      if (result.keyRecoveryMode) {
+        await SecureStorageService.set('temp_login_email', email);
+        await SecureStorageService.set('temp_login_password', password);
+        if (result.keyBackup) {
+          await SecureStorageService.set('temp_key_backup', JSON.stringify(result.keyBackup));
+        }
+        showToast({
+          type: 'info',
+          message: result.keyRecoveryMode === 'qr_required'
+            ? 'Veuillez valider cet appareil depuis votre appareil principal.'
+            : 'Configuration sécurisée : veuillez restaurer votre clé de chiffrement.',
+        });
+        router.replace({
+          pathname: '/devices/key-recovery',
+          params: { mode: result.keyRecoveryMode === 'qr_required' ? 'qr' : 'password' },
+        } as any);
+        return;
+      }
+
       showToast({ type: 'success', message: 'Connexion réussie' });
 
       if (result.requiresOnboarding || result.requiresKeySetup) {
@@ -92,7 +111,7 @@ export function LoginForm() {
 
         {/* Bloc Unique Mat et Opaque */}
         <View className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-900 dark:bg-zinc-950 mb-5">
-          
+
           {/* Option A : Appareil Principal */}
           <Pressable
             onPress={() => setMode('primary')}
@@ -140,14 +159,16 @@ export function LoginForm() {
         </View>
 
         {/* Pied du formulaire : Lien alternatif */}
-        <View className="flex-row justify-center items-center gap-1.5 pt-2">
+        <View className="flex flex-col justify-center items-center gap-1.5 pt-2">
           <Text className="text-xs font-semibold text-zinc-400 dark:text-zinc-500">
             Nouveau sur la plateforme ?
           </Text>
-          <Pressable onPress={() => router.push('/auth/register')}>
-            <Text className="text-xs font-bold text-orange-500 dark:text-orange-400">
-              Créer un compte
-            </Text>
+          <Pressable
+            onPress={() => router.push('/auth/register')}
+            className="flex-1 flex-row w-full py-5 mt-2 items-center justify-center gap-2 border border-orange-500 bg-orange-500 rounded-xl"
+          >
+            <UserPlus size={15} color="#FFF" strokeWidth={2.5} />
+            <Text className="text-[11px] font-bold text-white uppercase tracking-wider">Créer un compte</Text>
           </Pressable>
         </View>
       </View>
@@ -158,8 +179,8 @@ export function LoginForm() {
   return (
     <View className="w-full">
       {/* Bouton de retour rigide */}
-      <Pressable 
-        onPress={() => setMode('choose')} 
+      <Pressable
+        onPress={() => setMode('choose')}
         className="flex-row items-center gap-1.5 mb-4 self-start px-1 py-1"
       >
         <ArrowLeft size={12} color="#F97316" />
@@ -180,7 +201,7 @@ export function LoginForm() {
           autoCapitalize="none"
           containerClassName="bg-transparent"
         />
-        
+
         <View className="w-full gap-y-1.5">
           <Input
             label="Mot de passe"
@@ -194,8 +215,8 @@ export function LoginForm() {
             onRightIconPress={() => setShowPassword(!showPassword)}
             containerClassName="bg-transparent"
           />
-          <Pressable 
-            onPress={() => router.push('/auth/forgot-password')} 
+          <Pressable
+            onPress={() => router.push('/auth/forgot-password')}
             className="self-end mt-1 px-1"
           >
             <Text className="text-[11px] font-bold text-orange-500 dark:text-orange-400">

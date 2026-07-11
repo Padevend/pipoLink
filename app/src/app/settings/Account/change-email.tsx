@@ -1,13 +1,14 @@
 import { router } from "expo-router";
 import { ArrowLeft, Toolbox } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ChangeEmailScreen() {
+    const insets = useSafeAreaInsets();
     return (
         <SafeAreaView
             className="flex-1 bg-white dark:bg-zinc-950"
-            edges={["top"]}
+            edges={["top", "left", "right"]}
         >
             {/* HEADER : Panneau Mat Solide */}
             <View className="flex-row items-center gap-2 border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
@@ -24,7 +25,7 @@ export default function ChangeEmailScreen() {
             </View>
 
             {/* Contenu de la page à intégrer ici */}
-            <View className="flex-1 flex items-center justify-center gap-5">
+            <View className="flex-1 flex items-center justify-center gap-5" style={{ paddingBottom: insets.bottom + 16 }}>
                 <View className="flex items-center justify-center bg-zinc-50 dark:bg-zinc-900 p-4 rounded-full">
                     <Toolbox size={30} color="#71717A" />
                 </View>

@@ -14,4 +14,9 @@ AiRouter
   .get("/sessions/:id/documents", authMiddleware, callAction(AiController, "getDocuments"))
   .post("/sessions/:id/documents", authMiddleware, callAction(AiController, "addDocument"))
   .delete("/sessions/:id/documents/:documentId", authMiddleware, callAction(AiController, "removeDocument"))
-  .post("/sessions/:id/generate", authMiddleware, injectPlanMiddleware, callAction(AiController, "generateStudyAid"));
+  .post("/sessions/:id/generate", authMiddleware, injectPlanMiddleware, callAction(AiController, "generateStudyAid"))
+  .post("/upload-attachment", authMiddleware, callAction(AiController, "uploadAttachment"))
+  .post("/upload-attachement", authMiddleware, callAction(AiController, "uploadAttachment"))
+  .post("/uplaod-attachement", authMiddleware, callAction(AiController, "uploadAttachment"))
+  .get("/attachments", authMiddleware, callAction(AiController, "getAttachments"))
+  .delete("/attachments/:id", authMiddleware, callAction(AiController, "deleteAttachment"));

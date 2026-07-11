@@ -2,16 +2,17 @@ import { useLogout } from '@/features/auth/model/use-logout';
 import SettingItem from '@/shared/ui/settings-cards';
 import { router } from 'expo-router';
 import { ArrowLeft, Key, LogOut, MailPlus, Trash, User } from 'lucide-react-native';
-import { Pressable, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function AccountsSettingsScreen() {
   const { confirmLogout } = useLogout();
+  const insets = useSafeAreaInsets();
 
   return (
     <SafeAreaView
       className="flex-1 bg-white dark:bg-zinc-950"
-      edges={['top']}
+      edges={['top', 'left', 'right']}
     >
       {/* HEADER : Panneau Mat Solide */}
       <View className="flex-row items-center gap-2 border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
@@ -27,7 +28,11 @@ export default function AccountsSettingsScreen() {
         </Text>
       </View>
 
-      <View className="px-4 py-5">
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: insets.bottom + 24 }}
+        showsVerticalScrollIndicator={false}
+      >
         
         {/* SECTION : SÉCURITÉ & INFO (Conteneur Mat Structuré) */}
         <Text className="mb-2 ml-3 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
@@ -78,7 +83,7 @@ export default function AccountsSettingsScreen() {
           />
         </View>
         
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }

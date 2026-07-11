@@ -14,6 +14,8 @@ import { useTranslation } from 'react-i18next';
 import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import { AppLogo } from '@/shared/ui/app-logo';
 import { router } from 'expo-router';
 
@@ -65,6 +67,7 @@ const FEATURES = [
 
 export default function AboutScreen(): JSX.Element {
   const { t } = useTranslation('settings');
+  const insets = useSafeAreaInsets();
   
   const version = Constants.expoConfig?.version ?? '1.0.0';
 
@@ -74,7 +77,7 @@ export default function AboutScreen(): JSX.Element {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
       
       {/* HEADER : Panneau Mat Solide */}
       <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
@@ -89,7 +92,7 @@ export default function AboutScreen(): JSX.Element {
         </Text>
       </View>
 
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: insets.bottom + 24 }} showsVerticalScrollIndicator={false}>
         
         {/* SECTION 1 : LOGO & IDENTITY */}
         <View className="items-center mb-6">

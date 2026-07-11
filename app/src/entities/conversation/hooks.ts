@@ -21,10 +21,8 @@ export const useConversations = () => {
         localDb.upsertConversations(remote);
         return remote;
       } catch (e) {
-        console.error(e)
         const cached = localDb.getConversations();
         if (cached.length) return cached;
-        throw new Error('Hors ligne — aucune conversation en cache.');
       }
     },
     initialData: () => {

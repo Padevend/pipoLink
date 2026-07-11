@@ -8,19 +8,18 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, Phone, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth, useToast } from '@/providers';
 import { useInitiatePayment } from '@/features/payment/hooks';
 import { paymentsApi } from '@/shared/api/payments';
 import { Button } from '@/shared/ui/button';
-import { useSafeArea } from '@/shared/hooks/use-safe-area';
 import { cn } from '@/shared/utils/cn';
 import { PhoneInput } from '@/shared/ui/phone-input';
 
 export default function PaymentScreen(): JSX.Element {
-  const insets = useSafeArea();
+  const insets = useSafeAreaInsets();
   const { showToast } = useToast();
   const { refreshUser } = useAuth();
   const initiatePayment = useInitiatePayment();
@@ -213,7 +212,7 @@ export default function PaymentScreen(): JSX.Element {
   const isValid = validatePhone(phoneNumber);
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
       {/* HEADER */}
       <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
         <Pressable
@@ -231,6 +230,7 @@ export default function PaymentScreen(): JSX.Element {
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={insets.top}
         className="flex-1"
       >
         <ScrollView

@@ -1,193 +1,145 @@
-# Spécification Backend FastAPI — Moteur de RAG (Retrieval-Augmented Generation)
+# Spécification Technique d'Intégration — Agent RAG FastAPI & Backend PipoLink
 
-Ce document décrit les spécifications techniques pour le développement et l'exposition du service de RAG (Retrieval-Augmented Generation) développé en **Python** avec **FastAPI**. Ce serveur est responsable de l'extraction, de la vectorisation (embeddings), du stockage vectoriel et de la génération de réponses augmentées par le contexte des documents de cours.
-
----
-
-## 1. Architecture Générale et Outils Recommandés
-
-- **Framework Web :** FastAPI
-- **Parsing de Documents :** PyPDF, python-docx, et python-pptx (ou unstructured)
-- **Framework de RAG :** LangChain ou LlamaIndex
-- **Base de Données Vectorielle :** Qdrant, ChromaDB ou PgVector
-- **Modèles d'Embeddings :** `text-embedding-3-small` (OpenAI) ou un modèle local via HuggingFace (ex. `cohere-embed-multilingual-v3.0` ou `bge-m3`)
-- **Modèle de Génération (LLM) :** `gpt-4o-mini` (OpenAI), Mistral AI (ex. `mistral-large`), ou un LLM local type Llama-3 / Mistral-7B via Ollama.
+Ce document décrit l'architecture d'intégration entre le backend principal de **PipoLink** (Node.js/Hono) et l'**Agent de RAG** (Python/FastAPI). Il spécifie la configuration de l'environnement, le comportement des appels réseaux, les mécanismes de tolérance aux pannes (fallbacks), et les routes de l'API FastAPI à implémenter.
 
 ---
 
-## 2. Spécification des Routes de l'API
+## 1. Variable d'Environnement et Mode de Fonctionnement
 
-### 2.1 Route d'Ingestion & Vectorisation
-Permet d'extraire le texte d'un document, de le découper en segments (chunks), de générer les vecteurs correspondants et de les stocker dans la base vectorielle.
+Le backend PipoLink est conçu pour s'encapsuler de manière optionnelle et robuste avec l'agent RAG via la variable d'environnement suivante :
 
-- **Route :** `POST /api/v1/ingest`
-- **Format du Body :** `multipart/form-data`
+```bash
+RAG_AGENT_API_URL=http://localhost:8000
+```
 
-#### Paramètres du Body (Payload) :
-| Champ | Type | Obligatoire | Description |
+### Comportement du Backend Node.js :
+1. **Variable manquante ou vide (`RAG_AGENT_API_URL=""`) :**
+   * Le backend bascule automatiquement en mode **Fallback**.
+   * Les fonctionnalités de recherche intelligente renvoient un message structuré informant l'utilisateur que le service est en cours de conception ou indisponible.
+   * Aucune requête HTTP externe n'est tentée.
+2. **Variable présente (`RAG_AGENT_API_URL="http..."`) :**
+   * Le backend tente de joindre l'agent FastAPI pour chaque opération RAG (Ingestion, Requête, Suppression d'index, Outils d'étude).
+   * **Tolérance aux pannes :** Tous les appels sont encapsulés dans des blocs `try/catch`. En cas d'erreur réseau (ex: serveur FastAPI éteint, timeout ou plantage), le backend attrape l'erreur et sert le message de fallback pour garantir que l'application mobile ne crash jamais.
+
+---
+
+## 2. Intégration du Flux Documentaire & Vectorisation
+
+### 2.1 Ingestion de Document (Background non-bloquant)
+* **Déclencheur :** Upload réussi d'un document sur le backend principal (`LibraryService.uploadDocument`).
+* **Méthode d'appel Node.js :** Appel asynchrone non-bloquant via `Promise.resolve().then(...)` pour ne pas impacter le temps de réponse de la requête mobile d'upload.
+* **API FastAPI ciblée :** `POST /api/v1/ingest`
+* **Format :** `multipart/form-data`
+
+#### Payload envoyé par le Backend Node.js :
+| Champ | Type | Contenu | Description |
 | :--- | :--- | :--- | :--- |
-| `file` | `UploadFile` | Oui | Le fichier binaire du document (PDF, DOCX, TXT). |
-| `document_id` | `str` | Oui | L'identifiant unique du document dans la base principale. |
-| `filiere` | `str` | Non | Filière académique (ex: "Génie Logiciel"). |
-| `niveau` | `str` | Non | Niveau d'études (ex: "L3"). |
-| `ue` | `str` | Non | Unité d'Enseignement (ex: "Algorithmique"). |
-| `type` | `str` | Non | Catégorie (COURS, TD, TP, RESUME, AUTRE). |
+| `file` | `UploadFile` | Fichier binaire (Blob) | Le document physique (converti en `Uint8Array` à partir du Buffer local). |
+| `document_id` | `str` | Identifiant UUID | ID unique du document créé dans PostgreSQL. |
+| `filiere` | `str` | Nom de la filière | Exemple : "Génie Logiciel" (par défaut "Général"). |
+| `niveau` | `str` | Code niveau | Exemple : "L3" (par défaut "Général"). |
+| `ue` | `str` | Code de l'UE | Exemple : "Algorithmique" (par défaut "Général"). |
+| `type` | `str` | Type de document | COURS, TD, TP, RESUME, AUTRE. |
 
-#### Format de Réponse :
-- **Status Code :** `201 Created`
-- **Format :** `application/json`
+#### Format de Réponse attendu (JSON) :
 ```json
 {
   "status": "success",
-  "document_id": "doc_abc123xyz",
-  "chunks_count": 42,
+  "document_id": "doc_uuid_12345",
+  "chunks_count": 28,
   "message": "Le document a été extrait, segmenté et indexé avec succès."
 }
 ```
 
-#### Traitement côté Serveur :
-1. **Lecture du fichier :** Récupération du flux binaire.
-2. **Extraction de texte :**
-   - Utilisation de `PyPDF` pour les PDF.
-   - Utilisation de `python-docx` pour les documents Word.
-   - Fallback text-brut pour les `.txt`.
-3. **Segmentation (Chunking) :**
-   - Découper le texte en segments avec un `RecursiveCharacterTextSplitter`.
-   - Paramètres suggérés : `chunk_size=1000` caractères, `chunk_overlap=200` caractères.
-4. **Métadonnées :** Chaque chunk doit être associé à des métadonnées strictes :
-   ```json
-   {
-     "document_id": "doc_abc123xyz",
-     "filiere": "Génie Logiciel",
-     "niveau": "L3",
-     "ue": "Algorithmique",
-     "type": "COURS"
-   }
-   ```
-5. **Génération d'Embeddings :** Appel au modèle vectoriel pour générer les représentations numériques de chaque chunk.
-6. **Stockage Vectoriel :** Insertion des points (vecteurs + métadonnées) dans la collection de la VectorDB.
-
 ---
 
-### 2.2 Route de Génération RAG (Requête contextuelle)
-Permet à l'utilisateur de poser une question à l'IA en limitant sa recherche à un ou plusieurs documents spécifiques.
+### 2.2 Suppression d'un document de l'index (Background non-bloquant)
+* **Déclencheur :** Suppression d'un document dans la bibliothèque (`LibraryService.deleteDocument`).
+* **Méthode d'appel Node.js :** Déclenché asynchronement en arrière-plan.
+* **API FastAPI ciblée :** `DELETE /api/v1/documents/{document_id}`
 
-- **Route :** `POST /api/v1/query`
-- **Format du Body :** `application/json`
-
-#### Corps de la Requête (Payload) :
-```json
-{
-  "query": "Explique-moi le théorème de Taylor-Young et donne un exemple.",
-  "document_ids": ["doc_123", "doc_456"],
-  "conversation_history": [
-    {
-      "role": "user",
-      "content": "Bonjour"
-    },
-    {
-      "role": "assistant",
-      "content": "Bonjour ! Comment puis-je vous aider aujourd'hui ?"
-    }
-  ],
-  "temperature": 0.3
-}
-```
-
-#### Explication des Champs :
-- `query` (`str`, obligatoire) : La question posée par l'utilisateur.
-- `document_ids` (`List[str]`, obligatoire) : Liste d'identifiants de documents servant de filtre contextuel. La recherche sémantique ne se fera **que** sur ces documents.
-- `conversation_history` (`List[Dict]`, optionnel) : Liste ordonnée de messages précédents pour maintenir le contexte du dialogue. Chaque objet contient un `role` (user/assistant) et `content`.
-- `temperature` (`float`, optionnel) : Niveau de créativité du LLM (défaut: `0.2` pour maximiser la factualité).
-
-#### Format de Réponse :
-- **Status Code :** `200 OK`
-- **Format :** `application/json`
-```json
-{
-  "answer": "Le théorème de Taylor-Young permet d'approcher une fonction dérivable au voisinage d'un point par un polynôme...",
-  "sources": [
-    {
-      "document_id": "doc_123",
-      "title": "Cours d'Analyse Réelle - Chapitre 2",
-      "chunk_text": "...on utilise Taylor-Young pour obtenir un développement limité au voisinage de a...",
-      "score": 0.89
-    }
-  ]
-}
-```
-
-#### Traitement côté Serveur :
-1. **Vectorisation de la requête :** Générer l'embedding de `query`.
-2. **Recherche de similarité (Retrieval) :**
-   - Effectuer une recherche dans la VectorDB avec le vecteur de la requête.
-   - Appliquer un filtre strict de métadonnées : `document_id IN [document_ids]`.
-   - Limiter le nombre de résultats (ex: `top_k=4` ou `top_k=5` chunks).
-3. **Sélection et Formatage du contexte :** Rassembler le texte des chunks les plus pertinents sous forme de bloc textuel consolidé.
-4. **Construction du Prompt Système :**
-   - Injecter les chunks sous forme de "Contexte de référence".
-   - Demander au LLM de répondre **exclusivement** à l'aide du contexte fourni. Si le contexte ne contient pas l'information, le LLM doit l'indiquer explicitement.
-5. **Historique de conversation :** Concaténer l'historique reçu dans la structure de message finale.
-6. **Appel LLM (Generation) :** Envoyer le prompt construit au LLM choisi.
-7. **Formatage de la réponse :** Renvoyer la réponse générée ainsi que la liste des sources correspondantes pour affichage des citations.
-
----
-
-### 2.3 Route de Suppression d'Index
-Nettoie l'index vectoriel lorsqu'un document est supprimé de la bibliothèque générale.
-
-- **Route :** `DELETE /api/v1/documents/{document_id}`
-- **Format du Body :** Aucun (paramètre de path)
-
-#### Format de Réponse :
-- **Status Code :** `200 OK`
-- **Format :** `application/json`
+#### Format de Réponse attendu (JSON) :
 ```json
 {
   "status": "success",
-  "document_id": "doc_abc123xyz",
+  "document_id": "doc_uuid_12345",
   "message": "Tous les vecteurs associés à ce document ont été supprimés de la base de données."
 }
 ```
 
-#### Traitement côté Serveur :
-1. Envoyer une commande de suppression à la VectorDB en filtrant sur la métadonnée : `document_id == document_id`.
-2. Retourner le message de confirmation après exécution.
-
 ---
 
-### 2.4 Route de Diagnostic (Healthcheck)
-Permet à l'application ou à l'infrastructure de s'assurer du bon fonctionnement du service.
+## 3. Intégration du Chat Contextuel et des Outils d'Étude
 
-- **Route :** `GET /api/v1/health`
+### 3.1 Requête RAG (Chat interactif)
+* **Déclencheur :** Question de l'utilisateur envoyée dans un notebook actif (`AiService.chat`).
+* **API FastAPI ciblée :** `POST /api/v1/query`
+* **Format :** `application/json`
 
-#### Format de Réponse :
-- **Status Code :** `200 OK`
+#### Payload envoyé par le Backend Node.js :
 ```json
 {
-  "status": "healthy",
-  "vectordb_connected": true,
-  "llm_provider_reachable": true
+  "query": "Quel est le principe de l'algorithme de Dijkstra ?",
+  "document_ids": ["doc_uuid_1", "doc_uuid_2"],
+  "conversation_history": []
 }
 ```
 
+#### Format de Réponse attendu (JSON) :
+```json
+{
+  "answer": "L'algorithme de Dijkstra permet de trouver le plus court chemin entre un sommet source et tous les autres sommets d'un graphe pondéré..."
+}
+```
+
+#### Comportement en cas de panne ou d'absence de variable d'environnement :
+* **Fallback retourné à l'application mobile :**
+  > "Désolé, le service de recherche intelligente et de RAG est actuellement en cours de conception ou indisponible."
+
 ---
 
-## 3. Recommandations et Points Clés de Conception
+### 3.2 Génération d'Outils d'Étude (Premium)
+* **Déclencheur :** Demande de génération de fiches de révision, résumés ou quiz dans le notebook (`AiService.generateStudyAid`).
+* **API FastAPI ciblée :** `POST /api/v1/generate-study-aid`
+* **Format :** `application/json`
 
-### A. Gestion des formats de fichiers et tailles limites
-- **Formats recommandés :** `.pdf`, `.docx`, `.pptx`, `.txt`, `.md`.
-- **Taille maximale conseillée :** 20 Mo par fichier.
-- **MIME Types validés côté serveur :**
-  - `application/pdf`
-  - `application/vnd.openxmlformats-officedocument.wordprocessingml.document` (DOCX)
-  - `text/plain`
+#### Payload envoyé par le Backend Node.js :
+```json
+{
+  "document_ids": ["doc_uuid_1", "doc_uuid_2"],
+  "type": "quiz" 
+}
+```
+*(Les types de génération valides sont : `summary`, `faq`, `quiz`, `flashcards`, `timeline`, `comparison`).*
 
-### B. Gestion des Doublons
-Lorsqu'un utilisateur uploade un fichier portant le même nom ou identique :
-1. **Vérification d'empreinte (Hash SHA-256) :** Il est recommandé de calculer le hash du fichier binaire côté backend principal.
-2. Si le hash existe déjà pour cet utilisateur, **ne pas re-vectoriser** le document. Renvoyer simplement l'identifiant existant ou l'associer directement pour éviter les coûts d'embeddings et de stockage en double.
+#### Format de Réponse attendu (JSON) :
+```json
+{
+  "content": "### Quiz d'Évaluation\n\n**Question 1** : ...\n- [ ] A)\n- [x] B)"
+}
+```
 
-### C. Suivi de Progression (Non-bloquant)
-- L'upload étant asynchrone et non-bloquant depuis l'application mobile (géré via des tâches de fond React Query), le backend principal doit recevoir le document, créer son enregistrement dans PostgreSQL à l'état `PENDING_INDEXING`, puis déléguer le travail de vectorisation (FastAPI) via un worker asynchrone (ex: **Celery** ou **FastAPI BackgroundTasks**).
-- Dès que FastAPI termine l'ingestion, il notifie le backend principal (par exemple via un webhook interne) qui change le statut en `INDEXED`. L'application mobile met alors à jour l'UI grâce à l'invalidation des queries.
+#### Comportement en cas de panne ou d'absence de variable d'environnement :
+* **Fallback retourné à l'application mobile :**
+  > "### Service en cours de conception\n\nDésolé, la génération automatique d'outils d'étude ({type}) est actuellement indisponible ou en cours de conception."
+
+---
+
+## 4. Spécifications et Algorithmes attendus côté FastAPI (Python)
+
+Pour assurer une cohérence totale avec les appels du backend Node.js, l'agent FastAPI doit suivre les règles suivantes :
+
+### A. Découpage du Texte (Text Splitting)
+* Utiliser un diviseur de texte intelligent récursif (comme le `RecursiveCharacterTextSplitter` de LangChain).
+* **chunk_size :** 1000 caractères.
+* **chunk_overlap :** 200 caractères.
+* Les métadonnées de chaque chunk **doivent impérativement** contenir le `document_id`.
+
+### B. Recherche Vectorielle (Retrieval)
+* Lors d'une requête (`POST /api/v1/query`), la base de données vectorielle doit appliquer un **filtre de métadonnées strict** sur le tableau `document_ids`.
+* **Exemple en SQL / Qdrant :** `Filter(must=[FieldCondition(key="document_id", match=MatchAny(any=document_ids))])`
+* Ne jamais mélanger de documents extérieurs à la session active du notebook.
+
+### C. Gestion des Doublons (Déduplication)
+* Le backend Node.js calcule l'empreinte numérique SHA-256 du document binaire avant l'upload. Si le fichier existe déjà, il n'est pas envoyé à FastAPI.
+* FastAPI peut se concentrer uniquement sur le parsing et l'indexation directe sans avoir à gérer la déduplication au niveau de l'API RAG.

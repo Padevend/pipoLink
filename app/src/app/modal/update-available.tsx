@@ -24,7 +24,7 @@ export default function UpdateAvailableModal() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'bottom']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'bottom', 'left', 'right']}>
       <View className="flex-1 px-6 items-center justify-center gap-y-6">
         
         {/* Badge d'icône Fusée - Mat & Marque */}

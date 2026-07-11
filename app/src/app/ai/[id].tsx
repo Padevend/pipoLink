@@ -1,42 +1,44 @@
 import {
+  useAddDocumentToSession,
   useAiChat,
   useAiHistory,
-  useSessionDocuments,
-  useAddDocumentToSession,
+  useGenerateStudyAid,
+  useMyAiAttachments,
   useRemoveDocumentFromSession,
-  useGenerateStudyAid
+  useSessionDocuments
 } from '@/entities/ai/hooks';
 import { useMyDocuments } from '@/entities/document/hooks';
+import LibraryModal from '@/features/chat-ai/components/biblio-modal';
+import SourceModal from '@/features/chat-ai/components/modal-source';
+import type { Document } from '@/shared/api/types';
+import { useSafeArea } from '@/shared/hooks/use-safe-area';
 import { Input } from '@/shared/ui/input';
 import { cn } from '@/shared/utils/cn';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   ArrowLeft,
-  Send,
-  Sparkles,
   BookOpen,
-  FolderOpen,
-  HelpCircle,
   Clock,
   Columns,
+  FolderOpen,
+  HelpCircle,
   Layers,
+  Send,
+  Sparkles,
 } from 'lucide-react-native';
-import { useRef, useState, useMemo } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
+  ScrollView,
   Text,
-  View,
-  Modal,
-  ScrollView
+  View
 } from 'react-native';
-import { useSafeArea } from '@/shared/hooks/use-safe-area';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import SourceModal from '@/features/chat-ai/components/modal-source';
-import LibraryModal from '@/features/chat-ai/components/biblio-modal';
 
 const STUDY_AIDS = [
   { id: 'summary', label: 'Résumé', icon: BookOpen },
@@ -56,10 +58,12 @@ export default function AiChatScreen() {
   const { data: activeDocs, isLoading: docsLoading } = useSessionDocuments(sessionId);
   
   const { data: myDocsData, isLoading: myDocsLoading } = useMyDocuments();
-  const libraryDocs = useMemo(
-    () => myDocsData?.pages.flatMap((page) => page.items) ?? [],
-    [myDocsData?.pages]
-  );
+  const { data: aiDocsData, isLoading: aiDocsLoading } = useMyAiAttachments();
+  const libraryDocs = useMemo(() => {
+    const normalDocs = myDocsData?.pages.flatMap((page) => page.items) ?? [];
+    const aiDocs = aiDocsData ?? [];
+    return [...normalDocs, ...aiDocs];
+  }, [myDocsData?.pages, aiDocsData]);
 
   const addDocMutation = useAddDocumentToSession();
   const removeDocMutation = useRemoveDocumentFromSession();
@@ -83,12 +87,18 @@ export default function AiChatScreen() {
     }
   };
 
-  const handleAddDocument = async (documentId: string) => {
+  const handleAddDocument = async (doc: Document) => {
     try {
-      await addDocMutation.mutateAsync({ sessionId, documentId });
+      await addDocMutation.mutateAsync({ sessionId, documentId: doc.id });
       setAddSourceVisible(false);
     } catch (err) {
       console.warn('[addDocument] failed:', err);
+    }
+  };
+
+  const handleRemoveDocumentGlobal = (id: string) => {
+    if (activeDocs?.some((d) => d.id === id)) {
+      void handleRemoveDocument(id);
     }
   };
 
@@ -311,6 +321,7 @@ export default function AiChatScreen() {
         visible={sourcesModalVisible}
         animationType="slide"
         transparent={true}
+        statusBarTranslucent
         onRequestClose={() => setSourcesModalVisible(false)}
       >
         <SourceModal
@@ -328,6 +339,7 @@ export default function AiChatScreen() {
       <Modal
         visible={addSourceVisible}
         animationType="slide"
+        statusBarTranslucent
         transparent={true}
         onRequestClose={() => setAddSourceVisible(false)}
       >
@@ -336,7 +348,8 @@ export default function AiChatScreen() {
           libraryDocs={libraryDocs}
           activeDocs={activeDocs}
           handleAddDocument={handleAddDocument}
-          myDocsLoading={myDocsLoading}
+          handleRemoveDocumentGlobal={handleRemoveDocumentGlobal}
+          myDocsLoading={myDocsLoading || aiDocsLoading}
         />
       </Modal>
 

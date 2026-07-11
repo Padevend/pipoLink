@@ -8,6 +8,7 @@ import {
   Text,
   View
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export interface ActionMenuItem {
   id: string;
@@ -28,6 +29,7 @@ const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 export function ActionMenu({ visible, onClose, title, items }: ActionMenuProps): JSX.Element {
   const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (visible) {
@@ -77,9 +79,23 @@ export function ActionMenu({ visible, onClose, title, items }: ActionMenuProps):
   ).current;
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={animateClose}>
-      <View className="flex-1 justify-end bg-black/50 dark:bg-black/70">
-        
+    <Modal
+      visible={visible}
+      animationType="fade"
+      transparent
+      statusBarTranslucent
+      onDismiss={onClose}
+      onRequestClose={animateClose}
+    >
+      <View
+        style={{
+          flex: 1,
+          paddingTop: insets.top,
+          paddingLeft: insets.left,
+          paddingRight: insets.right,
+        }}
+        className="min-h-full flex-1 justify-end bg-black/50 dark:bg-black/70">
+
         {/* Backdrop sombre et net */}
         <Pressable className="absolute inset-0" onPress={animateClose} />
 
@@ -120,11 +136,10 @@ export function ActionMenu({ visible, onClose, title, items }: ActionMenuProps):
               >
                 <View className="flex-1 pr-4">
                   <Text
-                    className={`text-sm font-bold tracking-tight ${
-                      item.destructive 
-                        ? 'text-red-500' 
+                    className={`text-sm font-bold tracking-tight ${item.destructive
+                        ? 'text-red-500'
                         : 'text-zinc-900 dark:text-zinc-50'
-                    }`}
+                      }`}
                   >
                     {item.label}
                   </Text>
@@ -145,8 +160,8 @@ export function ActionMenu({ visible, onClose, title, items }: ActionMenuProps):
 
           {/* Bouton Fermer / Annuler - Format strict */}
           <View className="px-5 mt-3">
-            <Pressable 
-              onPress={animateClose} 
+            <Pressable
+              onPress={animateClose}
               className="w-full items-center justify-center py-3.5 rounded-xl border border-zinc-200 bg-white dark:border-zinc-900 dark:bg-zinc-950 active:opacity-80"
             >
               <Text className="text-[11px] font-mono font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">
@@ -154,7 +169,7 @@ export function ActionMenu({ visible, onClose, title, items }: ActionMenuProps):
               </Text>
             </Pressable>
           </View>
-          
+
         </Animated.View>
       </View>
     </Modal>

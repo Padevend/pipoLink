@@ -1,9 +1,23 @@
-import Sidebar from "@/share/components/sidebar";
+import Sidebar from "@/components/sidebar";
 import { Outlet, Navigate } from "react-router-dom";
-import { api } from "@/share/lib/api";
+import { useAuth } from "@/providers/auth/authContext";
+import { Loader2 } from "lucide-react";
 
 export default function RootLayout() {
-    if (!api.isAuthenticated()) {
+    const { isAuthenticated, loading } = useAuth();
+
+    if (loading) {
+        return (
+            <div className="h-screen w-screen flex flex-col items-center justify-center bg-zinc-50 space-y-2">
+                <Loader2 className="animate-spin text-orange-500" size={24} strokeWidth={2.5} />
+                <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 select-none">
+                    Vérification de la session...
+                </span>
+            </div>
+        );
+    }
+
+    if (!isAuthenticated()) {
         return <Navigate to="/login" replace />;
     }
 

@@ -23,9 +23,12 @@ import {
 import Animated, { FadeIn, FadeInDown, FadeOut } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 export default function CommentFeedbackScreen() {
   const { mutate, isPending } = useComment();
   const [reasonPickerOpen, setReasonPickerOpen] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const {
     control,
@@ -66,7 +69,7 @@ export default function CommentFeedbackScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
       
       {/* OVERLAY CHARGEMENT : Mat & Strict */}
       <Modal transparent visible={isPending} animationType="fade">
@@ -149,7 +152,7 @@ export default function CommentFeedbackScreen() {
       {/* FORMULAIRE */}
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: insets.bottom + 24 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >

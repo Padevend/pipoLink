@@ -55,6 +55,7 @@ export default function SettingsScreen() {
                 uri={user?.profile?.avatarUrl ?? undefined}
                 size="xl"
                 className="border border-white dark:border-zinc-950"
+                role={user?.role}
               />
             </View>
 
@@ -80,17 +81,14 @@ export default function SettingsScreen() {
               value="Voir et modifier les détails de votre compte"
               onPress={() => router.push("/settings/Accounts")}
             />
-            {isPrimary && (
-              <>
-                <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-900" />
-                <SettingItem
-                  icon={Shield}
-                  label="Appareils liés"
-                  value="Voir et gérer les appareils connectés à votre compte"
-                  onPress={() => router.push("/devices")}
-                />
-              </>
-            )}
+            <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-900" />
+            <SettingItem
+              icon={Shield}
+              label="Appareils liés"
+              value="Voir et gérer les appareils connectés à votre compte"
+              onPress={() => router.push("/devices")}
+            />
+
             <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-900" />
             <SettingItem
               icon={CreditCard}

@@ -1,12 +1,49 @@
 import { prisma } from "../../config/database.js";
 import { ErrorCode } from "../helpers/error-codes.js";
 import { DateTime } from "luxon";
+import { env } from "../../config/envManager.js";
+import { FileService } from "./file.service.js";
+import crypto from "crypto";
+
+function formatDocument(doc: any) {
+  const profile = doc.uploadedBy?.profile;
+  const displayName =
+    profile?.firstname && profile?.lastname
+      ? `${profile.firstname} ${profile.lastname}`
+      : doc.uploadedBy?.username ?? "Utilisateur";
+
+  return {
+    id: doc.id,
+    title: doc.title,
+    description: doc.description,
+    niveau: doc.niveau,
+    filiere: doc.filiere,
+    ue: doc.ue,
+    type: doc.type,
+    fileUrl: doc.fileUrl,
+    fileName: doc.fileName,
+    fileSize: doc.fileSize,
+    mimeType: doc.mimeType,
+    downloadCount: doc.downloadCount,
+    moderationStatus: doc.moderationStatus,
+    folderId: doc.folder_id,
+    uploadedById: doc.uploaded_by_id,
+    createdAt: doc.createdAt,
+    uploadedBy: doc.uploadedBy ? {
+      id: doc.uploadedBy.id,
+      username: doc.uploadedBy.username,
+      displayName,
+      avatarUrl: profile?.avatarUrl ?? null,
+    } : null,
+  };
+}
 
 /**
  * Service de gestion du chat IA.
  * Gère les sessions, les quotas par plan, et appelle le provider IA.
  */
 export class AiService {
+  private fileService = new FileService();
 
   async chat(userId: string, sessionId: string | null, message: string, plan: string) {
     await this._checkQuota(userId, plan);
@@ -43,11 +80,12 @@ export class AiService {
   }
 
   async getSessions(userId: string) {
-    return await prisma.aiSession.findMany({
+    const sessions = await prisma.aiSession.findMany({
       where:   { user_id: userId },
       include: { messages: { take: 1, orderBy: { createdAt: "desc" } } },
       orderBy: { updatedAt: "desc" },
     });
+    return sessions;
   }
 
   async getSession(userId: string, sessionId: string) {
@@ -126,25 +164,34 @@ export class AiService {
       };
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    const documentTitles = session.documents.map((d) => d.title).join(", ");
-
     let content = "";
-    if (type === "summary") {
-      content = `### Résumé global des documents (${documentTitles})\n\nCes documents abordent les points clés suivants :\n1. **Concepts Fondamentaux** : Définition des termes clés et mise en contexte.\n2. **Méthodologies** : Analyse des processus décrits et résolution des problèmes associés.\n3. **Synthèse Pratique** : Retours d'expériences et applications concrètes.\n\n*Source principale : ${session.documents[0].fileName}*`;
-    } else if (type === "faq") {
-      content = `### FAQ (Questions Fréquentes)\n\n**Q1 : Quel est l'objectif principal de ce cours ?**\n*R1 : L'objectif est de maîtriser les fondations théoriques et pratiques présentées dans ${session.documents[0].title}.*\n\n**Q2 : Quels sont les prérequis pour comprendre ces documents ?**\n*R2 : Une bonne connaissance des chapitres d'introduction et des notions associées.*`;
-    } else if (type === "quiz") {
-      content = `### Quiz d'Évaluation\n\n**Question 1 : Quelle formule est présentée à la page 3 du document ?**\n- [ ] A) E = mc²\n- [x] B) La transformée de Fourier\n- [ ] C) Le théorème de Pythagore\n\n**Question 2 : Vrai ou Faux : Les données du document supportent la thèse principale ?**\n*Réponse : Vrai. Voir section d'analyse de données.*`;
-    } else if (type === "flashcards") {
-      content = `### Flashcards de Révision\n\n**Recto** : Définition principale du document\n**Verso** : Voir section glossaire de ${session.documents[0].title}\n\n---\n\n**Recto** : Formule clé ou théorème marquant\n**Verso** : Démontré à la page 10.`;
-    } else if (type === "timeline") {
-      content = `### Chronologie des Événements / Développements\n\n- **T0** : Introduction des concepts clés dans le document.\n- **T1** : Phase d'expérimentation et d'application.\n- **T2** : Conclusion des travaux décrits.`;
-    } else if (type === "comparison") {
-      content = `### Comparaison de Documents\n\n- **Document A (${session.documents[0]?.title || "N/A"})** : Met l'accent sur les aspects théoriques et académiques.\n- **Document B (${session.documents[1]?.title || "N/A"})** : Se concentre sur les applications industrielles et les études de cas.`;
+    const ragApiUrl = env.get("RAG_AGENT_API_URL");
+
+    if (ragApiUrl) {
+      try {
+        const response = await fetch(`${ragApiUrl}/api/v1/generate-study-aid`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            document_ids: session.documents.map((d) => d.id),
+            type,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json() as { content: string };
+          content = data.content;
+        } else {
+          throw new Error(`RAG API responded with status ${response.status}`);
+        }
+      } catch (err) {
+        console.error('[RAG Agent generateStudyAid Error] Falling back:', err);
+        content = `### Service en cours de conception\n\nDésolé, la génération automatique d'outils d'étude (${type}) est actuellement indisponible ou en cours de conception.`;
+      }
     } else {
-      content = `Génération pour le type "${type}" non supportée.`;
+      content = `### Service en cours de conception\n\nDésolé, la génération automatique d'outils d'étude (${type}) est actuellement indisponible ou en cours de conception.`;
     }
 
     const aiMessage = await prisma.aiMessage.create({
@@ -156,6 +203,143 @@ export class AiService {
     });
 
     return { message: aiMessage };
+  }
+
+  async uploadAttachment(userId: string, payload: Record<string, unknown>, file: Buffer, meta: { originalName: string; mimeType: string }) {
+    // We do not require niveau, filiere, ue for personal AI attachments, but we accept them.
+    const filiere = (payload.filiere as string) || "Général";
+    const niveau = (payload.niveau as string) || "Général";
+    const ue = (payload.ue as string) || "Général";
+
+    // Deduplication check by hash
+    const hash = crypto.createHash("sha256").update(file).digest("hex");
+    const existingDoc = await prisma.document.findFirst({
+      where: { hash, uploaded_by_id: userId, type: "AI_ATTACHMENT" },
+      include: {
+        uploadedBy: {
+          select: {
+            id: true,
+            username: true,
+            profile: { select: { firstname: true, lastname: true, avatarUrl: true } }
+          }
+        }
+      }
+    });
+
+    let url: string;
+    let size: number;
+    let document: any;
+
+    if (existingDoc) {
+      document = existingDoc;
+    } else {
+      const stored = await this.fileService.storeAiAttachment(file, meta.mimeType, meta.originalName);
+      url = stored.url;
+      size = stored.size;
+
+      document = await prisma.document.create({
+        data: {
+          uploaded_by_id: userId,
+          title: (payload.title as string) || meta.originalName,
+          description: (payload.description as string) || null,
+          niveau,
+          filiere,
+          ue,
+          type: "AI_ATTACHMENT",
+          fileUrl: url,
+          fileName: meta.originalName,
+          fileSize: size,
+          mimeType: meta.mimeType,
+          isPublic: false,
+          moderationStatus: "APPROVED",
+          hash,
+        },
+        include: {
+          uploadedBy: {
+            select: {
+              id: true,
+              username: true,
+              profile: { select: { firstname: true, lastname: true, avatarUrl: true } }
+            }
+          }
+        }
+      });
+    }
+
+    // RAG Ingestion
+    const ragApiUrl = env.get("RAG_AGENT_API_URL");
+    if (ragApiUrl) {
+      Promise.resolve().then(async () => {
+        try {
+          const formData = new FormData();
+          const fileBlob = new Blob([new Uint8Array(file)], { type: meta.mimeType });
+          formData.append("file", fileBlob, meta.originalName);
+          formData.append("document_id", document.id);
+          formData.append("filiere", filiere);
+          formData.append("niveau", niveau);
+          formData.append("ue", ue);
+          formData.append("type", document.type);
+
+          const res = await fetch(`${ragApiUrl}/api/v1/ingest`, {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!res.ok) console.error(`[RAG Ingest AI Attachment] failed: ${res.statusText}`);
+        } catch (err) {
+          console.error(`[RAG Ingest AI Attachment] Error:`, err);
+        }
+      });
+    }
+
+    return formatDocument(document);
+  }
+
+  async getAttachments(userId: string) {
+    const documents = await prisma.document.findMany({
+      where: {
+        uploaded_by_id: userId,
+        type: "AI_ATTACHMENT"
+      },
+      include: {
+        uploadedBy: {
+          select: {
+            id: true,
+            username: true,
+            profile: { select: { firstname: true, lastname: true, avatarUrl: true } }
+          }
+        }
+      },
+      orderBy: { createdAt: "desc" }
+    });
+    return documents.map(formatDocument);
+  }
+
+  async deleteAttachment(userId: string, documentId: string) {
+    const document = await prisma.document.findUnique({ where: { id: documentId } });
+    if (!document) throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Document introuvable." };
+
+    if (document.uploaded_by_id !== userId || document.type !== "AI_ATTACHMENT") {
+      throw { code: ErrorCode.FORBIDDEN, status: 403, message: "Action non autorisée." };
+    }
+
+    // Delete from FileSystem/Drive
+    await this.fileService.deleteFileByUrl(document.fileUrl);
+
+    // Delete from DB
+    await prisma.document.delete({ where: { id: documentId } });
+
+    // Delete from RAG
+    const ragApiUrl = env.get("RAG_AGENT_API_URL");
+    if (ragApiUrl) {
+      Promise.resolve().then(async () => {
+        try {
+          await fetch(`${ragApiUrl}/api/v1/documents/${documentId}`, { method: "DELETE" });
+        } catch (err) {
+          console.error(`[RAG Delete] Error connecting to RAG agent for document ${documentId}:`, err);
+        }
+      });
+    }
   }
 
   // ── Méthodes privées ──────────────────────────────────────────────────────
@@ -178,19 +362,38 @@ export class AiService {
   }
 
   private async _callProvider(message: string, documents: any[]): Promise<string> {
-    await new Promise((r) => setTimeout(r, 1500));
-
     if (!documents || documents.length === 0) {
       return "Hiro : Je n'ai aucune source documentaire associée à cette conversation. Veuillez associer un document de votre bibliothèque pour que je puisse y faire référence.";
     }
 
-    const docNames = documents.map(d => d.title).join(", ");
-    const msgLower = message.toLowerCase();
-    
-    if (msgLower.includes("bonjour") || msgLower.includes("salut")) {
-      return `Bonjour ! Je suis Hiro, votre assistant d'étude intelligent. Je suis prêt à analyser les documents de cette session : **${docNames}**. Que souhaitez-vous savoir à leur sujet ?`;
+    const ragApiUrl = env.get("RAG_AGENT_API_URL");
+
+    if (ragApiUrl) {
+      try {
+        const response = await fetch(`${ragApiUrl}/api/v1/query`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            query: message,
+            document_ids: documents.map((d) => d.id),
+            conversation_history: [],
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json() as { answer: string };
+          return data.answer;
+        } else {
+          throw new Error(`RAG API responded with status ${response.status}`);
+        }
+      } catch (err) {
+        console.error('[RAG Agent Error] Falling back:', err);
+        return "Désolé, le service de recherche intelligente et de RAG est actuellement en cours de conception ou indisponible.";
+      }
     }
 
-    return `D'après vos documents associés (**${docNames}**), voici les éléments de réponse :\n\nLes concepts principaux abordés indiquent que la méthodologie recommandée repose sur une approche itérative [1]. Plus précisément, le document indique que les gains de performance sont directement liés à l'optimisation des flux locaux [2].\n\n---\n**Citations & Références :**\n* [1] *${documents[0].fileName}*, Chapitre 1, page 4 - "Introduction aux méthodes".\n* [2] *${documents[0].fileName}*, Section 2.3, page 12 - "Performance et optimisation".`;
+    return "Désolé, le service de recherche intelligente et de RAG est actuellement en cours de conception ou indisponible.";
   }
 }

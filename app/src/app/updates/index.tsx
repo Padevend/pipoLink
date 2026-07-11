@@ -1,30 +1,24 @@
 import { useOtaUpdate } from '@/features/updates/hooks/use-ota-update';
-import { UpdateManager } from '@/processes/update-manager';
 import Constants from 'expo-constants';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Updates from 'expo-updates';
 import { AlertTriangle, ArrowLeft, Clock, Download, Sparkles } from 'lucide-react-native';
-import React from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function UpdateScreen(): JSX.Element {
   const { redirect } = useLocalSearchParams();
   const { data, isLoading } = useOtaUpdate();
   const currentVersion = Constants.expoConfig?.version || '1.0.0';
+  const insets = useSafeAreaInsets();
 
-  const isCritical = data?.severity === 'critical' || data?.isRequired;
+  const isCritical = data?.severity === 'critical' || data?.severity === 'high';
 
   const handleDownload = async () => {
-    if (data?.type === 'manual') {
-      const link = UpdateManager.getStoreLink(data);
-      if (link) Linking.openURL(link);
-    } else {
-      if (!__DEV__) {
-         await Updates.fetchUpdateAsync().catch(() => {});
-         await Updates.reloadAsync();
-      }
+    if (!__DEV__) {
+      await Updates.fetchUpdateAsync().catch(() => {});
+      await Updates.reloadAsync();
     }
   };
 
@@ -48,7 +42,7 @@ export default function UpdateScreen(): JSX.Element {
   if (!data) return <View />;
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
       {/* HEADER : Panneau Mat Solide */}
       <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
         {!isCritical ? (
@@ -69,7 +63,7 @@ export default function UpdateScreen(): JSX.Element {
 
       <ScrollView 
         className="flex-1" 
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: insets.bottom + 24 }}
         showsVerticalScrollIndicator={false}
       >
         {/* EN-TÊTE GÉOMÉTRIQUE MAT */}
@@ -154,7 +148,7 @@ export default function UpdateScreen(): JSX.Element {
           >
             <Download size={14} color="#FFFFFF" strokeWidth={2.5} />
             <Text className="text-white font-bold text-xs uppercase tracking-wider">
-              {data.type === 'auto' ? 'Appliquer la mise à jour' : 'Mettre à jour maintenant'}
+              {isCritical ? 'Mettre à jour maintenant' : 'Appliquer la mise à jour'}
             </Text>
           </Pressable>
 

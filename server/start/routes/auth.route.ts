@@ -20,4 +20,8 @@ AuthRouter
   .post("/qr/initiate", callAction(AuthController, "initiatePairing"))
   .get("/qr/poll", callAction(AuthController, "pollQrLink"))
   .get("/qr/preview", authMiddleware, callAction(AuthController, "previewPairing"))
-  .post("/qr/approve", authMiddleware, callAction(AuthController, "approvePairing"));
+  .post("/qr/approve", authMiddleware, callAction(AuthController, "approvePairing"))
+  .post("/keys/backup", authMiddleware, callAction(AuthController, "backupKey"))
+  .post("/keys/recovery/complete", authMiddleware, callAction(AuthController, "completeRecovery"))
+  .post("/keys/recovery/failed", authMiddleware, callAction(AuthController, "failedRecovery"));
+

@@ -134,7 +134,7 @@ export default function UserInfoScreen() {
                 {/* EN-TÊTE IMMERSIF MATE */}
                 <View className="items-center pt-6 pb-6 bg-white dark:bg-zinc-900 border-b border-zinc-100 dark:border-zinc-900/60">
                     <View className="mb-4">
-                        <Avatar name={user?.username as string} uri={user?.profile?.avatarUrl ?? undefined} size={120} />
+                        <Avatar name={user?.username as string} uri={user?.profile?.avatarUrl ?? undefined} size={120} role={user?.role as any} />
                     </View>
 
                     <Text className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-50 text-center">

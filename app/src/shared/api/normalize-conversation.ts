@@ -6,7 +6,8 @@ type RawMember = {
     username: string,
     avatarUrl?: string | undefined,
     phone?: string | undefined,
-    role?: 'admin' | 'member'
+    role?: 'admin' | 'member',
+    accountRole?: 'admin' | 'staff' | 'student',
 };
 
 export type RawConversation = Partial<Conversation> & {
@@ -24,6 +25,7 @@ export function normalizeConversation(raw: RawConversation): Conversation {
       avatarUrl: m.avatarUrl,
       phone: m.phone,
       role: m.role,
+      accountRole: m.accountRole,
     }
   });
 

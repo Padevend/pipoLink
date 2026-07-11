@@ -1,9 +1,11 @@
 import { prepareDeviceForNewAccount } from '@/features/auth/lib/prepare-new-account-device';
 import { useAuth, useToast } from '@/providers';
+import { SecureStorageService } from '@/shared/lib/storage';
+import { checkPasswordStrength } from '@/shared/lib/password-strength';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { router } from 'expo-router';
-import { ArrowRight, Check, Eye, EyeOff, Lock, Mail, Square } from 'lucide-react-native';
+import { ArrowRight, Check, Eye, EyeOff, Lock, Mail, ShieldAlert, Square } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -24,6 +26,8 @@ export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const strengthResult = useMemo(() => checkPasswordStrength(password), [password]);
+
   const passwordCriteria = useMemo<PasswordCriterion[]>(() => {
     return [
       {
@@ -41,8 +45,16 @@ export function RegisterForm() {
         label: 'Au moins un chiffre',
         isValid: /\d/.test(password)
       },
+      {
+        id: 'special',
+        label: 'Un caractère spécial',
+        isValid: /[^A-Za-z0-9]/.test(password)
+      }
     ];
   }, [password]);
+
+  const allCompositionValid = passwordCriteria.every((c) => c.isValid);
+  const canSubmit = allCompositionValid && strengthResult.isStrong;
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -51,6 +63,7 @@ export function RegisterForm() {
     
     if (!password) newErrors.password = 'Mot de passe requis';
     else if (password.length < 8) newErrors.password = 'Minimum 8 caractères requis';
+    else if (!strengthResult.isStrong) newErrors.password = strengthResult.feedback || 'Mot de passe trop faible';
     
     if (password !== confirmPassword) {
       newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
@@ -67,6 +80,7 @@ export function RegisterForm() {
     try {
       await prepareDeviceForNewAccount();
       await register({ email, password });
+      await SecureStorageService.set('temp_login_password', password);
       showToast({ type: 'success', message: 'Inscription réussie ! Veuillez vérifier votre email.' });
       router.push({
         pathname: '/auth/verify-otp',
@@ -133,6 +147,18 @@ export function RegisterForm() {
               </Text>
             </View>
           ))}
+
+          {/* Indicateur d'entropie zxcvbn — distinct des règles de composition */}
+          {password.length >= 8 && allCompositionValid && !strengthResult.isStrong && (
+            <View className="flex-row items-center gap-x-2.5 mt-1 pt-2 border-t border-zinc-200 dark:border-zinc-800">
+              <View className="h-4 w-4 items-center justify-center">
+                <ShieldAlert size={12} color="#F59E0B" strokeWidth={2.5} />
+              </View>
+              <Text className="text-xs font-semibold text-amber-600 dark:text-amber-400 flex-1">
+                {strengthResult.feedback}
+              </Text>
+            </View>
+          )}
         </View>
 
         <Input

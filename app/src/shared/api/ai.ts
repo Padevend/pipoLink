@@ -72,4 +72,52 @@ export const aiApi = {
    */
   generateStudyAid: (sessionId: string, type: string) =>
     api.post<{ message: AiChatMessage }>(`/ai/sessions/${sessionId}/generate`, { type }),
+
+  /**
+   * Get private AI attachments
+   */
+  getAttachments: () =>
+    api.get<Document[]>('/ia/attachments'),
+
+  /**
+   * Upload private AI attachment
+   */
+  uploadAttachment: async (
+    file: { uri: string; name: string; mimeType: string; size?: number },
+    metadata: {
+      title: string;
+      type: string;
+      filiere: string;
+      niveau: string;
+      ue: string;
+      description?: string;
+    },
+  ) => {
+    const formData = new FormData();
+    // @ts-expect-error React Native FormData file blob
+    formData.append("file", {
+      uri: file.uri,
+      name: file.name,
+      type: file.mimeType || "application/octet-stream",
+    });
+    formData.append(
+      "payload",
+      JSON.stringify({
+        title: metadata.title,
+        type: metadata.type,
+        filiere: metadata.filiere,
+        niveau: metadata.niveau,
+        ue: metadata.ue,
+        description: metadata.description,
+      }),
+    );
+
+    return api.upload<Document>("/ia/upload-attachment", formData);
+  },
+
+  /**
+   * Delete private AI attachment
+   */
+  deleteAttachment: (id: string) =>
+    api.delete<void>(`/ia/attachments/${id}`),
 };

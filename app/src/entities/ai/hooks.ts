@@ -158,3 +158,40 @@ export const useGenerateStudyAid = () => {
     },
   });
 };
+
+export const useMyAiAttachments = () => {
+  return useQuery({
+    queryKey: [...aiKeys.all, 'attachments'] as const,
+    queryFn: () => aiApi.getAttachments(),
+  });
+};
+
+export const useUploadAiAttachment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: {
+      file: { uri: string; name: string; mimeType: string; size?: number };
+      metadata: {
+        title: string;
+        type: string;
+        filiere: string;
+        niveau: string;
+        ue: string;
+        description?: string;
+      };
+    }) => aiApi.uploadAttachment(payload.file, payload.metadata),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [...aiKeys.all, 'attachments'] });
+    },
+  });
+};
+
+export const useDeleteAiAttachment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => aiApi.deleteAttachment(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [...aiKeys.all, 'attachments'] });
+    },
+  });
+};

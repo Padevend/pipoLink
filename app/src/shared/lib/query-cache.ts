@@ -5,7 +5,7 @@ import type { Conversation } from '@/shared/api/messaging';
 import type { Document, PaginatedResponse } from '@/shared/api/types';
 import { mergeUserProfile, normalizeUser, type UserWithProfile } from '@/shared/api/normalize-user';
 import type { UserProfile } from '@/shared/api/types';
-import { userKeys } from '@/entities/user/hooks';
+import { userKeys } from '@/entities/user/keys';
 import { documentKeys } from '@/entities/document/library-keys';
 import { conversationKeys } from '@/entities/conversation/hooks';
 

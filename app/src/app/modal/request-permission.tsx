@@ -196,7 +196,12 @@ export default function PermissionsScreen() {
   return (
     <View 
       className="flex-1 bg-zinc-50 dark:bg-zinc-950" 
-      style={{ paddingBottom: insets.bottom + 16, paddingTop: insets.top + 8 }}
+      style={{
+        paddingBottom: insets.bottom + 16,
+        paddingTop: insets.top + 8,
+        paddingLeft: insets.left,
+        paddingRight: insets.right
+      }}
     >
       {/* Zone d'en-tête (Hero) */}
       <Animated.View entering={FadeInUp.delay(0).springify()} className="items-center px-7 pt-6 pb-6">

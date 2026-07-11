@@ -175,7 +175,7 @@ export default function NewGroupScreen(): JSX.Element {
         ) : (
           /* Zone vide si rien n'est trouvé */
           !isLoading && (
-            <View className="items-center justify-center py-8 rounded-xl border border-zinc-100 bg-white dark:border-zinc-900 mb-6 mt-4">
+            <View className="items-center justify-center py-8  mb-6 mt-4">
               <View className="h-12 w-12 items-center justify-center rounded-full bg-zinc-50 dark:bg-zinc-800 mb-3">
                 <Search size={18} color="#A1A1AA" />
               </View>

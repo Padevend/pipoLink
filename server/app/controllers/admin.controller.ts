@@ -4,6 +4,7 @@ import { ApiResponse } from "../helpers/api-response.js";
 import { NotificationService } from "../services/notification.service.js";
 import { FCMService } from "../../src/app/services/fcm.service.js";
 import { MailerService } from "../services/mailer.service.js";
+import { createUpdateValidator } from "../validators/update.validator.js";
 
 export class AdminController {
   private notifications = new NotificationService();
@@ -656,4 +657,115 @@ export class AdminController {
       return ApiResponse.error(c, "INTERNAL_ERROR", "Erreur lors du chargement des paiements.", 500);
     }
   }
+
+  /**
+   * Obtient toutes les versions de mise à jour enregistrées.
+   */
+  async getUpdates(c: HttpContext) {
+    try {
+      const updates = await prisma.updateVersioning.findMany({
+        orderBy: { createdAt: "desc" },
+      });
+      return ApiResponse.success(c, updates, "Liste des mises à jour récupérée.");
+    } catch (error: any) {
+      console.error("[AdminController.getUpdates] Error:", error);
+      return ApiResponse.error(c, "INTERNAL_ERROR", "Erreur lors du chargement des mises à jour.", 500);
+    }
+  }
+
+  /**
+   * Ajoute une nouvelle version de mise à jour.
+   */
+  async createUpdate(c: HttpContext) {
+    try {
+      const payload = await c.validateUsing(createUpdateValidator);
+
+      // Vérifier si la version existe déjà
+      const existing = await prisma.updateVersioning.findFirst({
+        where: { version: payload.version }
+      });
+
+      if (existing) {
+        return ApiResponse.error(c, "CONFLICT", "Cette version de mise à jour existe déjà.", 409);
+      }
+
+      const update = await prisma.updateVersioning.create({
+        data: {
+          version: payload.version,
+          changelog: payload.changelog,
+          isRequired: payload.isRequired,
+          minSdkVersion: payload.minSdkVersion,
+          severity: payload.severity as any,
+          type: payload.type as any,
+          links: payload.links || [],
+        }
+      });
+
+      // Audit Log
+      const adminId = c.get("userId") as string;
+      await prisma.auditLog.create({
+        data: {
+          user_id: adminId,
+          action: `CREATE_UPDATE_VERSION`,
+          targetId: update.id,
+          ip: c.req.header("x-forwarded-for") || "127.0.0.1",
+          userAgent: c.req.header("user-agent") || "Admin Action"
+        }
+      });
+
+      return ApiResponse.success(c, update, "Nouvelle version de mise à jour créée avec succès.", 201);
+    } catch (error: any) {
+      console.error("[AdminController.createUpdate] Error:", error);
+      if (error.status === 422) {
+        return ApiResponse.error(c, "VALIDATION_ERROR", error.message || "Données invalides.", 422);
+      }
+      return ApiResponse.error(c, "INTERNAL_ERROR", "Erreur lors de la création de la mise à jour.", 500);
+    }
+  }
+
+  /**
+   * Modifie le rôle d'un utilisateur (promote / demote).
+   */
+  async updateUserRole(c: HttpContext) {
+    try {
+      const userId = c.req.param("id") as string;
+      const { role } = await c.req.json();
+
+      if (!role || !["student", "staff", "admin"].includes(role)) {
+        return ApiResponse.error(c, "VALIDATION_ERROR", "Rôle invalide ou manquant. Doit être student, staff ou admin.", 400);
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id: userId }
+      });
+
+      if (!user) {
+        return ApiResponse.error(c, "NOT_FOUND", "Utilisateur non trouvé.", 404);
+      }
+
+      // Modifier le rôle
+      await prisma.user.update({
+        where: { id: userId },
+        data: { role }
+      });
+
+      // Log d'audit admin
+      const adminId = c.get("userId") as string;
+      await prisma.auditLog.create({
+        data: {
+          user_id: adminId,
+          action: `UPDATE_USER_ROLE`,
+          targetId: `${userId}:${role}`,
+          ip: c.req.header("x-forwarded-for") || "127.0.0.1",
+          userAgent: c.req.header("user-agent") || "Admin Action"
+        }
+      });
+
+      return ApiResponse.success(c, null, "Le rôle de l'utilisateur a été mis à jour avec succès.");
+    } catch (error: any) {
+      console.error("[AdminController.updateUserRole] Error:", error);
+      return ApiResponse.error(c, "INTERNAL_ERROR", "Erreur lors de la modification du rôle.", 500);
+    }
+  }
 }
+

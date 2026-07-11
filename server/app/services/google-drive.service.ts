@@ -30,7 +30,7 @@ export class GoogleDriveService {
   /**
    * Upload a file buffer to Google Drive
    */
-  async uploadFile(buffer: Buffer, fileName: string, mimeType: string): Promise<{ url: string; size: number }> {
+  async uploadFile(buffer: Buffer, fileName: string, mimeType: string, targetFolderId?: string): Promise<{ url: string; size: number, fileId: string }> {
     if (!this.isConfigured) {
       throw new Error("Google Drive is not configured.");
     }
@@ -40,7 +40,7 @@ export class GoogleDriveService {
 
     const fileMetadata = {
       name: fileName,
-      parents: [this.folderId],
+      parents: [targetFolderId || this.folderId],
     };
 
     const media = {
@@ -54,7 +54,7 @@ export class GoogleDriveService {
       media: media,
       fields: "id, name, webContentLink, webViewLink, size",
       supportsAllDrives: true,
-      supportsTeamDrives: true
+      supportsTeamDrives: true,
     });
 
     const fileId = res.data.id;
@@ -69,6 +69,7 @@ export class GoogleDriveService {
         role: "reader",
         type: "anyone",
       },
+      supportsAllDrives: true,
     });
 
     // We can query again to ensure webContentLink is generated, but creating permissions usually exposes it.
@@ -76,6 +77,24 @@ export class GoogleDriveService {
     const url = res.data.webContentLink || res.data.webViewLink || "";
     const size = res.data.size ? parseInt(res.data.size, 10) : buffer.length;
 
-    return { url, size };
+    return { url, size, fileId };
+  }
+
+  /**
+   * Delete a file from Google Drive
+   */
+  async deleteFile(fileId: string): Promise<void> {
+    if (!this.isConfigured) {
+      return;
+    }
+    
+    try {
+      await this.drive.files.delete({
+        fileId: fileId,
+        supportsAllDrives: true,
+      });
+    } catch (err) {
+      console.error(`Failed to delete file ${fileId} from Google Drive:`, err);
+    }
   }
 }

@@ -219,6 +219,7 @@ export const MessageBubble = React.memo(function MessageBubble({
          prev.message.status === next.message.status &&
          prev.message.is_deleted === next.message.is_deleted &&
          prev.message.cipherText === next.message.cipherText &&
+         prev.message.decryptedContent === next.message.decryptedContent &&
          prev.isMine === next.isMine &&
          prev.isGroup === next.isGroup;
 });

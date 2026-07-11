@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { Pressable, Text, TextInput, View, Modal, FlatList } from 'react-native';
-import { ChevronDown, Search, X, Phone } from 'lucide-react-native';
 import { cn } from '@/shared/utils/cn';
+import { ChevronDown, Phone, X } from 'lucide-react-native';
+import { useState } from 'react';
+import { FlatList, Modal, Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { SearchBar } from './search-bar';
 import { COUNTRIES } from '../data/avaible-phonCode';
+import { SearchBar } from './search-bar';
 
 function digitsOnly(value: string): string {
   return value.replace(/\D/g, '');
@@ -107,6 +107,7 @@ export function PhoneInput({
         animationType="fade"
         transparent={true}
         visible={modalVisible}
+        statusBarTranslucent
         onRequestClose={() => setModalVisible(false)}
       >
         <View className="flex-1 justify-end bg-black/50 dark:bg-black/70">

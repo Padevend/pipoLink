@@ -2,9 +2,6 @@ import { api } from './client';
 import { User } from './types';
 
 export const authApi = {
-  requestOtp: (phone: string) =>
-    api.post<void>('/auth/request-otp', { phone }),
-
   resendOtp: (payload: { email: string; purpose: 'EMAIL_VERIFY' | 'PASSWORD_RESET' }) =>
     api.post<void>('/auth/resend-otp', payload),
 
@@ -41,7 +38,32 @@ export const authApi = {
       deviceId?: string | null;
       requiresOnboarding?: boolean;
       requiresKeySetup?: boolean;
+      keyRecoveryMode?: 'qr_required' | 'key_recovery';
+      keyBackup?: { encrypted_key: string; salt: string };
     }>('/auth/login', payload),
+
+  backupKey: (payload: { encryptedKey: string; salt: string }) =>
+    api.post<{ success: boolean }>('/auth/keys/backup', payload),
+
+  completeRecovery: (payload: {
+    deviceName: string;
+    devicePlatform: string;
+    deviceFingerprint: string;
+    devicePublicKey: string;
+    deviceKeySignature: string;
+    isBypass?: boolean;
+  }) =>
+    api.post<{
+      device: { id: string; name: string; platform: string };
+      tokens: {
+        accessToken: string;
+        refreshToken: string;
+        expiresAt: number;
+      };
+    }>('/auth/keys/recovery/complete', payload),
+
+  failedRecovery: () =>
+    api.post<{ attemptsRemaining: number; lockedUntil: string | null }>('/auth/keys/recovery/failed'),
 
   refresh: (payload: { refreshToken: string }) =>
     api.post<{ accessToken: string; refreshToken: string; expiresAt: number; user: User; deviceId: string }>(

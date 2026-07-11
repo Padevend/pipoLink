@@ -1,7 +1,4 @@
-import { useState, useEffect } from "react";
-import { api } from "@/share/lib/api";
-import type { AuditLog } from "@/share/lib/api";
-import { useToast } from "@/providers/toast/toastContext";
+import { useHome } from "../model/use_home";
 import {
   FileText,
   Megaphone,
@@ -10,41 +7,13 @@ import {
   Laptop,
   MapPin,
   RefreshCw,
-  UserCheck
+  UserCheck,
+  Loader2
 } from "lucide-react";
 import { getStaticUrl } from "@/share/lib/helpers";
 
-export default function HomePage() {
-  const [stats, setStats] = useState<any>({
-    totalAccounts: 0,
-    activeAccounts: 0,
-    totalDocuments: 0,
-    totalAnnouncements: 0,
-  });
-  const [events, setEvents] = useState<AuditLog[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { showToast } = useToast();
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const data = await api.getStats();
-      setStats(data.stats);
-      setEvents(data.events);
-    } catch (err: any) {
-      showToast({
-        type: "error",
-        message: err.message || "Erreur de chargement des statistiques.",
-        duration: 4000,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadData();
-  }, []);
+export function HomeFeat() {
+  const { stats, events, loading, error, refresh } = useHome();
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -58,23 +27,21 @@ export default function HomePage() {
     });
   };
 
-  // Gestion des statuts purement monochrome et orange pour le focus critique
   const getActionStyle = (action: string) => {
     switch (action) {
       case "BAN_USER":
       case "DELETE_DOCUMENT":
-        return "bg-orange-500/10 text-orange-600 border-orange-500/20"; // Alerte ou action critique
+        return "bg-orange-500/10 text-orange-600 border-orange-500/20";
       case "LOGIN":
       case "DEVICE_LINKED":
       case "RESTORE_USER":
       default:
-        return "bg-zinc-100 text-zinc-700 border-zinc-200/80"; // Neutre
+        return "bg-zinc-100 text-zinc-700 border-zinc-200/80";
     }
   };
 
   return (
     <div className="space-y-8 select-none">
-      
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -86,7 +53,7 @@ export default function HomePage() {
           </p>
         </div>
         <button
-          onClick={loadData}
+          onClick={() => refresh()}
           disabled={loading}
           className="flex items-center space-x-2 px-4 py-2 rounded-xl border border-zinc-200 bg-white/80 hover:bg-white text-zinc-600 hover:text-zinc-900 transition-all duration-200 cursor-pointer disabled:opacity-50 shadow-sm backdrop-blur-md active:scale-[0.98]"
         >
@@ -95,9 +62,14 @@ export default function HomePage() {
         </button>
       </div>
 
-      {/* STATS CARDS (Style Glassmorphism Light) */}
+      {error && (
+        <div className="bg-red-50 border border-red-100 text-red-700 text-xs font-semibold p-4 rounded-xl">
+          Erreur lors du chargement des statistiques: {(error as any).message || "Problème réseau."}
+        </div>
+      )}
+
+      {/* STATS CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        
         {/* Card 1: Comptes Actifs */}
         <div className="bg-white/60 border border-white/80 rounded-2xl p-6 relative overflow-hidden group shadow-sm shadow-zinc-200/40 backdrop-blur-xl transition-all duration-300 hover:border-zinc-300">
           <div className="flex justify-between items-start">
@@ -154,7 +126,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* JOURNAL DES ÉVÉNEMENTS (Glass Block) */}
+      {/* JOURNAL DES ÉVÉNEMENTS */}
       <div className="bg-white/60 border border-white/80 rounded-2xl overflow-hidden shadow-sm shadow-zinc-200/40 backdrop-blur-xl">
         <div className="px-6 py-4.5 border-b border-zinc-200/60 flex items-center justify-between">
           <div className="flex items-center space-x-2.5">
@@ -179,7 +151,16 @@ export default function HomePage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {events.length === 0 ? (
+              {loading && events.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-zinc-400">
+                    <div className="flex justify-center items-center space-x-2">
+                      <Loader2 className="animate-spin text-orange-500" size={16} strokeWidth={2.5} />
+                      <span className="text-xs font-semibold">Chargement du journal...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : events.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-zinc-400 text-xs font-medium">
                     Aucun événement récent enregistré.
@@ -188,7 +169,6 @@ export default function HomePage() {
               ) : (
                 events.map((event) => (
                   <tr key={event.id} className="hover:bg-white/40 transition-colors duration-150">
-                    
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
                         <div className="h-8 w-8 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-[11px] font-bold text-zinc-600 overflow-hidden flex-shrink-0">
@@ -237,7 +217,6 @@ export default function HomePage() {
                         <span>{formatDate(event.createdAt)}</span>
                       </div>
                     </td>
-
                   </tr>
                 ))
               )}

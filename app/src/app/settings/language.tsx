@@ -1,8 +1,8 @@
 import { router } from 'expo-router';
 import { ArrowLeft, Languages } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { AppLanguage } from '@/i18n';
 import { useLanguage } from '@/shared/hooks/use-language';
@@ -16,9 +16,10 @@ const LANGUAGES: { id: AppLanguage; label: string; subLabel: string; isAvailable
 export default function LanguageScreen(): JSX.Element {
   const { t } = useTranslation('settings');
   const { language, setLanguage } = useLanguage();
+  const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
 
       {/* HEADER : Panneau Mat Solide */}
       <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
@@ -35,7 +36,11 @@ export default function LanguageScreen(): JSX.Element {
       </View>
 
       {/* Liste des Langues disponibles */}
-      <View className="flex-1 px-4 py-5">
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: insets.bottom + 24 }}
+        showsVerticalScrollIndicator={false}
+      >
         <Text className="mb-2 ml-1 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
           Langue de l'application
         </Text>
@@ -105,7 +110,7 @@ export default function LanguageScreen(): JSX.Element {
             );
           })}
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }

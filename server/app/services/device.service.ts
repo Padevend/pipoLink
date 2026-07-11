@@ -68,9 +68,12 @@ export class DeviceService {
     if (!device) throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Appareil introuvable." };
     if (device.isPrimary) throw { code: ErrorCode.FORBIDDEN, status: 403, message: "L'appareil principal ne peut pas être révoqué." };
 
-    await prisma.device.update({ where: { id: deviceId }, data: { revokedAt: new Date() } });
-    await prisma.refreshToken.updateMany({ where: { device_id: deviceId }, data: { revokedAt: new Date() } });
-    await prisma.auditLog.create({ data: { user_id: userId, action: "DEVICE_REVOKED", targetId: deviceId } });
+    await prisma.$transaction(async (trx) => {
+      await trx.chatMemberKey.deleteMany({ where: { device_id: deviceId } });
+      await trx.device.update({ where: { id: deviceId }, data: { revokedAt: new Date() } });
+      await trx.refreshToken.updateMany({ where: { device_id: deviceId }, data: { revokedAt: new Date() } });
+      await trx.auditLog.create({ data: { user_id: userId, action: "DEVICE_REVOKED", targetId: deviceId } });
+    });
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (user?.email) await this.mailer.sendSecurityAlert(user.email, "Appareil révoqué : " + device.name);

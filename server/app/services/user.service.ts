@@ -136,6 +136,35 @@ export class UserService {
           },
         });
 
+      // If a new device is created, copy existing chat keys from any previous devices
+      if (!existing) {
+        const matchDevices = await trx.device.findMany({
+          where: {
+            user_id: userId,
+            id: { not: device.id },
+          },
+          select: { id: true },
+        });
+
+        if (matchDevices.length > 0) {
+          const matchDeviceIds = matchDevices.map((d) => d.id);
+          const oldKeys = await trx.chatMemberKey.findMany({
+            where: { device_id: { in: matchDeviceIds } },
+          });
+
+          if (oldKeys.length > 0) {
+            await trx.chatMemberKey.createMany({
+              data: oldKeys.map((ok) => ({
+                chat_id: ok.chat_id,
+                device_id: device.id,
+                encrypted_chat_key: ok.encrypted_chat_key,
+              })),
+              skipDuplicates: true,
+            });
+          }
+        }
+      }
+
       await trx.user.update({ where: { id: userId }, data: { is_configured: true, username } });
 
       const user = await trx.user.findUniqueOrThrow({
@@ -146,9 +175,11 @@ export class UserService {
       const tokens = await this.authService._generateTokens(user, device.id);
       const expiresAtMs = tokens.expiresAt instanceof Date ? tokens.expiresAt.getTime() : Number(tokens.expiresAt);
 
-      // create subscription
-      await prisma.subscription.create({
-        data: {
+      // create subscription safely (upsert)
+      await trx.subscription.upsert({
+        where: { user_id: userId },
+        update: {},
+        create: {
           user_id: userId,
           plan: "FREE",
           status: "ACTIVE",

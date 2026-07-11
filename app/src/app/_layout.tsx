@@ -8,11 +8,11 @@ import '@/styles/global.css';
 
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { registerForPushNotifications, setupPushFromWebSocket } from '@/features/notifications/push';
+import { registerForPushNotifications, setupPushFromWebSocket, setupNotificationResponseListener } from '@/features/notifications/push';
 import { runAppStartup } from '@/processes/app-startup';
 import {
   AuthProvider,
@@ -24,9 +24,13 @@ import {
 import { I18nProvider } from '@/providers/i18n-provider';
 import { useKeyboardBehavior } from '@/shared/hooks/use-keyboardBehavior';
 import { ASYNC_STORAGE_KEYS, AsyncStorageService } from '@/shared/lib/storage';
-import { KeyboardAvoidingView } from 'react-native';
-import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
+import { KeyboardAvoidingView, ActivityIndicator, View, LogBox } from 'react-native';
 
+LogBox.ignoreLogs([
+  'Due to changes in Androids permission requirements, Expo Go can no longer provide full access to the media library',
+]);
+import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
+import { initializeSqlite } from '@/shared/storage/sqlite';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -72,6 +76,7 @@ function AppStartup() {
     void runAppStartup();
     void registerForPushNotifications().catch(() => undefined);
 
+    const stopResponseListener = setupNotificationResponseListener();
     let stopPush: () => void = () => { };
 
     // Resolve the current user ID so push notifications skip the sender
@@ -84,13 +89,35 @@ function AppStartup() {
       })
       .catch(() => { });
 
-    return () => stopPush();
+    return () => {
+      stopPush();
+      stopResponseListener();
+    };
   }, []);
 
   return null;
 }
 
 export default function RootLayout(): JSX.Element {
+  const [isDbReady, setIsDbReady] = useState(false);
+
+  useEffect(() => {
+    initializeSqlite()
+      .then(() => setIsDbReady(true))
+      .catch((err) => {
+        console.error('Failed to initialize SQLite database:', err);
+        setIsDbReady(true); // Fallback to allow app rendering
+      });
+  }, []);
+
+  if (!isDbReady) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#09090b' }}>
+        <ActivityIndicator size="large" color="#ffffff" />
+      </View>
+    );
+  }
+
   return (
     <>
       <GestureHandlerRootView style={{ flex: 1 }}>
