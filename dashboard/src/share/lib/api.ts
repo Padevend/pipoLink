@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3000";
+const API_URL = "https://api-plink.lyrastudio.org";
 
 import type { User } from "@/entities/users";
 export type { User };
