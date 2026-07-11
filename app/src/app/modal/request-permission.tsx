@@ -1,7 +1,5 @@
-import { BRAND } from "@/shared/config/brand";
 import { Camera } from "expo-camera";
 import * as FileSystem from "expo-file-system/legacy";
-//import * as MediaLibrary from "expo-media-library";
 import { router } from "expo-router";
 import {
   Camera as CameraIcon,
@@ -58,25 +56,9 @@ const PERMISSIONS: Permission[] = [
     required: true,
     icon:      FolderOpen,
     request:  async () => {
-      // Plus besoin de permission SAF, on sauvegarde dans documentDirectory
       return "granted";
     },
   },
-  // {
-  //   key:      "gallery",
-  //   label:    "Galerie photo",
-  //   desc:     "Permettre la sauvegarde des images et affiches en haute définition sur votre appareil",
-  //   required: true,
-  //   icon:      ImageIcon,
-  //   request:  async () => {
-  //     try {
-  //       const { status } = await MediaLibrary.requestPermissionsAsync(true);
-  //       return status === "granted" ? "granted" : "denied";
-  //     } catch (error) {
-  //       return "denied";
-  //     }
-  //   },
-  // }
 ];
 
 // Composant PermissionItem
@@ -102,19 +84,19 @@ function PermissionItem({
         <Pressable
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
-          className="flex-row items-center gap-x-3.5 p-4 mb-3 rounded-2xl border border-border-light/30 bg-surface-light/40 dark:border-border-dark/10 dark:bg-surface-dark/40 backdrop-blur-md"
+          className="flex-row items-center gap-x-3.5 p-4 mb-3 rounded-2xl border border-zinc-100 bg-white dark:border-zinc-900 dark:bg-zinc-900"
         >
           {/* Icône enveloppée */}
-          <View className="bg-surface-light dark:bg-surface-dark h-10 w-10 items-center justify-center rounded-xl ">
-            <Icon size={16} color="#64748B" strokeWidth={2} />
+          <View className="bg-zinc-50 dark:bg-zinc-800 h-10 w-10 items-center justify-center rounded-xl">
+            <Icon size={16} color="#71717A" strokeWidth={2} />
           </View>
 
           {/* Textes explicatifs */}
           <View className="flex-1">
-            <Text className="text-[14px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+            <Text className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
               {perm.label}
             </Text>
-            <Text className="text-[12px] font-medium text-text-secondary-light/40 dark:text-text-secondary-dark/40 mt-0.5 leading-4">
+            <Text className="text-xs font-medium text-zinc-400 dark:text-zinc-500 mt-0.5 leading-4">
               {perm.desc}
             </Text>
           </View>
@@ -122,21 +104,21 @@ function PermissionItem({
           {/* États et Badges à droite */}
           <View className="flex-shrink-0">
             {status === "granted" ? (
-              <View className="h-6 w-6 items-center justify-center rounded-lg bg-surface-light dark:bg-surface-dark">
-                <CheckCircle2 size={13} color="green" strokeWidth={2.5} />
+              <View className="h-6 w-6 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950/20">
+                <CheckCircle2 size={14} color="#10B981" strokeWidth={2.5} />
               </View>
             ) : status === "denied" ? (
-              <View className="rounded-md bg-red-500/10 border border-red-500/20 px-2 py-0.5">
+              <View className="rounded-lg bg-red-50 border border-red-100 dark:bg-red-950/20 dark:border-red-900/30 px-2 py-0.5">
                 <Text className="text-[10px] font-bold text-red-500 dark:text-red-400 uppercase tracking-wide">Refusé</Text>
               </View>
             ) : (
-              <View className={`rounded-md px-2 py-0.5 border ${
+              <View className={`rounded-lg px-2 py-0.5 border ${
                 perm.required 
-                  ? 'bg-primary/10 border-primary/20' 
-                  : 'bg-text-secondary-light/5 border-border-light/20 dark:border-border-dark/10'
+                  ? 'bg-orange-50 border-orange-100 dark:bg-orange-950/20 dark:border-orange-900/30' 
+                  : 'bg-zinc-50 border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700'
               }`}>
                 <Text className={`text-[10px] font-bold uppercase tracking-wide ${
-                  perm.required ? 'text-primary' : 'text-text-secondary-light/40 dark:text-text-secondary-dark/40'
+                  perm.required ? 'text-orange-500' : 'text-zinc-400 dark:text-zinc-500'
                 }`}>
                   {perm.required ? "Requis" : "Optionnel"}
                 </Text>
@@ -213,18 +195,23 @@ export default function PermissionsScreen() {
 
   return (
     <View 
-      className="flex-1 bg-background-light dark:bg-background-dark" 
-      style={{ paddingBottom: insets.bottom + 16, paddingTop: insets.top + 8 }}
+      className="flex-1 bg-zinc-50 dark:bg-zinc-950" 
+      style={{
+        paddingBottom: insets.bottom + 16,
+        paddingTop: insets.top + 8,
+        paddingLeft: insets.left,
+        paddingRight: insets.right
+      }}
     >
       {/* Zone d'en-tête (Hero) */}
-      <Animated.View entering={FadeInUp.delay(0).springify()} className="items-center px-7 pt-4 pb-6">
-        <View className="h-16 w-16 items-center justify-center rounded-2xl mb-5 bg-surface-light dark:bg-surface-dark">
-          <ShieldCheck size={26} color="#64748B" strokeWidth={1.8} />
+      <Animated.View entering={FadeInUp.delay(0).springify()} className="items-center px-7 pt-6 pb-6">
+        <View className="h-14 w-14 items-center justify-center rounded-xl mb-4 bg-white border border-zinc-100 dark:bg-zinc-900 dark:border-zinc-800">
+          <ShieldCheck size={24} color="#F97316" strokeWidth={1.8} />
         </View>
-        <Text className="text-[18px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark mb-2">
+        <Text className="text-base font-bold text-zinc-900 dark:text-zinc-50 mb-1.5">
           Autorisations requises
         </Text>
-        <Text className="text-[12px] font-medium text-center text-text-secondary-light/40 dark:text-text-secondary-dark/40 leading-5 px-3">
+        <Text className="text-xs font-medium text-center text-zinc-400 dark:text-zinc-500 leading-5 px-3">
           PipoLink requiert ces accès afin de valider vos documents d'étude, téléverser vos fichiers de stockage et sécuriser votre terminal.
         </Text>
       </Animated.View>
@@ -232,7 +219,7 @@ export default function PermissionsScreen() {
       {/* Liste défilante des permissions */}
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 4 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 4 }}
         showsVerticalScrollIndicator={false}
       >
         {PERMISSIONS.map((perm, i) => (
@@ -246,23 +233,23 @@ export default function PermissionsScreen() {
       </ScrollView>
 
       {/* Pied de page (Actions de validation) */}
-      <View className="px-5 py-4 gap-y-2">
+      <View className="px-4 py-4 gap-y-2.5">
         <Pressable
           onPress={handleRequestAll}
           disabled={loading}
-          className="h-12 items-center justify-center rounded-xl active:scale-[0.99] transition-transform"
-          style={{ backgroundColor: BRAND.primary, opacity: loading ? 0.7 : 1 }}
+          className="h-11 items-center justify-center rounded-xl bg-orange-500 active:bg-orange-600"
+          style={{ opacity: loading ? 0.7 : 1 }}
         >
-          <Text className="text-[13px] font-bold text-white uppercase tracking-wider">
+          <Text className="text-xs font-bold text-white uppercase tracking-wider">
             {loading ? "Vérification en cours…" : "Autoriser les accès"}
           </Text>
         </Pressable>
 
         <Pressable 
           onPress={handleSkip} 
-          className="h-12 items-center justify-center rounded-xl border border-border-light/40 bg-surface-light dark:border-border-dark/20 dark:bg-surface-dark active:scale-[0.99] transition-transform"
+          className="h-11 items-center justify-center rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 active:bg-zinc-50 dark:active:bg-zinc-800"
         >
-          <Text className="text-[12px] font-bold text-text-secondary-light/60 dark:text-text-secondary-dark/60 uppercase tracking-wide">
+          <Text className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
             Configurer plus tard
           </Text>
         </Pressable>

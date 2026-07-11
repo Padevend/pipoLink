@@ -5,7 +5,7 @@ import { cors } from "hono/cors";
  * En production, restreindre à l'origine du client mobile.
  */
 export const corsConfig = cors({
-  origin: process.env.CLIENT_DOMAIN ?? "*",
+  origin: ["http://localhost:5173"],
   allowHeaders: ["Content-Type", "Authorization"],
   allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   credentials: true,

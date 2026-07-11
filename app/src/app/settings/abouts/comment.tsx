@@ -4,7 +4,6 @@ import {
   type CommentFormValues,
 } from '@/features/feedback/lib/comment.schema';
 import { useComment } from '@/features/feedback/model/use-comment';
-import { BRAND } from '@/shared/config/brand';
 import { Button } from '@/shared/ui/button';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
@@ -24,9 +23,12 @@ import {
 import Animated, { FadeIn, FadeInDown, FadeOut } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 export default function CommentFeedbackScreen() {
   const { mutate, isPending } = useComment();
   const [reasonPickerOpen, setReasonPickerOpen] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const {
     control,
@@ -67,127 +69,131 @@ export default function CommentFeedbackScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top']}>
-      {/* Loader overlay */}
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
+      
+      {/* OVERLAY CHARGEMENT : Mat & Strict */}
       <Modal transparent visible={isPending} animationType="fade">
         <Animated.View
-          entering={FadeIn.duration(200)}
-          exiting={FadeOut.duration(150)}
-          className="flex-1 bg-black/40 items-center justify-center"
+          entering={FadeIn.duration(150)}
+          exiting={FadeOut.duration(100)}
+          className="flex-1 bg-black/50 items-center justify-center"
         >
-          <View className="p-6 bg-surface-light dark:bg-zinc-900 border border-border-light/40 dark:border-border-dark/20 rounded-2xl items-center shadow-2xl max-w-[80%]">
-            <ActivityIndicator size="small" color={BRAND.primary} />
-            <Text className="text-[13px] font-bold text-text-primary-light dark:text-text-primary-dark tracking-wide uppercase mt-4 text-center">
+          <View className="p-5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl items-center max-w-[80%]">
+            <ActivityIndicator size="small" color="#F97316" />
+            <Text className="text-[10px] font-bold tracking-wider text-zinc-900 dark:text-zinc-50 uppercase mt-3 text-center">
               Transmission en cours…
             </Text>
-            <Text className="text-[11px] text-text-secondary-light/60 dark:text-text-secondary-dark/60 mt-1 text-center">
+            <Text className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 mt-1 text-center">
               Nous acheminons votre retour d'expérience.
             </Text>
           </View>
         </Animated.View>
       </Modal>
 
-      {/* Reason picker modal */}
+      {/* MODAL DE SÉLECTION (PICKER) : Mat & Linéaire */}
       <Modal transparent visible={reasonPickerOpen} animationType="fade">
         <Pressable
-          className="flex-1 bg-black/40 items-center justify-center"
+          className="flex-1 bg-black/50 items-center justify-center"
           onPress={() => setReasonPickerOpen(false)}
         >
           <Animated.View
-            entering={FadeIn.duration(200)}
-            className="bg-surface-light dark:bg-zinc-900 border border-border-light/40 dark:border-border-dark/20 rounded-2xl w-[85%] max-w-[340px] overflow-hidden"
+            entering={FadeIn.duration(150)}
+            className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl w-[85%] max-w-[320px] overflow-hidden"
           >
-            <Text className="text-[13px] font-bold uppercase tracking-wider text-text-primary-light dark:text-text-primary-dark p-4 pb-2">
+            <Text className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 p-4 pb-2">
               Sélectionner un motif
             </Text>
-            {FEEDBACK_REASONS.map((reason) => (
-              <Pressable
-                key={reason.value}
-                className="px-4 py-3 active:bg-primary/5 flex-row items-center"
-                onPress={() => {
-                  setValue('subject', reason.value, { shouldValidate: true });
-                  setReasonPickerOpen(false);
-                }}
-              >
-                <View
-                  className={`h-5 w-5 rounded-full border-2 mr-3 items-center justify-center ${
-                    selectedSubject === reason.value
-                      ? 'border-primary bg-primary'
-                      : 'border-border-light/40 dark:border-border-dark/30'
-                  }`}
-                >
-                  {selectedSubject === reason.value && (
-                    <View className="h-2 w-2 rounded-full bg-white" />
-                  )}
+            {FEEDBACK_REASONS.map((reason, index) => {
+              const isSelected = selectedSubject === reason.value;
+              return (
+                <View key={reason.value}>
+                  {index > 0 && <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-800" />}
+                  <Pressable
+                    className="px-4 py-3 active:bg-zinc-50 dark:active:bg-zinc-800/50 flex-row items-center"
+                    onPress={() => {
+                      setValue('subject', reason.value, { shouldValidate: true });
+                      setReasonPickerOpen(false);
+                    }}
+                  >
+                    <View
+                      className={`h-4 w-4 rounded-full border items-center justify-center mr-3 ${
+                        isSelected
+                          ? 'border-orange-500 bg-orange-500'
+                          : 'border-zinc-300 dark:border-zinc-700 bg-transparent'
+                      }`}
+                    >
+                      {isSelected && <View className="h-1.5 w-1.5 rounded-full bg-white" />}
+                    </View>
+                    <Text className={`text-xs font-semibold ${isSelected ? 'text-orange-500 dark:text-orange-400' : 'text-zinc-900 dark:text-zinc-50'}`}>
+                      {reason.label}
+                    </Text>
+                  </Pressable>
                 </View>
-                <Text className="text-[14px] text-text-primary-light dark:text-text-primary-dark">
-                  {reason.label}
-                </Text>
-              </Pressable>
-            ))}
+              );
+            })}
             <View className="h-2" />
           </Animated.View>
         </Pressable>
       </Modal>
 
-      {/* Header */}
-      <View className="flex-row items-center border-b border-border-light/20 bg-surface-light/40 px-5 py-4 dark:border-border-dark/10 dark:bg-surface-dark/40 backdrop-blur-md">
+      {/* HEADER : Panneau Mat Solide */}
+      <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
         <Pressable
           onPress={() => router.back()}
-          className="h-8 w-8 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800/80 mr-3 active:scale-95"
+          className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
         >
-          <ArrowLeft size={16} className="text-text-secondary-light/70 dark:text-text-secondary-dark/70" />
+          <ArrowLeft size={14} color="#71717A" />
         </Pressable>
-        <Text className="font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark text-[16px]">
+        <Text className="flex-1 ml-3 text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
           Laissez un commentaire
         </Text>
       </View>
 
-      {/* Form */}
+      {/* FORMULAIRE */}
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: insets.bottom + 24 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Animated.View entering={FadeInDown.springify()} className="mb-6">
-          <Text className="text-[13px] leading-5 font-medium text-text-secondary-light/70 dark:text-text-secondary-dark/60">
+        <View className="mb-5">
+          <Text className="text-xs leading-5 font-semibold text-zinc-400 dark:text-zinc-500">
             Votre avis nous aide à faire évoluer PipoLink. Partagez vos suggestions, signalez un
             problème ou indiquez-nous simplement ce que vous préférez !
           </Text>
-        </Animated.View>
+        </View>
 
-        <Animated.View entering={FadeInDown.delay(100).springify()} className="gap-y-4">
-          {/* Reason picker */}
+        <View className="gap-y-4">
+          {/* SÉLECTEUR DE MOTIF */}
           <Controller
             control={control}
             name="subject"
             render={() => (
-              <View className="w-full gap-1.5">
-                <Text className="text-[11px] font-bold uppercase tracking-wide text-text-secondary-light/60 dark:text-text-secondary-dark/60 ml-1">
+              <View className="w-full gap-y-1.5">
+                <Text className="ml-1 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                   Motif
                 </Text>
                 <Pressable
                   onPress={() => setReasonPickerOpen(true)}
-                  className={`w-full flex-row rounded-xl bg-surface-light/50 dark:bg-surface-dark/40 border px-4 items-center h-16 ${
+                  className={`w-full flex-row rounded-xl bg-white dark:bg-zinc-950 border px-4 items-center h-12 ${
                     errors.subject
-                      ? 'border-error/40 bg-error/5 dark:border-error/30'
-                      : 'border-border-light/40 dark:border-border-dark/20'
+                      ? 'border-red-500 dark:border-red-900/50 bg-red-50/10'
+                      : 'border-zinc-200 dark:border-zinc-900 active:bg-zinc-50 dark:active:bg-zinc-900/50'
                   }`}
                 >
                   <Text
-                    className={`flex-1 text-[13px] font-medium ${
+                    className={`flex-1 text-xs font-semibold ${
                       selectedLabel
-                        ? 'text-text-primary-light dark:text-text-primary-dark'
-                        : 'text-[#64748B]'
+                        ? 'text-zinc-900 dark:text-zinc-50'
+                        : 'text-zinc-400 dark:text-zinc-500'
                     }`}
                   >
                     {selectedLabel || 'Sélectionner un motif…'}
                   </Text>
-                  <ChevronDown size={16} color="#64748B" />
+                  <ChevronDown size={14} color="#71717A" />
                 </Pressable>
                 {errors.subject && (
-                  <Text className="text-[11px] font-semibold text-error ml-1.5 mt-0.5">
+                  <Text className="ml-1 text-[10px] font-bold text-red-500 dark:text-red-400">
                     {errors.subject.message}
                   </Text>
                 )}
@@ -195,30 +201,30 @@ export default function CommentFeedbackScreen() {
             )}
           />
 
-          {/* Message textarea */}
+          {/* ZONE DE TEXTE MESSAGE */}
           <Controller
             control={control}
             name="message"
             render={({ field: { onChange, value } }) => (
               <View className="gap-y-1.5">
-                <Text className="text-[11px] font-bold uppercase tracking-wide text-text-secondary-light/60 dark:text-text-secondary-dark/60 ml-1">
+                <Text className="ml-1 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                   Contenu
                 </Text>
                 <TextInput
-                  className={`min-h-[140px] rounded-xl border bg-surface-light/50 px-4 py-3 text-[13px] font-medium text-text-primary-light dark:bg-surface-dark/40 dark:text-text-primary-dark ${
+                  className={`min-h-[140px] rounded-xl border bg-white px-4 py-3 text-xs font-semibold text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50 ${
                     errors.message
-                      ? 'border-error/40 bg-error/5 dark:border-error/30'
-                      : 'border-border-light/40 dark:border-border-dark/20'
+                      ? 'border-red-500 dark:border-red-900/50 bg-red-50/10'
+                      : 'border-zinc-200 dark:border-zinc-900 focus:border-orange-500 dark:focus:border-orange-500'
                   }`}
                   placeholder="Décrivez votre idée ou votre problème en quelques lignes…"
-                  placeholderTextColor="#64748B"
+                  placeholderTextColor="#71717A"
                   multiline
                   textAlignVertical="top"
                   value={value}
                   onChangeText={onChange}
                 />
                 {errors.message && (
-                  <Text className="text-[11px] font-semibold text-error ml-1.5 mt-0.5">
+                  <Text className="ml-1 text-[10px] font-bold text-red-500 dark:text-red-400">
                     {errors.message.message}
                   </Text>
                 )}
@@ -230,10 +236,10 @@ export default function CommentFeedbackScreen() {
             label="Envoyer le commentaire"
             onPress={handleSubmit(onSubmit)}
             disabled={isPending}
-            className="mt-4"
-            rightIcon={<MessageSquareCheck size={16} color="#FFF" strokeWidth={2.5} />}
+            className="mt-2 bg-orange-500 rounded-xl"
+            rightIcon={<MessageSquareCheck size={14} color="#FFF" strokeWidth={2.5} />}
           />
-        </Animated.View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

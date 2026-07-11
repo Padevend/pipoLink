@@ -108,4 +108,90 @@ export const useDeleteSession = () => {
       queryClient.setQueryData(aiKeys.history(variables), []);
     },
   });
-}
+};
+
+export const useSessionDocuments = (sessionId: string) => {
+  return useQuery({
+    queryKey: [...aiKeys.history(sessionId), 'documents'],
+    queryFn: () => aiApi.getSessionDocuments(sessionId),
+    enabled: !!sessionId,
+  });
+};
+
+export const useAddDocumentToSession = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ sessionId, documentId }: { sessionId: string; documentId: string }) =>
+      aiApi.addDocumentToSession(sessionId, documentId),
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({ queryKey: [...aiKeys.history(variables.sessionId), 'documents'] });
+      void queryClient.invalidateQueries({ queryKey: aiKeys.history(variables.sessionId) });
+    },
+  });
+};
+
+export const useRemoveDocumentFromSession = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ sessionId, documentId }: { sessionId: string; documentId: string }) =>
+      aiApi.removeDocumentFromSession(sessionId, documentId),
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({ queryKey: [...aiKeys.history(variables.sessionId), 'documents'] });
+      void queryClient.invalidateQueries({ queryKey: aiKeys.history(variables.sessionId) });
+    },
+  });
+};
+
+export const useGenerateStudyAid = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ sessionId, type }: { sessionId: string; type: string }) =>
+      aiApi.generateStudyAid(sessionId, type),
+    onSuccess: (data, variables) => {
+      queryClient.setQueryData(aiKeys.history(variables.sessionId), (old: any) => {
+        const existing = old || [];
+        if (!existing.some((msg: any) => msg.id === data.message.id)) {
+          return [...existing, data.message];
+        }
+        return existing;
+      });
+    },
+  });
+};
+
+export const useMyAiAttachments = () => {
+  return useQuery({
+    queryKey: [...aiKeys.all, 'attachments'] as const,
+    queryFn: () => aiApi.getAttachments(),
+  });
+};
+
+export const useUploadAiAttachment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: {
+      file: { uri: string; name: string; mimeType: string; size?: number };
+      metadata: {
+        title: string;
+        type: string;
+        filiere: string;
+        niveau: string;
+        ue: string;
+        description?: string;
+      };
+    }) => aiApi.uploadAttachment(payload.file, payload.metadata),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [...aiKeys.all, 'attachments'] });
+    },
+  });
+};
+
+export const useDeleteAiAttachment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => aiApi.deleteAttachment(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [...aiKeys.all, 'attachments'] });
+    },
+  });
+};

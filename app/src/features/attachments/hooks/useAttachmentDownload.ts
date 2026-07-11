@@ -25,7 +25,7 @@
 
 import type { MessageAttachment } from '@/shared/api/types';
 import { openLocalFile } from '@/shared/lib/open-local-file';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { attachmentDownloadManager } from '../lib/attachment-download.manager';
 import { useAttachmentState } from './useAttachmentState';
 
@@ -138,8 +138,68 @@ export function useAttachmentDownload({
 
   const openFile = useCallback(async () => {
     if (status !== 'completed' || !decryptedUri) return;
+
+    const fileUri = decryptedUri.startsWith('file://') || decryptedUri.startsWith('content://')
+      ? decryptedUri
+      : `file://${decryptedUri}`;
+
+    let exists = false;
+    try {
+      const FileSystem = require('expo-file-system/legacy');
+      const info = await FileSystem.getInfoAsync(fileUri);
+      exists = info.exists;
+    } catch {
+      exists = false;
+    }
+
+    if (!exists) {
+      // Le fichier a été supprimé/perdu : nettoyage du cache + téléchargement silencieux
+      await attachmentDownloadManager.cancel(attachment.id);
+      await attachmentDownloadManager.download({
+        attachment,
+        messageId,
+        chatId,
+      });
+      return;
+    }
+
     await openLocalFile(decryptedUri, attachment.mimeType);
-  }, [status, decryptedUri, attachment.mimeType]);
+  }, [status, decryptedUri, attachment, messageId, chatId]);
+
+  // ─── SILENT RECOVERY OF MISSING FILES ───────────────────────────────────────
+  useEffect(() => {
+    if (status === 'completed' && decryptedUri) {
+      let isSubscribed = true;
+      const checkFile = async () => {
+        const fileUri = decryptedUri.startsWith('file://') || decryptedUri.startsWith('content://')
+          ? decryptedUri
+          : `file://${decryptedUri}`;
+        
+        let exists = false;
+        try {
+          const FileSystem = require('expo-file-system/legacy');
+          const info = await FileSystem.getInfoAsync(fileUri);
+          exists = info.exists;
+        } catch {
+          exists = false;
+        }
+
+        if (!exists && isSubscribed) {
+          await attachmentDownloadManager.cancel(attachment.id);
+          await attachmentDownloadManager.download({
+            attachment,
+            messageId,
+            chatId,
+          });
+        }
+      };
+      
+      checkFile();
+      return () => {
+        isSubscribed = false;
+      };
+    }
+  }, [status, decryptedUri, attachment, messageId, chatId]);
 
   return {
     state,

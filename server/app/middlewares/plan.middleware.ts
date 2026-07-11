@@ -26,3 +26,24 @@ export async function planMiddleware(c: Context, next: Next) {
   c.set("plan", "PREMIUM");
   await next();
 }
+
+/**
+ * Middleware qui injecte le plan de l'utilisateur dans le contexte sans rejeter la requête.
+ */
+export async function injectPlanMiddleware(c: Context, next: Next) {
+  const userId = c.get("userId") as string;
+  if (!userId) {
+    c.set("plan", "FREE");
+    return await next();
+  }
+
+  const subscription = await prisma.subscription.findUnique({ where: { user_id: userId } });
+
+  if (subscription && subscription.status === "ACTIVE") {
+    c.set("plan", subscription.plan);
+  } else {
+    c.set("plan", "FREE");
+  }
+
+  await next();
+}

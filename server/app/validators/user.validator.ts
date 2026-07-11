@@ -31,9 +31,3 @@ export const updateProfileValidator = vine.compile(
     bio:       vine.string().maxLength(500).optional(),
   })
 );
-
-export const deleteAccountValidator = vine.compile(
-  vine.object({
-    email: vine.string().email(),
-  })
-)

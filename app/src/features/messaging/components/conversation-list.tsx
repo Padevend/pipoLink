@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { BrushCleaning, MessageSquare } from 'lucide-react-native';
 import { useMemo } from 'react';
 import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
+import { useSafeArea } from '@/shared/hooks/use-safe-area';
 
 import { useAnnouncements } from '@/entities/announcement/hooks';
 import { conversationKeys, useConversations } from '@/entities/conversation/hooks';
@@ -13,13 +14,18 @@ import { messagingApi } from '@/shared/api/messaging';
 import { ANNOUNCEMENTS_ENTRY_ID } from '@/shared/constants/announcements';
 import { Skeleton } from '@/shared/ui/skeleton';
 
+// Couleur orange vif électrique partagée
+const ORANGE_PRINCIPAL = '#FF6B00';
+
 type ListRow =
   | { kind: 'announcements'; id: typeof ANNOUNCEMENTS_ENTRY_ID }
   | { kind: 'conversation'; id: string; conversation: Conversation };
 
-const ItemSeparator = () => <View className="h-[1px] mx-5 bg-border-light/20 dark:bg-border-dark/10" />;
+// Ligne de séparation fine et élégante entre chaque élément
+const ItemSeparator = () => <View className="h-[1px] mx-6 bg-zinc-100 dark:bg-zinc-900" />;
 
 export function ConversationList() {
+  const insets = useSafeArea();
   const { data: conversations, isLoading, refetch, isRefetching } = useConversations();
   const { data: announcements } = useAnnouncements();
   
@@ -49,16 +55,16 @@ export function ConversationList() {
 
   const announcementPreview = announcements?.[0]?.title;
 
-  // État de chargement moderne (Skeleton Loader)
+  // Écran d'attente épuré (pendant le chargement des messages)
   if (isLoading) {
     return (
-      <View className="flex-1 px-5 pt-4 bg-background-light dark:bg-background-dark">
+      <View className="flex-1 px-6 pt-4 bg-white dark:bg-zinc-950">
         {[1, 2, 3, 4, 5].map((i) => (
-          <View key={i} className="flex-row items-center gap-4 py-3 border-b border-border-light/10 dark:border-border-dark/10">
-            <Skeleton className="h-12 w-12 rounded-full opacity-70" />
-            <View className="flex-1 gap-2.5">
-              <Skeleton className="mh-3 w-1/4 rounded-md opacity-80" />
-              <Skeleton className="min-h-3 w-3/4 rounded-md opacity-50" />
+          <View key={i} className="flex-row items-center gap-4 py-4 border-b border-zinc-100 dark:border-zinc-900">
+            <Skeleton className="h-12 w-12 rounded-xl bg-zinc-100 dark:bg-zinc-900" />
+            <View className="flex-1 gap-2">
+              <Skeleton className="h-4 w-1/4 rounded bg-zinc-100 dark:bg-zinc-900" />
+              <Skeleton className="h-3 w-3/4 rounded bg-zinc-100/60 dark:bg-zinc-900/60" />
             </View>
           </View>
         ))}
@@ -67,67 +73,74 @@ export function ConversationList() {
   }
 
   return (
-    <View className="flex-1 bg-background-light dark:bg-background-dark">
+    <View className="flex-1 bg-white dark:bg-zinc-950">
+      
+      {/* Bouton "Tout marquer comme lu" - Rond, épuré, orange vif, sans ombre */}
       {hasUnread && (
-        <View className="w-15 h-15 items-center justify-center rounded-full bg-primary p-4 absolute bottom-5 right-5 z-15">
+        <View 
+          className="absolute right-6 z-20 rounded-full bg-orange-500 overflow-hidden"
+          style={{ bottom: Math.max(insets.bottom, 24) }}
+        >
           <Pressable 
             onPress={markAllAsRead}
+            className="h-12 w-12 items-center justify-center active:opacity-90"
           >
-            <BrushCleaning size={20} color="white" />
+            <BrushCleaning size={20} color="#FFFFFF" />
           </Pressable>
         </View>
       )}
+
       <FlatList
         data={rows}
         keyExtractor={(item) => item.id}
-      contentContainerStyle={{ paddingBottom: 40 }}
-      showsVerticalScrollIndicator={false}
-      ItemSeparatorComponent={ItemSeparator}
-      renderItem={({ item }) => {
-        if (item.kind === 'announcements') {
+        contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 24) + 40 }}
+        showsVerticalScrollIndicator={false}
+        ItemSeparatorComponent={ItemSeparator}
+        renderItem={({ item }) => {
+          if (item.kind === 'announcements') {
+            return (
+              <AnnouncementListItem
+                preview={announcementPreview}
+                onPress={() => router.push('/announcements')}
+              />
+            );
+          }
           return (
-            <AnnouncementListItem
-              preview={announcementPreview}
-              onPress={() => router.push('/announcements')}
+            <ConversationItem
+              conversation={item.conversation}
+              onPress={() => router.push(`/chat/${item.conversation.id}`)}
             />
           );
-        }
-        return (
-          <ConversationItem
-            conversation={item.conversation}
-            onPress={() => router.push(`/chat/${item.conversation.id}`)}
+        }}
+        refreshControl={
+          <RefreshControl 
+            refreshing={isRefetching} 
+            onRefresh={refetch} 
+            tintColor={ORANGE_PRINCIPAL}
           />
-        );
-      }}
-      refreshControl={
-        <RefreshControl 
-          refreshing={isRefetching} 
-          onRefresh={refetch} 
-          tintColor="var(--color-primary)" 
-        />
-      }
-      ListEmptyComponent={
-        rows.length <= 1 ? (
-          <View className="items-center justify-center px-6 py-16 mt-10">
-            
-            {/* Conteneur icône style Verre Dépoli */}
-            <View className="mb-5 h-20 w-20 items-center justify-center">
-              <View className="p-3 rounded-xl bg-primary/10">
-                <MessageSquare size={28} className="text-primary" />
+        }
+        ListEmptyComponent={
+          rows.length <= 1 ? (
+            <View className="items-center justify-center px-8 py-24 mt-10">
+              
+              {/* Illustration centrale : Icône dans un carré aux angles nets */}
+              <View className="mb-6 h-14 w-14 items-center justify-center rounded-xl border border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/50">
+                <MessageSquare size={22} color={ORANGE_PRINCIPAL} />
               </View>
-            </View>
 
-            <Text className="text-lg font-semibold tracking-tight text-text-primary-light dark:text-text-primary-dark text-center">
-              Aucune conversation
-            </Text>
-            
-            <Text className="mt-1.5 px-8 text-center text-sm leading-5 text-text-secondary-light/80 dark:text-text-secondary-dark/80">
-              Démarrez une discussion avec vos camarades en cliquant sur le bouton d'ajout en haut.
-            </Text>
-          </View>
-        ) : null
-      }
-    />
+              {/* Message principal pour l'utilisateur */}
+              <Text className="text-sm font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-50 text-center">
+                Aucune discussion
+              </Text>
+              
+              {/* Message d'aide explicatif */}
+              <Text className="mt-2 px-6 text-center text-xs font-medium leading-relaxed text-zinc-400 dark:text-zinc-500">
+                Votre messagerie est vide. Initiez une nouvelle conversation en utilisant le bouton d'action situé en haut de l'écran.
+              </Text>
+            </View>
+          ) : null
+        }
+      />
     </View>
   );
 }

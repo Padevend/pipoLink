@@ -10,7 +10,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth, useToast } from "@/providers";
 import { queryClient } from "@/providers/query-provider";
@@ -25,6 +25,7 @@ import { PhoneInput } from "@/shared/ui/phone-input";
 
 export default function ProfileSettingsScreen(): JSX.Element {
   const { t } = useTranslation("common");
+  const insets = useSafeAreaInsets();
   
   const { user, refreshUser } = useAuth();
   const { showToast } = useToast();
@@ -85,79 +86,79 @@ export default function ProfileSettingsScreen(): JSX.Element {
 
   if (loading)
     return (
-      <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" />
+      <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" />
     );
 
   return (
     <SafeAreaView
-      className="flex-1 bg-background-light dark:bg-background-dark"
-      edges={["top"]}
+      className="flex-1 bg-white dark:bg-zinc-950"
+      edges={["top", "left", "right"]}
     >
-      {/* Header Translucide Style Glassmorphism */}
-      <View className="z-10 flex-row items-center border-b border-border-light/20 bg-surface-light/75 px-4 py-3.5 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl ">
+      {/* HEADER : Panneau Mat Solide */}
+      <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
         <Pressable
           onPress={() => router.back()}
-          className="h-9 w-9 items-center justify-center active:scale-95 transition-transform"
+          className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
         >
-          <ArrowLeft
-            size={20}
-            color="#64748B"
-          />
+          <ArrowLeft size={14} color="#71717A" />
         </Pressable>
 
-        <Text className="flex-1 ml-3 text-[17px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+        <Text className="flex-1 ml-3 text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
           Profile
         </Text>
       </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={insets.top}
         className="flex-1"
       >
         <ScrollView
-          className="flex-1 px-5"
-          contentContainerStyle={{ paddingTop: 20, paddingBottom: 40 }}
+          className="flex-1 px-4"
+          contentContainerStyle={{ paddingTop: 16, paddingBottom: insets.bottom + 24 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Section 1 : Avatar & Identité Critique */}
-          <View className="items-center mb-6">
-            <View className="rounded-full p-1 backdrop-blur-md">
+          {/* Section 1 : Sélecteur d'Avatar Maté */}
+          <View className="items-center mb-5">
+            <View className="rounded-full p-0.5">
               <AvatarPicker uri={avatarUri} onChange={setAvatarUri} />
             </View>
           </View>
 
           {/* Section 2 : Informations Personnelles */}
-          <Text className="mb-2.5 ml-3 text-[10px] font-bold uppercase tracking-widest text-text-secondary-light/60 dark:text-text-secondary-dark/60">
+          <Text className="mb-2 ml-3 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
             Informations personnelles
           </Text>
-          <View className="mb-5 rounded-2xl border border-border-light/40 bg-surface-light/10 p-4 dark:border-border-dark/20 dark:bg-surface-dark/40  gap-3">
+          <View className="mb-5 rounded-xl border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-900 dark:bg-zinc-900/20 gap-10">
             <Input
-              label="First name"
+              label="Nom"
               value={firstname}
               onChangeText={setFirstname}
-              containerClassName="bg-transparent border-0 px-0"
+              containerClassName="bg-transparent border-0 px-0 h-10"
+              className="text-xs text-zinc-900 dark:text-zinc-50"
             />
-            <View className="h-[0.5px] bg-border-light/10 dark:bg-border-dark/5" />
+            
             <Input
-              label="Last name"
+              label="Prenom"
               value={lastname}
               onChangeText={setLastname}
-              containerClassName="bg-transparent border-0 px-0"
+              containerClassName="bg-transparent border-0 px-0 h-10"
+              className="text-xs text-zinc-900 dark:text-zinc-50"
             />
-            <View className="h-[0.5px] bg-border-light/10 dark:bg-border-dark/5" />
+            
             <Input
-              label="Username"
+              label="Nom d'utilisateur"
               value={username}
               onChangeText={setUsername}
               autoCapitalize="none"
-              containerClassName="bg-transparent border-0 px-0"
+              containerClassName="bg-transparent border-0 px-0 h-10"
+              className="text-xs text-zinc-900 dark:text-zinc-50"
             />
-            <View className="h-[0.5px] bg-border-light/10 dark:bg-border-dark/5" />
 
-            <View className="gap-1 py-1">
-              <Text className="text-[11px] font-bold uppercase tracking-wider text-text-secondary-light/50 dark:text-text-secondary-dark/50">
-                Phone number
+            <View className="gap-1 py-0.5">
+              <Text className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                Numero de Telephone
               </Text>
               <PhoneInput
                 value={phone}
@@ -166,50 +167,51 @@ export default function ProfileSettingsScreen(): JSX.Element {
               />
             </View>
 
-            <View className="h-[0.5px] bg-border-light/10 dark:bg-border-dark/5" />
-            <View className="py-1">
+            <View className="">
               <GenderPicker value={gender} onChange={setGender} />
             </View>
           </View>
 
           {/* Section 3 : Parcours Étudiant */}
-          <Text className="mb-2.5 ml-3 text-[10px] font-bold uppercase tracking-widest text-text-secondary-light/60 dark:text-text-secondary-dark/60">
+          <Text className="mb-2 ml-3 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
             Cursus académique
           </Text>
-          <View className="mb-5 rounded-2xl border border-border-light/40 bg-surface-light/10 p-4 dark:border-border-dark/20 dark:bg-surface-dark/40 gap-4">
-            <View>
+          <View className="mb-5 rounded-xl border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-900 dark:bg-zinc-900/20 gap-3">
+            <View className="py-0.5">
               <LevelPicker value={niveau} onChange={setNiveau} />
             </View>
-            <View className="h-[0.5px] bg-border-light/10 dark:bg-border-dark/5" />
+            <View className="mx-0 h-[1px] bg-zinc-100 dark:bg-zinc-900" />
             <Input
               label="Major"
               value={filiere}
               onChangeText={setFiliere}
-              containerClassName="bg-transparent border-0 px-0"
+              containerClassName="bg-transparent border-0 px-0 h-10"
+              className="text-xs text-zinc-900 dark:text-zinc-50"
             />
           </View>
 
           {/* Section 4 : Biographie */}
-          <Text className="mb-2.5 ml-3 text-[10px] font-bold uppercase tracking-widest text-text-secondary-light/60 dark:text-text-secondary-dark/60">
+          <Text className="mb-2 ml-3 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
             À propos de vous
           </Text>
-          <View className="mb-6 rounded-2xl border border-border-light/40 bg-surface-light/10 p-4 dark:border-border-dark/20 dark:bg-surface-dark/40">
+          <View className="mb-6 rounded-xl border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-900 dark:bg-zinc-900/20">
             <Input
               label="Bio"
               value={bio}
               onChangeText={setBio}
               multiline
-              containerClassName="bg-transparent border-0 px-0 min-h-[80px]"
+              containerClassName="bg-transparent border-0 px-0 min-h-[72px]"
+              className="text-xs text-zinc-900 dark:text-zinc-50"
               textAlignVertical="top"
             />
           </View>
 
-          {/* Bouton d'Action */}
+          {/* BOUTON D'ACTION : Orange Mat Solide */}
           <Button
             label="Enregistrer"
             loading={saving}
             onPress={() => void save()}
-            className="rounded-2xl h-12 active:scale-[0.98] transition-transform"
+            className="rounded-xl h-11 bg-orange-500 active:bg-orange-600"
           />
         </ScrollView>
       </KeyboardAvoidingView>

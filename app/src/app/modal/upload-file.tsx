@@ -15,7 +15,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function UploadFileModal() {
   
-  const { id: conversationId } = useLocalSearchParams<{ id: string }>();
+  const { id: conversationId, isPending, recipientUserId } = useLocalSearchParams<{
+    id: string;
+    isPending?: string;
+    recipientUserId?: string;
+  }>();
   const { showToast } = useToast();
   const sendMessage = useSendMessage(conversationId ?? '');
 
@@ -39,6 +43,8 @@ export default function UploadFileModal() {
       await sendMessage.mutateAsync({
         content: caption.trim(),
         type: 'document',
+        isPending: isPending === 'true',
+        recipientUserId: recipientUserId || undefined,
         file: {
           uri: file.uri,
           name: file.name,
@@ -54,53 +60,53 @@ export default function UploadFileModal() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top', 'bottom']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'bottom', 'left', 'right']}>
       
-      {/* Header Minimaliste */}
-      <View className="flex-row items-center justify-between border-b border-border-light/30 px-6 py-4 dark:border-border-dark/20 backdrop-blur-md">
-        <Text className="text-xl font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+      {/* Header Épuré */}
+      <View className="flex-row items-center justify-between border-b border-zinc-100 px-6 py-4 dark:border-zinc-900">
+        <Text className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
           Envoyer un document
         </Text>
         <Pressable
           onPress={() => router.back()}
-          className="h-9 w-9 items-center justify-center rounded-full bg-surface-light/60 border border-border-light/20 dark:bg-surface-dark/40 dark:border-border-dark/20 active:opacity-80"
+          className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 dark:bg-zinc-900 active:bg-zinc-100 dark:active:bg-zinc-800"
         >
-          <X size={18} className="text-text-secondary-light dark:text-text-secondary-dark" />
+          <X size={16} color="#71717A" />
         </Pressable>
       </View>
 
       <ScrollView className="flex-1 px-6 pt-6" showsVerticalScrollIndicator={false}>
-        <View className="gap-6 pb-8">
+        <View className="gap-5 pb-8">
           
-          {/* Zone de Sélection Style "Glassmorphism" Tactile */}
-          <Pressable onPress={handlePickFile} disabled={sendMessage.isPending} className="active:opacity-90">
+          {/* Zone de Sélection Mate Fine */}
+          <Pressable onPress={handlePickFile} disabled={sendMessage.isPending} className="active:opacity-95">
             <Card
               variant="outline"
               className={cn(
-                'h-48 items-center justify-center gap-3.5 rounded-3xl border-2 border-dashed transition-colors',
+                'h-44 items-center justify-center gap-3 rounded-2xl border-2 border-dashed transition-colors',
                 file 
-                  ? 'border-success/40 bg-success/5 dark:bg-success/10' 
-                  : 'border-primary/20 bg-surface-light/40 dark:bg-surface-dark/20 backdrop-blur-md',
+                  ? 'border-emerald-500/30 bg-emerald-50/20 dark:border-emerald-500/20 dark:bg-emerald-950/10' 
+                  : 'border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/40',
               )}
             >
               {file ? (
                 <View className="items-center px-4">
-                  <View className="p-3 rounded-2xl bg-success/10 mb-2">
-                    <CheckCircle2 size={32} className="text-success" />
+                  <View className="p-2.5 rounded-xl bg-emerald-100/60 dark:bg-emerald-950/40 mb-1">
+                    <CheckCircle2 size={24} color="#10B981" />
                   </View>
-                  <Text className="font-semibold text-center text-success text-[15px]" numberOfLines={1}>
-                    Fichier sélectionné
+                  <Text className="font-bold text-center text-emerald-600 dark:text-emerald-400 text-sm">
+                    Fichier prêt
                   </Text>
                 </View>
               ) : (
                 <View className="items-center px-4">
-                  <View className="p-3 rounded-2xl bg-primary/10 mb-2">
-                    <Upload size={28} className="text-primary" />
+                  <View className="p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 mb-1.5">
+                    <Upload size={20} color="#F97316" />
                   </View>
-                  <Text className="font-medium text-[15px] text-text-primary-light dark:text-text-primary-dark">
+                  <Text className="font-bold text-sm text-zinc-800 dark:text-zinc-200">
                     Parcourir les fichiers
                   </Text>
-                  <Text className="text-xs text-text-secondary-light/60 dark:text-text-secondary-dark/60 mt-1">
+                  <Text className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
                     Tous les formats sont acceptés
                   </Text>
                 </View>
@@ -108,50 +114,52 @@ export default function UploadFileModal() {
             </Card>
           </Pressable>
 
-          {/* Détails du Fichier Sélectionné (si présent) */}
+          {/* Détails du Fichier Sélectionné */}
           {file && (
-            <View className="flex-row items-center gap-3.5 rounded-2xl border border-border-light/40 bg-surface-light/50 p-4 dark:border-border-dark/20 dark:bg-surface-dark/30 backdrop-blur-lg ">
-              <View className="p-2.5 rounded-xl bg-primary/10">
-                <FileText size={20} className="text-primary" />
+            <View className="flex-row items-center gap-3 rounded-xl border border-zinc-100 bg-white p-3.5 dark:border-zinc-900 dark:bg-zinc-900/60">
+              <View className="p-2 rounded-lg bg-orange-50 dark:bg-orange-950/20">
+                <FileText size={18} color="#F97316" />
               </View>
               <View className="flex-1">
-                <Text className="font-semibold text-[14px] text-text-primary-light dark:text-text-primary-dark" numberOfLines={1}>
+                <Text className="font-semibold text-xs text-zinc-800 dark:text-zinc-200" numberOfLines={1}>
                   {file.name}
                 </Text>
                 {file.size != null && (
-                  <Text className="text-[11px] font-medium text-text-secondary-light/70 dark:text-text-secondary-dark/70 mt-0.5">
+                  <Text className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 mt-0.5">
                     {(file.size / (1024 * 1024)).toFixed(2)} Mo
                   </Text>
                 )}
               </View>
-              {/* Option d'annulation rapide */}
-              <Pressable onPress={() => setFile(null)} className="p-1 rounded-full bg-text-secondary-light/10 dark:bg-text-secondary-dark/10">
-                <X size={14} className="text-text-secondary-light dark:text-text-secondary-dark" />
+              <Pressable 
+                onPress={() => setFile(null)} 
+                className="p-1 rounded-md bg-zinc-50 dark:bg-zinc-800 active:bg-zinc-100"
+              >
+                <X size={12} color="#A1A1AA" />
               </Pressable>
             </View>
           )}
 
-          {/* Champ d'annotation épuré */}
-          <View className="mt-2">
+          {/* Champ d'annotation */}
+          <View className="mt-1">
             <Input
               label="Message (optionnel)"
-              placeholder="Ajouter un commentaire lié à ce document…"
+              placeholder="Ajouter un commentaire..."
               value={caption}
               onChangeText={setCaption}
               multiline
-              containerClassName="rounded-2xl bg-surface-light/30 border-border-light/40 dark:bg-surface-dark/20 dark:border-border-dark/20"
-              className="text-[15px] pt-3"
+              containerClassName="rounded-xl bg-zinc-50 border-zinc-200 dark:bg-zinc-950 dark:border-zinc-800"
+              className="text-sm pt-2 text-zinc-900 dark:text-zinc-50"
             />
           </View>
 
-          {/* Bouton de Soumission Principal */}
-          <View className="mt-4">
+          {/* Bouton de Soumission */}
+          <View className="mt-2">
             <Button
               label="Envoyer le document"
               size="xl"
               className={cn(
-                "rounded-2xl h-14 ",
-                (!file || !conversationId) && "opacity-40"
+                "rounded-xl h-12 bg-orange-500 active:bg-orange-600",
+                (!file || !conversationId) && "bg-zinc-200 text-zinc-400 dark:bg-zinc-800 opacity-50"
               )}
               onPress={() => void handleSend()}
               loading={sendMessage.isPending}

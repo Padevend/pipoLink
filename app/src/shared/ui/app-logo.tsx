@@ -18,7 +18,7 @@ export function AppLogo({ size = 'md', showWordmark = false, className }: AppLog
   return (
     <View className={cn('items-center', className)}>
       <Image
-        source={{ uri: BRAND.logoUri }}
+        source={BRAND.logoUri}
         style={{ width: dim, height: dim, borderRadius: dim * 0.22 }}
         contentFit="cover"
         accessibilityLabel="PipoLink"

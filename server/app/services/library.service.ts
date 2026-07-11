@@ -1,7 +1,9 @@
+import crypto from "crypto";
 import { prisma } from "../../config/database.js";
 import { ErrorCode } from "../helpers/error-codes.js";
 import { FileService } from "./file.service.js";
 import { FolderResolverService } from "./folder-resolver.service.js";
+import { env } from "../../config/envManager.js";
 
 const docInclude = {
   uploadedBy: {
@@ -148,6 +150,11 @@ export class LibraryService {
     if (!doc) throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Document introuvable." };
 
     if (role !== "admin" && role !== "staff") {
+      // Prevent access to other users' AI attachments (which are automatically APPROVED)
+      if (doc.type === "AI_ATTACHMENT" && doc.uploaded_by_id !== userId) {
+        throw { code: ErrorCode.FORBIDDEN, status: 403, message: "Document non accessible." };
+      }
+      
       if (doc.moderationStatus !== "APPROVED" && doc.uploaded_by_id !== userId) {
         throw { code: ErrorCode.FORBIDDEN, status: 403, message: "Document non accessible." };
       }
@@ -158,7 +165,7 @@ export class LibraryService {
 
   async listMyDocuments(userId: string, page = 1, limit = 30) {
     const skip = (page - 1) * limit;
-    const where = { uploaded_by_id: userId };
+    const where = { uploaded_by_id: userId, type: { not: "AI_ATTACHMENT" } };
 
     const [documents, total] = await Promise.all([
       prisma.document.findMany({
@@ -175,12 +182,16 @@ export class LibraryService {
   }
 
   async listDocuments(role: string, filters: Record<string, unknown>, page = 1, limit = 20) {
-    const where: Record<string, unknown> = { ...this.visibilityWhere(role), status: "APPROVED" };
+    const where: Record<string, any> = { ...this.visibilityWhere(role), status: "APPROVED" };
 
     if (filters.filiere) where.filiere = filters.filiere;
     if (filters.niveau) where.niveau = filters.niveau;
     if (filters.ue) where.ue = filters.ue;
-    if (filters.type) where.type = filters.type;
+    if (filters.type) {
+      where.type = filters.type;
+    } else {
+      where.type = { not: "AI_ATTACHMENT" };
+    }
     if (filters.year) where.year = Number(filters.year);
 
     const skip = (page - 1) * limit;
@@ -209,7 +220,24 @@ export class LibraryService {
     }
 
     const folderId = await this.folderResolver.resolveFolderId(userId, filiere, niveau, ue);
-    const { url, size } = await this.fileService.storeDocument(file, meta.mimeType, meta.originalName);
+
+    // --- Hash Deduplication Check ---
+    const hash = crypto.createHash("sha256").update(file).digest("hex");
+    const existingDoc = await prisma.document.findFirst({
+      where: { hash }
+    });
+
+    let url: string;
+    let size: number;
+
+    if (existingDoc) {
+      url = existingDoc.fileUrl;
+      size = existingDoc.fileSize;
+    } else {
+      const stored = await this.fileService.storeDocument(file, meta.mimeType, meta.originalName);
+      url = stored.url;
+      size = stored.size;
+    }
 
     const tags = payload.tags as string[] | undefined;
     const tagConnections = tags
@@ -238,6 +266,7 @@ export class LibraryService {
         isPublic: (payload.isPublic as boolean) ?? true,
         tags: { connect: tagConnections.map((t) => ({ id: t.id })) },
         moderationStatus: "APPROVED",
+        hash,
       },
       include: docInclude,
     });
@@ -246,12 +275,49 @@ export class LibraryService {
       data: { user_id: userId, action: "DOCUMENT_UPLOADED", targetId: document.id },
     });
 
+    // Ingestion RAG en tâche de fond non-bloquante
+    const ragApiUrl = env.get("RAG_AGENT_API_URL");
+    if (ragApiUrl) {
+      Promise.resolve().then(async () => {
+        try {
+          const formData = new FormData();
+          const fileBlob = new Blob([new Uint8Array(file)], { type: meta.mimeType });
+          formData.append("file", fileBlob, meta.originalName);
+          formData.append("document_id", document.id);
+          formData.append("filiere", filiere || "Général");
+          formData.append("niveau", niveau || "Général");
+          formData.append("ue", ue || "Général");
+          formData.append("type", document.type);
+
+          const res = await fetch(`${ragApiUrl}/api/v1/ingest`, {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!res.ok) {
+            console.error(`[RAG Ingest] Ingestion failed for document ${document.id}: ${res.statusText}`);
+          }
+        } catch (err) {
+          console.error(`[RAG Ingest] Error connecting to RAG agent for document ${document.id}:`, err);
+        }
+      });
+    }
+
     return formatDocument(document);
   }
 
-  async downloadDocument(documentId: string, userId?: string) {
+  async downloadDocument(documentId: string, role: string, userId?: string) {
     const doc = await prisma.document.findUnique({ where: { id: documentId } });
     if (!doc) throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Document introuvable." };
+
+    if (role !== "admin" && role !== "staff") {
+      if (doc.type === "AI_ATTACHMENT" && doc.uploaded_by_id !== userId) {
+        throw { code: ErrorCode.FORBIDDEN, status: 403, message: "Téléchargement non autorisé." };
+      }
+      if (doc.moderationStatus !== "APPROVED" && doc.uploaded_by_id !== userId) {
+        throw { code: ErrorCode.FORBIDDEN, status: 403, message: "Téléchargement non autorisé." };
+      }
+    }
 
     await Promise.all([
       prisma.document.update({ where: { id: documentId }, data: { downloadCount: { increment: 1 } } }),
@@ -278,12 +344,31 @@ export class LibraryService {
     const canDelete = role === "admin" || role === "staff" || document.uploaded_by_id === userId;
     if (!canDelete) throw { code: ErrorCode.FORBIDDEN, status: 403, message: "Action non autorisee." };
 
+    await this.fileService.deleteFileByUrl(document.fileUrl);
     await prisma.document.delete({ where: { id: documentId } });
+
+    // Suppression de l'index RAG en tâche de fond non-bloquante
+    const ragApiUrl = env.get("RAG_AGENT_API_URL");
+    if (ragApiUrl) {
+      Promise.resolve().then(async () => {
+        try {
+          const res = await fetch(`${ragApiUrl}/api/v1/documents/${documentId}`, {
+            method: "DELETE",
+          });
+          if (!res.ok) {
+            console.error(`[RAG Delete] Failed to delete document ${documentId} from index: ${res.statusText}`);
+          }
+        } catch (err) {
+          console.error(`[RAG Delete] Error connecting to RAG agent for document ${documentId}:`, err);
+        }
+      });
+    }
   }
 
   async searchDocuments(query: string, role: string) {
-    const where: Record<string, unknown> = {
+    const where: Record<string, any> = {
       ...this.visibilityWhere(role),
+      type: { not: "AI_ATTACHMENT" },
       OR: [
         { title: { contains: query, mode: "insensitive" } },
         { ue: { contains: query, mode: "insensitive" } },
@@ -303,8 +388,8 @@ export class LibraryService {
   }
 
   async getPopular(level?: string) {
-    const where: Record<string, unknown> = {
-      //...this.visibilityWhere("user"),
+    const where: Record<string, any> = {
+      type: { not: "AI_ATTACHMENT" },
     };
 
     if(level) where.niveau = level;
@@ -323,7 +408,7 @@ export class LibraryService {
 
   async getRecommanded(userId: string) {
     const userDocs = await prisma.document.findMany({
-      where: { uploaded_by_id: userId },
+      where: { uploaded_by_id: userId, type: { not: "AI_ATTACHMENT" } },
       select: { filiere: true, niveau: true, ue: true },
       take: 20,
     });
@@ -332,7 +417,7 @@ export class LibraryService {
     const niveaux = Array.from(new Set(userDocs.map((d) => d.niveau).filter(Boolean)));
     const ues = Array.from(new Set(userDocs.map((d) => d.ue).filter(Boolean)));
 
-    const where: Record<string, unknown> = {
+    const where: Record<string, any> = {
       OR: [
         { filiere: { in: filieres } },
         { niveau: { in: niveaux } },
@@ -341,6 +426,7 @@ export class LibraryService {
       uploaded_by_id: { not: userId },
       moderationStatus: "APPROVED",
       isPublic: true,
+      type: { not: "AI_ATTACHMENT" },
     };
 
     const docs = await prisma.document.findMany({

@@ -4,7 +4,7 @@ import { exists } from 'i18next';
 const db = SQLite.openDatabaseSync('pipolink.db');
 
 export async function initializeSqlite(): Promise<void> {
-  await db.execAsync(`
+  db.execSync(`
     CREATE TABLE IF NOT EXISTS messages (
       id TEXT PRIMARY KEY NOT NULL,
       conversation_id TEXT NOT NULL,
@@ -81,23 +81,33 @@ export async function initializeSqlite(): Promise<void> {
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY NOT NULL,
+      username TEXT NOT NULL,
+      email TEXT NOT NULL,
+      matricule TEXT,
+      role TEXT NOT NULL DEFAULT 'student',
+      profile_json TEXT NOT NULL DEFAULT '{}',
+      conversations_json TEXT NOT NULL DEFAULT '[]'
+    );
   `);
 
-  const columns = await db.getAllSync(
+  const columns = db.getAllSync(
     `PRAGMA table_info(downloads)`,
   );
 
   const exists = columns.some(
     (column: any) => column.name === "mineType"
-  )
+  );
 
   if (exists) {
-    await db.execAsync(`
+    db.execSync(`
       ALTER TABLE downloads RENAME COLUMN mineType TO mimeType;
     `);
   }
 
-  await db.execAsync(`
+  db.execSync(`
     CREATE TABLE IF NOT EXISTS attachment_downloads (
       id TEXT PRIMARY KEY NOT NULL,
       message_id TEXT NOT NULL,
@@ -120,7 +130,7 @@ export async function initializeSqlite(): Promise<void> {
     );
   `);
 
-  await migrateSqliteColumns();
+  migrateSqliteColumnsSync();
 }
 
 /**
@@ -128,26 +138,26 @@ export async function initializeSqlite(): Promise<void> {
  * already have the base schema. Each ALTER TABLE is wrapped in its own
  * guard so a partial migration never leaves the DB in a bad state.
  */
-async function migrateSqliteColumns(): Promise<void> {
+function migrateSqliteColumnsSync(): void {
   const messageCols = db.getAllSync<{ name: string }>('PRAGMA table_info(messages)');
   const names = new Set(messageCols.map((c) => c.name));
 
   if (!names.has('iv')) {
-    await db.execAsync(`ALTER TABLE messages ADD COLUMN iv TEXT NOT NULL DEFAULT ''`);
+    db.execSync(`ALTER TABLE messages ADD COLUMN iv TEXT NOT NULL DEFAULT ''`);
   }
   if (!names.has('message_type')) {
-    await db.execAsync(`ALTER TABLE messages ADD COLUMN message_type TEXT NOT NULL DEFAULT 'TEXT'`);
+    db.execSync(`ALTER TABLE messages ADD COLUMN message_type TEXT NOT NULL DEFAULT 'TEXT'`);
   }
   if (!names.has('attachments_json')) {
-    await db.execAsync(`ALTER TABLE messages ADD COLUMN attachments_json TEXT NOT NULL DEFAULT '[]'`);
+    db.execSync(`ALTER TABLE messages ADD COLUMN attachments_json TEXT NOT NULL DEFAULT '[]'`);
   }
   if (!names.has('payload_json')) {
-    await db.execAsync(`ALTER TABLE messages ADD COLUMN payload_json TEXT NOT NULL DEFAULT '{}'`);
+    db.execSync(`ALTER TABLE messages ADD COLUMN payload_json TEXT NOT NULL DEFAULT '{}'`);
   }
 
   const convCols = db.getAllSync<{ name: string }>('PRAGMA table_info(conversations)');
   if (!convCols.some((c) => c.name === 'payload_json')) {
-    await db.execAsync(`ALTER TABLE conversations ADD COLUMN payload_json TEXT NOT NULL DEFAULT '{}'`);
+    db.execSync(`ALTER TABLE conversations ADD COLUMN payload_json TEXT NOT NULL DEFAULT '{}'`);
   }
 
   // Migrate old attachements table rows into the new attachment_downloads table
@@ -156,7 +166,7 @@ async function migrateSqliteColumns(): Promise<void> {
     `SELECT name FROM sqlite_master WHERE type='table' AND name='attachements'`,
   );
   if (tables.length > 0) {
-    await db.execAsync(`
+    db.execSync(`
       INSERT OR IGNORE INTO attachment_downloads
         (id, message_id, chat_id, encrypted_url, filename, mime_type, file_size, iv,
          status, progress, total_bytes, written_bytes,

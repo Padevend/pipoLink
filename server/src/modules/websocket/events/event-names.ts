@@ -32,6 +32,9 @@ export const WsEventName = {
   PresenceUpdated: "presence.updated",
   TypingStarted: "typing.started",
   TypingStopped: "typing.stopped",
+  AccountDeleted: "account.deleted",
+  UserLeftGroup: "user.left_group",
+  UserStatusChanged: "user.status_changed",
 } as const;
 
 export type WsEventNameType = typeof WsEventName[keyof typeof WsEventName];

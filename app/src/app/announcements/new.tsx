@@ -18,11 +18,11 @@ export default function NewAnnouncementScreen() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [poster, setPoster] = useState<ImagePicker.ImagePickerAsset | null>(null);
-  const [imageRatio, setImageRatio] = useState<number>(16 / 9); // Ratio initial par défaut
+  const [imageRatio, setImageRatio] = useState<number>(16 / 9);
 
   const isStaff = user?.role === 'admin' || user?.role === 'staff';
 
-  // Calcul dynamique du ratio réel dès qu'une image est sélectionnée
+  // Ajustement automatique du format de l'image sélectionnée
   useEffect(() => {
     if (poster?.uri) {
       Image.getSize(
@@ -37,6 +37,7 @@ export default function NewAnnouncementScreen() {
     }
   }, [poster?.uri]);
 
+  // Sécurité : Seul le personnel peut créer une annonce
   if (!isStaff) {
     router.replace('/announcements');
     return null;
@@ -45,7 +46,7 @@ export default function NewAnnouncementScreen() {
   const pickPoster = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      showToast({ type: 'error', message: 'Permission d’accès à la galerie requise.' });
+      showToast({ type: 'error', message: 'L’accès à vos photos est nécessaire pour ajouter une image.' });
       return;
     }
 
@@ -61,7 +62,7 @@ export default function NewAnnouncementScreen() {
 
   const handlePublish = async () => {
     if (!title.trim() || content.trim().length < 10) {
-      showToast({ type: 'error', message: 'Titre et contenu (min. 10 caractères) requis.' });
+      showToast({ type: 'error', message: 'Veuillez renseigner un titre et un contenu d’au moins 10 caractères.' });
       return;
     }
 
@@ -76,35 +77,35 @@ export default function NewAnnouncementScreen() {
           size: poster.fileSize ?? 0
         } : null,
       });
-      showToast({ type: 'success', message: 'Annonce publiée avec succès.' });
+      showToast({ type: 'success', message: 'Votre annonce a bien été publiée.' });
       router.back();
     } catch (e: unknown) {
       showToast({
         type: 'error',
-        message: e instanceof Error ? e.message : 'Publication impossible.',
+        message: e instanceof Error ? e.message : 'Une erreur est survenue lors de la publication.',
       });
     }
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-zinc-50 dark:bg-zinc-950" edges={['top']}>
 
-      {/* HEADER ULTRA-ÉPURÉ SATINÉ */}
-      <View className="z-10 flex-row items-center border-b border-border-light/40 bg-surface-light/75 px-4 py-3 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl">
+      {/* BARRE SUPÉRIEURE (Claire et sans reflets) */}
+      <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-4 dark:border-zinc-900 dark:bg-zinc-900">
         <Pressable
           onPress={() => router.back()}
-          hitSlop={8}
-          className="h-9 w-9 items-center justify-center active:scale-95 transition-transform"
+          hitSlop={12}
+          className="h-9 w-9 items-center justify-center rounded-full bg-zinc-50 dark:bg-zinc-800 active:opacity-70"
         >
-          <ArrowLeft size={20} color="#64748B" />
+          <ArrowLeft size={18} color="#71717A" />
         </Pressable>
 
         <View className="flex-1 ml-3">
-          <Text className="text-[16px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+          <Text className="text-base font-bold text-zinc-900 dark:text-zinc-50">
             Nouvelle annonce
           </Text>
-          <Text className="text-[10px] font-bold uppercase tracking-wider text-text-secondary-light/40 dark:text-text-secondary-dark/40 mt-0.5">
-            Diffusion officielle
+          <Text className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+            Rédiger un message pour l'établissement
           </Text>
         </View>
       </View>
@@ -119,58 +120,52 @@ export default function NewAnnouncementScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Bouton de Publication */}
-          <Button
-            label="Publier l’annonce"
-            size="xl"
-            disabled={title.trim() === '' || content.trim().length < 10 || createMutation.isPending}
-            loading={createMutation.isPending}
-            onPress={() => void handlePublish()}
-            className="rounded-xl h-11 mb-3"
-          />
+          {/* Formulaire de saisie du Titre */}
+          <View className="mb-4">
+            <Input
+              label="Titre de l'annonce"
+              placeholder="Exemple : Dates des examens du second semestre"
+              value={title}
+              onChangeText={setTitle}
+              containerClassName="bg-white dark:bg-zinc-900"
+            />
+          </View>
 
-          {/* Saisie du Titre */}
-          <Input
-            label="Titre de la publication"
-            placeholder="ex. Modalités des examens de fin de semestre"
-            value={title}
-            onChangeText={setTitle}
-            containerClassName="mb-5 bg-surface-light/50 dark:bg-surface-dark/40 border-border-light/40 dark:border-border-dark/20"
-          />
+          {/* Formulaire de saisie du Contenu */}
+          <View className="mb-6">
+            <Input
+              label="Texte de l'annonce"
+              placeholder="Écrivez ici toutes les informations importantes destinées aux étudiants..."
+              value={content}
+              onChangeText={setContent}
+              multiline
+              className="min-h-[140px] text-start align-top bg-white dark:bg-zinc-900 p-2"
+            />
+          </View>
 
-          {/* Saisie du Contenu */}
-          <Input
-            label="Corps du message"
-            placeholder="Rédigez le contenu complet de votre annonce à destination des étudiants…"
-            value={content}
-            onChangeText={setContent}
-            multiline
-            className="mb-6 min-h-[160px] bg-surface-light/50 dark:bg-surface-dark/40 border-border-light/40 dark:border-border-dark/20 text-start align-top p-4 rounded-xl"
-          />
-
-          {/* ZONE D'AJOUT DE POSTER ADAPTATIVE (SANS COUPURE) */}
-          <View className="my-6">
-            <Text className="mb-2 ml-1 text-[11px] font-bold uppercase tracking-widest text-text-secondary-light/40 dark:text-text-secondary-dark/50">
-              Affiche / Poster (Optionnel)
+          {/* ESPACE POUR L'IMAGE ILLUSTRATIVE */}
+          <View className="mb-8">
+            <Text className="mb-2 ml-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+              Image d'illustration (optionnel)
             </Text>
 
             {!poster?.uri ? (
-              // État Initial vide
+              // Case vide pour ajouter une photo
               <Pressable
                 onPress={pickPoster}
-                className="w-full h-36 rounded-xl border border-dashed border-border-light/60 dark:border-border-dark/40 bg-surface-light/30 dark:bg-surface-dark/20 items-center justify-center gap-y-2 active:scale-[0.99] transition-all"
+                className="w-full h-32 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 items-center justify-center gap-y-2 active:opacity-80"
               >
-                <View className="h-9 w-9 items-center justify-center rounded-xl bg-text-secondary-light/5 border border-border-light/10 dark:border-border-dark/10">
-                  <ImagePlus size={20} color="#64748B" strokeWidth={2} />
+                <View className="h-10 w-10 items-center justify-center rounded-full bg-zinc-50 dark:bg-zinc-800">
+                  <ImagePlus size={18} color="#71717A" />
                 </View>
-                <Text className="text-[12px] font-bold text-text-secondary-light/50 dark:text-text-secondary-dark/50">
-                  Ajouter une image d'illustration
+                <Text className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Choisir une image dans votre téléphone
                 </Text>
               </Pressable>
             ) : (
-              // État Rempli avec Préservation Intégrale de l'Image
+              // Aperçu de la photo sélectionnée avec bouton de suppression net
               <View
-                className="w-full rounded-xl overflow-hidden border border-border-light/40 dark:border-border-dark/20 bg-black/5 dark:bg-black/20 relative"
+                className="w-full rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 relative"
                 style={{ aspectRatio: imageRatio }}
               >
                 <Image
@@ -179,22 +174,31 @@ export default function NewAnnouncementScreen() {
                   resizeMode="contain"
                 />
 
-                {/* Bouton d'action destructif translucide en superposition */}
+                {/* Bouton pour retirer l'image */}
                 <View className="absolute top-3 right-3">
                   <Pressable
                     onPress={() => setPoster(null)}
-                    hitSlop={6}
-                    className="h-8 px-3 rounded-lg bg-red-500/90 border border-red-500/20 flex-row items-center justify-center gap-x-1.5 active:scale-95 transition-transform"
+                    hitSlop={8}
+                    className="h-8 px-3 rounded-lg bg-red-500 flex-row items-center justify-center gap-x-1.5 active:bg-red-600"
                   >
                     <Trash2 size={12} color="#FFFFFF" strokeWidth={2.5} />
-                    <Text className="text-[11px] font-bold text-white uppercase tracking-wider">Retirer</Text>
+                    <Text className="text-xs font-bold text-white">Supprimer</Text>
                   </Pressable>
                 </View>
               </View>
             )}
           </View>
 
-          
+          {/* GRAND BOUTON DE VALIDATION ET ENVOI */}
+          <Button
+            label={createMutation.isPending ? "Publication en cours..." : "Publier l'annonce maintenant"}
+            size="xl"
+            disabled={title.trim() === '' || content.trim().length < 10 || createMutation.isPending}
+            loading={createMutation.isPending}
+            onPress={() => void handlePublish()}
+            className="rounded-xl h-12 bg-orange-500 active:bg-orange-600"
+          />
+
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

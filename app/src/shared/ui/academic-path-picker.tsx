@@ -33,11 +33,11 @@ function ChipRow({
   if (!options.length) return null;
 
   return (
-    <View className="gap-2">
-      <Text className="ml-1 text-sm font-semibold text-text-secondary-light dark:text-text-secondary-dark">
+    <View className="gap-1.5 mt-3">
+      <Text className="ml-1 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
         {label}
       </Text>
-      <View className="flex-row flex-wrap gap-2">
+      <View className="flex-row flex-wrap gap-3">
         {options.map((opt) => {
           const isSelected = selected === opt;
           return (
@@ -45,14 +45,16 @@ function ChipRow({
               key={opt}
               onPress={() => onSelect(opt)}
               className={cn(
-                'rounded-2xl px-4 py-2.5',
-                isSelected ? 'bg-primary' : 'bg-surface-light dark:bg-surface-dark',
+                'rounded-lg px-3 py-1.5 border',
+                isSelected 
+                  ? 'bg-orange-500 border-orange-500 active:bg-orange-600' 
+                  : 'bg-zinc-50 border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800',
               )}
             >
               <Text
                 className={cn(
-                  'text-sm font-bold',
-                  isSelected ? 'text-white' : 'text-text-primary-light dark:text-text-primary-dark',
+                  'text-[11px] font-bold tracking-wide uppercase',
+                  isSelected ? 'text-white' : 'text-zinc-600 dark:text-zinc-400',
                 )}
               >
                 {opt}
@@ -80,7 +82,7 @@ export function AcademicPathPicker({ value, onChange }: AcademicPathPickerProps)
   }, [filiere, niveau, ue, onChange]);
 
   return (
-    <View className="gap-4">
+    <View className="gap-3.5">
       <ChipRow
         label="Filière"
         options={getFilieres()}
@@ -100,7 +102,12 @@ export function AcademicPathPicker({ value, onChange }: AcademicPathPickerProps)
           setUe('');
         }}
       />
-      <ChipRow label="Unité d'enseignement (UE)" options={ues} selected={ue} onSelect={setUe} />
+      <ChipRow 
+        label="Unité d'enseignement (UE)" 
+        options={ues} 
+        selected={ue} 
+        onSelect={setUe} 
+      />
     </View>
   );
 }

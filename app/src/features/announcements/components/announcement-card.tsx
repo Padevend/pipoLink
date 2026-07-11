@@ -22,7 +22,6 @@ import {
 
 import { useToast } from '@/providers';
 import { Announcement } from '@/shared/api/announcements';
-import { BRAND } from '@/shared/config/brand';
 import { getStaticUri } from '@/shared/lib/static';
 import { ImageViewer } from '@/shared/ui/image-viewer';
 import { deleteAsync } from 'expo-file-system/legacy';
@@ -43,7 +42,7 @@ export default function AnnouncementCard({ item }: { item: Announcement }) {
   const displayedImage = posterUri ?? previewUrl;
   const hasImage = !!displayedImage;
 
-  // Calcul dynamique de la taille réelle de l'image reçue pour éliminer les limites de hauteur
+  // Calcul automatique des dimensions de l'image pour un affichage parfait
   useEffect(() => {
     if (displayedImage) {
       Image.getSize(
@@ -78,7 +77,6 @@ export default function AnnouncementCard({ item }: { item: Announcement }) {
         }
       });
 
-      // Stockage en mémoire locale du composant et dans le cache global persistant
       setPosterUri(output.uri);
       setHdState('done');
       MEMORY_POSTER_CACHE[item.id] = { uri: output.uri, state: 'done' };
@@ -86,7 +84,7 @@ export default function AnnouncementCard({ item }: { item: Announcement }) {
       setHdState('idle');
       showToast({
         type: "warning",
-        message: "Échec du téléchargement de l'image haute définition."
+        message: "Impossible de charger la photo en haute qualité pour le moment."
       });
     }
   }, [posterUrl, hdState, item.id, showToast]);
@@ -136,11 +134,11 @@ export default function AnnouncementCard({ item }: { item: Announcement }) {
 
   return (
     <Animated.View style={{ transform: [{ scale: scaleAnim }], marginBottom: 16 }}>
-      <View className="overflow-hidden rounded-xl border border-border-light/40 bg-surface-light/50 dark:border-border-dark/20 dark:bg-surface-dark/40 backdrop-blur-md">
+      <View className="overflow-hidden rounded-xl border border-zinc-100 bg-white dark:border-zinc-900 dark:bg-zinc-900">
 
-        {/* HERO MEDIA BLOCK (HAUTEUR UNIQUE ADAPTATIVE) */}
+        {/* IMAGE D'ILLUSTRATION DE L'ANNONCE */}
         {hasImage && (
-          <View className="relative w-full bg-text-secondary-light/5">
+          <View className="relative w-full bg-zinc-50 dark:bg-zinc-950">
             <Pressable
               onPressIn={onPressIn}
               onPressOut={onPressOut}
@@ -154,84 +152,87 @@ export default function AnnouncementCard({ item }: { item: Announcement }) {
               />
             </Pressable>
 
-            <View className="absolute inset-0 pointer-events-none bg-black/5 dark:bg-black/10" />
-
-            {/* Statut de téléchargement HD */}
+            {/* Bouton pour activer la haute définition */}
             {posterUrl && hdState !== 'done' && (
               <Pressable
                 onPress={downloadPoster}
                 hitSlop={8}
-                className="absolute top-3 right-3 flex-row items-center gap-x-1.5 rounded-lg border border-white/20 bg-black/50 px-2.5 py-1.5 backdrop-blur-md active:scale-95 transition-transform"
+                className="absolute top-3 right-3 flex-row items-center gap-x-1.5 rounded-lg bg-zinc-950 px-3 py-1.5 active:opacity-80"
               >
                 {hdState === 'loading' ? (
                   <ActivityIndicator size="small" color="#FFFFFF" className="scale-75" />
                 ) : (
                   <Download size={12} color="#FFFFFF" strokeWidth={2.5} />
                 )}
-                <Text className="text-[10px] font-bold tracking-wider text-white uppercase">
-                  {hdState === 'loading' ? 'HD…' : 'Charger HD'}
+                <Text className="text-xs font-semibold text-white">
+                  {hdState === 'loading' ? 'Amélioration...' : 'Voir en haute qualité'}
                 </Text>
               </Pressable>
             )}
           </View>
         )}
 
-        {/* CARD BODY CONTENT */}
+        {/* CONTENU DE LA CARTE */}
         <Pressable onPressIn={onPressIn} onPressOut={onPressOut} className="p-4">
+          
+          {/* Nom de l'auteur de l'annonce */}
           {item.author?.username && (
-            <View className="flex-row items-center gap-1.5 mb-2.5">
-              <View
-                className="h-5 w-5 rounded-md items-center justify-center"
-                style={{ backgroundColor: `${BRAND.primary}12` }}
-              >
-                <User size={11} color={BRAND.primary} strokeWidth={2.5} />
+            <View className="flex-row items-center gap-1.5 mb-2">
+              <View className="h-5 w-5 rounded-md items-center justify-center bg-zinc-100 dark:bg-zinc-800">
+                <User size={12} color="#71717A" strokeWidth={2.5} />
               </View>
-              <Text className="text-[11px] font-bold uppercase tracking-wider" style={{ color: BRAND.primary }}>
+              <Text className="text-xs font-bold text-zinc-600 dark:text-zinc-400">
                 {item.author.username}
               </Text>
             </View>
           )}
 
-          <Text className="text-[15px] font-bold leading-5 tracking-tight text-text-primary-light dark:text-text-primary-dark mb-2">
+          {/* Titre principal */}
+          <Text className="text-base font-bold leading-5 text-zinc-900 dark:text-zinc-50 mb-2">
             {item.title}
           </Text>
 
-          <Text className="text-[13px] leading-[20px] text-text-primary-light/80 dark:text-text-primary-dark/80 font-medium">
+          {/* Corps de texte */}
+          <Text className="text-sm leading-5 text-zinc-600 dark:text-zinc-300 font-medium">
             {item.content}
           </Text>
 
-          <View className="my-3.5 h-[0.5px] bg-border-light/20 dark:bg-border-dark/10" />
+          {/* Ligne discrète de séparation */}
+          <View className="my-4 h-[1px] bg-zinc-100 dark:bg-zinc-800" />
 
+          {/* PIED DE LA CARTE (Date et Partage) */}
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center gap-1.5">
-              <Calendar size={11} color="#64748B" />
-              <Text className="text-[11px] font-medium text-text-secondary-light/40 dark:text-text-secondary-dark/50">
-                {format(new Date(item.createdAt), "d MMM yyyy 'à' HH:mm", { locale: fr })}
+              <Calendar size={12} color="#A1A1AA" />
+              <Text className="text-xs text-zinc-500 dark:text-zinc-400">
+                {format(new Date(item.createdAt), "d MMMM yyyy 'à' HH:mm", { locale: fr })}
               </Text>
             </View>
 
+            {/* Bouton Partager */}
             <Pressable
               onPress={handleShare}
-              className="flex-row items-center gap-x-1.5 px-2.5 py-1.5 rounded-lg border border-border-light/40 bg-surface-light dark:border-border-dark/20 dark:bg-surface-dark active:scale-95 transition-transform"
+              className="flex-row items-center gap-x-1.5 px-3 py-1.5 rounded-lg bg-zinc-50 border border-zinc-100 dark:bg-zinc-800 dark:border-zinc-800 active:opacity-80"
             >
-              <Share2 size={12} color="#64748B" strokeWidth={2} />
-              <Text className="text-[11px] font-bold text-text-secondary-light/60 dark:text-text-secondary-dark/60">
+              <Share2 size={12} color="#71717A" strokeWidth={2} />
+              <Text className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">
                 Partager
               </Text>
             </Pressable>
           </View>
+
         </Pressable>
       </View>
 
-      {/* MODAL POUR L'OUVERTURE DE L'IMAGE EN PLEIN ÉCRAN */}
+      {/* OUVERTURE DE L'IMAGE EN PLEIN ÉCRAN */}
       {hasImage && (
         <ImageViewer
           visible={isPreviewOpen}
           uri={displayedImage}
           aspectRatio={imageRatio}
           onClose={() => setIsPreviewOpen(false)}
-          onDownloadSuccess={() => showToast({ type: 'success', message: 'Image enregistrée ✓' })}
-          onDownloadError={(msg) => showToast({ type: 'error', message: "error" })}
+          onDownloadSuccess={() => showToast({ type: 'success', message: 'L’image a bien été enregistrée.' })}
+          onDownloadError={() => showToast({ type: 'error', message: "Impossible d'enregistrer l'image." })}
         />
       )}
     </Animated.View>

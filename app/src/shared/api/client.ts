@@ -2,7 +2,9 @@ import { SECURE_STORAGE_KEYS, SecureStorageService } from '@/shared/lib/storage'
 import { ApiResponse, ErrorResponse, PaginatedResponse } from './types';
 
 function envUrl(key: 'EXPO_PUBLIC_API_URL' | 'EXPO_PUBLIC_WS_URL', fallback: string): string {
-  const raw = process.env[key];
+  const raw = key === 'EXPO_PUBLIC_API_URL' 
+    ? process.env.EXPO_PUBLIC_API_URL 
+    : process.env.EXPO_PUBLIC_WS_URL;
   const value = typeof raw === 'string' ? raw.trim() : '';
   return value || fallback;
 }
@@ -177,7 +179,6 @@ export const api = {
       method: 'POST',
       body: formData,
       headers: {
-        'Content-Type': 'multipart/form-data',
         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         ...(options?.headers as any),
       },

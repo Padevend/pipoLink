@@ -16,13 +16,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDeleteDocument, useMyDocuments } from '@/entities/document/hooks';
 import { useToast } from '@/providers';
 import type { Document } from '@/shared/api/types';
-import { BRAND } from '@/shared/config/brand';
 import { formatBytes } from '@/shared/lib/file';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { cn } from '@/shared/utils/cn';
 
 export default function MyDocumentsScreen() {
-  
   const { showToast } = useToast();
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch, isRefetching } =
     useMyDocuments();
@@ -61,27 +59,27 @@ export default function MyDocumentsScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
       
-      {/* Header Style Glassmorphism Solide Épuré */}
-      <View className="z-10 flex-row items-center border-b border-border-light/20 bg-surface-light/75 px-4 py-3.5 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl ">
+      {/* HEADER : Panneau Fixe Mat Opaque */}
+      <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
         <Pressable 
           onPress={() => router.back()} 
-          className="h-9 w-9 items-center justify-center rounded-full active:opacity-80"
+          className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 dark:bg-zinc-900 active:bg-zinc-100 dark:active:bg-zinc-800"
         >
-          <ArrowLeft size={20} className="text-text-primary-light dark:text-text-primary-dark" />
+          <ArrowLeft size={16} color="#71717A" />
         </Pressable>
         
-        <Text className="flex-1 ml-3 text-[17px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+        <Text className="flex-1 ml-3 text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
           Mes documents
         </Text>
       </View>
 
-      {/* Chargement Skeletons Fluides */}
+      {/* Skeletons Solides Opaque */}
       {isLoading ? (
-        <View className="gap-3 p-5">
+        <View className="gap-2.5 p-4">
           {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-[92px] w-full rounded-2xl opacity-70" />
+            <Skeleton key={i} className="h-20 w-full rounded-xl bg-zinc-100 dark:bg-zinc-900" />
           ))}
         </View>
       ) : (
@@ -91,28 +89,26 @@ export default function MyDocumentsScreen() {
           refreshing={isRefetching}
           onRefresh={() => void refetch()}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 }}
-          ItemSeparatorComponent={() => <View className="h-3" />}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 40 }}
+          ItemSeparatorComponent={() => <View className="h-2.5" />}
           onEndReached={() => {
             if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
           }}
           ListFooterComponent={
             isFetchingNextPage ? (
-              <ActivityIndicator className="py-4" color={BRAND.primary} />
+              <ActivityIndicator className="py-4" color="#F97316" />
             ) : null
           }
           ListEmptyComponent={
-            <View className="items-center justify-center py-20 px-6">
-              {/* Icône enveloppée dans un conteneur Soft Glassmorphism */}
-              <View className="h-16 w-16 items-center justify-center rounded-2xl border border-border-light/40 bg-surface-light/40 dark:border-border-dark/20 dark:bg-surface-dark/30 backdrop-blur-xl  mb-4">
-                <View className="p-2.5 rounded-xl bg-primary/10">
-                  <FileText size={26} color={BRAND.primary} />
-                </View>
+            <View className="items-center justify-center py-32 px-6">
+              {/* Conteneur d'icône Mat Opaque */}
+              <View className="h-12 w-12 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 mb-4">
+                <FileText size={18} color="#F97316" />
               </View>
-              <Text className="text-base font-semibold tracking-tight text-text-primary-light dark:text-text-primary-dark text-center">
+              <Text className="text-xs font-bold tracking-tight text-zinc-900 dark:text-zinc-50 text-center">
                 Aucun document publié
               </Text>
-              <Text className="mt-1.5 text-center text-sm leading-5 text-text-secondary-light/80 dark:text-text-secondary-dark/80 px-6">
+              <Text className="mt-1 text-center text-[11px] leading-4 text-zinc-500 dark:text-zinc-400 px-4">
                 Vous n'avez pas encore téléversé ou partagé de documents avec l'établissement.
               </Text>
             </View>
@@ -125,46 +121,46 @@ export default function MyDocumentsScreen() {
                   params:     { id: item.id },
                 } as never)
               }
-              className="flex-row items-center rounded-2xl border border-border-light/40 bg-surface-light/50 p-4 dark:border-border-dark/20 dark:bg-surface-dark/40 active:opacity-90"
+              className="flex-row items-center rounded-xl border border-zinc-100 bg-zinc-50 p-3.5 dark:border-zinc-900 dark:bg-zinc-900/40 active:bg-zinc-100 dark:active:bg-zinc-900"
             >
-              {/* Wrapper Icône Document */}
-              <View className="mr-4 h-11 w-11 items-center justify-center rounded-xl bg-text-secondary-light/5 border border-border-light/10 dark:bg-text-secondary-dark/5 dark:border-border-dark/10 ">
-                <FileText size={18} color="#64748B" />
+              {/* Conteneur Icône Document Opaque */}
+              <View className="mr-3.5 h-9 w-9 items-center justify-center rounded-lg bg-zinc-200 dark:bg-zinc-800">
+                <FileText size={15} color="#71717A" />
               </View>
               
               {/* Corps Textuel */}
               <View className="flex-1 pr-3 justify-center">
                 <Text
                   numberOfLines={1}
-                  className="text-[14px] font-semibold tracking-tight text-text-primary-light dark:text-text-primary-dark"
+                  className="text-xs font-bold tracking-tight text-zinc-900 dark:text-zinc-50"
                 >
                   {item.title}
                 </Text>
                 
-                <Text className="mt-1 text-[11px] font-medium text-text-secondary-light/60 dark:text-text-secondary-dark/60">
+                <Text className="mt-0.5 text-[11px] font-semibold text-zinc-400 dark:text-zinc-500">
                   {formatBytes(item.fileSize)} · {format(new Date(item.createdAt), 'd MMM yyyy', { locale: fr })}
                 </Text>
                 
-                {/* Badge Compteur Téléchargements */}
+                {/* Badge Compteur Opaque Mat */}
                 <View className="flex-row mt-1.5">
-                  <View className="rounded-full bg-primary/5 border border-primary/10 px-2 py-0.5">
-                    <Text className="text-[10px] font-semibold tracking-wide text-primary">
+                  <View className="rounded bg-orange-50 dark:bg-orange-950/20 px-1.5 py-0.5">
+                    <Text className="text-[9px] font-bold tracking-wider text-orange-700 dark:text-orange-400 uppercase">
                       {item.downloadCount} téléchargement{item.downloadCount !== 1 ? 's' : ''}
                     </Text>
                   </View>
                 </View>
               </View>
 
-              {/* Bouton Action Supprimer */}
+              {/* Bouton Action Supprimer Rouge Mat */}
               <Pressable
                 onPress={() => confirmDelete(item)}
                 disabled={deleteMutation.isPending}
                 className={cn(
-                  "h-9 w-9 items-center justify-center rounded-xl active:opacity-75",
-                  "bg-red-500/10 border border-red-500/10 dark:bg-red-500/20"
+                  "h-8 w-8 items-center justify-center rounded-lg border active:bg-red-100 dark:active:bg-red-950/40",
+                  "bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-900/40"
                 )}
               >
-                <Trash2 size={15} color="#EF4444" />
+                <Trash2 size={13} color="#EF4444" />
               </Pressable>
             </Pressable>
           )}

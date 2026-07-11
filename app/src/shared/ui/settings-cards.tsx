@@ -1,71 +1,70 @@
 import { cn } from "@/shared/utils/cn";
-import {
-    ChevronRight,
-    User
-} from "lucide-react-native";
+import { ChevronRight, User } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
 
 export default function SettingItem({
-    icon: Icon,
-    label,
-    value,
-    onPress,
-    showChevron = true,
-    destructive = false,
+  icon: Icon,
+  label,
+  value,
+  onPress,
+  showChevron = true,
+  destructive = false,
 }: {
-    icon: typeof User;
-    label: string;
-    value?: string;
-    onPress?: () => void;
-    showChevron?: boolean;
-    destructive?: boolean;
+  icon: typeof User;
+  label: string;
+  value?: string;
+  onPress?: () => void;
+  showChevron?: boolean;
+  destructive?: boolean;
 }) {
-    return (
-        (
-            <Pressable
-                onPress={onPress}
-                className="flex-row items-center py-3.5 px-4 active:bg-text-secondary-light/5 dark:active:bg-text-secondary-dark/5 transition-all active:scale-[0.99]"
-            >
-                {/* Conteneur Icône Épuré */}
-                <View
-                    className={cn(
-                        "mr-4 h-9 w-9 items-center justify-center rounded-xl border",
-                        destructive
-                            ? "bg-error/10 border-error/10"
-                            : "bg-text-secondary-light/5 border-border-light/10 dark:bg-text-secondary-dark/5 dark:border-border-dark/10",
-                    )}
-                >
-                    <Icon size={16} color={destructive ? "#EF4444" : "#64748B"} />
-                </View>
+  return (
+    <Pressable
+      onPress={onPress}
+      className={cn(
+        "flex-row items-center py-3 px-4",
+        destructive 
+          ? "active:bg-red-50 dark:active:bg-red-950/20" 
+          : "active:bg-zinc-100 dark:active:bg-zinc-900"
+      )}
+    >
+      {/* Conteneur Icône Mat Opaque */}
+      <View
+        className={cn(
+          "mr-3.5 h-8 w-8 items-center justify-center rounded-lg border",
+          destructive
+            ? "bg-red-50 border-red-100 dark:bg-red-950/20 dark:border-red-900/30"
+            : "bg-zinc-100 border-zinc-200 dark:bg-zinc-800 dark:border-zinc-800/60",
+        )}
+      >
+        <Icon size={14} color={destructive ? "#EF4444" : "#71717A"} />
+      </View>
 
-                {/* Textes alignés */}
-                <View className="flex-1 justify-center pr-2">
-                    <Text
-                        className={cn(
-                            "text-[14px] font-semibold tracking-tight",
-                            destructive
-                                ? "text-error"
-                                : "text-text-primary-light dark:text-text-primary-dark",
-                        )}
-                    >
-                        {label}
-                    </Text>
-                    {value ? (
-                        <Text
-                            className="mt-0.5 text-[11px] font-medium text-text-secondary-light/60 dark:text-text-secondary-dark/60"
-                            numberOfLines={1}
-                        >
-                            {value}
-                        </Text>
-                    ) : null}
-                </View>
+      {/* Textes alignés */}
+      <View className="flex-1 justify-center pr-2">
+        <Text
+          className={cn(
+            "text-xs font-bold tracking-tight",
+            destructive
+              ? "text-red-600 dark:text-red-400"
+              : "text-zinc-900 dark:text-zinc-50",
+          )}
+        >
+          {label}
+        </Text>
+        {value ? (
+          <Text
+            className="mt-0.5 text-[11px] font-semibold text-zinc-400 dark:text-zinc-500"
+            numberOfLines={1}
+          >
+            {value}
+          </Text>
+        ) : null}
+      </View>
 
-                {showChevron ? (
-                    <View className="opacity-40">
-                        <ChevronRight size={16} color="#64748B" />
-                    </View>
-                ) : null}
-            </Pressable>
-        )
-    )
-};
+      {/* Icône Chevron de navigation */}
+      {showChevron && !destructive ? (
+        <ChevronRight size={14} color="#A1A1AA" />
+      ) : null}
+    </Pressable>
+  );
+}

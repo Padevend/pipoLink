@@ -3,7 +3,6 @@ import {
   changePasswordSchema,
   type ChangePasswordFormValues,
 } from '@/features/account/lib/change-password.schema';
-import { BRAND } from '@/shared/config/brand';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,10 +20,11 @@ import {
   View,
 } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeOut } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ChangePasswordScreen() {
   const { mutate, isPending } = useChangePassword();
+  const insets = useSafeAreaInsets();
 
   const {
     control,
@@ -59,58 +59,58 @@ export default function ChangePasswordScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top']}>
-      {/* Loader overlay */}
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
+      {/* LOADER OVERLAY : Mat et sans ombre portée */}
       <Modal transparent visible={isPending} animationType="fade">
         <Animated.View
-          entering={FadeIn.duration(200)}
-          exiting={FadeOut.duration(150)}
-          className="flex-1 bg-black/40 items-center justify-center"
+          entering={FadeIn.duration(150)}
+          exiting={FadeOut.duration(100)}
+          className="flex-1 bg-black/50 items-center justify-center"
         >
-          <View className="p-6 bg-surface-light dark:bg-zinc-900 border border-border-light/40 dark:border-border-dark/20 rounded-2xl items-center shadow-2xl max-w-[80%]">
-            <ActivityIndicator size="small" color={BRAND.primary} />
-            <Text className="text-[13px] font-bold text-text-primary-light dark:text-text-primary-dark tracking-wide uppercase mt-4 text-center">
+          <View className="p-5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl items-center max-w-[80%]">
+            <ActivityIndicator size="small" color="#F97316" />
+            <Text className="text-[11px] font-bold text-zinc-900 dark:text-zinc-50 tracking-wider uppercase mt-3.5 text-center">
               Mise à jour…
             </Text>
-            <Text className="text-[11px] text-text-secondary-light/60 dark:text-text-secondary-dark/60 mt-1 text-center">
+            <Text className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 mt-1 text-center">
               Modification de vos accès en cours.
             </Text>
           </View>
         </Animated.View>
       </Modal>
 
-      {/* Header */}
-      <View className="flex-row items-center border-b border-border-light/20 bg-surface-light/40 px-5 py-4 dark:border-border-dark/10 dark:bg-surface-dark/40 backdrop-blur-md">
+      {/* HEADER : Panneau Mat Solide */}
+      <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
         <Pressable
           onPress={() => router.back()}
-          className="h-8 w-8 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800/80 mr-3 active:scale-95"
+          className="h-8 w-8 mr-3 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
         >
-          <ArrowLeft size={16} className="text-text-secondary-light/70 dark:text-text-secondary-dark/70" />
+          <ArrowLeft size={14} color="#71717A" />
         </Pressable>
-        <Text className="font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark text-[16px]">
+        <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
           Changer le mot de passe
         </Text>
       </View>
 
-      {/* Form */}
+      {/* FORMULAIRE */}
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 28, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: insets.bottom + 24 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Icon + Description */}
-        <Animated.View entering={FadeInDown.springify()} className="items-center mb-8">
-          <View className="h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 mb-4">
-            <ShieldCheck size={28} color={BRAND.primary} />
+        {/* En-tête Descriptive Maté */}
+        <Animated.View entering={FadeInDown.springify()} className="items-center mb-6">
+          <View className="h-12 w-12 items-center justify-center rounded-xl bg-orange-50 dark:bg-orange-950/20 mb-3.5">
+            <ShieldCheck size={22} color="#F97316" />
           </View>
-          <Text className="text-[13px] leading-5 font-medium text-text-secondary-light/70 dark:text-text-secondary-dark/60 text-center px-4">
+          <Text className="text-xs leading-5 font-semibold text-zinc-400 dark:text-zinc-500 text-center px-4">
             Modifiez votre mot de passe pour sécuriser l'accès à votre compte PipoLink.
           </Text>
         </Animated.View>
 
-        {/* Form fields */}
-        <Animated.View entering={FadeInDown.delay(100).springify()} className="gap-y-4">
+        {/* Champs de Saisie */}
+        <Animated.View entering={FadeInDown.delay(100).springify()} className="gap-y-6">
           <Controller
             control={control}
             name="currentPassword"
@@ -163,8 +163,8 @@ export default function ChangePasswordScreen() {
             label="Mettre à jour le mot de passe"
             onPress={handleSubmit(onSubmit)}
             disabled={isPending}
-            className="mt-6"
-            rightIcon={<KeyRound size={16} color="#FFF" strokeWidth={2.5} />}
+            className="mt-4 rounded-xl h-11 bg-orange-500 active:bg-orange-600"
+            rightIcon={<KeyRound size={14} color="#FFF" />}
           />
         </Animated.View>
       </ScrollView>

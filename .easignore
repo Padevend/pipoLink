@@ -1,0 +1,52 @@
+.claude/
+.pnpm-store/
+
+./server/.env
+./node_modules/
+
+# Expo
+.expo/
+dist/
+agent/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+app/keystore-info.json
+app/google-service01.json
+app/release-key.keystore
+app/credentials.json
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+deploy-*.sh
+
+# typescript
+*.tsbuildinfo
+
+appapp-example
+
+# generated native folders
+app/ios
+app/android
+
+!app/google-services.json

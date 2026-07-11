@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import { updatesApi } from '@/shared/api/updates';
+import { UpdateManager } from '@/processes/update-manager';
 
 export function useOtaUpdate() {
   return useQuery({
     queryKey: ['update'],
-    queryFn: updatesApi.checkUpdate,
+    queryFn: () => UpdateManager.manualCheck(),
   });
 }

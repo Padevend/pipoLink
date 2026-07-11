@@ -26,6 +26,18 @@ enum MessageType {
   SYSTEM
 }
 
+enum UpdateSeverity {
+  low
+  medium
+  high
+  critical
+}
+
+enum UpdateType {
+  auto
+  manual
+}
+
 // model
 model User {
   id            String   @id @default(uuid()) @db.Uuid
@@ -37,6 +49,10 @@ model User {
   is_active     Boolean  @default(false)
   is_excluded   Boolean  @default(false)
   is_configured Boolean  @default(false)
+  status        String   @default("ACTIVE")
+  isAnonymized  Boolean  @default(false)
+  deletedAt     DateTime? @db.Timestamptz
+  anonymizedAt  DateTime? @db.Timestamptz
   createdAt     DateTime @default(now()) @db.Timestamptz
   updatedAt     DateTime @updatedAt @db.Timestamptz
 
@@ -44,6 +60,7 @@ model User {
   subscription  Subscription?
   devices       Device[]
   refreshTokens RefreshToken[]
+  keyBackup     KeyBackup?
   auditLogs     AuditLog[]
   qrTokens      QrToken[]
   messages      Message[]
@@ -55,6 +72,7 @@ model User {
   payments      Payment[]
   notifications Notification[]
   announcements Announcement[]
+  createdInvitations GroupInvitation[] @relation("CreatedInvitations")
 
   @@map("users")
 }
@@ -133,12 +151,31 @@ model AuditLog {
   user_id   String   @db.Uuid
   action    String
   targetId  String?
+  ip        String?
+  userAgent String?
+  location  String?
   createdAt DateTime @default(now()) @db.Timestamptz
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("audit_logs")
 }
+
+model KeyBackup {
+  id                 String    @id @default(uuid()) @db.Uuid
+  user_id            String    @unique @db.Uuid
+  encrypted_key      String
+  salt               String
+  attemptsRemaining  Int       @default(5)
+  lockedUntil        DateTime? @db.Timestamptz
+  createdAt          DateTime  @default(now()) @db.Timestamptz
+  updatedAt          DateTime  @updatedAt @db.Timestamptz
+
+  user               User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("key_backups")
+}
+
 
 model Chat {
   id            String   @id @default(uuid()) @db.Uuid
@@ -152,6 +189,7 @@ model Chat {
   messages   Message[]
   members    ConversationMember[]
   memberKeys ChatMemberKey[]
+  invitations GroupInvitation[]
 
   @@map("chats")
 }
@@ -270,10 +308,12 @@ model Document {
   downloadCount    Int      @default(0)
   folder_id        String?  @db.Uuid
   uploaded_by_id   String   @db.Uuid
+  hash             String?
   createdAt        DateTime @default(now()) @db.Timestamptz
 
   uploadedBy User  @relation("UserDocuments", fields: [uploaded_by_id], references: [id], onDelete: Cascade)
   tags       Tag[] @relation("DocumentTags")
+  aiSessions AiSession[] @relation("AiSessionDocuments")
 
   @@index([niveau, filiere, ue])
   @@index([downloadCount(sort: Desc)])
@@ -320,8 +360,9 @@ model AiSession {
   createdAt DateTime @default(now()) @db.Timestamptz
   updatedAt DateTime @updatedAt @db.Timestamptz
 
-  user     User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  messages AiMessage[]
+  user      User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  messages  AiMessage[]
+  documents Document[]  @relation("AiSessionDocuments")
 
   @@map("ai_sessions")
 }
@@ -385,4 +426,36 @@ model Announcement {
   author User @relation(fields: [author_id], references: [id], onDelete: Cascade)
 
   @@map("announcements")
+}
+
+model GroupInvitation {
+  id                 String   @id @default(uuid()) @db.Uuid
+  chat_id            String   @db.Uuid
+  token              String   @unique
+  encrypted_chat_key String?
+  max_uses           Int?
+  uses               Int      @default(0)
+  expires_at         DateTime? @db.Timestamptz
+  revoked_at         DateTime? @db.Timestamptz
+  created_by_id      String   @db.Uuid
+  created_at         DateTime @default(now()) @db.Timestamptz
+
+  chat            Chat     @relation(fields: [chat_id], references: [id], onDelete: Cascade)
+  createdBy       User     @relation("CreatedInvitations", fields: [created_by_id], references: [id], onDelete: Cascade)
+
+  @@map("group_invitations")
+}
+
+model UpdateVersioning {
+  id          String   @id @default(uuid()) @db.Uuid
+  version     String
+  createdAt   DateTime @default(now()) @db.Timestamptz
+  changelog   Json?
+  isRequired  Boolean  @default(false)
+  minSdkVersion String
+  severity    UpdateSeverity
+  type        UpdateType
+  links       Json?
+
+  @@map("update_versioning")
 }

@@ -1,0 +1,25 @@
+# PipoLink End-to-End Audit Tasks
+
+- [ ] Phase 1: Identity & Authentication Audit
+  - [ ] Trace Frontend Auth flows (Register, Login, OTP, Forgot Password)
+  - [ ] Trace Backend Auth logic (Controllers, Services)
+  - [ ] Check JWT/Refresh Token logic and session persistence
+- [ ] Phase 2: E2EE Key Management & Device Audit
+  - [ ] Trace Device Registration & Revocation
+  - [ ] Trace Key Recovery & Fallback (PBKDF2)
+  - [ ] Check secure storage handling
+- [ ] Phase 3: Messaging & Synchronization Audit
+  - [ ] Trace 1-to-1 and Group Chat logic
+  - [ ] Verify E2EE Key sync and Message broadcast (WebSockets)
+  - [ ] Check attachment handling
+- [ ] Phase 4: Library & E ternal Services
+  - [ ] Trace Document Upload, Validation, and Storage (Local/Drive)
+  - [ ] Trace Search/Browse logic
+  - [ ] Check AI Integration (RAG) and quotas
+- [ ] Phase 5: Payment Webhooks & Subscription
+  - [ ] Trace Webhook integrity verification
+  - [ ] Check transaction idempotency and subscription state machines
+- [ ] Phase 5: Consolidation & Reporting
+  - [ ] Compile findings into `audit_report.md`
+  - [ ] Categorize issues by severity
+  - [ ] Finalize recommendations

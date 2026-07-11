@@ -6,10 +6,11 @@ import { router } from 'expo-router';
 import { ArrowLeft, Mail, Send } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ForgotPasswordScreen() {
   const { showToast } = useToast();
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -37,21 +38,24 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
       
-      <View className="z-10 flex-row items-center border-b border-border-light/20 bg-surface-light/75 px-4 py-3.5 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl">
+      {/* HEADER : Panneau Mat Solide */}
+      <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
+        {/* Bouton Retour Géométrique Mat */}
         <Pressable 
           onPress={() => router.back()}
-          className="h-9 w-9 items-center justify-center active:scale-95 transition-transform"
+          className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
         >
-          <ArrowLeft size={20} color="#64748B" />
+          <ArrowLeft size={14} color="#71717A" />
         </Pressable>
         
-        <View className="ml-3.5 flex-1">
-          <Text className="text-[16px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+        {/* Bloc Titre & Sous-titre Contextuel */}
+        <View className="ml-3 flex-1">
+          <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
             Mot de passe oublié
           </Text>
-          <Text className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary-light/50 dark:text-text-secondary-dark/50 mt-0.5">
+          <Text className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mt-0.5">
             Récupération de compte
           </Text>
         </View>
@@ -59,24 +63,29 @@ export default function ForgotPasswordScreen() {
 
       <ScrollView 
         className="flex-1"
-        contentContainerStyle={{ flexGrow: 1 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingBottom: insets.bottom + 16,
+          paddingLeft: insets.left,
+          paddingRight: insets.right
+        }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View className="flex-1 px-6 pt-6 pb-10">
+        <View className="flex-1 px-4 pt-6 pb-10">
           
-          {/* Section textuelle épurée d'introduction */}
-          <View className="mb-8">
-            <Text className="text-[24px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+          {/* Section d'accueil textuelle épurée */}
+          <View className="mb-6">
+            <Text className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
               Réinitialiser le mot de passe
             </Text>
-            <Text className="text-[13px] font-medium leading-[20px] text-text-secondary-light/70 dark:text-text-secondary-dark/60 mt-1.5">
+            <Text className="text-xs font-semibold leading-5 text-zinc-400 dark:text-zinc-500 mt-2">
               Saisissez votre adresse email académique. Nous vous ferons parvenir un code de sécurité pour configurer un nouveau mot de passe.
             </Text>
           </View>
 
-          {/* Formulaire enveloppé (Style Satiné / Glassmorphic) */}
-          <View className="w-full gap-y-6">
+          {/* Formulaire (Structure Mat Intégrée) */}
+          <View className="w-full gap-y-4">
             <Input 
               label="Adresse Email Académique"
               placeholder="nom@universite.edu"
@@ -92,8 +101,7 @@ export default function ForgotPasswordScreen() {
               label="Envoyer le code"
               onPress={() => void handleReset()}
               loading={isLoading}
-              size="xl"
-              className="rounded-xl h-12"
+              className="bg-orange-500 rounded-xl h-11"
               rightIcon={!isLoading ? <Send size={14} color="#FFFFFF" /> : undefined}
             />
           </View>

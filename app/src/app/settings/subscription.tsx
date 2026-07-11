@@ -1,130 +1,153 @@
 import { ArrowLeft, Check, Info, Sparkles } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
-import { BRAND } from '@/shared/config/brand';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '@/providers';
 import { Button } from '@/shared/ui/button';
 import { router } from 'expo-router';
 import { ScrollView } from 'react-native-gesture-handler';
 
 export default function SubscriptionScreen(): JSX.Element {
   const { t } = useTranslation('settings');
+  const { user } = useAuth();
+  const insets = useSafeAreaInsets();
 
+  const isPremium = user?.subscription?.plan === 'PREMIUM' && user?.subscription?.status === 'ACTIVE';
 
   return (
-    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
 
-      {/* Header Translucide Style Glassmorphism */}
-      <View className="z-10 flex-row items-center border-b border-border-light/20 bg-surface-light/75 px-4 py-3.5 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl">
+      {/* HEADER : Panneau Mat Solide */}
+      <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
         <Pressable
           onPress={() => router.back()}
-          className="h-9 w-9 items-center justify-center active:scale-95 transition-transform"
+          className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
         >
-          <ArrowLeft size={20} color="#64748B" />
+          <ArrowLeft size={14} color="#71717A" />
         </Pressable>
 
-        <Text className="flex-1 ml-3 text-[17px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+        <Text className="flex-1 ml-3 text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
           Abonnement
         </Text>
       </View>
 
-      <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingTop: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-        <View className="gap-5">
+      <ScrollView 
+        className="flex-1" 
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: insets.bottom + 24 }} 
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="gap-y-4">
 
-          {/* CARTE : PLAN GRATUIT (Satiné Sobre) */}
-          <View className="rounded-2xl border border-border-light/40 bg-surface-light/50 p-5 dark:border-border-dark/20 dark:bg-surface-dark/40 backdrop-blur-md">
+          {/* CARTE : PLAN GRATUIT (Mat Sobre) */}
+          <View className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-900/30">
             <View className="flex-row justify-between items-center mb-4">
-              <Text className="text-[16px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+              <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
                 Plan Gratuit
               </Text>
-              <View className="rounded-full bg-text-secondary-light/10 dark:bg-text-secondary-dark/10 px-2.5 py-0.5 border border-border-light/10">
-                <Text className="text-[10px] font-bold text-text-secondary-light dark:text-text-secondary-dark">
-                  Actuel
-                </Text>
-              </View>
+              {!isPremium && (
+                <View className="rounded-md bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 border border-zinc-200 dark:border-zinc-700">
+                  <Text className="text-[9px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    Actuel
+                  </Text>
+                </View>
+              )}
             </View>
 
             {/* Avantages Free énumérés */}
-            <View className="gap-2.5">
-              <View className="flex-row items-center gap-2">
-                <Check size={14} color="#64748B" />
-                <Text className="text-[12px] font-medium text-text-secondary-light dark:text-text-secondary-dark">
+            <View className="gap-y-2.5">
+              <View className="flex-row items-center gap-x-2.5">
+                <Check size={13} color="#71717A" />
+                <Text className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
                   20 messages IA / jour
                 </Text>
               </View>
-              <View className="flex-row items-center gap-2">
-                <Check size={14} color="#64748B" />
-                <Text className="text-[12px] font-medium text-text-secondary-light dark:text-text-secondary-dark">
-                  Accès standard à la bibliothèque
+              <View className="flex-row items-center gap-x-2.5">
+                <Check size={13} color="#71717A" />
+                <Text className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                  Accès standard à la bibliothèque (5 documents, max 5 Mo)
                 </Text>
               </View>
             </View>
           </View>
 
-          {/* CARTE : PLAN PREMIUM (Premium Glassmorphism avec couleur de marque) */}
-          <View className="rounded-2xl border border-primary/20 bg-surface-light/80 p-5 dark:border-primary/10 dark:bg-surface-dark/60 backdrop-blur-md relative overflow-hidden">
+          {/* CARTE : PLAN PREMIUM (Mat Contrasté Orange) */}
+          <View className="rounded-xl border border-orange-200 bg-orange-50/20 p-4 dark:border-orange-950/30 dark:bg-orange-950/10">
 
-            {/* Badge Flottant Sparkles */}
+            {/* En-tête de l'offre */}
             <View className="flex-row justify-between items-center mb-4">
-              <View className="flex-row items-center gap-1.5">
-                <Sparkles size={16} color={BRAND.primary} />
-                <Text className="text-[16px] font-bold tracking-tight text-primary">
+              <View className="flex-row items-center gap-x-1.5">
+                <Sparkles size={14} color="#F97316" />
+                <Text className="text-sm font-bold tracking-tight text-orange-500 dark:text-orange-400">
                   Plan Premium
                 </Text>
               </View>
-              <View className="rounded-full bg-primary/10 px-2.5 py-0.5 border border-primary/20">
-                <Text className="text-[10px] font-bold text-primary">
-                  Recommandé
-                </Text>
-              </View>
+              {isPremium ? (
+                <View className="rounded-md bg-orange-500 px-2 py-0.5 border border-orange-600">
+                  <Text className="text-[9px] font-bold uppercase tracking-wider text-white">
+                    Actuel
+                  </Text>
+                </View>
+              ) : (
+                <View className="rounded-md bg-orange-100 dark:bg-orange-950/50 px-2 py-0.5 border border-orange-200 dark:border-orange-900/30">
+                  <Text className="text-[9px] font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400">
+                    Recommandé
+                  </Text>
+                </View>
+              )}
             </View>
 
             {/* Avantages Premium énumérés */}
-            <View className="gap-2.5 mb-5">
-              <View className="flex-row items-center gap-2">
-                <View className="h-4 w-4 rounded-full bg-primary/10 items-center justify-center">
-                  <Check size={11} color={BRAND.primary} />
+            <View className="gap-y-2.5 mb-5">
+              <View className="flex-row items-center gap-x-2.5">
+                <View className="h-4 w-4 rounded-md bg-orange-100 dark:bg-orange-950/40 items-center justify-center border border-orange-200/30">
+                  <Check size={11} color="#F97316" />
                 </View>
-                <Text className="text-[13px] font-semibold text-text-primary-light dark:text-text-primary-dark">
-                  Accès IA illimité
+                <Text className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+                  Accès IA illimité (Hiro)
                 </Text>
               </View>
 
-              <View className="flex-row items-center gap-2">
-                <View className="h-4 w-4 rounded-full bg-primary/10 items-center justify-center">
-                  <Check size={11} color={BRAND.primary} />
+              <View className="flex-row items-center gap-x-2.5">
+                <View className="h-4 w-4 rounded-md bg-orange-100 dark:bg-orange-950/40 items-center justify-center border border-orange-200/30">
+                  <Check size={11} color="#F97316" />
                 </View>
-                <Text className="text-[13px] font-semibold text-text-primary-light dark:text-text-primary-dark">
-                  Synchronisation prioritaire
+                <Text className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+                  Génération d'Outils d'Étude (Résumés, Quiz, FAQ, Chronologies...)
                 </Text>
               </View>
 
-              <View className="flex-row items-center gap-2">
-                <View className="h-4 w-4 rounded-full bg-primary/10 items-center justify-center">
-                  <Check size={11} color={BRAND.primary} />
+              <View className="flex-row items-center gap-x-2.5">
+                <View className="h-4 w-4 rounded-md bg-orange-100 dark:bg-orange-950/40 items-center justify-center border border-orange-200/30">
+                  <Check size={11} color="#F97316" />
                 </View>
-                <Text className="text-[13px] font-semibold text-text-primary-light dark:text-text-primary-dark">
-                  Bibliothèque avancée & filtres exclusifs
+                <Text className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+                  Bibliothèque illimitée (fichiers jusqu'à 50 Mo)
                 </Text>
               </View>
             </View>
 
-            {/* Bouton d'action bientôt disponible */}
-            <Button
-              label="Bientôt disponible"
-              variant="primary"
-              className="rounded-xl h-11 opacity-60"
-              onPress={() => undefined}
-              disabled
-            />
+            {/* Bouton d'action */}
+            {isPremium ? (
+              <Button
+                label="Abonné Premium Actif"
+                onPress={() => undefined}
+                disabled
+                className="rounded-xl h-11 bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400"
+              />
+            ) : (
+              <Button
+                label="S'abonner (1 000 XAF/mois)"
+                onPress={() => router.push('/settings/payment')}
+                className="rounded-xl h-11 bg-orange-500 active:bg-orange-600"
+              />
+            )}
           </View>
 
-          {/* Note d'information contextuelle discrète */}
-          <View className="flex-row items-start gap-2 px-2 mt-2">
-            <Info size={14} className="text-text-secondary-light/40 mt-0.5" />
-            <Text className="flex-1 text-[11px] leading-[16px] font-medium text-text-secondary-light/50 dark:text-text-secondary-dark/40">
-              L'abonnement Premium permettra de soutenir les infrastructures et le développement de l'application. Les fonctionnalités actuelles resteront gratuites.
+          {/* Note d'information contextuelle */}
+          <View className="flex-row items-start gap-x-2 px-1 mt-1">
+            <Info size={13} color="#A1A1AA" className="mt-0.5 shrink-0" />
+            <Text className="flex-1 text-xs font-medium text-zinc-400 dark:text-zinc-500 leading-4">
+              L'abonnement Premium soutient le développement de PipoLink et libère la puissance totale de l'IA Hiro pour booster votre réussite universitaire.
             </Text>
           </View>
 

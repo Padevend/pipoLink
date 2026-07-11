@@ -13,6 +13,6 @@ export function useIsPrimaryDevice() {
       const current = devices.find((d) => d.id === deviceId);
       return current?.isPrimary ?? false;
     },
-    staleTime: 60_000,
+    staleTime: 5_000,
   });
 }

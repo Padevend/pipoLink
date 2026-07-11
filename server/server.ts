@@ -15,7 +15,7 @@ import { serveStatic } from "hono/serve-static";
 async function bootstrap() {
   // Vérification connexion base de données
   await prisma.$connect();
-  console.log("✅ Base de données connectée");
+  console?.log("✅ Base de données connectée");
 
   const app = createRouter();
 
@@ -38,7 +38,7 @@ async function bootstrap() {
     port: Number(env.get("PORT")),
     hostname: env.get("HOST") ?? "0.0.0.0",
   }, (info) => {
-    console.log(`🚀 Serveur PipoLink démarré sur http://${info.address}:${info.port}`);
+    console?.log(`🚀 Serveur PipoLink démarré sur http://${info.address}:${info.port}`);
   });
 
   initWebSocket(server as any);
@@ -46,6 +46,6 @@ async function bootstrap() {
 }
 
 bootstrap().catch((err) => {
-  console.error("❌ Erreur de démarrage :", err);
+  console?.error("❌ Erreur de démarrage :", err);
   process.exit(1);
 });

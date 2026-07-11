@@ -5,13 +5,16 @@ type RawMember = {
     id: string,
     username: string,
     avatarUrl?: string | undefined,
-    phone?: string | undefined
+    phone?: string | undefined,
+    role?: 'admin' | 'member',
+    accountRole?: 'admin' | 'staff' | 'student',
 };
 
 export type RawConversation = Partial<Conversation> & {
   updated_at?: string | Date;
   unread_count?: number;
   members?: RawMember[];
+  created_by_id?: string;
 };
 
 export function normalizeConversation(raw: RawConversation): Conversation {
@@ -20,7 +23,9 @@ export function normalizeConversation(raw: RawConversation): Conversation {
       id: m.id,
       username: m.username,
       avatarUrl: m.avatarUrl,
-      phone: m.phone
+      phone: m.phone,
+      role: m.role,
+      accountRole: m.accountRole,
     }
   });
 
@@ -48,5 +53,6 @@ export function normalizeConversation(raw: RawConversation): Conversation {
     unreadCount,
     members,
     updatedAt,
+    created_by_id: raw.created_by_id,
   };
 }

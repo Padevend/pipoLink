@@ -16,53 +16,54 @@ import { useAnnouncements } from '@/entities/announcement/hooks';
 import AnnouncementCard from '@/features/announcements/components/announcement-card';
 import SkeletonCard from '@/features/announcements/components/skeleton-card';
 import { useAuth } from '@/providers';
-import { BRAND } from '@/shared/config/brand';
 
-// Screen: AnnouncementsScreen
 export default function AnnouncementsScreen() {
   const { user } = useAuth();
   const { data: announcements, isLoading, refetch, isRefetching } = useAnnouncements();
   const isStaff = user?.role === 'admin' || user?.role === 'staff';
 
   return (
-    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-zinc-50 dark:bg-zinc-950" edges={['top']}>
 
-      {/* HEADER PANELS */}
-      <View className="z-10 flex-row items-center justify-between border-b border-border-light/40 bg-surface-light/75 px-4 py-3 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl">
+      {/* EN-TÊTE DE LA PAGE (Simple, clair et accueillant) */}
+      <View className="flex-row items-center justify-between border-b border-zinc-100 bg-white px-4 py-4 dark:border-zinc-900 dark:bg-zinc-900">
         <View className="flex-row items-center flex-1 gap-3">
+          {/* Bouton retour plus accessible et doux au toucher */}
           <Pressable
             onPress={() => router.back()}
-            hitSlop={8}
-            className="h-9 w-9 items-center justify-center active:scale-95 transition-transform"
+            hitSlop={12}
+            className="h-9 w-9 items-center justify-center rounded-full bg-zinc-50 dark:bg-zinc-800 active:opacity-70"
           >
-            <ArrowLeft size={18} color="#64748B" />
+            <ArrowLeft size={18} color="#71717A" />
           </Pressable>
 
           <View className="flex-1">
-            <Text className="text-[16px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+            <Text className="text-base font-bold text-zinc-900 dark:text-zinc-50">
               Annonces
             </Text>
-            <Text className="text-[10px] font-bold uppercase tracking-wider text-text-secondary-light/40 dark:text-text-secondary-dark/40 mt-0.5">
-              Actualités Universitaires
+            <Text className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+              Les dernières actualités de votre établissement
             </Text>
           </View>
         </View>
 
+        {/* Bouton pour ajouter une annonce (visible uniquement pour le personnel) */}
         {isStaff && (
           <Pressable
             onPress={() => router.push('/announcements/new')}
-            hitSlop={4}
-            className="h-9 w-9 items-center justify-center rounded-xl active:scale-95 transition-transform"
-            style={{ backgroundColor: BRAND.primary }}
+            hitSlop={8}
+            className="flex-row items-center justify-center h-9 px-3 rounded-xl bg-orange-500 active:bg-orange-600"
           >
-            <Plus size={18} color="#FFFFFF" strokeWidth={2.5} />
+            <Plus size={16} color="#FFFFFF" strokeWidth={2.5} className="mr-1" />
+            <Text className="text-white text-xs font-semibold">Créer</Text>
           </Pressable>
         )}
       </View>
 
-      {/* BODY SCREEN LIST */}
+      {/* LISTE DES ANNONCES */}
       {isLoading ? (
-        <View className="px-4 pt-4 gap-y-2">
+        // Écran d'attente pendant le chargement
+        <View className="px-4 pt-4 gap-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
@@ -75,17 +76,18 @@ export default function AnnouncementsScreen() {
           onRefresh={() => void refetch()}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
+          // Message affiché si la liste est vide
           ListEmptyComponent={
-            <View className="items-center justify-center py-40 gap-y-3">
-              <View className="h-12 w-12 items-center justify-center rounded-2xl bg-text-secondary-light/5 border border-border-light/10">
-                <Megaphone size={20} className="text-text-secondary-light/40 dark:text-text-secondary-dark/40" strokeWidth={1.5} />
+            <View className="items-center justify-center py-32 px-6">
+              <View className="h-14 w-14 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-900 mb-4">
+                <Megaphone size={24} color="#A1A1AA" strokeWidth={1.5} />
               </View>
-              <Text className="text-[13px] font-semibold text-center text-text-secondary-light/50 dark:text-text-secondary-dark/50">
-                Aucune annonce pour le moment.
+              <Text className="text-sm font-medium text-center text-zinc-500 dark:text-zinc-400">
+                Il n'y a aucune annonce à afficher pour le moment.
               </Text>
             </View>
           }
-          renderItem={({ item }) => <AnnouncementCard item={item as any} />}
+          renderItem={({ item }) => <AnnouncementCard item={item} />}
         />
       )}
     </SafeAreaView>

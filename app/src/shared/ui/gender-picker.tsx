@@ -5,7 +5,7 @@ import { cn } from '@/shared/utils/cn';
 export const GENDERS = [
   { id: 'M', label: 'Homme' },
   { id: 'F', label: 'Femme' },
-  { id: 'I', label: 'Non Précisé' },
+  { id: 'I', label: 'Non Spécifié' },
 ] as const;
 
 export type GenderId = (typeof GENDERS)[number]['id'];
@@ -19,10 +19,13 @@ interface GenderPickerProps {
 
 export function GenderPicker({ label = 'Genre', value, onChange, error }: GenderPickerProps): JSX.Element {
   return (
-    <View className="gap-2">
-      <Text className="ml-1 text-sm font-semibold text-text-secondary-light dark:text-text-secondary-dark">
-        {label}
-      </Text>
+    <View className="gap-1.5">
+      {label && (
+        <Text className="ml-1 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+          {label}
+        </Text>
+      )}
+      
       <View className="flex-row flex-wrap gap-2">
         {GENDERS.map((g) => {
           const selected = value === g.id;
@@ -31,14 +34,16 @@ export function GenderPicker({ label = 'Genre', value, onChange, error }: Gender
               key={g.id}
               onPress={() => onChange(g.id)}
               className={cn(
-                'rounded-2xl px-4 py-3',
-                selected ? 'bg-primary' : 'bg-surface-light dark:bg-surface-dark',
+                'rounded-lg px-3.5 h-8 justify-center border transition-colors',
+                selected 
+                  ? 'bg-orange-500 border-orange-500 active:bg-orange-600' 
+                  : 'bg-white border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800',
               )}
             >
               <Text
                 className={cn(
-                  'text-sm font-bold',
-                  selected ? 'text-white' : 'text-text-primary-light dark:text-text-primary-dark',
+                  'text-xs font-bold',
+                  selected ? 'text-white' : 'text-zinc-900 dark:text-zinc-50',
                 )}
               >
                 {g.label}
@@ -47,7 +52,12 @@ export function GenderPicker({ label = 'Genre', value, onChange, error }: Gender
           );
         })}
       </View>
-      {error ? <Text className="ml-2 text-xs font-medium text-error">{error}</Text> : null}
+      
+      {error ? (
+        <Text className="ml-1 text-[11px] font-semibold text-red-600 dark:text-red-400">
+          {error}
+        </Text>
+      ) : null}
     </View>
   );
 }

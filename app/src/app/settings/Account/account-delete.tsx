@@ -3,7 +3,6 @@ import {
   deleteAccountSchema,
   type DeleteAccountFormValues,
 } from '@/features/account/lib/delete-account.schema';
-import { BRAND } from '@/shared/config/brand';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { useAuth } from '@/providers/auth-provider';
@@ -13,13 +12,12 @@ import { router } from 'expo-router';
 import {
   AlertTriangle,
   ArrowLeft,
-  Mail,
+  Lock,
   MessageCircleWarning,
   ShieldAlert,
   Trash2,
   UserX,
 } from 'lucide-react-native';
-import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import {
   ActivityIndicator,
@@ -31,20 +29,21 @@ import {
   View,
 } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeOut } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { localDb } from '@/shared/storage/local-db';
 
 const CONSEQUENCES = [
   {
     icon: MessageCircleWarning,
-    text: 'Suppression irréversible de tous vos messages et conversations.',
+    text: 'Vos messages resteront visibles mais votre nom sera remplacé par "Compte supprimé".',
   },
   {
     icon: UserX,
-    text: 'Retrait de tous vos contacts et groupes.',
+    text: 'Retrait de tous vos groupes et conversations.',
   },
   {
     icon: ShieldAlert,
-    text: 'Vos clés de chiffrement et données locales seront détruites.',
+    text: 'Vos clés de chiffrement et appareils seront définitivement détruits.',
   },
   {
     icon: AlertTriangle,
@@ -53,6 +52,7 @@ const CONSEQUENCES = [
 ] as const;
 
 export default function DeleteAccountScreen() {
+  const insets = useSafeAreaInsets();
   const { logout } = useAuth();
   const queryClient = useQueryClient();
   const { mutate, isPending } = useDeleteAccount();
@@ -63,7 +63,7 @@ export default function DeleteAccountScreen() {
     formState: { errors },
   } = useForm<DeleteAccountFormValues>({
     resolver: zodResolver(deleteAccountSchema),
-    defaultValues: { email: '' },
+    defaultValues: { password: '' },
   });
 
   const onSubmit = (data: DeleteAccountFormValues) => {
@@ -77,18 +77,27 @@ export default function DeleteAccountScreen() {
           style: 'destructive',
           onPress: () => {
             mutate(
-              { email: data.email },
+              { password: data.password },
               {
                 onSuccess: async () => {
                   queryClient.clear();
+                  localDb.resetDb();
                   await logout();
                   router.replace('/auth/login');
                 },
                 onError: (err) => {
-                  Alert.alert(
-                    'Erreur',
-                    (err as Error).message || 'Impossible de supprimer le compte.',
-                  );
+                  const error = err as { status?: number; message?: string };
+                  let message = 'Impossible de supprimer le compte.';
+
+                  if (error.status === 401) {
+                    message = 'Mot de passe incorrect.';
+                  } else if (error.status === 409) {
+                    message = 'Ce compte a déjà été supprimé.';
+                  } else if (error.message) {
+                    message = error.message;
+                  }
+
+                  Alert.alert('Erreur', message);
                 },
               },
             );
@@ -99,73 +108,73 @@ export default function DeleteAccountScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top']}>
-      {/* Loader overlay */}
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
+      {/* LOADER OVERLAY : Mat et sans ombre portée */}
       <Modal transparent visible={isPending} animationType="fade">
         <Animated.View
-          entering={FadeIn.duration(200)}
-          exiting={FadeOut.duration(150)}
-          className="flex-1 bg-black/40 items-center justify-center"
+          entering={FadeIn.duration(150)}
+          exiting={FadeOut.duration(100)}
+          className="flex-1 bg-black/50 items-center justify-center"
         >
-          <View className="p-6 bg-surface-light dark:bg-zinc-900 border border-border-light/40 dark:border-border-dark/20 rounded-2xl items-center shadow-2xl max-w-[80%]">
+          <View className="p-5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl items-center max-w-[80%]">
             <ActivityIndicator size="small" color="#EF4444" />
-            <Text className="text-[13px] font-bold text-text-primary-light dark:text-text-primary-dark tracking-wide uppercase mt-4 text-center">
+            <Text className="text-[11px] font-bold text-zinc-900 dark:text-zinc-50 tracking-wider uppercase mt-3.5 text-center">
               Suppression en cours…
             </Text>
-            <Text className="text-[11px] text-text-secondary-light/60 dark:text-text-secondary-dark/60 mt-1 text-center">
+            <Text className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 mt-1 text-center">
               Veuillez patienter, cette opération est irréversible.
             </Text>
           </View>
         </Animated.View>
       </Modal>
 
-      {/* Header */}
-      <View className="flex-row items-center border-b border-border-light/20 bg-surface-light/40 px-5 py-4 dark:border-border-dark/10 dark:bg-surface-dark/40 backdrop-blur-md">
+      {/* HEADER : Panneau Mat Solide */}
+      <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
         <Pressable
           onPress={() => router.back()}
-          className="h-8 w-8 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800/80 mr-3 active:scale-95"
+          className="h-8 w-8 mr-3 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
         >
-          <ArrowLeft size={16} className="text-text-secondary-light/70 dark:text-text-secondary-dark/70" />
+          <ArrowLeft size={14} color="#71717A" />
         </Pressable>
-        <Text className="font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark text-[16px]">
+        <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
           Supprimer le compte
         </Text>
       </View>
 
-      {/* Content */}
+      {/* CONTENU */}
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 28, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: insets.bottom + 24 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Danger icon */}
+        {/* En-tête Statut Critique */}
         <Animated.View entering={FadeInDown.springify()} className="items-center mb-6">
-          <View className="h-16 w-16 items-center justify-center rounded-full bg-red-500/10 mb-3">
-            <Trash2 size={30} color="#EF4444" />
+          <View className="h-12 w-12 items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/20 mb-3.5">
+            <Trash2 size={22} color="#EF4444" />
           </View>
-          <Text className="text-lg font-bold text-red-500 text-center">
+          <Text className="text-sm font-bold text-red-500 text-center">
             Suppression définitive
           </Text>
-          <Text className="text-[12px] text-text-secondary-light/60 dark:text-text-secondary-dark/50 text-center mt-1">
+          <Text className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 text-center mt-1">
             Cette action ne peut pas être annulée.
           </Text>
         </Animated.View>
 
-        {/* Consequences card */}
+        {/* Panneau Mat des Conséquences */}
         <Animated.View
           entering={FadeInDown.delay(80).springify()}
-          className="rounded-2xl border border-red-500/20 bg-red-500/5 dark:bg-red-950/20 p-4 mb-6"
+          className="rounded-xl border border-red-200 bg-red-50/50 dark:border-red-900/30 dark:bg-red-950/10 p-4 mb-5"
         >
-          <Text className="text-[12px] font-bold uppercase tracking-wider text-red-500 mb-3">
+          <Text className="text-[9px] font-bold uppercase tracking-wider text-red-500 mb-3">
             Conséquences
           </Text>
           {CONSEQUENCES.map((item, idx) => {
             const Icon = item.icon;
             return (
-              <View key={idx} className="flex-row items-start mb-2.5 last:mb-0">
-                <Icon size={14} color="#EF4444" className="mt-0.5 mr-2.5 shrink-0" />
-                <Text className="flex-1 text-[13px] leading-5 text-text-primary-light dark:text-text-primary-dark">
+              <View key={idx} className="flex-row items-start pb-2">
+                <Icon size={13} color="#EF4444" className="shrink-0" />
+                <Text className="flex-1 text-xs ps-2 font-medium text-zinc-800 dark:text-zinc-200 leading-4">
                   {item.text}
                 </Text>
               </View>
@@ -173,24 +182,24 @@ export default function DeleteAccountScreen() {
           })}
         </Animated.View>
 
-        {/* Email confirmation */}
-        <Animated.View entering={FadeInDown.delay(160).springify()} className="gap-y-4">
-          <Text className="text-[13px] font-medium text-text-primary-light dark:text-text-primary-dark">
-            Pour confirmer, saisissez l'adresse email associée à votre compte :
+        {/* Formulaire de validation */}
+        <Animated.View entering={FadeInDown.delay(160).springify()} className="gap-y-3.5">
+          <Text className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 px-1">
+            Pour confirmer, saisissez votre mot de passe :
           </Text>
 
           <Controller
             control={control}
-            name="email"
+            name="password"
             render={({ field: { onChange, value } }) => (
               <Input
-                placeholder="votre@email.com"
+                placeholder="Mot de passe"
                 value={value}
                 onChangeText={onChange}
+                secureTextEntry
                 autoCapitalize="none"
-                keyboardType="email-address"
-                leftIcon={Mail}
-                error={errors.email?.message}
+                leftIcon={Lock}
+                error={errors.password?.message}
               />
             )}
           />
@@ -200,8 +209,8 @@ export default function DeleteAccountScreen() {
             variant="danger"
             onPress={handleSubmit(onSubmit)}
             disabled={isPending}
-            className="mt-4"
-            rightIcon={<Trash2 size={16} color="#FFF" strokeWidth={2.5} />}
+            className="mt-2 rounded-xl h-11 bg-red-500 active:bg-red-600"
+            rightIcon={<Trash2 size={14} color="#FFF" />}
           />
         </Animated.View>
       </ScrollView>

@@ -1,45 +1,53 @@
 import { router } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AssociateDevicePanel } from '@/features/devices/components/associate-device-panel';
 import { AppLogo } from '@/shared/ui/app-logo';
 
 export default function LinkDeviceScreen(): JSX.Element {
+  const insets = useSafeAreaInsets();
   return (
-    <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
       
-      {/* En-tête Translucide Style Glassmorphism Lumineux (Sans Shadow) */}
-      <View className="z-10 flex-row items-center justify-between border-b border-slate-200/60 bg-white/80 px-4 py-3.5 backdrop-blur-xl">
+      {/* HEADER : Panneau Mat Solide */}
+      <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
         <View className="flex-row items-center flex-1">
-          {/* Bouton Retour Épuré Capsulaire */}
+          {/* Bouton Retour Géométrique Mat */}
           <Pressable 
             onPress={() => router.back()} 
-            className="h-9 w-9 items-center justify-center active:scale-95 transition-transform"
+            className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
           >
-            <ArrowLeft size={20} color="#64748B" />
+            <ArrowLeft size={14} color="#71717A" />
           </Pressable>
           
-          {/* Conteneur Titre & Sous-titre Contextuel */}
-          <View className="ml-3.5 flex-1">
-            <Text className="text-[16px] font-bold tracking-tight text-slate-800">
+          {/* Bloc Titre & Sous-titre Contextuel */}
+          <View className="ml-3 flex-1">
+            <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
               Associer cet appareil
             </Text>
-            <Text className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mt-0.5">
+            <Text className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mt-0.5">
               Équipement secondaire sécurisé
             </Text>
           </View>
         </View>
 
-        {/* Logo d'application équilibré sur la droite */}
-        <View className="opacity-90">
+        {/* Logo d'application net sur la droite */}
+        <View>
           <AppLogo size="sm" />
         </View>
       </View>
 
       {/* Contenu principal / Panneau d'association */}
-      <View className="flex-1 px-4 pt-4">
+      <View
+        className="flex-1 pt-4"
+        style={{
+          paddingBottom: insets.bottom + 16,
+          paddingLeft: insets.left + 16,
+          paddingRight: insets.right + 16
+        }}
+      >
         <AssociateDevicePanel autoStart />
       </View>
 

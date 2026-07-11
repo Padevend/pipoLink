@@ -21,7 +21,7 @@ export default function Index(){
         }
         void (async () => {
             const sk = await getIdentityPrivateKeyBytes();
-            setKeyStatus(sk ? 'present' : 'missing');
+            setKeyStatus(sk !== null ? 'present' : 'missing');
         })();
     }, [isLoggedIn, user?.is_configured]);
 

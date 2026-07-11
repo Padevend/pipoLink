@@ -2,51 +2,59 @@ import { RegisterForm } from '@/features/auth/components/register-form';
 import { router } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function RegisterScreen() {
+  const insets = useSafeAreaInsets();
   return (
-    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
       
-      {/* En-tête Translucide Style Glassmorphism (Sans Shadow - Adaptatif Light/Dark) */}
-      <View className="z-10 flex-row items-center border-b border-border-light/20 bg-surface-light/75 px-4 py-3.5 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl">
+      {/* HEADER : Panneau Mat Solide */}
+      <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
+        {/* Bouton Retour Géométrique Mat */}
         <Pressable 
           onPress={() => router.back()}
-          className="h-9 w-9 items-center justify-center rounded-full bg-background-light/40 dark:bg-background-dark/30 active:scale-95 transition-transform"
+          className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
         >
-          <ArrowLeft size={18} className="text-text-primary-light dark:text-text-primary-dark" />
+          <ArrowLeft size={14} color="#71717A" />
         </Pressable>
         
-        <View className="ml-3.5 flex-1">
-          <Text className="text-[16px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+        {/* Bloc Titre & Sous-titre Contextuel */}
+        <View className="ml-3 flex-1">
+          <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
             Inscription
           </Text>
-          <Text className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary-light/50 dark:text-text-secondary-dark/50 mt-0.5">
+          <Text className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mt-0.5">
             Nouveau compte étudiant
           </Text>
         </View>
       </View>
       
       <ScrollView 
-        contentContainerStyle={{ flexGrow: 1 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingBottom: insets.bottom + 16,
+          paddingLeft: insets.left,
+          paddingRight: insets.right
+        }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         className="flex-1"
       >
-        <View className="flex-1 px-6 pt-6 pb-10">
+        <View className="flex-1 px-4 pt-6 pb-10">
           
           {/* Section d'accueil textuelle épurée */}
-          <View className="mb-8">
-            <Text className="text-[24px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+          <View className="mb-6">
+            <Text className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
               Rejoignez votre communauté
             </Text>
-            <Text className="text-[13px] font-medium leading-[20px] text-text-secondary-light/70 dark:text-text-secondary-dark/60 mt-1.5">
+            <Text className="text-xs font-semibold leading-5 text-zinc-400 dark:text-zinc-500 mt-2">
               Accédez à vos cours, vos notes et vos services académiques en quelques instants.
             </Text>
           </View>
 
-          {/* Formulaire d'inscription enveloppé (Style Satiné / Glassmorphic) */}
-          <View className="w-full rounded-2xl">
+          {/* Formulaire d'inscription (Structure Mat Intégrée) */}
+          <View className="w-full">
             <RegisterForm />
           </View>
 

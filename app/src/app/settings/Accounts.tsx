@@ -2,79 +2,88 @@ import { useLogout } from '@/features/auth/model/use-logout';
 import SettingItem from '@/shared/ui/settings-cards';
 import { router } from 'expo-router';
 import { ArrowLeft, Key, LogOut, MailPlus, Trash, User } from 'lucide-react-native';
-import { Pressable, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function AccountsSettingsScreen() {
-    const { confirmLogout } = useLogout();
+  const { confirmLogout } = useLogout();
+  const insets = useSafeAreaInsets();
 
-    return (
-        <SafeAreaView
-            className="flex-1 bg-background-light dark:bg-background-dark"
-            edges={['top']}
+  return (
+    <SafeAreaView
+      className="flex-1 bg-white dark:bg-zinc-950"
+      edges={['top', 'left', 'right']}
+    >
+      {/* HEADER : Panneau Mat Solide */}
+      <View className="flex-row items-center gap-2 border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
+        <Pressable
+          onPress={() => router.back()}
+          className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
         >
-            {/* Header épuré */}
-            <View className="z-10 flex-row items-center border-b border-border-light/30 bg-surface-light/75 px-4 py-3 dark:border-border-dark/20 dark:bg-surface-dark/75 backdrop-blur-xl">
-                <Pressable
-                    onPress={() => router.back()}
-                    className="flex-row items-center gap-1 h-9 pl-2 pr-3 active:opacity-80"
-                >
-                    <ArrowLeft size={20} color="#64748B" />
-                </Pressable>
+          <ArrowLeft size={14} color="#71717A" />
+        </Pressable>
 
-                <View className="flex-row items-center">
-                    <Text className="font-semibold tracking-tight text-text-primary-light dark:text-text-primary-dark text-xl">Mon Compte</Text>
-                </View>
-            </View>
+        <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+          Mon Compte
+        </Text>
+      </View>
 
-            <View className="px-4 py-6">
-                <View className="mb-6 overflow-hidden backdrop-blur-md py-6">
-                    <SettingItem
-                        icon={User}
-                        label="Informations personnelles"
-                        value="Nom, email, téléphone, bio"
-                        onPress={() => router.push('/settings/Account/profile')}
-                    />
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: insets.bottom + 24 }}
+        showsVerticalScrollIndicator={false}
+      >
+        
+        {/* SECTION : SÉCURITÉ & INFO (Conteneur Mat Structuré) */}
+        <Text className="mb-2 ml-3 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+          Sécurité & Informations
+        </Text>
+        <View className="mb-5 overflow-hidden rounded-xl border border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/20">
+          <SettingItem
+            icon={User}
+            label="Informations personnelles"
+            value="Nom, email, téléphone, bio"
+            onPress={() => router.push('/settings/Account/profile')}
+          />
+          <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-900" />
+          <SettingItem
+            icon={MailPlus}
+            label="Changer d'email"
+            value="Mettre à jour votre adresse email"
+            onPress={() => router.push('/settings/Account/change-email')}
+          />
+          <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-900" />
+          <SettingItem
+            icon={Key}
+            label="Changer de mot de passe"
+            value="Mettre à jour votre mot de passe"
+            onPress={() => router.push('/settings/Account/change-password')}
+          />
+        </View>
 
-                    <SettingItem
-                        icon={MailPlus}
-                        label="Changer d'email"
-                        value="Mettre à jour votre adresse email"
-                        onPress={() => router.push('/settings/Account/change-email')}
-                    />
-
-                    <SettingItem
-                        icon={Key}
-                        label="Changer de mot de passe"
-                        value="Mettre à jour votre mot de passe"
-                        onPress={() => router.push('/settings/Account/change-password')}
-                    />
-                </View>
-
-
-                {/* Section : Action de compte*/}
-                <Text className="mb-2.5 ml-3 text-[10px] font-bold uppercase tracking-widest text-text-secondary-light/60 dark:text-text-secondary-dark/60">
-                    Actions de compte
-                </Text>
-                <View className="mb-8 overflow-hidden rounded-2xl border border-border-light/40 bg-surface-light/50 dark:border-border-dark/20 dark:bg-surface-dark/40 backdrop-blur-md">
-                    <SettingItem
-                        icon={LogOut}
-                        label="Déconnexion"
-                        destructive
-                        showChevron={false}
-                        onPress={confirmLogout}
-                    />
-                    <View className="mx-4 h-[0.5px] bg-border-light/10 dark:bg-border-dark/5" />
-                    <SettingItem
-                        icon={Trash}
-                        label="Supprimer mon compte"
-                        destructive
-                        showChevron={false}
-                        onPress={() => router.push('/settings/Account/account-delete')}
-                    />
-                </View>
-            </View>
-
-        </SafeAreaView>
-    )
+        {/* SECTION : ACTIONS DE COMPTE */}
+        <Text className="mb-2 ml-3 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+          Actions de compte
+        </Text>
+        <View className="mb-6 overflow-hidden rounded-xl border border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/20">
+          <SettingItem
+            icon={LogOut}
+            label="Déconnexion"
+            destructive
+            showChevron={false}
+            onPress={confirmLogout}
+          />
+          <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-900" />
+          <SettingItem
+            icon={Trash}
+            label="Supprimer mon compte"
+            destructive
+            showChevron={false}
+            onPress={() => router.push('/settings/Account/account-delete')}
+          />
+        </View>
+        
+      </ScrollView>
+    </SafeAreaView>
+  );
 }

@@ -3,7 +3,6 @@ import { Image } from 'expo-image';
 import { Camera, Trash2, Plus } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
 
-import { BRAND } from '@/shared/config/brand';
 import { cn } from '@/shared/utils/cn';
 import { getStaticUri } from '../lib/static';
 
@@ -32,19 +31,23 @@ export function AvatarPicker({ label = 'Photo de profil', uri, onChange, error }
   };
 
   return (
-    <View className="items-center w-full">
+    <View className="flex flex-col items-center">
       {/* Label aligné sur la charte des Inputs */}
       {label && (
-        <Text className="self-start ml-1 text-[13px] font-semibold text-text-secondary-light dark:text-text-secondary-dark mb-2">
+        <Text className="self-center ml-1 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2">
           {label}
         </Text>
-      )/* Enveloppe de l'avatar avec badge d'action superposé */}
-      <View className="relative h-24 w-24 items-center justify-center mb-3">
+      )}
+
+      {/* Enveloppe de l'avatar avec badge d'action superposé */}
+      <View className="relative h-20 w-20 items-center justify-center mb-2.5">
         <Pressable
           onPress={() => void pickImage()}
           className={cn(
-            'h-24 w-24 items-center justify-center overflow-hidden rounded-full border-2 bg-surface-light/40 dark:bg-surface-dark/30 transition-all active:scale-95',
-            error ? 'border-red-500/50' : 'border-border-light/40 dark:border-border-dark/20',
+            'h-20 w-20 items-center justify-center overflow-hidden rounded-full border bg-zinc-50 dark:bg-zinc-900/40 active:bg-zinc-100 dark:active:bg-zinc-900',
+            error 
+              ? 'border-red-500 dark:border-red-500' 
+              : 'border-zinc-200 dark:border-zinc-800',
           )}
         >
           {uri ? (
@@ -55,34 +58,34 @@ export function AvatarPicker({ label = 'Photo de profil', uri, onChange, error }
             />
           ) : (
             <View className="items-center justify-center h-full w-full">
-              <Camera size={26} color={BRAND.primary} />
+              <Camera size={20} color="#F97316" />
             </View>
           )}
         </Pressable>
 
-        {/* Badge d'action flottant contextuel (Ajouter ou Supprimer) */}
+        {/* Badge d'action flottant contextuel (Rectangle adouci mat) */}
         {uri ? (
           <Pressable
             onPress={() => onChange(null)}
-            className="absolute -bottom-1 -right-1 h-7 w-7 items-center justify-center rounded-full border border-red-200 active:scale-90 dark:border-red-950/40 bg-red-500"
+            className="absolute -bottom-1 -right-1 h-6 w-6 items-center justify-center rounded-lg border border-red-200 bg-red-500 dark:border-red-600 active:bg-red-600"
           >
-            <Trash2 size={13} color="#fff" />
+            <Trash2 size={11} color="#fff" />
           </Pressable>
         ) : (
           <Pressable
             onPress={() => void pickImage()}
-            className="absolute -bottom-1 -right-1 h-7 w-7 items-center justify-center rounded-full border border-border-light/40 bg-white active:scale-90 dark:border-border-dark/20 dark:bg-surface-dark"
+            className="absolute -bottom-1 -right-1 h-6 w-6 items-center justify-center rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 active:bg-zinc-100 dark:active:bg-zinc-800"
           >
-            <Plus size={14} color={BRAND.primary} />
+            <Plus size={11} color="#F97316" />
           </Pressable>
         )}
       </View>
 
       {/* Message indicatif contextuel de bas de champ */}
       {error ? (
-        <Text className="text-[11px] font-medium text-red-500 dark:text-red-400">{error}</Text>
+        <Text className="text-[11px] font-semibold text-red-600 dark:text-red-400">{error}</Text>
       ) : (
-        <Text className="text-center text-[12px] font-medium text-text-secondary-light/50 dark:text-text-secondary-dark/50">
+        <Text className="text-center text-[11px] font-semibold text-zinc-400 dark:text-zinc-500">
           {uri ? 'Photo configurée avec succès' : 'Format carré recommandé'}
         </Text>
       )}

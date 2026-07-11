@@ -3,11 +3,7 @@ import {
   ArrowLeft,
   Bell,
   BellRing,
-  Eye,
-  EyeOff,
-  Flashlight,
   RefreshCw,
-  ShieldOff,
   Vibrate,
   Volume2,
 } from 'lucide-react-native';
@@ -21,7 +17,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useNotificationSettings } from '@/features/notifications/hooks/use-notification-settings';
 import {
@@ -29,11 +25,6 @@ import {
   registerForPushNotifications,
   setPushEnabled,
 } from '@/features/notifications/push';
-import {
-  AndroidImportance,
-  AndroidNotificationVisibility,
-} from '@/features/notifications/types';
-import { BRAND } from '@/shared/config/brand';
 import { cn } from '@/shared/utils/cn';
 
 const SOUND_OPTIONS: { value: 'default' | 'custom' | null; label: string }[] = [
@@ -41,12 +32,11 @@ const SOUND_OPTIONS: { value: 'default' | 'custom' | null; label: string }[] = [
   { value: null, label: 'Aucun' },
 ];
 
-
 /* ─── Sub-components ──────────────────────────────────────────────────────── */
 
 function SectionLabel({ children }: { children: string }) {
   return (
-    <Text className="mb-3 ml-3 mt-6 text-[10px] font-bold uppercase tracking-widest text-text-secondary-light/60 dark:text-text-secondary-dark/60">
+    <Text className="mb-2 ml-1 mt-5 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
       {children}
     </Text>
   );
@@ -67,23 +57,23 @@ function ToggleRow({
 }) {
   return (
     <View className="flex-row items-center justify-between px-4 py-3.5">
-      <View className="flex-row items-start flex-1 pr-4 gap-3.5">
+      <View className="flex-row items-start flex-1 pr-4 gap-3">
         <View
           className={cn(
-            'h-9 w-9 items-center justify-center rounded-xl border',
+            'h-8 w-8 items-center justify-center rounded-lg border',
             value
-              ? 'bg-primary/10 border-primary/20'
-              : 'bg-text-secondary-light/5 border-border-light/10 dark:bg-text-secondary-dark/5 dark:border-border-dark/10',
+              ? 'bg-orange-50 border-orange-200 dark:bg-orange-950/30 dark:border-orange-900/50'
+              : 'bg-zinc-50 border-zinc-100 dark:bg-zinc-900 dark:border-zinc-800',
           )}
         >
-          <Icon size={16} color={value ? BRAND.primary : '#64748B'} />
+          <Icon size={14} color={value ? '#F97316' : '#71717A'} />
         </View>
         <View className="flex-1 justify-center">
-          <Text className="text-[14px] font-semibold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+          <Text className="text-xs font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
             {label}
           </Text>
           {description ? (
-            <Text className="mt-0.5 text-[11px] font-medium leading-[16px] text-text-secondary-light/60 dark:text-text-secondary-dark/60">
+            <Text className="mt-0.5 text-[10px] font-semibold leading-4 text-zinc-400 dark:text-zinc-500">
               {description}
             </Text>
           ) : null}
@@ -92,7 +82,7 @@ function ToggleRow({
       <Switch
         value={value}
         onValueChange={onValueChange}
-        trackColor={{ true: BRAND.primary, false: '#D1D5DB' }}
+        trackColor={{ true: '#F97316', false: '#E4E4E7' }}
         thumbColor="#FFFFFF"
       />
     </View>
@@ -100,14 +90,13 @@ function ToggleRow({
 }
 
 function Separator() {
-  return <View className="mx-4 h-[0.5px] bg-border-light/10 dark:bg-border-dark/5" />;
+  return <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-900" />;
 }
 
 /* ─── Main screen ─────────────────────────────────────────────────────────── */
 
 export default function NotificationsScreen(): JSX.Element {
   const { settings, loading, updateSettings, resetSettings } = useNotificationSettings();
-
   const [pushEnabled, setPushEnabledState] = useState(true);
 
   useEffect(() => {
@@ -121,52 +110,56 @@ export default function NotificationsScreen(): JSX.Element {
     if (value) await registerForPushNotifications();
   };
 
-  /** Apply changes & re-register the channel on Android */
   const applyAndRegister = async () => {
     if (Platform.OS === 'android') {
       await registerForPushNotifications();
     }
   };
 
+  const insets = useSafeAreaInsets();
+
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-background-light dark:bg-background-dark" edges={['top']}>
-        <ActivityIndicator size="large" color={BRAND.primary} />
+      <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
+        <ActivityIndicator size="small" color="#F97316" />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top']}>
-      {/* ── Header ─────────────────────────────────────────────────────── */}
-      <View className="z-10 flex-row items-center border-b border-border-light/20 bg-surface-light/75 px-4 py-3.5 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl">
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
+      
+      {/* HEADER : Panneau Mat Solide */}
+      <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
         <Pressable
           onPress={() => router.back()}
-          className="h-9 w-9 items-center justify-center active:scale-95 transition-transform"
+          className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
         >
-          <ArrowLeft size={20} color="#64748B" />
+          <ArrowLeft size={14} color="#71717A" />
         </Pressable>
-        <Text className="flex-1 ml-3 text-[17px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+        
+        <Text className="flex-1 ml-3 text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
           Notifications
         </Text>
 
-        {/* Reset button */}
+        {/* Bouton de réinitialisation géométrique */}
         <Pressable
           onPress={async () => {
             await resetSettings();
             await applyAndRegister();
           }}
-          className="h-9 w-9 items-center justify-center active:scale-95 transition-transform"
+          className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
         >
-          <RefreshCw size={18} color="#64748B" />
+          <RefreshCw size={13} color="#71717A" />
         </Pressable>
       </View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-        <View className="px-5">
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}>
+        <View className="px-4">
+          
           {/* ── Section: Activation globale ──────────────────────────── */}
           <SectionLabel>Alertes système</SectionLabel>
-          <View className="rounded-2xl border border-border-light/40 bg-surface-light/50 dark:border-border-dark/20 dark:bg-surface-dark/40 backdrop-blur-md">
+          <View className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-900 dark:bg-zinc-950">
             <ToggleRow
               icon={BellRing}
               label="Push notifications"
@@ -178,8 +171,8 @@ export default function NotificationsScreen(): JSX.Element {
 
           {/* ── Section: Son & Vibration ────────────────────────────── */}
           <SectionLabel>Son & Vibration</SectionLabel>
-          <View className="overflow-hidden rounded-2xl border border-border-light/40 bg-surface-light/50 dark:border-border-dark/20 dark:bg-surface-dark/40 backdrop-blur-md">
-            {/* Sound picker */}
+          <View className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-900 dark:bg-zinc-950">
+            {/* Options de son */}
             {SOUND_OPTIONS.map((opt, idx) => {
               const isSelected = settings.sound === opt.value;
               return (
@@ -190,23 +183,28 @@ export default function NotificationsScreen(): JSX.Element {
                       await updateSettings({ sound: opt.value });
                       await applyAndRegister();
                     }}
-                    className="flex-row items-center justify-between px-4 py-3.5 active:bg-text-secondary-light/5 dark:active:bg-text-secondary-dark/5"
+                    className={cn(
+                      'flex-row items-center justify-between px-4 py-3.5 transition-colors',
+                      isSelected 
+                        ? 'bg-orange-50/20 dark:bg-orange-950/5' 
+                        : 'active:bg-zinc-50 dark:active:bg-zinc-900/50'
+                    )}
                   >
-                    <View className="flex-row items-center gap-3.5">
+                    <View className="flex-row items-center gap-3">
                       <View
                         className={cn(
-                          'h-9 w-9 items-center justify-center rounded-xl border',
+                          'h-8 w-8 items-center justify-center rounded-lg border',
                           isSelected
-                            ? 'bg-primary/10 border-primary/20'
-                            : 'bg-text-secondary-light/5 border-border-light/10 dark:bg-text-secondary-dark/5 dark:border-border-dark/10',
+                            ? 'bg-orange-50 border-orange-200 dark:bg-orange-950/30 dark:border-orange-900/50'
+                            : 'bg-zinc-50 border-zinc-100 dark:bg-zinc-900 dark:border-zinc-800',
                         )}
                       >
-                        <Volume2 size={16} color={isSelected ? BRAND.primary : '#64748B'} />
+                        <Volume2 size={14} color={isSelected ? '#F97316' : '#71717A'} />
                       </View>
                       <Text
                         className={cn(
-                          'text-[14px] font-semibold tracking-tight',
-                          isSelected ? 'text-primary' : 'text-text-primary-light dark:text-text-primary-dark',
+                          'text-xs font-semibold tracking-tight',
+                          isSelected ? 'text-orange-500 dark:text-orange-400' : 'text-zinc-900 dark:text-zinc-50',
                         )}
                       >
                         {opt.label}
@@ -214,13 +212,13 @@ export default function NotificationsScreen(): JSX.Element {
                     </View>
                     <View
                       className={cn(
-                        'h-5 w-5 items-center justify-center rounded-full border transition-all',
+                        'h-4 w-4 items-center justify-center rounded-full border',
                         isSelected
-                          ? 'border-primary bg-primary/10'
-                          : 'border-border-light/60 dark:border-border-dark/40 bg-transparent',
+                          ? 'border-orange-500 bg-orange-500'
+                          : 'border-zinc-300 dark:border-zinc-700 bg-transparent',
                       )}
                     >
-                      {isSelected && <View className="h-2 w-2 rounded-full bg-primary" />}
+                      {isSelected && <View className="h-1.5 w-1.5 rounded-full bg-white" />}
                     </View>
                   </Pressable>
                 </View>
@@ -229,7 +227,7 @@ export default function NotificationsScreen(): JSX.Element {
 
             <Separator />
 
-            {/* Vibration toggle */}
+            {/* Commutateur de vibration */}
             <ToggleRow
               icon={Vibrate}
               label="Vibration"

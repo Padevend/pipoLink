@@ -100,6 +100,72 @@ export class FileService {
   }
 
   /**
+   * Stocke un document personnel pour l'IA.
+   * Ces documents sont placés dans un dossier différent pour des raisons de confidentialité.
+   */
+  async storeAiAttachment(buffer: Buffer, mimeType: string, originalName?: string): Promise<{ url: string; size: number }> {
+    this._validateMime(mimeType, [...this.ALLOWED_DOCUMENTS, ...this.ALLOWED_IMAGES]);
+    this._validateSize(buffer.length, env.get("MAX_FILE_SIZE_MB") * 1024 * 1024);
+
+    const ext      = mime.extension(mimeType) || "bin";
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const driveName = originalName ? `${Date.now()}-${originalName}` : fileName;
+
+    if (this.driveService.isConfigured) {
+      try {
+        const driveAiFolderId = env.get("GOOGLE_DRIVE_AI_FOLDER_ID") as string | undefined;
+        const driveResult = await this.driveService.uploadFile(buffer, driveName, mimeType, driveAiFolderId);
+        return { url: driveResult.url, size: driveResult.size };
+      } catch (error) {
+        console.error("Google Drive upload failed for AI attachment, falling back to local storage:", error);
+      }
+    }
+
+    const dir      = this._ensureDir("ai-attachments");
+    const filePath = path.join(dir, fileName);
+    fs.writeFileSync(filePath, buffer);
+    return { url: `/storage/ai-attachments/${fileName}`, size: buffer.length };
+  }
+
+  /**
+   * Supprime un fichier du file system local ou du Drive, à partir de son URL.
+   */
+  async deleteFileByUrl(fileUrl: string): Promise<void> {
+    if (fileUrl.startsWith("/storage/")) {
+      // Local file
+      const relativePath = fileUrl.replace("/storage/", "");
+      const fullPath = path.join(env.get("STORAGE_PATH"), relativePath);
+      const resolvedStoragePath = path.resolve(env.get("STORAGE_PATH"));
+      const resolvedFullPath = path.resolve(fullPath);
+      
+      if (!resolvedFullPath.startsWith(resolvedStoragePath)) {
+        console.error(`[Security] Path traversal attempt blocked: ${fileUrl}`);
+        return;
+      }
+
+      if (fs.existsSync(resolvedFullPath)) {
+        fs.unlinkSync(resolvedFullPath);
+      }
+    } else if (fileUrl.includes("drive.google.com")) {
+      // Drive file - extract ID
+      // URL formats: https://drive.google.com/uc?id=FILE_ID&export=download or https://drive.google.com/file/d/FILE_ID/view
+      try {
+        const urlObj = new URL(fileUrl);
+        let fileId = urlObj.searchParams.get("id");
+        if (!fileId && urlObj.pathname.includes("/file/d/")) {
+          const parts = urlObj.pathname.split("/file/d/");
+          if (parts[1]) fileId = parts[1].split("/")[0];
+        }
+        if (fileId) {
+          await this.driveService.deleteFile(fileId);
+        }
+      } catch (err) {
+        console.error("Failed to delete drive file by URL:", err);
+      }
+    }
+  }
+
+  /**
    * Traite et enregistre l'affiche d'une annonce.
    */
   async saveAnnouncementPoster(buffer: Buffer, mimeType: string, quality: number): Promise<string> {

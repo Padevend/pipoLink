@@ -81,7 +81,7 @@ export class AnnouncementController {
       return ApiResponse.error(c, "NOT_FOUND", "Annonce non trouvée.", 404);
     }
 
-    if(announcement.author_id !== c.get("userId") || role !== "admin") {
+    if (announcement.author_id !== c.get("userId") && role !== "admin") {
       return ApiResponse.error(c, "FORBIDDEN", "Réservé au personnel.", 403);
     }
 

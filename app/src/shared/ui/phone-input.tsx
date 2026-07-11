@@ -1,11 +1,10 @@
-import { useState } from 'react';
-import { Pressable, Text, TextInput, View, Modal, FlatList } from 'react-native';
-import { ChevronDown, Search, X, Phone } from 'lucide-react-native';
 import { cn } from '@/shared/utils/cn';
-import { BRAND } from '@/shared/config/brand';
+import { ChevronDown, Phone, X } from 'lucide-react-native';
+import { useState } from 'react';
+import { FlatList, Modal, Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { SearchBar } from './search-bar';
 import { COUNTRIES } from '../data/avaible-phonCode';
+import { SearchBar } from './search-bar';
 
 function digitsOnly(value: string): string {
   return value.replace(/\D/g, '');
@@ -20,17 +19,16 @@ interface PhoneInputProps {
   value: string;
   onChangeE164: (e164: string) => void;
   error?: string;
-  dialCode?: string; // Indicatif par défaut (Ex: +237)
+  dialCode?: string;
 }
 
 export function PhoneInput({
-  label = 'Numéro de téléphone',
+  label,
   value,
   onChangeE164,
   error,
   dialCode = '+237',
 }: PhoneInputProps): JSX.Element {
-  // Retrouver l'objet pays initial basé sur le dialCode passé en prop
   const initialCountry = COUNTRIES.find(c => c.code === dialCode) || COUNTRIES[0];
 
   const [selectedCountry, setSelectedCountry] = useState(initialCountry);
@@ -38,7 +36,6 @@ export function PhoneInput({
   const [searchQuery, setSearchQuery] = useState('');
   const [focused, setFocused] = useState(false);
 
-  // Extraction de la partie nationale
   const nationalFromValue = value.startsWith(selectedCountry.code)
     ? value.slice(selectedCountry.code.length)
     : value.replace(/^\+\d+/, '');
@@ -54,57 +51,55 @@ export function PhoneInput({
     setSelectedCountry(country);
     setModalVisible(false);
     setSearchQuery('');
-    // Recalculer instantanément la valeur E164 avec le nouvel indicatif
     onChangeE164(national ? parseE164(country.code, national) : '');
   };
 
-  // Filtrage de la liste de recherche
   const filteredCountries = COUNTRIES.filter(c =>
     c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.code.includes(searchQuery)
   );
 
   return (
-    <View className="w-full gap-y-1.5">
+    <View className="w-full gap-y-1">
       {label ? (
-        <Text className="ml-1 text-[13px] font-semibold text-text-secondary-light dark:text-text-secondary-dark">
+        <Text className="ml-1 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
           {label}
         </Text>
       ) : null}
 
-      {/* Boîtier principal d'entrée (Style Satiné - Sans Shadow) */}
+      {/* BOÎTIER PRINCIPAL : Cadre Mat Opaque */}
       <View
         className={cn(
-          'h-12 flex-row items-center rounded-xl border bg-surface-light/40 dark:bg-surface-dark/30 transition-all',
-          focused ? 'border-primary/60' : 'border-border-light/40 dark:border-border-dark/20',
-          error && 'border-red-500/50 bg-red-50/10 dark:bg-red-950/5',
+          'h-10 flex-row items-center rounded-xl border bg-zinc-50 dark:bg-zinc-900/20',
+          focused ? 'border-orange-500' : 'border-zinc-200 dark:border-zinc-800',
+          error && 'border-red-500 bg-red-50/10 dark:bg-red-950/5',
         )}
       >
         {/* Déclencheur du Sélecteur d'Indicatif */}
         <Pressable
           onPress={() => setModalVisible(true)}
-          className="h-full flex-row items-center justify-center gap-1 border-r border-border-light/40 px-3.5 dark:border-border-dark/20 active:bg-slate-100/50 dark:active:bg-slate-800/40 rounded-l-xl"
+          className="h-full flex-row items-center justify-center gap-1 border-r border-zinc-200 px-3 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-900 rounded-l-xl"
         >
-          <Text className="text-[14px] font-bold text-text-primary-light dark:text-text-primary-dark">
+          <Text className="text-xs font-bold text-zinc-900 dark:text-zinc-50">
             {selectedCountry.code}
           </Text>
-          <ChevronDown size={14} color="#64748B" />
+          <ChevronDown size={12} color="#71717A" />
         </Pressable>
 
-        {/* Champ de saisie numérique formaté par paires (00 00 00...) */}
+        {/* Champ de saisie numérique formaté */}
         <TextInput
           value={national.replace(/(\d{2})(?=\d)/g, '$1 ').trim()}
           onChangeText={handleNationalChange}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           placeholder="6 00 00 00 00"
-          placeholderTextColor="#94A3B8"
+          placeholderTextColor="#A1A1AA"
           keyboardType="phone-pad"
-          className="flex-1 h-full px-4 text-[14px] font-semibold text-text-primary-light dark:text-text-primary-dark"
+          className="flex-1 h-full px-3 text-xs font-semibold text-zinc-900 dark:text-zinc-50"
         />
       </View>
 
       {error ? (
-        <Text className="ml-1 text-[11px] font-medium text-red-500 dark:text-red-400">{error}</Text>
+        <Text className="ml-1 text-[11px] font-semibold text-red-600 dark:text-red-400">{error}</Text>
       ) : null}
 
       {/* ================= MODAL DE SÉLECTION DU PAYS ================= */}
@@ -112,29 +107,30 @@ export function PhoneInput({
         animationType="fade"
         transparent={true}
         visible={modalVisible}
+        statusBarTranslucent
         onRequestClose={() => setModalVisible(false)}
       >
-        <View className="flex-1 justify-end bg-black/40 dark:bg-black/60 backdrop-blur-sm">
-          <SafeAreaView className="max-h-[80%] rounded-t-[24px] border-t border-border-light/40 bg-background-light dark:border-border-dark/20 dark:bg-background-dark">
+        <View className="flex-1 justify-end bg-black/50 dark:bg-black/70">
+          <SafeAreaView className="max-h-[80%] rounded-t-xl border-t border-zinc-200 bg-white dark:border-zinc-900 dark:bg-zinc-950">
 
-            {/* Header de la Modal */}
-            <View className="flex-row items-center justify-between border-b border-border-light/40 px-5 py-4 dark:border-border-dark/20">
+            {/* Header de la Modal : Panneau Mat */}
+            <View className="flex-row items-center justify-between border-b border-zinc-100 px-4 py-3 dark:border-zinc-900">
               <View className="flex-row items-center gap-2">
-                <Phone size={16} color={BRAND.primary} />
-                <Text className="text-[16px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+                <Phone size={14} color="#F97316" />
+                <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
                   Choisir un pays
                 </Text>
               </View>
               <Pressable
                 onPress={() => setModalVisible(false)}
-                className="h-7 w-7 items-center justify-center rounded-full bg-surface-light dark:bg-surface-dark"
+                className="h-7 w-7 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 active:bg-zinc-100 dark:active:bg-zinc-800"
               >
-                <X size={15} color="#64748B" />
+                <X size={13} color="#71717A" />
               </Pressable>
             </View>
 
-            {/* Barre de Recherche Interne (Style Glassmorphic) */}
-            <View className="flex pb-5">
+            {/* Barre de Recherche Interne */}
+            <View className="flex pb-3 pt-1">
               <SearchBar
                 value={searchQuery}
                 onChangeText={setSearchQuery}
@@ -146,35 +142,37 @@ export function PhoneInput({
             <FlatList
               data={filteredCountries}
               keyExtractor={(item) => item.code + item.name}
-              contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
+              contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
               renderItem={({ item }) => {
                 const isSelected = item.code === selectedCountry.code;
                 return (
                   <Pressable
                     onPress={() => handleCountrySelect(item)}
                     className={cn(
-                      'flex-row items-center justify-between py-3.5 border-b border-border-light/20 dark:border-border-dark/10 active:opacity-60',
-                      isSelected && 'bg-primary/5 dark:bg-primary/5 rounded-lg px-2 -mx-2'
+                      'flex-row items-center justify-between py-3 border-b border-zinc-100 dark:border-zinc-900/60',
+                      isSelected 
+                        ? 'bg-orange-50/60 dark:bg-orange-950/10 rounded-lg px-2 -mx-2' 
+                        : 'active:bg-zinc-50 dark:active:bg-zinc-900/40'
                     )}
                   >
-                    <View className="flex-row items-center gap-4">
-                      {/* Structure demandée : "{code}  {country}" */}
-                      <Text className="text-[14px] font-bold text-primary w-14" style={{ color: BRAND.primary }}>
+                    <View className="flex-row items-center gap-3">
+                      {/* Structure demandée : "{code} {country}" */}
+                      <Text className="text-xs font-bold text-orange-500 w-12">
                         {item.code}
                       </Text>
-                      <Text className="text-[14px] font-medium text-text-primary-light dark:text-text-primary-dark">
+                      <Text className="text-xs font-semibold text-zinc-900 dark:text-zinc-50">
                         {item.name}
                       </Text>
                     </View>
 
                     {isSelected && (
-                      <View className="h-2 w-2 rounded-full bg-primary" style={{ backgroundColor: BRAND.primary }} />
+                      <View className="h-1.5 w-1.5 rounded-full bg-orange-500" />
                     )}
                   </Pressable>
                 );
               }}
               ListEmptyComponent={
-                <Text className="text-center text-[13px] text-text-secondary-light/50 dark:text-text-secondary-dark/50 py-8 font-medium">
+                <Text className="text-center text-[11px] text-zinc-400 dark:text-zinc-500 py-8 font-semibold">
                   Aucun pays trouvé pour "{searchQuery}"
                 </Text>
               }

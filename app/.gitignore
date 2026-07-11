@@ -20,6 +20,9 @@ expo-env.d.ts
 *.mobileprovision
 keystore-info.json
 google-services.json
+google-service01.json
+release-key.keystore
+credentials.json
 
 # Metro
 .metro-health-check*

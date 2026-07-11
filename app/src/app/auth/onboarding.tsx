@@ -1,18 +1,18 @@
 import { router } from "expo-router";
 import { useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Text,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useOnboarding } from "@/features/auth/hooks/use-onboarding";
 import {
-    onboardingSchema,
-    type OnboardingFormValues,
+  onboardingSchema,
+  type OnboardingFormValues,
 } from "@/features/auth/lib/onboarding-schema";
 import { useAuth, useToast } from "@/providers";
 import { AppLogo } from "@/shared/ui/app-logo";
@@ -25,6 +25,7 @@ import { PhoneInput } from "@/shared/ui/phone-input";
 
 export default function OnboardingScreen(): JSX.Element {
   const [firstname, setFirstname] = useState("");
+  const insets = useSafeAreaInsets();
   const [lastname, setLastname] = useState("");
   const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
@@ -36,7 +37,7 @@ export default function OnboardingScreen(): JSX.Element {
   const [errors, setErrors] = useState<
     Partial<Record<keyof OnboardingFormValues | "avatar", string>>
   >({});
-  
+
   const onboarding = useOnboarding();
   const { refreshUser } = useAuth();
   const { showToast } = useToast();
@@ -89,25 +90,38 @@ export default function OnboardingScreen(): JSX.Element {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top']}>
-      
-      {/* En-tête Translucide Style Glassmorphism (Remplaçant du LinearGradient - Sans Shadow) */}
-      <View className="z-10 border-b border-border-light/20 bg-surface-light/75 px-5 py-4 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl">
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
+
+      {/* HEADER : Panneau Mat Solide */}
+      <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
         <View className="flex-row items-center justify-between">
           <AppLogo size="sm" />
         </View>
-        <Text className="mt-2 text-[12px] font-medium leading-[18px] text-text-secondary-light/70 dark:text-text-secondary-dark/60">
-          Complétez votre profil. Les clés de chiffrement de bout en bout sont générées uniquement sur cet appareil sécurisé.
-        </Text>
+
+        {/* Bloc Titre & Sous-titre Contextuel */}
+        <View className="ml-3 flex-1">
+          <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50 uppercase">
+            Mon Profile
+          </Text>
+          <Text className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mt-0.5">
+            complétez votre profil
+          </Text>
+        </View>
       </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={insets.top}
         className="flex-1"
       >
         <ScrollView
-          className="flex-1 px-5"
-          contentContainerStyle={{ paddingTop: 20, paddingBottom: 40 }}
+          className="flex-1"
+          contentContainerStyle={{
+            paddingTop: 20,
+            paddingBottom: insets.bottom + 24,
+            paddingLeft: insets.left + 16,
+            paddingRight: insets.right + 16
+          }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -120,9 +134,8 @@ export default function OnboardingScreen(): JSX.Element {
             />
           </View>
 
-          {/* Formulaire encapsulé en bloc Satiné Verre Unifié */}
-          <View className="w-full backdrop-blur-md gap-y-4">
-            
+          {/* Formulaire (Structure Mat Intégrée) */}
+          <View className="w-full gap-y-4">
             <Input
               label="Prénom *"
               value={firstname}
@@ -131,7 +144,7 @@ export default function OnboardingScreen(): JSX.Element {
               containerClassName="bg-transparent"
               placeholder="Votre prénom"
             />
-            
+
             <Input
               label="Nom *"
               value={lastname}
@@ -140,7 +153,7 @@ export default function OnboardingScreen(): JSX.Element {
               containerClassName="bg-transparent"
               placeholder="Votre nom"
             />
-            
+
             <Input
               label="Pseudo (optionnel)"
               value={username}
@@ -150,7 +163,7 @@ export default function OnboardingScreen(): JSX.Element {
               containerClassName="bg-transparent"
               placeholder="nom_utilisateur"
             />
-            
+
             <PhoneInput
               label="Numéro de téléphone (optionnel)"
               value={phone}
@@ -204,8 +217,7 @@ export default function OnboardingScreen(): JSX.Element {
               label="Terminer la configuration"
               loading={onboarding.isPending}
               onPress={() => void handleSubmit()}
-              size="xl"
-              className="rounded-xl h-12"
+              className="bg-orange-500 rounded-xl h-11"
             />
           </View>
         </ScrollView>

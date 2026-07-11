@@ -12,76 +12,84 @@ import {
   Shield,
   User
 } from "lucide-react-native";
-import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, Text, View } from "react-native";
+import { RefreshControl } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SettingsScreen() {
-  const { user, logout } = useAuth();
-  const { data: isPrimary } = useIsPrimaryDevice();
-
-  const { t } = useTranslation("settings");
+  const { user, refreshUser } = useAuth();
+  const { data: isPrimary, refetch: refetchIsPrimary } = useIsPrimaryDevice();
 
   return (
     <SafeAreaView
-      className="flex-1 bg-background-light dark:bg-background-dark"
+      className="flex-1 bg-white dark:bg-zinc-950"
       edges={["top"]}
     >
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View className="px-5 py-6">
-          {/* Titre Principal Raffiné */}
-          <Text className="mb-6 text-[26px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={(
+          <RefreshControl
+            refreshing={false}
+            onRefresh={async () => {
+              await refreshUser();
+              await refetchIsPrimary();
+            }}
+          />
+        )}
+      >
+        <View className="px-4 py-5">
+
+          {/* TITRE PRINCIPAL MAT */}
+          <Text className="mb-5 text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
             Profil
           </Text>
 
-          {/* En-tête de Profil Façon Badge Volant */}
+          {/* EN-TÊTE DE PROFIL : Panneau Mat Solide */}
           <Pressable
             onPress={() => router.push("/settings/Account/profile")}
-            className="mb-8 items-center rounded-3xl border border-border-light/40 bg-surface-light/40 p-5 dark:border-border-dark/20 dark:bg-surface-dark/30 active:scale-[0.99] transition-all"
+            className="mb-6 items-center rounded-xl border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-900 dark:bg-zinc-900/40 active:bg-zinc-100 dark:active:bg-zinc-900"
           >
-            <View className="rounded-full p-1 bg-background-light/60 dark:bg-background-dark/40">
+            <View className="rounded-full p-0.5 bg-zinc-200 dark:bg-zinc-800">
               <Avatar
                 name={user?.profile?.firstname || user?.username || "User"}
                 uri={user?.profile?.avatarUrl ?? undefined}
                 size="xl"
-                className="border-2 border-white dark:border-slate-900"
+                className="border border-white dark:border-zinc-950"
+                role={user?.role}
               />
             </View>
-            <Text className="mt-3 text-[18px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+
+            <Text className="mt-2.5 text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
               {user?.username}
             </Text>
 
-            <View className="mt-1.5 rounded-full bg-primary/10 border border-primary/10 px-2.5 py-0.5">
-              <Text className="text-[9px] font-bold uppercase tracking-wider text-primary">
+            <View className="mt-1.5 rounded bg-orange-50 dark:bg-orange-950/20 px-1.5 py-0.5">
+              <Text className="text-[9px] font-bold uppercase tracking-wider text-orange-700 dark:text-orange-400">
                 {user?.role}
               </Text>
             </View>
           </Pressable>
 
-          {/* Section : Compte */}
-          <Text className="mb-2.5 ml-3 text-[10px] font-bold uppercase tracking-widest text-text-secondary-light/60 dark:text-text-secondary-dark/60">
+          {/* SECTION : COMPTE */}
+          <Text className="mb-2 ml-3 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
             Compte
           </Text>
-          <View className="mb-6 overflow-hidden rounded-2xl border border-border-light/40 bg-surface-light/50 dark:border-border-dark/20 dark:bg-surface-dark/40 backdrop-blur-md">
+          <View className="mb-5 overflow-hidden rounded-xl border border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/20">
             <SettingItem
               icon={User}
               label="Mon compte"
               value="Voir et modifier les détails de votre compte"
               onPress={() => router.push("/settings/Accounts")}
             />
-            {isPrimary && (
-              <>
-                <View className="mx-4 h-[0.5px] bg-border-light/10 dark:bg-border-dark/5" />
-                <SettingItem
-                  icon={Shield}
-                  label="Appareils liés"
-                  value="Voir et gérer les appareils connectés à votre compte"
-                  onPress={() => router.push("/devices")}
-                />
-                <View className="mx-4 h-[0.5px] bg-border-light/10 dark:bg-border-dark/5" />
-              </>
-            )}
-            <View className="mx-4 h-[0.5px] bg-border-light/10 dark:bg-border-dark/5" />
+            <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-900" />
+            <SettingItem
+              icon={Shield}
+              label="Appareils liés"
+              value="Voir et gérer les appareils connectés à votre compte"
+              onPress={() => router.push("/devices")}
+            />
+
+            <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-900" />
             <SettingItem
               icon={CreditCard}
               label="Abonnement"
@@ -90,25 +98,25 @@ export default function SettingsScreen() {
             />
           </View>
 
-          {/* Section : Préférences */}
-          <Text className="mb-2.5 ml-3 text-[10px] font-bold uppercase tracking-widest text-text-secondary-light/60 dark:text-text-secondary-dark/60">
+          {/* SECTION : PRÉFÉRENCES */}
+          <Text className="mb-2 ml-3 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
             Préférences
           </Text>
-          <View className="mb-6 overflow-hidden rounded-2xl border border-border-light/40 bg-surface-light/50 dark:border-border-dark/20 dark:bg-surface-dark/40 backdrop-blur-md">
+          <View className="mb-5 overflow-hidden rounded-xl border border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/20">
             <SettingItem
               icon={Palette}
               label="Apparence"
               value="Thème clair, sombre, système"
               onPress={() => router.push("/settings/appearance")}
             />
-            <View className="mx-4 h-[0.5px] bg-border-light/10 dark:bg-border-dark/5" />
+            <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-900" />
             <SettingItem
               icon={Globe}
               label="Langue"
               value="Voir et modifier la langue de l'application"
               onPress={() => router.push("/settings/language")}
             />
-            <View className="mx-4 h-[0.5px] bg-border-light/10 dark:bg-border-dark/5" />
+            <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-900" />
             <SettingItem
               icon={Bell}
               label="Notifications"
@@ -117,11 +125,11 @@ export default function SettingsScreen() {
             />
           </View>
 
-          {/* Section : Aide */}
-          <Text className="mb-2.5 ml-3 text-[10px] font-bold uppercase tracking-widest text-text-secondary-light/60 dark:text-text-secondary-dark/60">
+          {/* SECTION : AIDE */}
+          <Text className="mb-2 ml-3 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
             Aide & support
           </Text>
-          <View className="mb-8 overflow-hidden rounded-2xl border border-border-light/40 bg-surface-light/50 dark:border-border-dark/20 dark:bg-surface-dark/40 backdrop-blur-md">
+          <View className="mb-6 overflow-hidden rounded-xl border border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/20">
             <SettingItem
               icon={HelpCircle}
               label="Centre d'aide"
@@ -129,6 +137,7 @@ export default function SettingsScreen() {
               onPress={() => router.push("/settings/Help")}
             />
           </View>
+
         </View>
       </ScrollView>
     </SafeAreaView>

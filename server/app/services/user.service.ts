@@ -61,6 +61,9 @@ export class UserService {
 
     if (!user) return null;
 
+    // Ne pas exposer les comptes supprimés via getUser
+    if (user.email?.endsWith("@deleted.local")) return null;
+
     const conversations = await prisma.chat.findMany({
       where: {
         AND: [
@@ -133,6 +136,35 @@ export class UserService {
           },
         });
 
+      // If a new device is created, copy existing chat keys from any previous devices
+      if (!existing) {
+        const matchDevices = await trx.device.findMany({
+          where: {
+            user_id: userId,
+            id: { not: device.id },
+          },
+          select: { id: true },
+        });
+
+        if (matchDevices.length > 0) {
+          const matchDeviceIds = matchDevices.map((d) => d.id);
+          const oldKeys = await trx.chatMemberKey.findMany({
+            where: { device_id: { in: matchDeviceIds } },
+          });
+
+          if (oldKeys.length > 0) {
+            await trx.chatMemberKey.createMany({
+              data: oldKeys.map((ok) => ({
+                chat_id: ok.chat_id,
+                device_id: device.id,
+                encrypted_chat_key: ok.encrypted_chat_key,
+              })),
+              skipDuplicates: true,
+            });
+          }
+        }
+      }
+
       await trx.user.update({ where: { id: userId }, data: { is_configured: true, username } });
 
       const user = await trx.user.findUniqueOrThrow({
@@ -142,6 +174,17 @@ export class UserService {
 
       const tokens = await this.authService._generateTokens(user, device.id);
       const expiresAtMs = tokens.expiresAt instanceof Date ? tokens.expiresAt.getTime() : Number(tokens.expiresAt);
+
+      // create subscription safely (upsert)
+      await trx.subscription.upsert({
+        where: { user_id: userId },
+        update: {},
+        create: {
+          user_id: userId,
+          plan: "FREE",
+          status: "ACTIVE",
+        },
+      });
 
       return {
         user,
@@ -165,6 +208,7 @@ export class UserService {
       is_active: true,
       is_configured: true,
       is_excluded: false,
+      isAnonymized: false,
     };
 
     if (q.length > 0) {
@@ -236,19 +280,5 @@ export class UserService {
       create: { user_id: userId, firstname: "", lastname: "", avatarUrl: url },
     });
     return { avatarUrl: url };
-  }
-
-  async deleteAccount(userId: string) {
-    await prisma.refreshToken.updateMany({
-      where: { user_id: userId },
-      data: { revokedAt: new Date() },
-    });
-
-    await prisma.device.deleteMany({
-      where: { user_id: userId }
-    });
-
-    await prisma.user.update({ where: { id: userId }, data: { is_excluded: true } });
-    await prisma.auditLog.create({ data: { user_id: userId, action: "ACCOUNT_DELETED" } });
   }
 }

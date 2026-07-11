@@ -2,7 +2,7 @@ import { prisma } from "../../config/database.js";
 
 export class NotificationService {
   async createNotification(userId: string, payload: { title: string; body: string; type: string; data?: any }) {
-    return await prisma.notification.create({
+    const notif = await prisma.notification.create({
       data: {
         user_id: userId,
         title: payload.title,
@@ -11,6 +11,8 @@ export class NotificationService {
         data: payload.data ?? undefined,
       },
     });
+
+    return notif;
   }
 
   async listNotifications(userId: string) {

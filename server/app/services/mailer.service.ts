@@ -58,6 +58,40 @@ export class MailerService {
     await this._send(to, "Votre abonnement PipoLink expire bientôt", html);
   }
 
+  /**
+   * Envoie une facture par email après un paiement réussi.
+   */
+  async sendInvoice(
+    to: string,
+    username: string,
+    transactionId: string,
+    amount: string,
+    date: string,
+    plan: string,
+    paymentMethod: string
+  ) {
+    const html = this._loadTemplate("invoice", {
+      username,
+      transactionId,
+      amount,
+      date,
+      plan,
+      paymentMethod,
+    });
+    await this._send(to, `Votre facture PipoLink — Abonnement Premium`, html);
+  }
+
+  /**
+   * Envoie un email d'action.
+   *
+   * @param to     - Adresse email du destinataire
+   * @param action - Description de l'action (ex: 'Changement de mot de passe')
+   */
+  async sendAction(to: string, action: string, message: string) {
+    const html = this._loadTemplate("action_notify", { action, date: new Date().toLocaleString("fr-FR"), message });
+    await this._send(to, "Action — PipoLink", html);
+  }
+
   // ── Méthodes privées ──────────────────────────────────────────────────────
 
   /**

@@ -1,10 +1,11 @@
 import { prepareDeviceForNewAccount } from '@/features/auth/lib/prepare-new-account-device';
 import { useAuth, useToast } from '@/providers';
-import { BRAND } from '@/shared/config/brand';
+import { SecureStorageService } from '@/shared/lib/storage';
+import { checkPasswordStrength } from '@/shared/lib/password-strength';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { router } from 'expo-router';
-import { ArrowRight, Check, Circle, Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
+import { ArrowRight, Check, Eye, EyeOff, Lock, Mail, ShieldAlert, Square } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -13,7 +14,6 @@ interface PasswordCriterion {
   label: string;
   isValid: boolean;
 }
-
 
 export function RegisterForm() {
   const { register } = useAuth();
@@ -25,6 +25,8 @@ export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const strengthResult = useMemo(() => checkPasswordStrength(password), [password]);
 
   const passwordCriteria = useMemo<PasswordCriterion[]>(() => {
     return [
@@ -43,13 +45,16 @@ export function RegisterForm() {
         label: 'Au moins un chiffre',
         isValid: /\d/.test(password)
       },
+      {
+        id: 'special',
+        label: 'Un caractère spécial',
+        isValid: /[^A-Za-z0-9]/.test(password)
+      }
     ];
   }, [password]);
 
-  // Détermine si le mot de passe est entièrement valide
-  const isPasswordValid = useMemo<boolean>(() => {
-    return passwordCriteria.every(criterion => criterion.isValid);
-  }, [passwordCriteria]);
+  const allCompositionValid = passwordCriteria.every((c) => c.isValid);
+  const canSubmit = allCompositionValid && strengthResult.isStrong;
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -58,6 +63,7 @@ export function RegisterForm() {
     
     if (!password) newErrors.password = 'Mot de passe requis';
     else if (password.length < 8) newErrors.password = 'Minimum 8 caractères requis';
+    else if (!strengthResult.isStrong) newErrors.password = strengthResult.feedback || 'Mot de passe trop faible';
     
     if (password !== confirmPassword) {
       newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
@@ -74,6 +80,7 @@ export function RegisterForm() {
     try {
       await prepareDeviceForNewAccount();
       await register({ email, password });
+      await SecureStorageService.set('temp_login_password', password);
       showToast({ type: 'success', message: 'Inscription réussie ! Veuillez vérifier votre email.' });
       router.push({
         pathname: '/auth/verify-otp',
@@ -89,7 +96,7 @@ export function RegisterForm() {
   return (
     <View className="w-full">
       {/* Grille de saisie épurée */}
-      <View className="gap-y-5">
+      <View className="gap-y-4">
         <Input
           label="Adresse Email Académique"
           placeholder="nom@universite.edu"
@@ -114,30 +121,44 @@ export function RegisterForm() {
           onRightIconPress={() => setShowPassword(!showPassword)}
           containerClassName="bg-transparent"
         />
-        <View
-          className="p-3.5 rounded-xl border border-border-light/20 bg-surface-light/20 dark:border-border-dark/10 dark:bg-surface-dark/20 backdrop-blur-sm gap-y-2"
-        >
-          <Text className="text-[10px] font-bold text-text-secondary-light/50 dark:text-text-secondary-dark/50 uppercase tracking-widest mb-1">
+
+        {/* Bloc d'indicateur des critères de sécurité mat */}
+        <View className="p-4 rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/30 gap-y-2.5">
+          <Text className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">
             Critères requis de sécurité
           </Text>
 
           {passwordCriteria.map((criterion) => (
             <View key={criterion.id} className="flex-row items-center gap-x-2.5">
-              {criterion.isValid ? (
-                <Check size={14} className="text-emerald-500" strokeWidth={3} />
-              ) : (
-                <Circle size={8} className="text-text-secondary-light/30 dark:text-text-secondary-dark/30 mx-0.5" strokeWidth={3} />
-              )}
+              <View className="h-4 w-4 items-center justify-center">
+                {criterion.isValid ? (
+                  <Check size={12} color="#10B981" strokeWidth={3} />
+                ) : (
+                  <Square size={10} color="#D4D4D8" strokeWidth={2.5} />
+                )}
+              </View>
               <Text
-                className={`text-[13px] font-medium transition-colors ${criterion.isValid
-                    ? 'text-emerald-600 dark:text-emerald-400 opacity-60 line-through'
-                    : 'text-text-secondary-light/70 dark:text-text-secondary-dark/60 no-underline'
+                className={`text-xs font-semibold ${criterion.isValid
+                    ? 'text-emerald-600 dark:text-emerald-400 line-through'
+                    : 'text-zinc-500 dark:text-zinc-400'
                   }`}
               >
                 {criterion.label}
               </Text>
             </View>
           ))}
+
+          {/* Indicateur d'entropie zxcvbn — distinct des règles de composition */}
+          {password.length >= 8 && allCompositionValid && !strengthResult.isStrong && (
+            <View className="flex-row items-center gap-x-2.5 mt-1 pt-2 border-t border-zinc-200 dark:border-zinc-800">
+              <View className="h-4 w-4 items-center justify-center">
+                <ShieldAlert size={12} color="#F59E0B" strokeWidth={2.5} />
+              </View>
+              <Text className="text-xs font-semibold text-amber-600 dark:text-amber-400 flex-1">
+                {strengthResult.feedback}
+              </Text>
+            </View>
+          )}
         </View>
 
         <Input
@@ -153,27 +174,23 @@ export function RegisterForm() {
       </View>
 
       {/* Action de soumission principale */}
-      <View className="mt-8 mb-5">
+      <View className="mt-6 mb-4">
         <Button
           label="Créer mon compte"
           onPress={() => void handleRegister()}
           loading={isLoading}
-          size="xl"
-          className="rounded-xl h-12"
-          rightIcon={!isLoading ? <ArrowRight size={16} color="#FFFFFF" /> : undefined}
+          className="bg-orange-500 rounded-xl h-11"
+          rightIcon={!isLoading ? <ArrowRight size={14} color="#FFFFFF" /> : undefined}
         />
       </View>
       
       {/* Lien de redirection vers la connexion */}
       <View className="flex-row justify-center items-center gap-1.5 pt-1">
-        <Text className="text-[13px] font-medium text-text-secondary-light/60 dark:text-text-secondary-dark/60">
+        <Text className="text-xs font-semibold text-zinc-400 dark:text-zinc-500">
           Vous avez déjà un compte ?
         </Text>
-        <Pressable 
-          onPress={() => router.push('/auth/login')}
-          className="flex-row items-center active:opacity-70"
-        >
-          <Text className="text-[13px] font-bold text-primary" style={{ color: BRAND.primary }}>
+        <Pressable onPress={() => router.push('/auth/login')}>
+          <Text className="text-xs font-bold text-orange-500 dark:text-orange-400">
             Se connecter
           </Text>
         </Pressable>

@@ -6,7 +6,12 @@ export interface ChangePasswordPayload {
 }
 
 export interface DeleteAccountPayload {
-  email: string;
+  password: string;
+}
+
+export interface DeleteAccountResponse {
+  success: boolean;
+  message: string;
 }
 
 export const accountApi = {
@@ -14,7 +19,7 @@ export const accountApi = {
     api.post<null>('/auth/change-password', payload),
 
   deleteAccount: (payload: DeleteAccountPayload) =>
-    api.delete<null>('/users/me', {
+    api.delete<DeleteAccountResponse>('/users/me', {
       body: JSON.stringify(payload),
     }),
 } as const;

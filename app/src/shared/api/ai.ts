@@ -1,4 +1,5 @@
 import { api } from './client';
+import type { Document } from './types';
 
 export interface AiChatMessage {
   id: string;
@@ -8,12 +9,13 @@ export interface AiChatMessage {
 }
 
 export interface AiSessionResponse {
-  createdAt: string,
-  id: string,
-  messages: AiChatMessage[],
-  title: string,
-  updatedAt: string,
-  user_id: string
+  createdAt: string;
+  id: string;
+  messages: AiChatMessage[];
+  documents?: Document[];
+  title: string;
+  updatedAt: string;
+  user_id: string;
 }
 
 export interface AiSession {
@@ -46,4 +48,76 @@ export const aiApi = {
    */
   deleteSessions: (sessionId: string) =>
     api.delete<void>(`/ai/sessions/${sessionId}`),
+
+  /**
+   * Get documents associated with a session
+   */
+  getSessionDocuments: (sessionId: string) =>
+    api.get<Document[]>(`/ai/sessions/${sessionId}/documents`),
+
+  /**
+   * Add a document to a session
+   */
+  addDocumentToSession: (sessionId: string, documentId: string) =>
+    api.post<Document[]>(`/ai/sessions/${sessionId}/documents`, { documentId }),
+
+  /**
+   * Remove a document from a session
+   */
+  removeDocumentFromSession: (sessionId: string, documentId: string) =>
+    api.delete<void>(`/ai/sessions/${sessionId}/documents/${documentId}`),
+
+  /**
+   * Generate study aids (summary, faq, quiz, etc.)
+   */
+  generateStudyAid: (sessionId: string, type: string) =>
+    api.post<{ message: AiChatMessage }>(`/ai/sessions/${sessionId}/generate`, { type }),
+
+  /**
+   * Get private AI attachments
+   */
+  getAttachments: () =>
+    api.get<Document[]>('/ia/attachments'),
+
+  /**
+   * Upload private AI attachment
+   */
+  uploadAttachment: async (
+    file: { uri: string; name: string; mimeType: string; size?: number },
+    metadata: {
+      title: string;
+      type: string;
+      filiere: string;
+      niveau: string;
+      ue: string;
+      description?: string;
+    },
+  ) => {
+    const formData = new FormData();
+    // @ts-expect-error React Native FormData file blob
+    formData.append("file", {
+      uri: file.uri,
+      name: file.name,
+      type: file.mimeType || "application/octet-stream",
+    });
+    formData.append(
+      "payload",
+      JSON.stringify({
+        title: metadata.title,
+        type: metadata.type,
+        filiere: metadata.filiere,
+        niveau: metadata.niveau,
+        ue: metadata.ue,
+        description: metadata.description,
+      }),
+    );
+
+    return api.upload<Document>("/ia/upload-attachment", formData);
+  },
+
+  /**
+   * Delete private AI attachment
+   */
+  deleteAttachment: (id: string) =>
+    api.delete<void>(`/ia/attachments/${id}`),
 };

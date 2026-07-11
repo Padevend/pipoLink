@@ -27,46 +27,47 @@ export default function DownloadHistoryScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
 
-      {/* HEADER PANEL SATINÉ */}
-      <View className="z-10 flex-row items-center justify-between border-b border-border-light/40 bg-surface-light/75 px-4 py-3 dark:border-border-dark/10 dark:bg-surface-dark/75 backdrop-blur-xl">
+      {/* HEADER : Panneau Mat Fixe */}
+      <View className="flex-row items-center justify-between border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
         <View className="flex-row items-center flex-1 gap-3">
           <Pressable
             onPress={() => router.back()}
             hitSlop={8}
-            className="h-9 w-9 items-center justify-center rounded-xl bg-background-light/40 dark:bg-background-dark/30 active:scale-95 transition-transform"
+            className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 dark:bg-zinc-900 active:bg-zinc-100 dark:active:bg-zinc-800"
           >
-            <ArrowLeft size={18} color="#64748B" />
+            <ArrowLeft size={16} color="#71717A" />
           </Pressable>
 
           <View className="flex-1">
-            <Text className="text-[16px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+            <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
               Téléchargements
             </Text>
-            <Text className="text-[10px] font-bold uppercase tracking-wider text-text-secondary-light/40 dark:text-text-secondary-dark/40 mt-0.5">
+            <Text className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mt-0.5">
               Historique des fichiers
             </Text>
           </View>
         </View>
 
+        {/* Bouton Rafraîchir */}
         <Pressable
           onPress={refresh}
           hitSlop={8}
           disabled={isRefreshing}
-          className="flex-row items-center gap-x-1.5 rounded-lg border border-border-light/40 bg-surface-light dark:border-border-dark/20 dark:bg-surface-dark active:scale-95 transition-transform me-4"
+          className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800 me-2"
         >
-          <RefreshCw size={20} color="#64748B" strokeWidth={2} />
+          <RefreshCw size={14} color="#71717A" />
         </Pressable>
 
-        {/* Bouton de nettoyage contextuel */}
+        {/* Bouton de nettoyage contextuel rouge mat */}
         {history && history.length > 0 && (
           <Pressable
             onPress={handleClearHistory}
             hitSlop={8}
-            className="h-10 w-10 items-center justify-center rounded-xl bg-red-500/10 border border-red-500/20 active:scale-95 transition-transform"
+            className="h-8 w-8 items-center justify-center rounded-lg bg-red-50 border border-red-200 dark:bg-red-950/20 dark:border-red-900/40 active:bg-red-100 dark:active:bg-red-950/40"
           >
-            <BrushCleaning size={20} color={"red"} strokeWidth={2} />
+            <BrushCleaning size={14} color="#EF4444" />
           </Pressable>
         )}
         
@@ -79,19 +80,19 @@ export default function DownloadHistoryScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
         renderItem={({ item }) => (
-          <View className="mb-3">
+          <View className="mb-2.5">
             <DownloadCard task={item} onDelete={deleteItem} />
           </View>
         )}
         ListEmptyComponent={() => (
-          <View className="items-center justify-center py-40 gap-y-3 px-8">
-            <View className="h-12 w-12 items-center justify-center rounded-2xl bg-text-secondary-light/5 border border-border-light/10 dark:border-border-dark/10">
-              <HardDriveDownload size={20} className="text-text-secondary-light/40 dark:text-text-secondary-dark/40" strokeWidth={1.5} />
+          <View className="items-center justify-center py-32 px-6">
+            <View className="h-12 w-12 items-center justify-center rounded-xl bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 mb-3">
+              <HardDriveDownload size={18} color="#A1A1AA" />
             </View>
-            <Text className="text-[14px] font-bold text-text-primary-light dark:text-text-primary-dark text-center">
+            <Text className="text-xs font-bold text-zinc-900 dark:text-zinc-50 text-center">
               Aucun téléchargement
             </Text>
-            <Text className="text-[12px] font-medium text-center text-text-secondary-light/50 dark:text-text-secondary-dark/50 leading-[18px]">
+            <Text className="text-[11px] font-medium text-center text-zinc-500 dark:text-zinc-400 mt-1 leading-4">
               Les documents ou fichiers HD d'annonces téléchargés s'afficheront ici.
             </Text>
           </View>
