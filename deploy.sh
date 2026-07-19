@@ -20,7 +20,7 @@ git reset --hard origin/main
 
 # ── 2. Build et lancement des conteneurs ─────────────────────────────────────
 echo "🏗️  Build Docker Compose..."
-docker-compose up -d --build
+docker-compose up -d --build --force-recreate --remove-orphans --no-deps
 
 # ── 3. Migrations Prisma ──────────────────────────────────────────────────────
 # echo "🗄️  Exécution des migrations Prisma..."
