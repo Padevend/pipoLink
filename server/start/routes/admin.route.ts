@@ -20,4 +20,5 @@ AdminRouter
   .get("/payments", callAction(AdminController, "getPayments"))
   .get("/updates", callAction(AdminController, "getUpdates"))
   .post("/updates", callAction(AdminController, "createUpdate"))
+  .post("/notifications", callAction(AdminController, "sendBroadcastNotification"))
   .post("/users/:id/role", callAction(AdminController, "updateUserRole"));

@@ -124,6 +124,84 @@ export class FCMService {
   }
 
   /**
+   * Envoie un push DATA-ONLY (sans bloc `notification`) : l'app cliente
+   * l'intercepte (même tuée via le background handler) et affiche elle-même
+   * la notification après déchiffrement. Tokens Expo hérités : notification
+   * générique (pas de handler headless possible).
+   */
+  async sendDataPush(tokens: string[], data: Record<string, string>) {
+    if (!tokens || tokens.length === 0) return;
+
+    const fcmTokens = tokens.filter(t => !t.startsWith('ExponentPushToken') && !t.startsWith('ExpoPushToken'));
+    const expoTokens = tokens.filter(t => t.startsWith('ExponentPushToken') || t.startsWith('ExpoPushToken'));
+
+    // Garde 4 KB FCM : on retire cipherText/iv si le payload est trop gros
+    let payload: Record<string, string> = {};
+    for (const [k, v] of Object.entries(data)) payload[k] = String(v ?? '');
+    if (JSON.stringify(payload).length > 3800) {
+      const { cipherText, iv, ...rest } = payload;
+      payload = rest;
+    }
+
+    if (fcmTokens.length > 0) {
+      if (getApps().length === 0) {
+        console.warn("Firebase non configuré, impossible d'envoyer le push data-only.");
+      } else {
+        const messaging = getMessaging();
+        for (let i = 0; i < fcmTokens.length; i += 500) {
+          const chunk = fcmTokens.slice(i, i + 500);
+          try {
+            const response = await messaging.sendEachForMulticast({
+              tokens: chunk,
+              data: payload,
+              android: { priority: "high" },
+              apns: {
+                headers: {
+                  "apns-push-type": "background",
+                  "apns-priority": "5",
+                },
+                payload: { aps: { "content-available": 1 } },
+              },
+            });
+            if (response.failureCount > 0) {
+              void this.purgeInvalidTokens(chunk, response.responses);
+            }
+          } catch (error) {
+            console.error("[FCM] Erreur lors de l'envoi data-only :", error);
+          }
+        }
+      }
+    }
+
+    if (expoTokens.length > 0) {
+      try {
+        const messages = expoTokens.map(token => ({
+          to: token,
+          sound: 'default',
+          title: 'PipoLink',
+          body: payload.type === 'MESSAGE' ? 'Nouveau message' : (payload.title || 'Nouvelle notification'),
+          data: payload,
+          channelId: 'default',
+        }));
+        const response = await fetch('https://exp.host/--/api/v2/push/send', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Accept-encoding': 'gzip, deflate',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(messages),
+        });
+        if (!response.ok) {
+          console.error('[Expo Push] Erreur API:', await response.text());
+        }
+      } catch (error) {
+        console.error('[Expo Push] Erreur d\'envoi:', error);
+      }
+    }
+  }
+
+  /**
    * Purge les tokens FCM invalides ou expirés de la base de données.
    * Appelé automatiquement après un envoi multicast qui contient des erreurs.
    */

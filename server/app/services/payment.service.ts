@@ -6,11 +6,15 @@ import { RealtimeBus } from "../../src/modules/websocket/gateway/realtime-bus.js
 import { WsEventName } from "../../src/modules/websocket/events/event-names.js";
 import {PaymentOperation,RandomGenerator} from "@hachther/mesomb";
 
+// Prix de l'abonnement Premium, fixé côté serveur (le montant client est ignoré)
+const PREMIUM_PRICE_XAF = 2500;
+
 export class PaymentService {
   /**
    * Initiates a mobile money payment collection via MeSomb.
+   * Le montant client (_amount) est ignoré : le prix est fixé côté serveur.
    */
-  async initiatePayment(userId: string, amount: number, provider: string, phone: string) {
+  async initiatePayment(userId: string, _amount: number | undefined, provider: string, phone: string) {
     let sub = await prisma.subscription.findUnique({ where: { user_id: userId } });
     if (!sub) {
       sub = await prisma.subscription.create({
@@ -46,7 +50,7 @@ export class PaymentService {
       data: {
         user_id: userId,
         subscription_id: sub.id,
-        amount,
+        amount: PREMIUM_PRICE_XAF,
         provider,
         expiresAt: DateTime.now().plus({ hours: 1 }).toJSDate(),
       },
@@ -82,7 +86,7 @@ export class PaymentService {
       // Perform collect transaction
       const response = await mesomb.makeCollect({
         payer: phone,
-        amount: amount,
+        amount: PREMIUM_PRICE_XAF,
         service: provider, // 'MTN' or 'ORANGE'
         currency: 'XAF',
         country: 'CM',
@@ -90,7 +94,12 @@ export class PaymentService {
       });
 
       const transactionPk = response.transaction?.pk || null;
-      const isSuccess = response.isOperationSuccess?.();
+      // isTransactionSuccess = paiement réellement confirmé (status SUCCESS).
+      // isOperationSuccess ne signifie que « requête API acceptée » : un paiement
+      // rejeté par l'utilisateur renvoie success=true + transaction.status=FAILED.
+      const isSuccess = typeof (response as any).isTransactionSuccess === "function"
+        ? (response as any).isTransactionSuccess()
+        : response.transaction?.status === "SUCCESS";
 
       // Save the provider reference and update state
       const updatedPayment = await prisma.payment.update({
@@ -128,7 +137,8 @@ export class PaymentService {
   async completePayment(paymentId: string) {
     const trxResult = await prisma.$transaction(async (trx) => {
       const payment = await trx.payment.findUnique({ where: { id: paymentId } });
-      if (!payment || payment.status === "SUCCESS") return { payment };
+      // Un paiement FAILED ne doit JAMAIS être complété (protège aussi le webhook)
+      if (!payment || payment.status === "SUCCESS" || payment.status === "FAILED") return { payment };
 
       // Update payment status to SUCCESS
       const updatedPayment = await trx.payment.update({
@@ -212,8 +222,39 @@ export class PaymentService {
 
   /**
    * Gets the status of a payment.
+   * Si le paiement est PENDING, interroge activement MeSomb (checkTransactions)
+   * pour confirmer ou invalider la transaction — l'abonnement ne s'active
+   * que sur un SUCCESS confirmé par MeSomb.
    */
   async getStatus(paymentId: string) {
-    return await prisma.payment.findUnique({ where: { id: paymentId } });
+    const payment = await prisma.payment.findUnique({ where: { id: paymentId } });
+    if (!payment || payment.status !== "PENDING" || !payment.providerRef) {
+      return payment;
+    }
+
+    const applicationKey = env.get("MESOMB_APP_KEY");
+    const accessKey = env.get("MESOMB_ACCESS_KEY");
+    const secretKey = env.get("MESOMB_SECRET_KEY");
+    if (!applicationKey || !accessKey || !secretKey) return payment;
+
+    try {
+      const mesomb = new PaymentOperation({ applicationKey, accessKey, secretKey });
+      const transactions = (await mesomb.checkTransactions([payment.providerRef])) as any[];
+      const tx = transactions?.find((t) => t?.pk === payment.providerRef) ?? transactions?.[0];
+
+      if (tx?.status === "SUCCESS") {
+        return await this.completePayment(payment.id);
+      }
+      if (tx?.status === "FAILED") {
+        return await prisma.payment.update({
+          where: { id: payment.id },
+          data: { status: "FAILED" },
+        });
+      }
+    } catch (err) {
+      console.error("[MeSomb checkTransactions Error]:", err);
+    }
+
+    return payment;
   }
 }

@@ -5,6 +5,9 @@ import { NotificationService } from "../services/notification.service.js";
 import { FCMService } from "../../src/app/services/fcm.service.js";
 import { MailerService } from "../services/mailer.service.js";
 import { createUpdateValidator } from "../validators/update.validator.js";
+import { adminNotificationValidator } from "../validators/admin-notification.validator.js";
+import { RealtimeBus } from "../../src/modules/websocket/gateway/realtime-bus.js";
+import { WsEventName } from "../../src/modules/websocket/events/event-names.js";
 
 export class AdminController {
   private notifications = new NotificationService();
@@ -23,12 +26,19 @@ export class AdminController {
    */
   async getStats(c: HttpContext) {
     try {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
       const [
         totalAccounts,
         activeAccounts,
         totalDocuments,
         totalAnnouncements,
-        recentEvents
+        recentEvents,
+        totalRevenueAgg,
+        monthRevenueAgg,
+        activePremium
       ] = await Promise.all([
         prisma.user.count(),
         prisma.user.count({ where: { is_active: true, is_excluded: false } }),
@@ -53,6 +63,17 @@ export class AdminController {
               }
             }
           }
+        }),
+        prisma.payment.aggregate({
+          _sum: { amount: true },
+          where: { status: "SUCCESS" },
+        }),
+        prisma.payment.aggregate({
+          _sum: { amount: true },
+          where: { status: "SUCCESS", paidAt: { gte: startOfMonth } },
+        }),
+        prisma.subscription.count({
+          where: { plan: "PREMIUM", status: "ACTIVE", currentPeriodEnd: { gt: new Date() } },
         })
       ]);
 
@@ -83,7 +104,13 @@ export class AdminController {
           totalAccounts,
           activeAccounts,
           totalDocuments,
-          totalAnnouncements
+          totalAnnouncements,
+          revenue: {
+            totalRevenue: totalRevenueAgg._sum.amount ?? 0,
+            revenueThisMonth: monthRevenueAgg._sum.amount ?? 0,
+            activePremium,
+            mrr: activePremium * 2500,
+          }
         },
         events: formattedEvents
       }, "Statistiques chargées avec succès.");
@@ -670,6 +697,71 @@ export class AdminController {
     } catch (error: any) {
       console.error("[AdminController.getUpdates] Error:", error);
       return ApiResponse.error(c, "INTERNAL_ERROR", "Erreur lors du chargement des mises à jour.", 500);
+    }
+  }
+
+  /**
+   * Envoie une notification (in-app + push) à tous les utilisateurs actifs.
+   */
+  async sendBroadcastNotification(c: HttpContext) {
+    try {
+      const payload = await c.validateUsing(adminNotificationValidator);
+
+      const recipients = await prisma.user.findMany({
+        where: { is_active: true },
+        select: { id: true },
+      });
+
+      if (recipients.length > 0) {
+        await prisma.notification.createMany({
+          data: recipients.map((u) => ({
+            user_id: u.id,
+            title: payload.title,
+            body: payload.body,
+            type: "ADMIN_BROADCAST",
+          })),
+        });
+
+        for (const u of recipients) {
+          RealtimeBus.emit(
+            WsEventName.NotificationCreated,
+            { title: payload.title, body: payload.body, type: "ADMIN_BROADCAST" },
+            { userId: u.id },
+          );
+        }
+
+        const devices = await prisma.device.findMany({
+          where: { fcm_token: { not: null }, user: { is_active: true } },
+          select: { fcm_token: true },
+        });
+        const tokens = devices.map((d) => d.fcm_token as string);
+        if (tokens.length > 0) {
+          void this.fcm.sendDataPush(tokens, {
+            type: "ADMIN_BROADCAST",
+            title: payload.title,
+            body: payload.body,
+          });
+        }
+      }
+
+      const adminId = c.get("userId") as string;
+      await prisma.auditLog.create({
+        data: {
+          user_id: adminId,
+          action: `SEND_BROADCAST_NOTIFICATION`,
+          targetId: `${recipients.length} users`,
+          ip: c.req.header("x-forwarded-for") || "127.0.0.1",
+          userAgent: c.req.header("user-agent") || "Admin Action"
+        }
+      });
+
+      return ApiResponse.success(c, { recipients: recipients.length }, "Notification envoyée.", 201);
+    } catch (error: any) {
+      console.error("[AdminController.sendBroadcastNotification] Error:", error);
+      if (error.status === 422) {
+        return ApiResponse.error(c, "VALIDATION_ERROR", error.message || "Données invalides.", 422);
+      }
+      return ApiResponse.error(c, "INTERNAL_ERROR", "Erreur lors de l'envoi de la notification.", 500);
     }
   }
 

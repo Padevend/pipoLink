@@ -11,6 +11,7 @@ import {
   LogOut,
   Terminal,
   RefreshCw,
+  BellRing,
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -49,6 +50,11 @@ export default function Sidebar() {
         path: "/updates",
         name: "Mises à Jour",
         icon: RefreshCw,
+      },
+      {
+        path: "/notifications",
+        name: "Notifications",
+        icon: BellRing,
       },
     ];
   }, []);

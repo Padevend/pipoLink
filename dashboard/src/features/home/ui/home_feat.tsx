@@ -8,7 +8,11 @@ import {
   MapPin,
   RefreshCw,
   UserCheck,
-  Loader2
+  Loader2,
+  Wallet,
+  CalendarDays,
+  Sparkles,
+  TrendingUp
 } from "lucide-react";
 import { getStaticUrl } from "@/share/lib/helpers";
 
@@ -121,6 +125,70 @@ export function HomeFeat() {
             </div>
             <div className="h-9 w-9 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-500 group-hover:text-orange-500 transition-colors duration-200">
               <Activity size={16} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* REVENUE CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Card 5: Revenu Total */}
+        <div className="bg-white/60 border border-white/80 rounded-2xl p-6 relative overflow-hidden group shadow-sm shadow-zinc-200/40 backdrop-blur-xl transition-all duration-300 hover:border-zinc-300">
+          <div className="flex justify-between items-start">
+            <div className="space-y-2">
+              <span className="text-zinc-400 text-[10px] font-bold uppercase tracking-wider">Revenu Total</span>
+              <h3 className="text-2xl font-bold tracking-tight text-zinc-800">
+                {stats.revenue.totalRevenue.toLocaleString("fr-FR")}
+                <span className="text-xs text-zinc-400 font-medium ml-1.5">XAF</span>
+              </h3>
+            </div>
+            <div className="h-9 w-9 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-500 group-hover:text-orange-500 transition-colors duration-200">
+              <Wallet size={16} />
+            </div>
+          </div>
+        </div>
+
+        {/* Card 6: Revenu ce mois */}
+        <div className="bg-white/60 border border-white/80 rounded-2xl p-6 relative overflow-hidden group shadow-sm shadow-zinc-200/40 backdrop-blur-xl transition-all duration-300 hover:border-zinc-300">
+          <div className="flex justify-between items-start">
+            <div className="space-y-2">
+              <span className="text-zinc-400 text-[10px] font-bold uppercase tracking-wider">Revenu ce mois</span>
+              <h3 className="text-2xl font-bold tracking-tight text-zinc-800">
+                {stats.revenue.revenueThisMonth.toLocaleString("fr-FR")}
+                <span className="text-xs text-zinc-400 font-medium ml-1.5">XAF</span>
+              </h3>
+            </div>
+            <div className="h-9 w-9 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-500 group-hover:text-orange-500 transition-colors duration-200">
+              <CalendarDays size={16} />
+            </div>
+          </div>
+        </div>
+
+        {/* Card 7: Abonnés Premium */}
+        <div className="bg-white/60 border border-white/80 rounded-2xl p-6 relative overflow-hidden group shadow-sm shadow-zinc-200/40 backdrop-blur-xl transition-all duration-300 hover:border-zinc-300">
+          <div className="flex justify-between items-start">
+            <div className="space-y-2">
+              <span className="text-zinc-400 text-[10px] font-bold uppercase tracking-wider">Abonnés Premium</span>
+              <h3 className="text-2xl font-bold tracking-tight text-zinc-800">{stats.revenue.activePremium}</h3>
+            </div>
+            <div className="h-9 w-9 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-500 group-hover:text-orange-500 transition-colors duration-200">
+              <Sparkles size={16} />
+            </div>
+          </div>
+        </div>
+
+        {/* Card 8: MRR */}
+        <div className="bg-white/60 border border-white/80 rounded-2xl p-6 relative overflow-hidden group shadow-sm shadow-zinc-200/40 backdrop-blur-xl transition-all duration-300 hover:border-zinc-300">
+          <div className="flex justify-between items-start">
+            <div className="space-y-2">
+              <span className="text-zinc-400 text-[10px] font-bold uppercase tracking-wider">MRR</span>
+              <h3 className="text-2xl font-bold tracking-tight text-zinc-800">
+                {stats.revenue.mrr.toLocaleString("fr-FR")}
+                <span className="text-xs text-zinc-400 font-medium ml-1.5">XAF</span>
+              </h3>
+            </div>
+            <div className="h-9 w-9 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-500 group-hover:text-orange-500 transition-colors duration-200">
+              <TrendingUp size={16} />
             </div>
           </div>
         </div>

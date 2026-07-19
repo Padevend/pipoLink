@@ -3,12 +3,10 @@ import { validatePayload } from "../utils/validation.js";
 import { messageSendValidator, messageUpdateValidator, messageDeleteValidator, messageDeliveredValidator, messageReadValidator } from "../dto/message.dto.js";
 import type { HandlerContext } from "./index.js";
 import { MessagingService } from "../../../../app/services/messaging.service.js";
-import { NotificationService } from "../../../../app/services/notification.service.js";
-import { FCMService } from "../../../app/services/fcm.service.js";
+import { pushNewMessage } from "../../../../app/services/message-push.service.js";
+import { prisma } from "../../../../config/database.js";
 
 const messaging = new MessagingService();
-const notifications = new NotificationService();
-const fcmService = new FCMService();
 
 export async function handleMessageSend(ctx: HandlerContext, payload: unknown, requestId?: string) {
   const state = ctx.gateway.getConnectionState(ctx.connectionId);
@@ -35,38 +33,24 @@ export async function handleMessageSend(ctx: HandlerContext, payload: unknown, r
     });
   }
 
-  for (const member of members) {
-    if (member.user_id === state.userId) continue;
-    await notifications.createNotification(member.user_id, {
-      title: "Nouveau message",
-      body: "Vous avez un nouveau message.",
-      type: "MESSAGE",
-      data: { conversationId: data.conversationId, messageId: message.id },
-    });
-    ctx.gateway.emit(WsEventName.NotificationCreated, { conversationId: data.conversationId, messageId: message.id }, {
-      userId: member.user_id,
-    });
-
-    // Send FCM push notification
-    const { prisma } = await import("../../../../config/database.js");
-    const userDevices = await prisma.device.findMany({
-      where: { user_id: member.user_id, fcm_token: { not: null } },
-      select: { fcm_token: true }
-    });
-    const tokens = userDevices.map(d => d.fcm_token as string);
-    
-    if (tokens.length > 0) {
-      // Send data-only so the app can handle it and decrypt if needed, 
-      // or standard notification
-      await fcmService.sendPushNotification(tokens, "PipoLink", "Nouveau message", {
+  const recipients = members.filter((m) => m.user_id !== state.userId);
+  if (recipients.length > 0) {
+    await prisma.notification.createMany({
+      data: recipients.map((m) => ({
+        user_id: m.user_id,
+        title: "Nouveau message",
+        body: "Vous avez un nouveau message.",
         type: "MESSAGE",
-        conversationId: data.conversationId,
-        messageId: message.id,
-        cipherText: message.cipherText,
-        iv: message.iv,
-        senderId: message.sender_id
+        data: { conversationId: data.conversationId, messageId: message.id },
+      })),
+    });
+    for (const member of recipients) {
+      ctx.gateway.emit(WsEventName.NotificationCreated, { conversationId: data.conversationId, messageId: message.id }, {
+        userId: member.user_id,
       });
     }
+    // Push data-only : le client déchiffre et affiche (même app fermée)
+    void pushNewMessage(state.userId, data.conversationId, message);
   }
 
   ctx.gateway.emit(WsEventName.MessageDelivered, { messageId: message.id, conversationId: data.conversationId }, {

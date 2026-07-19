@@ -3,7 +3,7 @@ module.exports = {
     {
       name: 'pipolink-backend',
       script: './dist/server.js',
-      instances: 1,
+      instances: 4,
       exec_mode: 'cluster',
       env: {
         NODE_ENV: 'production',

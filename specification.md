@@ -125,6 +125,53 @@ RAG_AGENT_API_URL=http://localhost:8000
 
 ---
 
+### 3.3 Recherche sémantique contextualisée (Bibliothèque — Premium)
+* **Déclencheur :** Recherche en langage naturel dans la bibliothèque par un abonné PREMIUM (`LibraryService.semanticSearch`). Exemple de requête : "document qui parle des lois de Maxwell en thermodynamique".
+* **API FastAPI ciblée :** `POST /api/v1/semantic-search`
+* **Format :** `application/json`
+
+#### Payload envoyé par le Backend Node.js :
+```json
+{
+  "query": "document qui parle des lois de Maxwell en thermodynamique",
+  "user_id": "user_uuid_123",
+  "filters": {
+    "filiere": "Génie Logiciel",
+    "niveau": "L3",
+    "ue": "Thermodynamique",
+    "document_ids": ["doc_uuid_1", "doc_uuid_2"]
+  }
+}
+```
+*(Tous les champs de `filters` sont optionnels ; `filters` peut être un objet vide. La recherche s'effectue sur l'ensemble de l'index vectoriel, restreint par les filtres de métadonnées fournis.)*
+
+#### Format de Réponse attendu (JSON) :
+```json
+{
+  "results": [
+    {
+      "document_id": "doc_uuid_1",
+      "title": "Cours de Thermodynamique - Chapitre 4",
+      "score": 0.92,
+      "excerpt": "…les relations de Maxwell découlent des différentielles exactes des potentiels thermodynamiques…"
+    }
+  ]
+}
+```
+*(`score` est une similarité normalisée entre 0 et 1, résultats triés par score décroissant, maximum 20 résultats. Le backend Node.js filtre ensuite les `document_id` selon la visibilité de l'appelant — modération/visibilité publique — avant de renvoyer au mobile.)*
+
+#### Comportement en cas de panne ou d'absence de variable d'environnement :
+* **Fallback retourné à l'application mobile (HTTP 200, jamais de crash) :**
+```json
+{
+  "unavailable": true,
+  "message": "Fonctionnalité temporairement indisponible ou en maintenance.",
+  "results": []
+}
+```
+
+---
+
 ## 4. Spécifications et Algorithmes attendus côté FastAPI (Python)
 
 Pour assurer une cohérence totale avec les appels du backend Node.js, l'agent FastAPI doit suivre les règles suivantes :

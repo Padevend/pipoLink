@@ -387,6 +387,72 @@ export class LibraryService {
     return docs.map(formatDocument);
   }
 
+  /**
+   * Recherche sémantique contextualisée via l'agent RAG (réservée PREMIUM).
+   * Ne throw jamais : env absente ou agent injoignable → fallback structuré.
+   */
+  async semanticSearch(
+    userId: string,
+    role: string,
+    query: string,
+    filters?: Record<string, unknown>,
+  ) {
+    const FALLBACK = {
+      unavailable: true as const,
+      message: "Fonctionnalité temporairement indisponible ou en maintenance.",
+      results: [] as never[],
+    };
+
+    const ragApiUrl = env.get("RAG_AGENT_API_URL");
+    if (!ragApiUrl) return FALLBACK;
+
+    try {
+      const response = await fetch(`${ragApiUrl}/api/v1/semantic-search`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query, user_id: userId, filters: filters ?? {} }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`RAG API returned status ${response.status}`);
+      }
+
+      const data = (await response.json()) as {
+        results?: { document_id: string; title?: string; score?: number; excerpt?: string }[];
+      };
+      const ragResults = data.results ?? [];
+      if (ragResults.length === 0) return { unavailable: false as const, results: [] };
+
+      // Ne renvoyer que les documents visibles par l'appelant
+      const ids = ragResults.map((r) => r.document_id);
+      const visibleDocs = await prisma.document.findMany({
+        where: {
+          id: { in: ids },
+          ...this.visibilityWhere(role),
+          type: { not: "AI_ATTACHMENT" },
+        },
+        include: docInclude,
+      });
+      const byId = new Map(visibleDocs.map((d) => [d.id, d]));
+
+      return {
+        unavailable: false as const,
+        results: ragResults
+          .filter((r) => byId.has(r.document_id))
+          .map((r) => ({
+            document_id: r.document_id,
+            title: r.title ?? byId.get(r.document_id)!.title,
+            score: r.score ?? 0,
+            excerpt: r.excerpt ?? "",
+            document: formatDocument(byId.get(r.document_id)! as any),
+          })),
+      };
+    } catch (err) {
+      console.error("[RAG SemanticSearch] Falling back:", err);
+      return FALLBACK;
+    }
+  }
+
   async getPopular(level?: string) {
     const where: Record<string, any> = {
       type: { not: "AI_ATTACHMENT" },
