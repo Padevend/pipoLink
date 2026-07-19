@@ -6,18 +6,36 @@ import { localDb } from '@/shared/storage/local-db';
 import { wsManager } from '@/shared/websocket/manager';
 
 let syncing = false;
+let lastSyncSuccessAt = 0;
+const MIN_SYNC_INTERVAL_MS = 60_000;
 
-export async function syncFromServer(): Promise<void> {
+async function getPrefetchLimits(): Promise<{ chats: number; messages: number }> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const NetInfo = require('@react-native-community/netinfo').default as {
+      fetch: () => Promise<{ type: string }>;
+    };
+    const state = await NetInfo.fetch();
+    if (state.type === 'cellular') return { chats: 8, messages: 30 };
+  } catch {
+    // NetInfo optional
+  }
+  return { chats: 12, messages: 40 };
+}
+
+export async function syncFromServer(options?: { force?: boolean }): Promise<void> {
   if (syncing) return;
+  if (!options?.force && Date.now() - lastSyncSuccessAt < MIN_SYNC_INTERVAL_MS) return;
   syncing = true;
   try {
     const conversations = await messagingApi.getConversations();
-    localDb.upsertConversations(conversations);
+    localDb.replaceConversations(conversations);
 
+    const limits = await getPrefetchLimits();
     await Promise.all(
-      conversations.slice(0, 12).map(async (c) => {
+      conversations.slice(0, limits.chats).map(async (c) => {
         try {
-          const page = await messagingApi.getMessages(c.id, { page: 1, limit: 40 });
+          const page = await messagingApi.getMessages(c.id, { page: 1, limit: limits.messages });
           localDb.upsertMessages(c.id, page.items);
         } catch {
           // ignore per-chat failures offline
@@ -40,6 +58,7 @@ export async function syncFromServer(): Promise<void> {
 
     await flushPendingMessages();
 
+    lastSyncSuccessAt = Date.now();
     void queryClient.invalidateQueries({ queryKey: ['conversations'] });
     void queryClient.invalidateQueries({ queryKey: ['ai'] });
   } finally {

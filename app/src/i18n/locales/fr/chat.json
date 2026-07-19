@@ -11,5 +11,8 @@
   "createGroup": "Créer le groupe",
   "noUsers": "Aucun utilisateur trouvé",
   "groupCreated": "Groupe créé",
-  "chatCreated": "Conversation démarrée"
+  "chatCreated": "Conversation démarrée",
+  "eventPromoTitle": "Créer un événement",
+  "eventPromoSubtitle": "Organisez et publiez vos événements avec Ticky",
+  "eventPromoCta": "Commencer"
 }

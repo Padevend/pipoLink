@@ -14,6 +14,21 @@ export type PendingMessageRow = {
   retry_count: number;
 };
 
+function insertConversationRow(c: ReturnType<typeof normalizeConversation>): void {
+  db.runSync(
+    `INSERT OR REPLACE INTO conversations (id, name, last_message, unread_count, updated_at, payload_json)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [
+      c.id,
+      c.name ? c.name : c.members.map((m) => m.username).join(', ') || 'Conversation',
+      c.lastMessage?.cipherText?.slice(0, 80) ?? '',
+      c.unreadCount,
+      c.updatedAt,
+      JSON.stringify(c),
+    ],
+  );
+}
+
 export const localDb = {
   // global
   resetDb(): void {
@@ -34,21 +49,34 @@ export const localDb = {
   // gestion des conversations
   // ============================================================================================
   upsertConversations(items: Conversation[]): void {
-    for (const raw of items) {
-      const c = normalizeConversation(raw);
-      db.runSync(
-        `INSERT OR REPLACE INTO conversations (id, name, last_message, unread_count, updated_at, payload_json)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [
-          c.id,
-          c.name ? c.name : c.members.map((m) => m.username).join(', ') || 'Conversation',
-          c.lastMessage?.cipherText?.slice(0, 80) ?? '',
-          c.unreadCount,
-          c.updatedAt,
-          JSON.stringify(c),
-        ],
-      );
-    }
+    db.withTransactionSync(() => {
+      for (const raw of items) {
+        insertConversationRow(normalizeConversation(raw));
+      }
+    });
+  },
+
+  /**
+   * Remplace intégralement la liste locale par celle du serveur : supprime les
+   * conversations (et leurs messages) absentes de la réponse serveur pour que
+   * les chats supprimés ne réapparaissent plus.
+   */
+  replaceConversations(items: Conversation[]): void {
+    db.withTransactionSync(() => {
+      const normalized = items.map(normalizeConversation);
+      const ids = normalized.map((c) => c.id);
+      if (ids.length === 0) {
+        db.runSync('DELETE FROM messages');
+        db.runSync('DELETE FROM pending_messages');
+        db.runSync('DELETE FROM conversations');
+      } else {
+        const ph = ids.map(() => '?').join(',');
+        db.runSync(`DELETE FROM messages WHERE conversation_id NOT IN (${ph})`, ids);
+        db.runSync(`DELETE FROM pending_messages WHERE conversation_id NOT IN (${ph})`, ids);
+        db.runSync(`DELETE FROM conversations WHERE id NOT IN (${ph})`, ids);
+      }
+      for (const c of normalized) insertConversationRow(c);
+    });
   },
 
   getConversations(): Conversation[] {
@@ -61,27 +89,29 @@ export const localDb = {
   // gestion des messages de chats
   // ============================================================================================
   upsertMessages(conversationId: string, items: Message[]): void {
-    for (const raw of items) {
-      const m = normalizeMessage({ ...raw, chat_id: conversationId } as any);
-      const attachmentsJson = JSON.stringify(m.attachments ?? []);
-      db.runSync(
-        `INSERT OR REPLACE INTO messages
-         (id, conversation_id, content_encrypted, sender_id, created_at, status, iv, message_type, attachments_json, payload_json)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          m.id,
-          conversationId,
-          m.cipherText,
-          m.sender_id,
-          m.created_at,
-          m.status,
-          m.iv,
-          m.type,
-          attachmentsJson,
-          JSON.stringify(m),
-        ],
-      );
-    }
+    db.withTransactionSync(() => {
+      for (const raw of items) {
+        const m = normalizeMessage({ ...raw, chat_id: conversationId } as any);
+        const attachmentsJson = JSON.stringify(m.attachments ?? []);
+        db.runSync(
+          `INSERT OR REPLACE INTO messages
+           (id, conversation_id, content_encrypted, sender_id, created_at, status, iv, message_type, attachments_json, payload_json)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            m.id,
+            conversationId,
+            m.cipherText,
+            m.sender_id,
+            m.created_at,
+            m.status,
+            m.iv,
+            m.type,
+            attachmentsJson,
+            JSON.stringify(m),
+          ],
+        );
+      }
+    });
   },
 
   getMessages(conversationId: string, limit = 200): Message[] {
@@ -118,12 +148,14 @@ export const localDb = {
   // gestions des sessions du caht Ai
   // ============================================================================================
   upsertAiSessions(sessions: AiSession[]): void {
-    for (const s of sessions) {
-      db.runSync(
-        'INSERT OR REPLACE INTO ai_sessions (id, title, created_at) VALUES (?, ?, ?)',
-        [s.id, s.title, s.createdAt],
-      );
-    }
+    db.withTransactionSync(() => {
+      for (const s of sessions) {
+        db.runSync(
+          'INSERT OR REPLACE INTO ai_sessions (id, title, created_at) VALUES (?, ?, ?)',
+          [s.id, s.title, s.createdAt],
+        );
+      }
+    });
   },
 
   getAiSessions(): AiSession[] {
@@ -133,12 +165,14 @@ export const localDb = {
   },
 
   upsertAiMessages(sessionId: string, messages: AiChatMessage[]): void {
-    for (const m of messages) {
-      db.runSync(
-        'INSERT OR REPLACE INTO ai_messages (id, session_id, role, content, created_at) VALUES (?, ?, ?, ?, ?)',
-        [m.id, sessionId, m.role, m.content, m.createdAt],
-      );
-    }
+    db.withTransactionSync(() => {
+      for (const m of messages) {
+        db.runSync(
+          'INSERT OR REPLACE INTO ai_messages (id, session_id, role, content, created_at) VALUES (?, ?, ?, ?, ?)',
+          [m.id, sessionId, m.role, m.content, m.createdAt],
+        );
+      }
+    });
   },
 
   getAiMessages(sessionId: string): AiChatMessage[] {
@@ -227,7 +261,7 @@ export const localDb = {
 
   clearDownlaodHistory(): void {
     db.runAsync(
-      'DELETE FROM downloads WHERE status IN [completed, failed, cancelled]'
+      "DELETE FROM downloads WHERE status IN ('completed', 'failed', 'cancelled')"
     );
   },
   // ============================================================================================
@@ -235,21 +269,23 @@ export const localDb = {
   // gestionnaire des profils utilisateurs
   // ============================================================================================
   upsertUsers(users: any[]): void {
-    for (const u of users) {
-      db.runSync(
-        `INSERT OR REPLACE INTO users (id, username, email, matricule, role, profile_json, conversations_json)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [
-          u.id,
-          u.username || '',
-          u.email || '',
-          u.matricule || null,
-          u.role || 'student',
-          JSON.stringify(u.profile || {}),
-          JSON.stringify(u.conversations || []),
-        ],
-      );
-    }
+    db.withTransactionSync(() => {
+      for (const u of users) {
+        db.runSync(
+          `INSERT OR REPLACE INTO users (id, username, email, matricule, role, profile_json, conversations_json)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            u.id,
+            u.username || '',
+            u.email || '',
+            u.matricule || null,
+            u.role || 'student',
+            JSON.stringify(u.profile || {}),
+            JSON.stringify(u.conversations || []),
+          ],
+        );
+      }
+    });
   },
 
   getUser(id: string): any | null {

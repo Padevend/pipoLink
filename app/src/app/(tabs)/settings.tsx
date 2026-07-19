@@ -5,6 +5,7 @@ import SettingItem from "@/shared/ui/settings-cards";
 import { router } from "expo-router";
 import {
   Bell,
+  CalendarPlus,
   CreditCard,
   Globe,
   HelpCircle,
@@ -15,10 +16,12 @@ import {
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { RefreshControl } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as WebBrowser from 'expo-web-browser';
+import { APP_CONFIG } from "@/shared/config/app";
 
 export default function SettingsScreen() {
   const { user, refreshUser } = useAuth();
-  const { data: isPrimary, refetch: refetchIsPrimary } = useIsPrimaryDevice();
+  const { refetch: refetchIsPrimary } = useIsPrimaryDevice();
 
   return (
     <SafeAreaView
@@ -137,6 +140,22 @@ export default function SettingsScreen() {
               onPress={() => router.push("/settings/Help")}
             />
           </View>
+
+          {/* SECTION OTHER FOR ZYRA STUDIO */}
+          <Text className="mb-2 mt-10 text-center text-[9px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+            Créer avec par Zyra Studio
+          </Text>
+          <View className="w-[90%] mx-auto h-[1px] bg-zinc-200 dark:bg-zinc-400 mb-2"/>
+          
+          <SettingItem
+              icon={CalendarPlus}
+              label="Créer un événement"
+              value="Organisez et publiez vos événements avec Ticky"
+              onPress={() => {
+                WebBrowser.openBrowserAsync(APP_CONFIG.links.ticky_brand).catch(() => { });
+              }}
+              showChevron={false}
+            />
 
         </View>
       </ScrollView>

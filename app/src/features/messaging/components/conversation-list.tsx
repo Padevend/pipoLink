@@ -8,6 +8,7 @@ import { useAnnouncements } from '@/entities/announcement/hooks';
 import { conversationKeys, useConversations } from '@/entities/conversation/hooks';
 import { ConversationItem } from '@/entities/conversation/ui/conversation-item';
 import { AnnouncementListItem } from '@/features/announcements/components/announcement-list-item';
+import { EventPromoCard } from '@/features/events/components/event-promo-card';
 import { queryClient } from '@/providers';
 import type { Conversation } from '@/shared/api/messaging';
 import { messagingApi } from '@/shared/api/messaging';
@@ -96,6 +97,11 @@ export function ConversationList() {
         contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 24) + 40 }}
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={ItemSeparator}
+        ListHeaderComponent={<EventPromoCard />}
+        windowSize={7}
+        maxToRenderPerBatch={8}
+        initialNumToRender={12}
+        removeClippedSubviews
         renderItem={({ item }) => {
           if (item.kind === 'announcements') {
             return (

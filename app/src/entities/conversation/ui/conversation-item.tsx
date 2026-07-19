@@ -13,6 +13,18 @@ export interface ConversationItemProps {
   onPress: () => void;
 }
 
+// Cache module-level des aperçus déchiffrés pour éviter fetch clé + déchiffrement à chaque rendu
+const previewCache = new Map<string, string>();
+const PREVIEW_CACHE_MAX = 200;
+
+function cachePreview(key: string, value: string): void {
+  if (previewCache.size >= PREVIEW_CACHE_MAX) {
+    const oldest = previewCache.keys().next().value;
+    if (oldest !== undefined) previewCache.delete(oldest);
+  }
+  previewCache.set(key, value);
+}
+
 export const ConversationItem = React.memo(function ConversationItem({ conversation, onPress }: ConversationItemProps) {
   const { user } = useAuth();
 
@@ -45,11 +57,14 @@ export const ConversationItem = React.memo(function ConversationItem({ conversat
       return null;
     }
     const otherMember = conversation.members.find((m) => m.id !== user?.id);
-    console.log("role", JSON.stringify(otherMember, null, 2));
     return otherMember?.accountRole;
   }, [conversation.type, conversation.members, user?.id]);
 
+  const cacheKey = lastMessage ? `${lastMessage.id}:${lastMessage.iv}` : null;
+  const cachedPreview = cacheKey ? previewCache.get(cacheKey) : undefined;
+
   useEffect(() => {
+    if (!lastMessage || cachedPreview !== undefined) return;
     const getKey = async () => {
       try {
         setChatKey(await ensureChatKeyForChat(conversation.id));
@@ -58,18 +73,21 @@ export const ConversationItem = React.memo(function ConversationItem({ conversat
       }
     };
     getKey();
-  }, [conversation.id]);
+  }, [conversation.id, lastMessage, cachedPreview]);
 
   // Déchiffrement du dernier message (Logique métier préservée)
   const decryptedLastMessage = useMemo(() => {
     if (!lastMessage) return 'Aucun message';
+    if (cachedPreview !== undefined) return cachedPreview;
     if (!chatKey) return 'Message sécurisé';
     try {
-      return decryptMessage(lastMessage.cipherText, lastMessage?.iv, chatKey);
+      const plain = decryptMessage(lastMessage.cipherText, lastMessage?.iv, chatKey);
+      if (cacheKey) cachePreview(cacheKey, plain);
+      return plain;
     } catch {
       return 'Erreur de déchiffrement';
     }
-  }, [lastMessage, chatKey]);
+  }, [lastMessage, chatKey, cachedPreview, cacheKey]);
 
   return (
     <Pressable

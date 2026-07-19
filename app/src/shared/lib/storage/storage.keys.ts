@@ -15,4 +15,5 @@ export const ASYNC_STORAGE_KEYS = {
   APP_LANGUAGE: 'app_language',
   ONBOARDING_COMPLETED: 'onboarding_completed',
   NOTIFICATION_CHANNEL_SETTINGS: 'notification_channel_settings',
+  EVENT_CARD_DISMISSED: 'event_card_dismissed_v1',
 } as const;

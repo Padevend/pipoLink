@@ -34,10 +34,6 @@ export function useUploadDocument() {
     },
     onError: (err: any) => {
       console.error('[UploadDocument] failed:', err);
-      showToast({
-        type: 'error',
-        message: err.message || "Échec de l'upload du document.",
-      });
     },
   });
 }

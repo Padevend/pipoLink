@@ -14,6 +14,8 @@ import Animated, {
 } from "react-native-reanimated";
 import { DecryptedMessage } from "../hooks/use-messages";
 import BubbleMenu from "./Bubble-menu";
+import * as WebBrowser from 'expo-web-browser';
+import { APP_CONFIG } from "@/shared/config/app";
 
 interface MessageBubbleProps {
   isGroup?: boolean;
@@ -77,6 +79,10 @@ export const MessageBubble = React.memo(function MessageBubble({
     return <Check size={11} strokeWidth={2.5} color={GRIS_VALIDATION} />;
   };
 
+  const openDocs = useCallback(() => {
+    WebBrowser.openBrowserAsync(APP_CONFIG.links.message_decryption_docs).catch(()=>{});
+  }, []);
+
   const isSingleImageOnly =
     hasAttachments &&
     message.attachments?.length === 1 &&
@@ -88,13 +94,17 @@ export const MessageBubble = React.memo(function MessageBubble({
       <View className={cn('max-w-[85%] items-start relative z-10', isMine ? 'items-end' : 'items-start')}>
 
         {/* Menu flottant technique */}
-        {menuVisible && (
-          <BubbleMenu
-            isMine={isMine}
-            onReply={() => onReply?.(message)}
-            onDelete={() => onDelete?.(message.id)}
-            onClose={() => setMenuVisible(false)}
-          />
+        {!message.decryptFailed && (
+          <>
+            {menuVisible && (
+              <BubbleMenu
+                isMine={isMine}
+                onReply={() => onReply?.(message)}
+                onDelete={() => onDelete?.(message.id)}
+                onClose={() => setMenuVisible(false)}
+              />
+            )}
+          </>
         )}
 
         <Pressable
@@ -112,15 +122,17 @@ export const MessageBubble = React.memo(function MessageBubble({
               />
             </View>
           )}
-          
+
           <Animated.View style={animStyle} className="flex flex-col">
             <View
               className={cn(
                 'rounded-xl px-3.5 py-2.5 border',
                 isMine
-                  ? message.is_deleted 
-                    ? 'bg-zinc-100 border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800' 
-                    : 'bg-orange-500 border-orange-600 dark:bg-orange-600 dark:border-orange-700'
+                  ? message.is_deleted
+                    ? 'bg-zinc-100 border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800'
+                    : message.decryptFailed
+                      ? 'bg-orange-50 dark:bg-orange-100 border-0'
+                      : 'bg-orange-500 border-orange-600 dark:bg-orange-600 dark:border-orange-700'
                   : 'border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/40',
                 isSingleImageOnly && 'bg-transparent border-0 dark:bg-transparent p-0'
               )}
@@ -129,6 +141,15 @@ export const MessageBubble = React.memo(function MessageBubble({
                 <Text className={cn("text-xs italic font-medium", isMine ? "text-zinc-400" : "text-zinc-400 dark:text-zinc-500")}>
                   Ce message a été supprimé
                 </Text>
+              ) : message.decryptFailed ? (
+                <View className="text-xs">
+                  <Text className={cn("text-xs font-medium italic", isMine ? "text-zinc-400" : "text-zinc-400 dark:text-zinc-500")}>Ce message n'a pas pu être déchiffré</Text>
+                  <Pressable
+                    onPress={openDocs}
+                  >
+                    <Text className="text-xs underline text-orange-500 italic">Decouvrir pourquoi ici</Text>
+                  </Pressable>
+                </View>
               ) : (
                 <>
                   {/* Bloc de Citation (Réponse) technique */}
@@ -141,8 +162,8 @@ export const MessageBubble = React.memo(function MessageBubble({
                       }}
                       className={cn(
                         'mb-2 border-l-2 pl-2 rounded-md py-1 px-2',
-                        isMine 
-                          ? 'border-white/40 bg-white/10' 
+                        isMine
+                          ? 'border-white/40 bg-white/10'
                           : 'border-orange-500/40 bg-orange-500/5'
                       )}
                     >
@@ -185,9 +206,7 @@ export const MessageBubble = React.memo(function MessageBubble({
                         message.decryptFailed && 'font-mono text-[11px] text-red-500 dark:text-red-400 font-bold'
                       )}
                     >
-                      {message.decryptFailed
-                        ? '// ERREUR_DECHIFFREMENT_CLE_INTROUVABLE'
-                        : message.decryptedContent ?? message.cipherText}
+                      {message.decryptedContent ?? message.cipherText}
                     </Text>
                   )}
                 </>
@@ -216,10 +235,10 @@ export const MessageBubble = React.memo(function MessageBubble({
   );
 }, (prev, next) => {
   return prev.message.id === next.message.id &&
-         prev.message.status === next.message.status &&
-         prev.message.is_deleted === next.message.is_deleted &&
-         prev.message.cipherText === next.message.cipherText &&
-         prev.message.decryptedContent === next.message.decryptedContent &&
-         prev.isMine === next.isMine &&
-         prev.isGroup === next.isGroup;
+    prev.message.status === next.message.status &&
+    prev.message.is_deleted === next.message.is_deleted &&
+    prev.message.cipherText === next.message.cipherText &&
+    prev.message.decryptedContent === next.message.decryptedContent &&
+    prev.isMine === next.isMine &&
+    prev.isGroup === next.isGroup;
 });

@@ -39,6 +39,19 @@ export const libraryApi = {
   searchDocuments: (q: string) =>
     api.get<Document[]>("/library/documents/search", { params: { q } }),
 
+  semanticSearch: (query: string) =>
+    api.post<{
+      unavailable: boolean;
+      message?: string;
+      results: {
+        document_id: string;
+        title: string;
+        score: number;
+        excerpt: string;
+        document?: Document;
+      }[];
+    }>("/library/documents/semantic-search", { query }),
+
   getDocuments: (params?: {
     filiere?: string;
     niveau?: string;

@@ -25,6 +25,39 @@ export class ApiError extends Error {
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
+  timeoutMs?: number;
+}
+
+const DEFAULT_TIMEOUT_MS = 12_000;
+const RETRY_DELAY_MS = 1_000;
+
+/**
+ * fetch avec timeout (AbortController) + 1 retry sur erreur réseau/timeout
+ * pour les GET uniquement (idempotents).
+ */
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  timeoutMs: number,
+): Promise<Response> {
+  const attempt = async (): Promise<Response> => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { ...init, signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+
+  try {
+    return await attempt();
+  } catch (e) {
+    const method = (init.method ?? 'GET').toUpperCase();
+    if (method !== 'GET') throw e;
+    await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+    return attempt();
+  }
 }
 
 async function getAuthToken() {
@@ -37,7 +70,7 @@ async function getAuthToken() {
 }
 
 export async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-  const { params, headers, ...rest } = options;
+  const { params, headers, timeoutMs, ...rest } = options;
   
   let url = `${API_BASE_URL}${endpoint}`;
   
@@ -65,13 +98,13 @@ export async function request<T>(endpoint: string, options: RequestOptions = {})
     defaultHeaders['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     ...rest,
     headers: {
       ...defaultHeaders,
       ...headers,
     },
-  });
+  }, timeoutMs ?? DEFAULT_TIMEOUT_MS);
 
   const data = await response.json();
 
@@ -106,7 +139,7 @@ export async function requestPaginated<T>(
   endpoint: string,
   options: RequestOptions = {},
 ): Promise<PaginatedResponse<T>> {
-  const { params, headers, ...rest } = options;
+  const { params, headers, timeoutMs, ...rest } = options;
 
   let url = `${API_BASE_URL}${endpoint}`;
   if (params) {
@@ -119,7 +152,7 @@ export async function requestPaginated<T>(
   }
 
   const token = await getAuthToken();
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     ...rest,
     headers: {
       'Content-Type': 'application/json',
@@ -127,7 +160,7 @@ export async function requestPaginated<T>(
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...headers,
     },
-  });
+  }, timeoutMs ?? DEFAULT_TIMEOUT_MS);
 
   const body = (await response.json()) as PaginatedApiBody<T> & ErrorResponse;
   if (!response.ok) {
