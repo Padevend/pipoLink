@@ -18,9 +18,11 @@ git checkout main
 git stash
 git reset --hard origin/main
 
-# ── 2. Build et lancement des conteneurs ─────────────────────────────────────
+# ── 2. Build et lancement des conteneurs (sans reutilisers le cahe) ─────────────────────────────────────
 echo "🏗️  Build Docker Compose..."
-docker-compose up -d --build --force-recreate --remove-orphans --no-deps
+docker-compose build --no-cache
+docker-compose up -d --force-recreate
+
 
 # ── 3. Migrations Prisma ──────────────────────────────────────────────────────
 # echo "🗄️  Exécution des migrations Prisma..."
