@@ -23,6 +23,7 @@ echo "🏗️  Build Docker Compose..."
 docker-compose build --no-cache
 docker-compose up -d --force-recreate
 
+
 # ── 3. Migrations Prisma ──────────────────────────────────────────────────────
 # echo "🗄️  Exécution des migrations Prisma..."
 # docker-compose exec -T backend npx prisma migrate deploy
