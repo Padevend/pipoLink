@@ -14,6 +14,7 @@ const DocumentsPage = lazy(() => import("@/pages/documents/ui/documents_page"));
 const SubscriptionsPage = lazy(() => import("@/pages/subscriptions/ui/subscriptions_page"));
 const PaymentsPage = lazy(() => import("@/pages/payments/ui/payments_page"));
 const UpdatesPage = lazy(() => import("@/pages/updates/ui/updates_page"));
+const NotificationsPage = lazy(() => import("@/pages/notifications/ui/notifications_page"));
 
 const router = createBrowserRouter([
     {
@@ -52,6 +53,10 @@ const router = createBrowserRouter([
                     {
                         path: "updates",
                         element: <UpdatesPage />
+                    },
+                    {
+                        path: "notifications",
+                        element: <NotificationsPage />
                     }
                 ]
             }

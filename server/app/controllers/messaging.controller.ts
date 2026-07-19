@@ -7,6 +7,8 @@ import { FileService } from "../services/file.service.js";
 import { ErrorCode } from "../helpers/error-codes.js";
 import { RealtimeBus } from "../../src/modules/websocket/gateway/realtime-bus.js";
 import { WsEventName } from "../../src/modules/websocket/events/event-names.js";
+import { pushNewMessage } from "../services/message-push.service.js";
+import { prisma } from "../../config/database.js";
 
 export class MessagingController {
   private service = new MessagingService();
@@ -90,15 +92,24 @@ export class MessagingController {
     for (const member of members) {
       const unread = await this.service.getUnreadCount(member.user_id, conversationId);
       RealtimeBus.emit(WsEventName.ConversationUpdated, { conversationId, lastMessage, unreadCount: unread }, { userId: member.user_id });
-      if (member.user_id !== userId) {
-        await this.notifications.createNotification(member.user_id, {
+    }
+
+    const recipients = members.filter((m) => m.user_id !== userId);
+    if (recipients.length > 0) {
+      await prisma.notification.createMany({
+        data: recipients.map((m) => ({
+          user_id: m.user_id,
           title: "Nouveau message",
           body: "Vous avez un nouveau message.",
           type: "MESSAGE",
           data: { conversationId, messageId: message.id },
-        });
+        })),
+      });
+      for (const member of recipients) {
         RealtimeBus.emit(WsEventName.NotificationCreated, { conversationId, messageId: message.id }, { userId: member.user_id });
       }
+      // Push data-only : le client déchiffre et affiche (même app fermée)
+      void pushNewMessage(userId, conversationId, message);
     }
 
     return ApiResponse.success(c, message, "Message envoyé.", 201);

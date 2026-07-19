@@ -81,16 +81,6 @@ export class AiController {
 
   async generateStudyAid(c: HttpContext) {
     const userId = c.get("userId") as string;
-    const plan = c.get("plan") as string || "FREE";
-
-    if (plan !== "PREMIUM") {
-      return ApiResponse.error(
-        c,
-        "PREMIUM_REQUIRED",
-        "La génération d'outils d'étude (FAQ, quiz, flashcards...) nécessite un abonnement PREMIUM.",
-        402
-      );
-    }
 
     const sessionId = c.req.param("id");
     if (!sessionId) {

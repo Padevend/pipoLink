@@ -1,4 +1,4 @@
-const API_URL = "https://api-plink.lyrastudio.org";
+const API_URL = "http://127.0.0.1:3000"//"https://api-plink.lyrastudio.org";
 
 import type { User } from "@/entities/users";
 export type { User };
@@ -80,6 +80,21 @@ export interface Update {
   createdAt: string;
 }
 
+export interface RevenueStats {
+  totalRevenue: number;
+  revenueThisMonth: number;
+  activePremium: number;
+  mrr: number;
+}
+
+export interface SystemStats {
+  totalAccounts: number;
+  activeAccounts: number;
+  totalDocuments: number;
+  totalAnnouncements: number;
+  revenue: RevenueStats;
+}
+
 
 class APIServices{
   public url: string;
@@ -106,6 +121,7 @@ class APIServices{
     this.getPayments = this.getPayments.bind(this);
     this.getUpdates = this.getUpdates.bind(this);
     this.createUpdate = this.createUpdate.bind(this);
+    this.sendBroadcastNotification = this.sendBroadcastNotification.bind(this);
   }
 
   async sendRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -159,8 +175,8 @@ class APIServices{
     return this.sendRequest("/users/me");
   }
 
-  async getStats(): Promise<{ stats: any; events: AuditLog[] }> {
-    return this.sendRequest<{ stats: any; events: AuditLog[] }>("/admin/stats");
+  async getStats(): Promise<{ stats: SystemStats; events: AuditLog[] }> {
+    return this.sendRequest<{ stats: SystemStats; events: AuditLog[] }>("/admin/stats");
   }
 
   async getEvents(page = 1, limit = 20): Promise<{ events: AuditLog[]; total: number; page: number; limit: number; totalPages: number }> {
@@ -208,6 +224,13 @@ class APIServices{
 
   async createUpdate(data: Partial<Update>): Promise<Update> {
     return this.sendRequest("/admin/updates", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async sendBroadcastNotification(data: { title: string; body: string }): Promise<{ recipients: number }> {
+    return this.sendRequest("/admin/notifications", {
       method: "POST",
       body: JSON.stringify(data),
     });

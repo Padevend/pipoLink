@@ -1,7 +1,6 @@
 import { api } from './client';
 
 export interface InitiatePaymentPayload {
-  amount: number;
   provider: 'MTN' | 'ORANGE';
   phone: string;
 }

@@ -3,6 +3,7 @@ import type { MessageAttachment } from '@/shared/api/types';
 import { formatBytes } from '@/shared/lib/file';
 import { ImageViewer } from '@/shared/ui/image-viewer';
 import { cn } from '@/shared/utils/cn';
+import { Image as ExpoImage } from 'expo-image';
 import { useEffect, useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import Animated, {
@@ -115,10 +116,13 @@ export function AttachmentImage({
                   setIsPreviewOpen(true);
                 }}
               />
-              <Image
+              <ExpoImage
                 source={{ uri: decryptedUri }}
                 style={{ flex: 1 }}
-                resizeMode="cover"
+                contentFit="cover"
+                cachePolicy="disk"
+                transition={150}
+                recyclingKey={attachment.id}
               />
             </Animated.View>
           ) : (

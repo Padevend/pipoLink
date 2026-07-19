@@ -6,7 +6,7 @@ import { enqueueEvent, flushQueuedEvents, hasQueuedEvents } from './queue';
 function wsBaseUrl(): string {
   const raw = process.env.EXPO_PUBLIC_WS_URL;
   const value = typeof raw === 'string' ? raw.trim() : '';
-  return value || 'ws://10.0.2.2:3000/ws';
+  return value || 'wss://api-plink.lyrastudio.org/ws';
 }
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error';

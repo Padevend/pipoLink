@@ -171,7 +171,6 @@ export default function PaymentScreen(): JSX.Element {
 
     try {
       const res = await initiatePayment.mutateAsync({
-        amount: 10,
         provider: operator,
         phone: formattedPhone,
       });
@@ -195,7 +194,7 @@ export default function PaymentScreen(): JSX.Element {
       
       setLoading(false);
 
-      if (err.code === 'CONCURRENCY_LOCKED') {
+      if (err.code === 'PAYMENT_IN_PROGRESS') {
         showToast({
           type: 'warning',
           message: 'Une transaction est déjà en cours sur votre compte. Veuillez patienter ou valider.',
@@ -255,7 +254,7 @@ export default function PaymentScreen(): JSX.Element {
             </Text>
             <View className="flex-row justify-between items-center border-t border-orange-200/20 pt-3">
               <Text className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Montant total</Text>
-              <Text className="text-base font-extrabold text-zinc-900 dark:text-zinc-50">1 000 XAF / mois</Text>
+              <Text className="text-base font-extrabold text-zinc-900 dark:text-zinc-50">2 500 XAF / mois</Text>
             </View>
           </View>
 
@@ -319,7 +318,7 @@ export default function PaymentScreen(): JSX.Element {
               value={phoneNumber}
             />
             <Text className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1.5 pl-1 leading-4">
-              Saisissez le numéro Mobile Money du compte qui sera débité de 1 000 XAF.
+              Saisissez le numéro Mobile Money du compte qui sera débité de 2 500 XAF.
             </Text>
           </View>
 
@@ -364,7 +363,7 @@ export default function PaymentScreen(): JSX.Element {
             </Text>
 
             <Text className="text-xs text-zinc-500 dark:text-zinc-400 text-center leading-5 mb-5">
-              Une demande de débit de 1 000 XAF a été envoyée au numéro.{'\n\n'}
+              Une demande de débit de 2 500 XAF a été envoyée au numéro.{'\n\n'}
               Veuillez confirmer sur votre mobile via le pop-up USSD. Si rien n'apparaît, composez{' '}
               <Text className="font-bold text-orange-500">
                 {operator === 'MTN' ? '*126#' : '*150#'}

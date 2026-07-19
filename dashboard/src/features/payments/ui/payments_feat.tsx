@@ -1,12 +1,17 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { usePayments } from "../model/use_payments";
+import { api, type AuditLog, type SystemStats } from "@/share/lib/api";
 import {
   ChevronLeft,
   ChevronRight,
   Loader2,
   Calendar,
   DollarSign,
-  CreditCard
+  CreditCard,
+  Wallet,
+  TrendingUp,
+  CalendarDays
 } from "lucide-react";
 
 export function PaymentsFeat() {
@@ -14,6 +19,11 @@ export function PaymentsFeat() {
   const [limit] = useState(10);
 
   const { payments, totalPages, loading, error } = usePayments({ page, limit });
+  const { data: statsData } = useQuery<{ stats: SystemStats; events: AuditLog[] }>({
+    queryKey: ["system-stats-events"],
+    queryFn: api.getStats,
+  });
+  const revenue = statsData?.stats?.revenue;
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "N/A";
@@ -72,6 +82,45 @@ export function PaymentsFeat() {
       {error && (
         <div className="bg-red-50 border border-red-100 text-red-700 text-xs font-semibold p-4 rounded-xl">
           Erreur lors du chargement des paiements: {(error as any).message || "Problème réseau."}
+        </div>
+      )}
+
+      {/* REVENUE SUMMARY */}
+      {revenue && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white/60 border border-white/80 rounded-2xl p-4 flex items-center gap-3 shadow-sm shadow-zinc-200/40 backdrop-blur-xl">
+            <div className="h-9 w-9 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-orange-500 shrink-0">
+              <Wallet size={16} />
+            </div>
+            <div>
+              <span className="text-zinc-400 text-[10px] font-bold uppercase tracking-wider">Revenu Total</span>
+              <p className="text-lg font-bold tracking-tight text-zinc-800">
+                {revenue.totalRevenue.toLocaleString("fr-FR")} <span className="text-xs text-zinc-400 font-medium">XAF</span>
+              </p>
+            </div>
+          </div>
+          <div className="bg-white/60 border border-white/80 rounded-2xl p-4 flex items-center gap-3 shadow-sm shadow-zinc-200/40 backdrop-blur-xl">
+            <div className="h-9 w-9 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-orange-500 shrink-0">
+              <CalendarDays size={16} />
+            </div>
+            <div>
+              <span className="text-zinc-400 text-[10px] font-bold uppercase tracking-wider">Revenu ce mois</span>
+              <p className="text-lg font-bold tracking-tight text-zinc-800">
+                {revenue.revenueThisMonth.toLocaleString("fr-FR")} <span className="text-xs text-zinc-400 font-medium">XAF</span>
+              </p>
+            </div>
+          </div>
+          <div className="bg-white/60 border border-white/80 rounded-2xl p-4 flex items-center gap-3 shadow-sm shadow-zinc-200/40 backdrop-blur-xl">
+            <div className="h-9 w-9 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-orange-500 shrink-0">
+              <TrendingUp size={16} />
+            </div>
+            <div>
+              <span className="text-zinc-400 text-[10px] font-bold uppercase tracking-wider">MRR ({revenue.activePremium} abonnés)</span>
+              <p className="text-lg font-bold tracking-tight text-zinc-800">
+                {revenue.mrr.toLocaleString("fr-FR")} <span className="text-xs text-zinc-400 font-medium">XAF</span>
+              </p>
+            </div>
+          </div>
         </div>
       )}
 

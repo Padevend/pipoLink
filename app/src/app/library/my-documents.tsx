@@ -14,14 +14,19 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useDeleteDocument, useMyDocuments } from '@/entities/document/hooks';
-import { useToast } from '@/providers';
+import { useAuth, useToast } from '@/providers';
 import type { Document } from '@/shared/api/types';
 import { formatBytes } from '@/shared/lib/file';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { cn } from '@/shared/utils/cn';
 
+const FREE_DOC_LIMIT = 5;
+
 export default function MyDocumentsScreen() {
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const isPremium =
+    user?.subscription?.plan === 'PREMIUM' && user?.subscription?.status === 'ACTIVE';
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch, isRefetching } =
     useMyDocuments();
   const deleteMutation = useDeleteDocument();
@@ -30,6 +35,9 @@ export default function MyDocumentsScreen() {
     () => data?.pages.flatMap((page) => page.items) ?? [],
     [data?.pages],
   );
+
+  const totalDocs = data?.pages[0]?.total ?? documents.length;
+  const quotaFull = !isPremium && totalDocs >= FREE_DOC_LIMIT;
 
   const confirmDelete = useCallback(
     (doc: Document) => {
@@ -73,6 +81,28 @@ export default function MyDocumentsScreen() {
         <Text className="flex-1 ml-3 text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
           Mes documents
         </Text>
+
+        {/* Quota FREE : X/5 documents */}
+        {!isPremium && !isLoading && (
+          <Pressable
+            onPress={quotaFull ? () => router.push('/settings/subscription' as never) : undefined}
+            className={cn(
+              'rounded-md px-2 py-1 border',
+              quotaFull
+                ? 'bg-orange-50 border-orange-200 dark:bg-orange-950/30 dark:border-orange-900/50 active:bg-orange-100'
+                : 'bg-zinc-50 border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800',
+            )}
+          >
+            <Text
+              className={cn(
+                'text-[10px] font-bold tracking-wider uppercase',
+                quotaFull ? 'text-orange-600 dark:text-orange-400' : 'text-zinc-500 dark:text-zinc-400',
+              )}
+            >
+              {Math.min(totalDocs, FREE_DOC_LIMIT)}/{FREE_DOC_LIMIT} documents
+            </Text>
+          </Pressable>
+        )}
       </View>
 
       {/* Skeletons Solides Opaque */}

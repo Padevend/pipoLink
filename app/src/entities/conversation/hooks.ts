@@ -18,11 +18,12 @@ export const useConversations = () => {
     queryFn: async () => {
       try {
         const remote = await messagingApi.getConversations();
-        localDb.upsertConversations(remote);
+        localDb.replaceConversations(remote);
         return remote;
       } catch (e) {
         const cached = localDb.getConversations();
         if (cached.length) return cached;
+        throw e;
       }
     },
     initialData: () => {

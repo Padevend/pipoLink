@@ -6,10 +6,12 @@ import { announcementValidator } from "../validators/announcement.validator.js";
 import { RealtimeBus } from "../../src/modules/websocket/gateway/realtime-bus.js";
 import { WsEventName } from "../../src/modules/websocket/events/event-names.js";
 import { prisma } from "../../config/database.js";
+import { FCMService } from "../../src/app/services/fcm.service.js";
 
 export class AnnouncementController {
   private service = new AnnouncementService();
   private notifications = new NotificationService();
+  private fcm = new FCMService();
 
   async list(c: HttpContext) {
     const announcements = await this.service.listAnnouncements();
@@ -41,21 +43,47 @@ export class AnnouncementController {
       select: { id: true },
     });
 
-    await Promise.all(
-      recipients.map(async (u) => {
-        await this.notifications.createNotification(u.id, {
+    if (recipients.length > 0) {
+      await prisma.notification.createMany({
+        data: recipients.map((u) => ({
+          user_id: u.id,
           title: "Nouvelle annonce",
-          body:  announcement.title,
-          type:  "ANNOUNCEMENT",
-          data:  { announcementId: announcement.id },
-        });
+          body: announcement.title,
+          type: "ANNOUNCEMENT",
+          data: { announcementId: announcement.id },
+        })),
+      });
+      for (const u of recipients) {
         RealtimeBus.emit(
           WsEventName.NotificationCreated,
-          { announcementId: announcement.id },
+          {
+            announcementId: announcement.id,
+            title: announcement.title,
+            body: (announcement.content ?? "").slice(0, 180),
+            type: "ANNOUNCEMENT",
+          },
           { userId: u.id },
         );
-      }),
-    );
+      }
+
+      // Push data-only vers les appareils des utilisateurs actifs (même app fermée)
+      const devices = await prisma.device.findMany({
+        where: {
+          fcm_token: { not: null },
+          user: { is_active: true, id: { not: authorId } },
+        },
+        select: { fcm_token: true },
+      });
+      const tokens = devices.map((d) => d.fcm_token as string);
+      if (tokens.length > 0) {
+        void this.fcm.sendDataPush(tokens, {
+          type: "ANNOUNCEMENT",
+          announcementId: announcement.id,
+          title: announcement.title,
+          body: (announcement.content ?? "").slice(0, 500),
+        });
+      }
+    }
 
     return ApiResponse.success(c, announcement, "Annonce créée.", 201);
   }

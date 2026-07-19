@@ -21,10 +21,12 @@ export function useWebSocket() {
 }
 
 export function WebSocketProvider({ children }: { children: ReactNode }): JSX.Element {
-  const { isLoggedIn, logout } = useAuth();
+  const { isLoggedIn, logout, refreshUser } = useAuth();
   const [status, setStatus] = useState(wsManager.getStatus());
   const logoutRef = useRef(logout);
   logoutRef.current = logout;
+  const refreshUserRef = useRef(refreshUser);
+  refreshUserRef.current = refreshUser;
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -74,9 +76,15 @@ export function WebSocketProvider({ children }: { children: ReactNode }): JSX.El
       },
     );
     
+    // Mise à jour instantanée du plan après un paiement confirmé
+    const unsubscribeSubscription = wsManager.on(WS_EVENTS.SUBSCRIPTION_UPDATED, () => {
+      void refreshUserRef.current().catch(() => undefined);
+    });
+
     return () => {
       unsubscribeStatus();
       unsubscribeRevoked();
+      unsubscribeSubscription();
       wsManager.disconnect();
     };
   }, [isLoggedIn]);

@@ -1,26 +1,23 @@
-import { Platform } from 'react-native';
 import { router } from 'expo-router';
 import type { RawMessage } from '@/shared/api/normalize-message';
 import { normalizeMessage } from '@/shared/api/normalize-message';
 import { WS_EVENTS } from '@/shared/constants/ws-events';
 import { decryptMessage } from '@/shared/crypto/message';
-import { AsyncStorageService, ASYNC_STORAGE_KEYS } from '@/shared/lib/storage';
-import { on } from '@/shared/websocket/manager';
+import { AsyncStorageService } from '@/shared/lib/storage';
+import { on, wsManager } from '@/shared/websocket/manager';
 import Constants from 'expo-constants';
 
 import { ensureChatKeyForChat } from '@/features/messaging/lib/ensure-chat-key';
 
-import { DEFAULT_CHANNEL_SETTINGS, type NotificationChannelSettings } from './types';
+import { displayPush, ensureChannel, type PushData } from './background-handler';
 import { fetchJson } from '@/shared/api/fetch';
 
 const ENABLED_KEY = 'notifications_enabled';
 
-type NotificationsModule = typeof import('expo-notifications');
+type NotifeeModule = typeof import('@notifee/react-native');
+type MessagingModule = typeof import('@react-native-firebase/messaging');
 
-let notificationsModule: NotificationsModule | null | undefined;
-let handlerConfigured = false;
-
-/** Expo Go (SDK 53+) ne supporte plus les push distantes Android — éviter le chargement du module natif. */
+/** Expo Go ne supporte pas les modules natifs RNFB/Notifee. */
 function isExpoGo(): boolean {
   try {
     return Constants.appOwnership === 'expo';
@@ -29,61 +26,61 @@ function isExpoGo(): boolean {
   }
 }
 
-function getNotifications(): NotificationsModule | null {
-  if (notificationsModule !== undefined) {
-    return notificationsModule;
-  }
+let notifeeModule: NotifeeModule | null | undefined;
+let messagingModule: MessagingModule | null | undefined;
 
+function getNotifee(): NotifeeModule | null {
+  if (notifeeModule !== undefined) return notifeeModule;
   if (isExpoGo()) {
-    notificationsModule = null;
+    notifeeModule = null;
     return null;
   }
-
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    notificationsModule = require('expo-notifications') as NotificationsModule;
-    if (!handlerConfigured && notificationsModule) {
-      notificationsModule.setNotificationHandler({
-        handleNotification: async () => ({
-          shouldShowAlert: true,
-          shouldPlaySound: true,
-          shouldSetBadge: true,
-          shouldShowBanner: true,
-          shouldShowList: true,
-        }),
-      });
-      handlerConfigured = true;
-    }
+    notifeeModule = require('@notifee/react-native') as NotifeeModule;
   } catch (e) {
-    if (__DEV__) {
-      console.warn('[push] expo-notifications unavailable:', e);
-    }
-    notificationsModule = null;
+    if (__DEV__) console.warn('[push] notifee unavailable:', e);
+    notifeeModule = null;
   }
+  return notifeeModule;
+}
 
-  return notificationsModule;
+function getMessaging(): MessagingModule | null {
+  if (messagingModule !== undefined) return messagingModule;
+  if (isExpoGo()) {
+    messagingModule = null;
+    return null;
+  }
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    messagingModule = require('@react-native-firebase/messaging') as MessagingModule;
+  } catch (e) {
+    if (__DEV__) console.warn('[push] rnfb messaging unavailable:', e);
+    messagingModule = null;
+  }
+  return messagingModule;
 }
 
 export function arePushNotificationsSupported(): boolean {
-  return getNotifications() !== null;
+  return getNotifee() !== null && getMessaging() !== null;
 }
 
 export async function isPushEnabled(): Promise<boolean> {
   return (await AsyncStorageService.get<boolean>(ENABLED_KEY)) ?? true;
 }
 
-/** Load the persisted channel settings (or fall back to built-in defaults). */
-async function loadChannelSettings(): Promise<NotificationChannelSettings> {
-  const stored = await AsyncStorageService.get<NotificationChannelSettings>(
-    ASYNC_STORAGE_KEYS.NOTIFICATION_CHANNEL_SETTINGS,
-  );
-  return stored ? { ...DEFAULT_CHANNEL_SETTINGS, ...stored } : DEFAULT_CHANNEL_SETTINGS;
+/** Dédup foreground : WS local notif vs FCM onMessage (LRU cap 100). */
+const seenMessageIds = new Set<string>();
+function markSeen(messageId: string): boolean {
+  if (seenMessageIds.has(messageId)) return false;
+  if (seenMessageIds.size >= 100) {
+    const oldest = seenMessageIds.values().next().value;
+    if (oldest !== undefined) seenMessageIds.delete(oldest);
+  }
+  seenMessageIds.add(messageId);
+  return true;
 }
 
-/**
- * Silently updates the FCM token on the backend if a token is provided.
- * Called after obtaining a push token (Expo or native FCM).
- */
 async function syncFcmTokenToBackend(token: string): Promise<void> {
   try {
     await fetchJson('/devices/fcm-token', {
@@ -98,68 +95,22 @@ async function syncFcmTokenToBackend(token: string): Promise<void> {
 }
 
 export async function registerForPushNotifications(): Promise<string | null> {
-  const Notifications = getNotifications();
-  if (!Notifications || !(await isPushEnabled())) return null;
+  const notifee = getNotifee();
+  const msg = getMessaging();
+  if (!notifee || !msg || !(await isPushEnabled())) return null;
 
   try {
-    const { status: existing } = await Notifications.getPermissionsAsync();
-    let final = existing;
-    if (existing !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      final = status;
-    }
-    if (final !== 'granted') return null;
+    const settings = await notifee.default.requestPermission();
+    // 1 = AuthorizationStatus.AUTHORIZED, 2 = PROVISIONAL
+    if (settings.authorizationStatus < 1) return null;
 
-    if (Platform.OS === 'android') {
-      const cfg = await loadChannelSettings();
+    await ensureChannel();
 
-      await Notifications.setNotificationChannelAsync(cfg.id, {
-        name: cfg.name ?? 'PipoLink',
-        importance: cfg.importance as unknown as import('expo-notifications').AndroidImportance,
-        vibrationPattern: cfg.enableVibrate ? (cfg.vibrationPattern ?? [0, 250, 250, 250]) : null,
-        sound: cfg.sound === 'default' ? 'default' : undefined,
-        showBadge: true,
-        description: 'Notifications pour les nouveaux messages et annonces',
-        groupId: 'pipolink',
-        bypassDnd: cfg.bypassDnd,
-        lightColor: cfg.lightColor,
-        lockscreenVisibility:
-          cfg.lockscreenVisibility as unknown as import('expo-notifications').AndroidNotificationVisibility,
-        enableLights: cfg.enableLights,
-        enableVibrate: cfg.enableVibrate,
-      });
+    const token = await msg.default().getToken();
+    if (token) {
+      syncFcmTokenToBackend(token);
     }
-
-    // Si nous sommes dans Expo Go, on récupère uniquement le token Expo.
-    // Sinon (Dev Client ou Prod), on tente d'abord le FCM natif, puis fallback sur le token Expo.
-    let tokenData: string | null = null;
-    try {
-      if (isExpoGo()) {
-        const expoToken = await Notifications.getExpoPushTokenAsync().catch(() => null);
-        tokenData = expoToken?.data ?? null;
-      } else {
-        try {
-          const deviceToken = await Notifications.getDevicePushTokenAsync();
-          tokenData = deviceToken?.data ?? null;
-        } catch (err) {
-          if (__DEV__) {
-            console.warn('[push] Failed to get native device token, trying Expo push token:', err);
-          }
-          const expoToken = await Notifications.getExpoPushTokenAsync().catch(() => null);
-          tokenData = expoToken?.data ?? null;
-        }
-      }
-    } catch (e) {
-      if (__DEV__) {
-        console.warn('[push] Error getting token:', e);
-      }
-    }
-
-    // Sync the push token to backend asynchronously (fire & forget)
-    if (tokenData) {
-      syncFcmTokenToBackend(tokenData);
-    }
-    return tokenData;
+    return token ?? null;
   } catch (e) {
     if (__DEV__) {
       console.warn('[push] registerForPushNotifications failed:', e);
@@ -168,25 +119,62 @@ export async function registerForPushNotifications(): Promise<string | null> {
   }
 }
 
-export function setupNotificationResponseListener(): () => void {
-  const Notifications = getNotifications();
-  if (!Notifications) return () => {};
+function navigateFromNotificationData(data?: Record<string, unknown>): void {
+  if (data && typeof data.conversationId === 'string' && data.conversationId) {
+    const conversationId = data.conversationId;
+    setTimeout(() => {
+      router.push(`/chat/${conversationId}` as any);
+    }, 300);
+  }
+}
 
-  const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
-    try {
-      const data = response.notification.request.content.data;
-      if (data && data.conversationId) {
-        setTimeout(() => {
-          router.push(`/chat/${data.conversationId}` as any);
-        }, 300);
+/**
+ * Écouteurs de taps sur notification :
+ * - foreground/background press via notifee.onForegroundEvent
+ * - cold start via notifee.getInitialNotification()
+ * - onMessage FCM (app ouverte, WS down) + onTokenRefresh
+ */
+export function setupNotificationResponseListener(): () => void {
+  const notifee = getNotifee();
+  const msg = getMessaging();
+  if (!notifee || !msg) return () => {};
+
+  const unsubs: (() => void)[] = [];
+
+  try {
+    unsubs.push(
+      notifee.default.onForegroundEvent(({ type, detail }) => {
+        if (type === notifee.EventType.PRESS) {
+          navigateFromNotificationData(detail.notification?.data);
+        }
+      }),
+    );
+
+    void notifee.default.getInitialNotification().then((initial) => {
+      if (initial) {
+        navigateFromNotificationData(initial.notification.data);
       }
-    } catch (e) {
-      console.error('[push] Error handling notification response:', e);
-    }
-  });
+    });
+
+    // App ouverte : le WS est la source primaire. FCM onMessage ne prend le
+    // relais que si le WS est down, avec dédup par messageId.
+    unsubs.push(
+      msg.default().onMessage(async (remoteMessage) => {
+        if (!(await isPushEnabled())) return;
+        if (wsManager.getStatus() === 'connected') return;
+        const data = (remoteMessage.data ?? {}) as PushData;
+        if (data.type === 'MESSAGE' && data.messageId && !markSeen(data.messageId)) return;
+        await displayPush(data);
+      }),
+    );
+
+    unsubs.push(msg.default().onTokenRefresh((token) => void syncFcmTokenToBackend(token)));
+  } catch (e) {
+    if (__DEV__) console.warn('[push] setupNotificationResponseListener failed:', e);
+  }
 
   return () => {
-    subscription.remove();
+    unsubs.forEach((u) => u());
   };
 }
 
@@ -195,13 +183,21 @@ export async function showLocalNotification(
   body: string,
   data?: Record<string, unknown>,
 ): Promise<void> {
-  const Notifications = getNotifications();
-  if (!Notifications || !(await isPushEnabled())) return;
+  const notifee = getNotifee();
+  if (!notifee || !(await isPushEnabled())) return;
 
   try {
-    await Notifications.scheduleNotificationAsync({
-      content: { title, body, data, sound: true },
-      trigger: null,
+    const channelId = await ensureChannel();
+    await notifee.default.displayNotification({
+      id: typeof data?.messageId === 'string' ? data.messageId : undefined,
+      title,
+      body,
+      data: (data ?? {}) as Record<string, string>,
+      android: {
+        channelId,
+        smallIcon: 'ic_launcher',
+        pressAction: { id: 'default', launchActivity: 'default' },
+      },
     });
   } catch (e) {
     if (__DEV__) {
@@ -230,6 +226,15 @@ type MessageCreatedPayload = {
   message: RawMessage;
 };
 
+type NotificationCreatedPayload = {
+  title?: string;
+  body?: string;
+  type?: string;
+  conversationId?: string;
+  messageId?: string;
+  announcementId?: string;
+};
+
 /**
  * Wire push notifications to incoming WebSocket events.
  *
@@ -243,6 +248,9 @@ export function setupPushFromWebSocket(currentUserId: string): () => void {
 
       // ── Ne jamais notifier l'envoyeur lui-même ─────────────────────
       if (message.sender_id === currentUserId) return;
+
+      // ── Dédup avec le canal FCM ────────────────────────────────────
+      if (!markSeen(message.id)) return;
 
       // ── Déchiffrer le contenu du message ──────────────────────────
       const body = await tryDecryptBody(
@@ -258,17 +266,23 @@ export function setupPushFromWebSocket(currentUserId: string): () => void {
         messageId: message.id,
       });
     }),
-    on(WS_EVENTS.NOTIFICATION_CREATED, async () => {
-      await showLocalNotification('PipoLink', 'You have a new notification');
+    on<NotificationCreatedPayload>(WS_EVENTS.NOTIFICATION_CREATED, async (payload) => {
+      // Les notifs de messages/annonces sont déjà couvertes par leurs propres canaux
+      if (payload?.messageId || payload?.announcementId) return;
+      if (payload?.title || payload?.body) {
+        await showLocalNotification(payload.title ?? 'PipoLink', payload.body ?? '');
+      }
     }),
-    on<{ title?: string }>(WS_EVENTS.ANNOUNCEMENT_CREATED, async (payload) => {
+    on<{ title?: string; content?: string }>(WS_EVENTS.ANNOUNCEMENT_CREATED, async (payload) => {
       await showLocalNotification(
-        'Nouvelle annonce',
-        typeof payload?.title === 'string' ? payload.title : 'Une annonce a été publiée',
+        typeof payload?.title === 'string' ? payload.title : 'Nouvelle annonce',
+        typeof payload?.content === 'string'
+          ? payload.content.slice(0, 180)
+          : 'Une annonce a été publiée',
       );
     }),
     on(WS_EVENTS.DEVICE_LINKED, async () => {
-      await showLocalNotification('PipoLink', 'A new device was linked to your account');
+      await showLocalNotification('PipoLink', 'Un nouvel appareil a été lié à votre compte');
     }),
   ];
   return () => unsubs.forEach((u) => u());

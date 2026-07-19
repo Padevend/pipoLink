@@ -71,9 +71,9 @@ export class LibraryController {
           );
         }
 
-        // Enforce 5 documents limit for free users
+        // Enforce 5 documents limit for free users (AI attachments excluded)
         const count = await prisma.document.count({
-          where: { uploaded_by_id: userId },
+          where: { uploaded_by_id: userId, type: { not: "AI_ATTACHMENT" } },
         });
         if (count >= 5) {
           return ApiResponse.error(
@@ -83,6 +83,16 @@ export class LibraryController {
             402
           );
         }
+      }
+
+      // Cap global (PREMIUM inclus)
+      if (file.size > 50 * 1024 * 1024) {
+        return ApiResponse.error(
+          c,
+          "FILE_TOO_LARGE",
+          "La taille maximale par fichier est de 50 Mo.",
+          413
+        );
       }
 
       const buffer = Buffer.from(await file.arrayBuffer());
@@ -100,6 +110,22 @@ export class LibraryController {
     const role = c.get("role") as string;
     const docs = await this.service.searchDocuments(query, role);
     return ApiResponse.success(c, docs, "Documents trouvés.");
+  }
+
+  async semanticSearch(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const role = c.get("role") as string;
+    const body = (await c.req.json().catch(() => ({}))) as {
+      query?: string;
+      filters?: Record<string, unknown>;
+    };
+
+    if (!body.query?.trim()) {
+      return ApiResponse.error(c, "VALIDATION_ERROR", "La requête de recherche est requise.", 400);
+    }
+
+    const result = await this.service.semanticSearch(userId, role, body.query.trim(), body.filters);
+    return ApiResponse.success(c, result, "Recherche sémantique effectuée.");
   }
 
   async downloadDocument(c: HttpContext) {

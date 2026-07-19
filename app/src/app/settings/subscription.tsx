@@ -124,6 +124,15 @@ export default function SubscriptionScreen(): JSX.Element {
                   Bibliothèque illimitée (fichiers jusqu'à 50 Mo)
                 </Text>
               </View>
+
+              <View className="flex-row items-center gap-x-2.5">
+                <View className="h-4 w-4 rounded-md bg-orange-100 dark:bg-orange-950/40 items-center justify-center border border-orange-200/30">
+                  <Check size={11} color="#F97316" />
+                </View>
+                <Text className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+                  Recherche sémantique dans la bibliothèque
+                </Text>
+              </View>
             </View>
 
             {/* Bouton d'action */}
@@ -136,7 +145,7 @@ export default function SubscriptionScreen(): JSX.Element {
               />
             ) : (
               <Button
-                label="S'abonner (1 000 XAF/mois)"
+                label="S'abonner (2 500 XAF/mois)"
                 onPress={() => router.push('/settings/payment')}
                 className="rounded-xl h-11 bg-orange-500 active:bg-orange-600"
               />
