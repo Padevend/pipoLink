@@ -230,6 +230,67 @@ export class MessagingService {
     return { encryptedChatKey: row.encrypted_chat_key };
   }
 
+  /**
+   * Rotation de la clé de chat : remplace TOUTES les ChatMemberKey du chat par
+   * une nouvelle clé chiffrée pour chaque appareil membre. Utilisé quand un
+   * appareil légitime ne peut plus déchiffrer la clé (récupération avec
+   * génération de nouvelles clés d'identité).
+   */
+  async rotateChatKey(
+    userId: string,
+    chatId: string,
+    keys: { deviceId: string; encryptedKey: string }[],
+  ) {
+    await this._assertMember(userId, chatId);
+
+    if (!Array.isArray(keys) || keys.length === 0) {
+      throw { code: "VALIDATION_ERROR", status: 400, message: "Liste de clés requise." };
+    }
+
+    // Ne garder que les appareils actifs appartenant aux membres du chat
+    const members = await prisma.conversationMember.findMany({
+      where: { conversation_id: chatId },
+      select: { user_id: true },
+    });
+    const memberIds = members.map((m) => m.user_id);
+
+    const validDevices = await prisma.device.findMany({
+      where: {
+        id: { in: keys.map((k) => k.deviceId) },
+        user_id: { in: memberIds },
+        revokedAt: null,
+      },
+      select: { id: true },
+    });
+    const validDeviceIds = new Set(validDevices.map((d) => d.id));
+    const validKeys = keys.filter((k) => validDeviceIds.has(k.deviceId) && !!k.encryptedKey);
+
+    if (validKeys.length === 0) {
+      throw { code: "VALIDATION_ERROR", status: 400, message: "Aucun appareil valide dans la liste de clés." };
+    }
+
+    await prisma.$transaction(async (trx) => {
+      await trx.chatMemberKey.deleteMany({ where: { chat_id: chatId } });
+      await trx.chatMemberKey.createMany({
+        data: validKeys.map((k) => ({
+          id: crypto.randomUUID(),
+          chat_id: chatId,
+          device_id: k.deviceId,
+          encrypted_chat_key: k.encryptedKey,
+        })),
+      });
+      await trx.auditLog.create({
+        data: {
+          user_id: userId,
+          action: "CHAT_KEY_ROTATED",
+          targetId: chatId,
+        },
+      });
+    });
+
+    return { rotated: validKeys.length };
+  }
+
   async listConversations(userId: string) {
     const members = await prisma.conversationMember.findMany({
       where: { user_id: userId },

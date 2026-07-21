@@ -41,7 +41,8 @@ export const libraryApi = {
 
   semanticSearch: (query: string) =>
     api.post<{
-      unavailable: boolean;
+      // Contrat volontairement agnostique : l'app affiche `message` si présent,
+      // sinon les résultats — l'état du service (actif/maintenance) reste côté serveur.
       message?: string;
       results: {
         document_id: string;

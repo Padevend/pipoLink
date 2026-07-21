@@ -5,6 +5,7 @@ import { messagingApi } from '@/shared/api/messaging';
 import { sortMessagesAsc } from '@/shared/api/normalize-message';
 import type { Message, PaginatedResponse } from '@/shared/api/types';
 import { decryptMessage } from '@/shared/crypto/message';
+import { SecureStorageService } from '@/shared/lib/storage';
 import { localDb } from '@/shared/storage/local-db';
 import { queryClient } from '@/providers';
 
@@ -68,27 +69,47 @@ export function useMessages(conversationId: string, options?: { enabled?: boolea
               ck = null;
             }
 
-            const decryptedNetwork = await Promise.all(
-              networkRaw.items.map(async (m) => {
-                if (!ck) return { ...m, decryptedContent: null, decryptFailed: true };
-                const text = await decryptMessage(m.cipherText, m.iv, ck);
-                let responseToDecrypted: DecryptedMessage | null = null;
-                if (m.responseTo) {
-                  const repText = await decryptMessage(m.responseTo.cipherText, m.responseTo.iv, ck);
-                  responseToDecrypted = {
-                    ...m.responseTo,
-                    decryptedContent: repText,
-                    decryptFailed: repText === null
+            const decryptWith = (key: Uint8Array | null) =>
+              Promise.all(
+                sortMessagesAsc(networkRaw.items).map(async (m): Promise<DecryptedMessage> => {
+                  if (!key) return { ...m, decryptedContent: null, decryptFailed: true };
+                  const text = await decryptMessage(m.cipherText, m.iv, key);
+                  let responseToDecrypted: DecryptedMessage | null = null;
+                  if (m.responseTo) {
+                    const repText = await decryptMessage(m.responseTo.cipherText, m.responseTo.iv, key);
+                    responseToDecrypted = {
+                      ...m.responseTo,
+                      decryptedContent: repText,
+                      decryptFailed: repText === null
+                    };
+                  }
+                  return {
+                    ...m,
+                    decryptedContent: text,
+                    decryptFailed: text === null,
+                    responseToDecrypted
                   };
-                }
-                return {
-                  ...m,
-                  decryptedContent: text,
-                  decryptFailed: text === null,
-                  responseToDecrypted
-                };
-              })
-            );
+                })
+              );
+
+            let decryptedNetwork = await decryptWith(ck);
+
+            // Auto-guérison : si le message le plus récent ne se déchiffre pas,
+            // la clé locale est probablement obsolète (rotation de clé par un
+            // autre membre) → invalider et re-tenter une fois avec la clé serveur.
+            const newest = decryptedNetwork[decryptedNetwork.length - 1];
+            if (ck && newest?.decryptFailed) {
+              await SecureStorageService.remove(`chat_key_${conversationId}`);
+              let freshKey: Uint8Array | null = null;
+              try {
+                freshKey = await ensureChatKeyForChat(conversationId);
+              } catch {
+                freshKey = null;
+              }
+              if (freshKey) {
+                decryptedNetwork = await decryptWith(freshKey);
+              }
+            }
 
             // Update React Query state in-place
             queryClient.setQueryData<InfiniteData<PaginatedResponse<DecryptedMessage>>>(

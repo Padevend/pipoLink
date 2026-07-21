@@ -28,6 +28,7 @@ export const WS_EVENTS = {
   PRESENCE_UPDATED: 'presence.updated',
 
   // Others
+  CHAT_KEY_ROTATED: 'chat.key_rotated',
   NOTIFICATION_CREATED: 'notification.created',
   DOCUMENT_UPLOADED: 'document.uploaded',
   DOCUMENT_UPDATED: 'document.updated',

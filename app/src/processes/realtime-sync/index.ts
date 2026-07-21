@@ -15,7 +15,7 @@ import { localDb } from '@/shared/storage/local-db';
 import { on } from '@/shared/websocket/manager';
 import { conversationKeys } from '@/entities/conversation/hooks';
 import { activeChat } from '@/features/messaging/lib/active-chat';
-import { AsyncStorageService, ASYNC_STORAGE_KEYS } from '@/shared/lib/storage';
+import { AsyncStorageService, ASYNC_STORAGE_KEYS, SecureStorageService, SECURE_STORAGE_KEYS } from '@/shared/lib/storage';
 import type { UserWithProfile } from '@/shared/api/normalize-user';
 import { syncContactProfilesSilently } from '@/processes/contact-sync';
 
@@ -240,6 +240,26 @@ export function setupRealtimeSync(): () => void {
     on<void>(WS_EVENTS.NOTIFICATION_CREATED, () => {
       void queryClient.invalidateQueries({ queryKey: ['notifications'] });
     }),
+
+    // La clé du chat a été renouvelée (ex. récupération de clés d'un membre) :
+    // invalider la clé locale et re-déchiffrer avec la nouvelle clé serveur.
+    on<{ conversationId: string; rotatedByDeviceId?: string | null }>(
+      WS_EVENTS.CHAT_KEY_ROTATED,
+      async (payload) => {
+        if (!payload?.conversationId) return;
+        try {
+          const myDeviceId = await SecureStorageService.get(SECURE_STORAGE_KEYS.DEVICE_ID);
+          // L'appareil qui a effectué la rotation possède déjà la nouvelle clé
+          if (payload.rotatedByDeviceId && payload.rotatedByDeviceId === myDeviceId) return;
+
+          await SecureStorageService.remove(`chat_key_${payload.conversationId}`);
+          void queryClient.invalidateQueries({ queryKey: ['messages', payload.conversationId] });
+          void queryClient.invalidateQueries({ queryKey: conversationKeys.list() });
+        } catch {
+          // silencieux
+        }
+      },
+    ),
 
     on<string>('status.change', (status) => {
       if (status === 'connected') {

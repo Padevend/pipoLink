@@ -12,6 +12,7 @@ export {
   useMyDocuments,
   useDeleteDocument,
   useUploadDocument,
+  useSemanticSearch,
 } from './hooks/index';
 
 export const useDocuments = (params?: {

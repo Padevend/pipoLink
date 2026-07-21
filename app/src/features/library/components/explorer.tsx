@@ -22,6 +22,7 @@ export type ExplorerRow =
 
 interface LibraryExplorerProps {
     documentAction: (doc: Document) => void;
+    showAISearch?: boolean;
 }
 
 function useDebouncedValue<T>(value: T, delayMs: number): T {
@@ -34,7 +35,8 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
 }
 
 export default function LibraryExplorerComponnent({
-    documentAction
+    documentAction,
+    showAISearch
 }: LibraryExplorerProps) {
     const [trail, setTrail] = useState<BreadcrumbItem[]>([ROOT_CRUMB]);
     const [search, setSearch] = useState('');
@@ -113,28 +115,29 @@ export default function LibraryExplorerComponnent({
                 </View>
 
                 {/* Recherche sémantique (Premium) */}
-                <Pressable
-                    onPress={handleSemanticSearchPress}
-                    className="mt-2.5 flex-row items-center justify-between rounded-xl border border-orange-200 bg-orange-50/60 px-3.5 py-2.5 dark:border-orange-900/40 dark:bg-orange-950/20 active:bg-orange-100 dark:active:bg-orange-950/40"
-                >
-                    <View className="flex-row items-center gap-2 flex-1">
-                        <Sparkles size={14} color="#F97316" />
-                        <Text className="text-xs font-bold tracking-tight text-zinc-800 dark:text-zinc-200">
-                            Recherche IA
-                        </Text>
-                        <Text numberOfLines={1} className="flex-1 text-[10px] font-medium text-zinc-400 dark:text-zinc-500">
-                            « les lois de Maxwell en thermo… »
-                        </Text>
-                    </View>
-                    {!isPremium && (
-                        <View className="rounded-md bg-orange-500 px-1.5 py-0.5 ml-2">
-                            <Text className="text-[8px] font-black uppercase tracking-wider text-white">
-                                Premium
+                {showAISearch && (
+                    <Pressable
+                        onPress={handleSemanticSearchPress}
+                        className="mt-2.5 flex-row items-center justify-between rounded-xl border border-orange-200 bg-orange-50/60 px-3.5 py-2.5 dark:border-orange-900/40 dark:bg-orange-950/20 active:bg-orange-100 dark:active:bg-orange-950/40"
+                    >
+                        <View className="flex-row items-center gap-2 flex-1">
+                            <Sparkles size={14} color="#F97316" />
+                            <Text className="text-xs font-bold tracking-tight text-zinc-800 dark:text-zinc-200">
+                                Recherche IA
+                            </Text>
+                            <Text numberOfLines={1} className="flex-1 text-[10px] font-medium text-zinc-400 dark:text-zinc-500">
+                                « les lois de Maxwell en thermo… »
                             </Text>
                         </View>
-                    )}
-                </Pressable>
-
+                        {!isPremium && (
+                            <View className="rounded-md bg-orange-500 px-1.5 py-0.5 ml-2">
+                                <Text className="text-[8px] font-black uppercase tracking-wider text-white">
+                                    Premium
+                                </Text>
+                            </View>
+                        )}
+                    </Pressable>
+                )}
                 {/* Fil d'Ariane */}
                 <View className="mt-3.5">
                     <ExplorerBreadcrumb items={trail} onNavigate={navigateBreadcrumb} />

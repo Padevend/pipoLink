@@ -79,17 +79,14 @@ export default function SemanticSearchModal() {
       </View>
 
       <View className="flex-1 px-4 pt-4">
-        {/* État maintenance */}
-        {result?.unavailable ? (
+        {/* Message serveur (l'app ne connaît pas l'état du service : elle affiche ce qu'il envoie) */}
+        {result?.message ? (
           <View className="items-center justify-center py-20 px-6">
             <View className="h-12 w-12 items-center justify-center rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 mb-3">
               <Wrench size={20} color="#F97316" />
             </View>
-            <Text className="text-sm font-bold tracking-tight text-zinc-800 dark:text-zinc-200 text-center">
-              Service indisponible
-            </Text>
-            <Text className="mt-1 text-center text-xs leading-4 text-zinc-400 dark:text-zinc-500 px-6">
-              {result.message ?? 'Fonctionnalité temporairement indisponible ou en maintenance.'}
+            <Text className="mt-1 text-center text-xs leading-5 text-zinc-500 dark:text-zinc-400 px-6">
+              {result.message}
             </Text>
           </View>
         ) : (

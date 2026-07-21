@@ -397,10 +397,12 @@ export class LibraryService {
     query: string,
     filters?: Record<string, unknown>,
   ) {
+    // L'app ne connaît jamais l'état du service : elle affiche simplement
+    // `message` s'il est présent, et `results` sinon. Basculer le RAG en
+    // production ne demande donc aucune mise à jour de l'app.
     const FALLBACK = {
-      unavailable: true as const,
-      message: "Fonctionnalité temporairement indisponible ou en maintenance.",
       results: [] as never[],
+      message: "Fonctionnalité temporairement indisponible ou en maintenance.",
     };
 
     const ragApiUrl = env.get("RAG_AGENT_API_URL");
@@ -421,7 +423,7 @@ export class LibraryService {
         results?: { document_id: string; title?: string; score?: number; excerpt?: string }[];
       };
       const ragResults = data.results ?? [];
-      if (ragResults.length === 0) return { unavailable: false as const, results: [] };
+      if (ragResults.length === 0) return { results: [] };
 
       // Ne renvoyer que les documents visibles par l'appelant
       const ids = ragResults.map((r) => r.document_id);
@@ -436,7 +438,6 @@ export class LibraryService {
       const byId = new Map(visibleDocs.map((d) => [d.id, d]));
 
       return {
-        unavailable: false as const,
         results: ragResults
           .filter((r) => byId.has(r.document_id))
           .map((r) => ({

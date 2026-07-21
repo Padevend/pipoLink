@@ -8,7 +8,7 @@ import { useKeyRecovery } from '@/features/auth/hooks/use-key-recovery';
 import { AssociateDevicePanel } from '@/features/devices/components/associate-device-panel';
 import { useAuth, useToast } from '@/providers';
 import { authApi } from '@/shared/api/auth';
-import { generateIdentityKeys, restoreKeyBackup } from '@/shared/crypto';
+import { createKeyBackup, generateIdentityKeys, restoreKeyBackup } from '@/shared/crypto';
 import { SECURE_STORAGE_KEYS, SecureStorageService } from '@/shared/lib/storage';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
@@ -194,6 +194,20 @@ export default function KeyRecoveryScreen(): JSX.Element {
                 },
                 completeRes.device as any,
               );
+
+              // Remplacer la sauvegarde serveur (qui contient les ANCIENNES clés,
+              // désormais inutilisables) par une sauvegarde des nouvelles clés,
+              // pour que la prochaine récupération par mot de passe fonctionne.
+              try {
+                const tempPassword = await SecureStorageService.get('temp_login_password');
+                if (tempPassword) {
+                  const backup = await createKeyBackup(tempPassword);
+                  if (backup) await authApi.backupKey(backup);
+                }
+              } catch {
+                // non bloquant : la sauvegarde sera recréée au prochain changement de mot de passe
+              }
+
               await SecureStorageService.remove('temp_login_email');
               await SecureStorageService.remove('temp_login_password');
               await SecureStorageService.remove('temp_key_backup');

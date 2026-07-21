@@ -70,6 +70,26 @@ export class MessagingController {
     return ApiResponse.success(c, result, "Clé chiffrée.");
   }
 
+  async rotateChatKey(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const deviceId = c.get("deviceId") as string | undefined;
+    const chatId = c.req.param("id")!;
+    const body = (await c.req.json().catch(() => ({}))) as {
+      keys?: { deviceId: string; encryptedKey: string }[];
+    };
+
+    const result = await this.service.rotateChatKey(userId, chatId, body.keys ?? []);
+
+    // Prévenir les membres connectés : leur clé locale mise en cache est obsolète
+    RealtimeBus.emit(
+      WsEventName.ChatKeyRotated,
+      { conversationId: chatId, rotatedByDeviceId: deviceId ?? null },
+      { conversationId: chatId },
+    );
+
+    return ApiResponse.success(c, result, "Clé du chat renouvelée.");
+  }
+
   async getMessages(c: HttpContext) {
     const userId = c.get("userId") as string;
     const conversationId = c.req.param("id")!;

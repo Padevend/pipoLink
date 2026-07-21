@@ -56,6 +56,11 @@ export const messagingApi = {
       },
     ),
 
+  rotateChatKey: (
+    chatId: string,
+    keys: { deviceId: string; encryptedKey: string }[],
+  ) => api.post<{ rotated: number }>(`/messaging/${chatId}/keys/rotate`, { keys }),
+
   getMessages: async (
     conversationId: string,
     params?: { page?: number; limit?: number },
