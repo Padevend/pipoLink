@@ -143,6 +143,7 @@ export default function LibraryModal({
           <>
             <LibraryExplorerComponnent
               documentAction={handleAddDocument}
+              showAISearch={false}
             />
           </>
         )}

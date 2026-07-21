@@ -13,6 +13,7 @@ MessagingRouter
   .get("/", ...msgAuth, callAction(MessagingController, "listConversations"))
   .post("/", ...msgAuth, callAction(MessagingController, "createChat"))
   .get("/:id/my-encrypted-key", ...msgAuth, callAction(MessagingController, "myEncryptedChatKey"))
+  .post("/:id/keys/rotate", ...msgAuth, callAction(MessagingController, "rotateChatKey"))
   .post("/:id/members", ...msgAuth, callAction(MessagingController, "addMember"))
   .get("/:id/messages", ...msgAuth, callAction(MessagingController, "getMessages"))
   .post("/:id/messages", ...msgAuth, callAction(MessagingController, "sendMessage"))

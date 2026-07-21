@@ -27,6 +27,7 @@ export const WsEventName = {
   DeviceLinked: "device.linked",
   DeviceRevoked: "device.revoked",
   KeyRotationRequired: "key.rotation_required",
+  ChatKeyRotated: "chat.key_rotated",
   SubscriptionUpdated: "subscription.updated",
   AiResponseCreated: "ai.response.created",
   PresenceUpdated: "presence.updated",

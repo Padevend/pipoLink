@@ -75,18 +75,38 @@ export const ConversationItem = React.memo(function ConversationItem({ conversat
     getKey();
   }, [conversation.id, lastMessage, cachedPreview]);
 
-  // Déchiffrement du dernier message (Logique métier préservée)
-  const decryptedLastMessage = useMemo(() => {
+  // Déchiffrement du dernier message (async → state, avec cache module-level)
+  const [decryptedLastMessage, setDecryptedLastMessage] = useState<string>(() => {
     if (!lastMessage) return 'Aucun message';
-    if (cachedPreview !== undefined) return cachedPreview;
-    if (!chatKey) return 'Message sécurisé';
-    try {
-      const plain = decryptMessage(lastMessage.cipherText, lastMessage?.iv, chatKey);
-      if (cacheKey) cachePreview(cacheKey, plain);
-      return plain;
-    } catch {
-      return 'Erreur de déchiffrement';
+    return cachedPreview !== undefined ? cachedPreview : 'Message sécurisé';
+  });
+
+  useEffect(() => {
+    if (!lastMessage) {
+      setDecryptedLastMessage('Aucun message');
+      return;
     }
+    if (cachedPreview !== undefined) {
+      setDecryptedLastMessage(cachedPreview);
+      return;
+    }
+    if (!chatKey) {
+      setDecryptedLastMessage('Message sécurisé');
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const plain = await decryptMessage(lastMessage.cipherText, lastMessage.iv, chatKey);
+        if (plain !== null && cacheKey) cachePreview(cacheKey, plain);
+        if (!cancelled) setDecryptedLastMessage(plain ?? 'Erreur de déchiffrement');
+      } catch {
+        if (!cancelled) setDecryptedLastMessage('Erreur de déchiffrement');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [lastMessage, chatKey, cachedPreview, cacheKey]);
 
   return (

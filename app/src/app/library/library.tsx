@@ -63,6 +63,7 @@ export default function LibraryExplorerScreen() {
 
             <LibraryExplorerComponnent
                 documentAction={openDocument}
+                showAISearch={true}
             />
         </SafeAreaView>
     );
