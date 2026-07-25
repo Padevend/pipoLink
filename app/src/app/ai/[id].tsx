@@ -2,6 +2,7 @@ import {
   useAddDocumentToSession,
   useAiChat,
   useAiHistory,
+  useAiTokens,
   useGenerateStudyAid,
   useMyAiAttachments,
   useRemoveDocumentFromSession,
@@ -11,6 +12,7 @@ import { useMyDocuments } from '@/entities/document/hooks';
 import LibraryModal from '@/features/chat-ai/components/biblio-modal';
 import SourceModal from '@/features/chat-ai/components/modal-source';
 import type { Document } from '@/shared/api/types';
+import { useDraft } from '@/shared/hooks/use-draft';
 import { useSafeArea } from '@/shared/hooks/use-safe-area';
 import { Input } from '@/shared/ui/input';
 import { cn } from '@/shared/utils/cn';
@@ -25,6 +27,7 @@ import {
   Layers,
   Send,
   Sparkles,
+  Zap,
 } from 'lucide-react-native';
 import { useMemo, useRef, useState } from 'react';
 import {
@@ -71,14 +74,15 @@ export default function AiChatScreen() {
   const chatMutation = useAiChat();
 
   const flatListRef = useRef<FlatList>(null);
-  const [text, setText] = useState('');
+  // Brouillon local par session IA (restauré à la réouverture, TTL 24 h)
+  const { text, setText, clearDraft } = useDraft(`ai_${sessionId}`);
   const [sourcesModalVisible, setSourcesModalVisible] = useState(false);
   const [addSourceVisible, setAddSourceVisible] = useState(false);
 
   const handleSend = async () => {
     if (!text.trim()) return;
     const msg = text.trim();
-    setText('');
+    clearDraft();
     try {
       await chatMutation.mutateAsync({ message: msg, sessionId });
       flatListRef.current?.scrollToEnd({ animated: true });
@@ -169,6 +173,15 @@ export default function AiChatScreen() {
     });
   };
 
+  const { data: tokensData } = useAiTokens();
+  const remainingTimeText = useMemo(() => {
+    if (!tokensData?.timeRemainingMs) return null;
+    const totalMinutes = Math.ceil(tokensData.timeRemainingMs / (60 * 1000));
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+  }, [tokensData?.timeRemainingMs]);
+
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
       
@@ -186,15 +199,28 @@ export default function AiChatScreen() {
           <Text className="font-bold text-sm text-zinc-900 dark:text-zinc-50">Hiro Notebook</Text>
         </View>
 
-        <Pressable
-          onPress={() => setSourcesModalVisible(true)}
-          className="flex-row items-center gap-1.5 h-8 rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 px-2.5 active:bg-zinc-100 dark:active:bg-zinc-800"
-        >
-          <FolderOpen size={14} color="#71717A" />
-          <Text className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300">
-            Sources ({activeDocs?.length ?? 0})
-          </Text>
-        </Pressable>
+        <View className="flex-row items-center gap-2">
+          {/* Badge de Jetons IA */}
+          <Pressable
+            onPress={() => router.push('/settings/subscription')}
+            className="flex-row items-center gap-1 rounded-lg bg-orange-50 border border-orange-200/60 dark:bg-orange-950/30 dark:border-orange-900/40 px-2 py-1 active:opacity-80"
+          >
+            <Zap size={12} color="#F97316" />
+            <Text className="text-[11px] font-bold text-orange-600 dark:text-orange-400">
+              {tokensData ? tokensData.tokens.toLocaleString() : '...'}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setSourcesModalVisible(true)}
+            className="flex-row items-center gap-1.5 h-8 rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 px-2.5 active:bg-zinc-100 dark:active:bg-zinc-800"
+          >
+            <FolderOpen size={14} color="#71717A" />
+            <Text className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300">
+              Sources ({activeDocs?.length ?? 0})
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
@@ -241,6 +267,7 @@ export default function AiChatScreen() {
             contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 24 }}
             renderItem={({ item }) => {
               const isAi = item.role === 'assistant';
+              const isFailed = item.status === 'fail';
               return (
                 <View className={cn('mb-3 max-w-[85%]', isAi ? 'self-start items-start' : 'self-end items-end')}>
                   <View
@@ -248,11 +275,31 @@ export default function AiChatScreen() {
                       'px-4 py-2.5 rounded-2xl',
                       isAi
                         ? 'rounded-tl-sm border border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/60'
+                        : isFailed
+                        ? 'rounded-tr-sm bg-red-500/90 border border-red-400'
                         : 'rounded-tr-sm bg-orange-500',
                     )}
                   >
                     {renderMessageContent(item.content, isAi)}
                   </View>
+
+                  {isFailed && (
+                    <View className="flex-row items-center gap-2 mt-1 px-1">
+                      <Text className="text-[10px] text-red-500 font-bold">Échec de l'envoi</Text>
+                      <Pressable
+                        onPress={() => chatMutation.retryFailedAiMessage(sessionId, item)}
+                        className="bg-orange-500/10 px-2 py-0.5 rounded"
+                      >
+                        <Text className="text-[10px] font-bold text-orange-500">Réessayer</Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => chatMutation.deleteFailedAiMessage(sessionId, item.id)}
+                        className="bg-red-500/10 px-2 py-0.5 rounded"
+                      >
+                        <Text className="text-[10px] font-bold text-red-500">Supprimer</Text>
+                      </Pressable>
+                    </View>
+                  )}
                 </View>
               );
             }}
@@ -283,6 +330,26 @@ export default function AiChatScreen() {
           </View>
         )}
 
+        {/* Bannières d'avertissement de Jetons IA */}
+        {tokensData && tokensData.tokens < 20 && (
+          <View className="mx-3 mb-2 flex-row items-center justify-between rounded-xl bg-orange-500/10 border border-orange-500/30 p-2.5">
+            <View className="flex-1 pr-2">
+              <Text className="text-xs font-bold text-orange-600 dark:text-orange-400">
+                Solde de jetons insuffisant ({tokensData.tokens} / {tokensData.maxTokens})
+              </Text>
+              <Text className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5">
+                Restauration automatique dans {remainingTimeText || 'quelques minutes'}.
+              </Text>
+            </View>
+            <Pressable
+              onPress={() => router.push('/settings/subscription')}
+              className="rounded-lg bg-orange-500 px-3 py-1.5 active:bg-orange-600"
+            >
+              <Text className="text-[11px] font-bold text-white">Passer Premium</Text>
+            </Pressable>
+          </View>
+        )}
+
         {/* Barre de Saisie Opaque */}
         <View 
           className="border-t border-zinc-100 bg-white p-3 dark:border-zinc-900 dark:bg-zinc-950"
@@ -291,9 +358,10 @@ export default function AiChatScreen() {
           <View className="flex-row items-end gap-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-1">
             <View className="flex-1">
               <Input
-                placeholder="Posez votre question..."
+                placeholder={tokensData && tokensData.tokens < 20 ? "Solde de jetons insuffisant..." : "Posez votre question..."}
                 value={text}
                 onChangeText={setText}
+                editable={!tokensData || tokensData.tokens >= 20}
                 multiline
                 containerClassName="bg-transparent border-0 min-h-[36px] max-h-[100px] px-2"
                 className="text-xs text-zinc-900 dark:text-zinc-50"
@@ -302,10 +370,10 @@ export default function AiChatScreen() {
 
             <Pressable
               onPress={() => void handleSend()}
-              disabled={!text.trim() || chatMutation.isPending || generateMutation.isPending}
+              disabled={!text.trim() || generateMutation.isPending || (!!tokensData && tokensData.tokens < 20)}
               className={cn(
                 'h-9 w-9 items-center justify-center rounded-lg active:opacity-90',
-                text.trim() && !chatMutation.isPending && !generateMutation.isPending
+                text.trim() && !generateMutation.isPending && (!tokensData || tokensData.tokens >= 20)
                   ? 'bg-orange-500'
                   : 'bg-transparent opacity-30',
               )}

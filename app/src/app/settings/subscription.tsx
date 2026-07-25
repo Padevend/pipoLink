@@ -58,7 +58,13 @@ export default function SubscriptionScreen(): JSX.Element {
               <View className="flex-row items-center gap-x-2.5">
                 <Check size={13} color="#71717A" />
                 <Text className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                  20 messages IA / jour
+                  2 500 jetons IA disponibles à l'inscription
+                </Text>
+              </View>
+              <View className="flex-row items-center gap-x-2.5">
+                <Check size={13} color="#71717A" />
+                <Text className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                  Renouvellement des jetons toutes les 6 heures
                 </Text>
               </View>
               <View className="flex-row items-center gap-x-2.5">
@@ -103,7 +109,16 @@ export default function SubscriptionScreen(): JSX.Element {
                   <Check size={11} color="#F97316" />
                 </View>
                 <Text className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
-                  Accès IA illimité (Hiro)
+                  8 000 jetons IA par fenêtre de restauration
+                </Text>
+              </View>
+
+              <View className="flex-row items-center gap-x-2.5">
+                <View className="h-4 w-4 rounded-md bg-orange-100 dark:bg-orange-950/40 items-center justify-center border border-orange-200/30">
+                  <Check size={11} color="#F97316" />
+                </View>
+                <Text className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+                  Renouvellement accéléré toutes les 3h 30min
                 </Text>
               </View>
 

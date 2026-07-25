@@ -1,11 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { aiApi } from '@/shared/api/ai';
 import { localDb } from '@/shared/storage/local-db';
+import { generateUUID } from '@/shared/utils/uuid';
 
 export const aiKeys = {
   all: ['ai'] as const,
   sessions: () => [...aiKeys.all, 'sessions'] as const,
   history: (sessionId: string) => [...aiKeys.all, 'history', sessionId] as const,
+  tokens: () => [...aiKeys.all, 'tokens'] as const,
+};
+
+export const useAiTokens = () => {
+  return useQuery({
+    queryKey: aiKeys.tokens(),
+    queryFn: () => aiApi.getTokenStatus(),
+    refetchInterval: 30000, // Refresh tokens state every 30s
+  });
 };
 
 export const useAiSessions = () => {
@@ -51,20 +61,41 @@ export const useAiHistory = (sessionId: string) => {
 export const useAiChat = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: (payload: { message: string; sessionId?: string }) =>{
-      // add msg to view (optimistic)
+  const mutation = useMutation({
+    mutationFn: async (payload: { message: string; sessionId?: string; tempId?: string }) => {
+      return aiApi.sendMessage({ message: payload.message, sessionId: payload.sessionId });
+    },
+    onMutate: async (payload) => {
+      const tempId = payload.tempId || `temp-${generateUUID()}`;
       if (payload.sessionId) {
         queryClient.setQueryData(aiKeys.history(payload.sessionId), (old: any) => {
           const existing = old || [];
-          const tempId = `temp-${Date.now()}`;
-          return [...existing, { id: tempId, role: 'user', content: payload.message }];
+          return [...existing, { id: tempId, role: 'user', content: payload.message, status: 'send', createdAt: new Date().toISOString() }];
         });
       }
-
-      return aiApi.sendMessage(payload)
+      return { tempId, sessionId: payload.sessionId, message: payload.message };
     },
-    onSuccess: (data, payload) => {
+    onError: (_error, _variables, context) => {
+      if (context?.sessionId && context?.tempId) {
+        queryClient.setQueryData(aiKeys.history(context.sessionId), (old: any) => {
+          let existing = old || [];
+          return existing.map((msg: any) =>
+            msg.id === context.tempId ? { ...msg, status: 'fail' } : msg
+          );
+        });
+
+        localDb.upsertAiMessages(context.sessionId, [
+          {
+            id: context.tempId,
+            role: 'user',
+            content: context.message,
+            createdAt: new Date().toISOString(),
+            status: 'fail',
+          },
+        ]);
+      }
+    },
+    onSuccess: (data, payload, context) => {
       queryClient.setQueryData(aiKeys.sessions(), (old: any) => {
         const existing = old || [];
         if (!existing.some((s: any) => s.id === data.session.id)) {
@@ -73,12 +104,22 @@ export const useAiChat = () => {
         return existing;
       });
 
+      if (data.tokens) {
+        queryClient.setQueryData(aiKeys.tokens(), data.tokens);
+      } else {
+        void queryClient.invalidateQueries({ queryKey: aiKeys.tokens() });
+      }
+
       if (data.session.id) {
         queryClient.setQueryData(aiKeys.history(data.session.id), (old: any) => {
           let existing = old || [];
           
-          // Nettoyer les messages temporaires optimistes
-          existing = existing.filter((msg: any) => !msg.id.startsWith('temp-'));
+          // Nettoyer le message temporaire optimiste
+          if (context?.tempId) {
+            existing = existing.filter((msg: any) => msg.id !== context.tempId);
+          } else {
+            existing = existing.filter((msg: any) => !msg.id.startsWith('temp-'));
+          }
           
           const newMessages = [];
           if (data.request && !existing.some((msg: any) => msg.id === data.request.id)) {
@@ -88,11 +129,32 @@ export const useAiChat = () => {
             newMessages.push(data.message);
           }
           
-          return [...existing, ...newMessages];
+          const updated = [...existing, ...newMessages];
+          localDb.upsertAiMessages(data.session.id, updated);
+          return updated;
         });
       }
     },
   });
+
+  const deleteFailedAiMessage = (sessionId: string, messageId: string) => {
+    queryClient.setQueryData(aiKeys.history(sessionId), (old: any) => {
+      const existing = old || [];
+      return existing.filter((m: any) => m.id !== messageId);
+    });
+    localDb.deleteAiMessage(messageId);
+  };
+
+  const retryFailedAiMessage = (sessionId: string, msg: any) => {
+    deleteFailedAiMessage(sessionId, msg.id);
+    mutation.mutate({ message: msg.content, sessionId });
+  };
+
+  return {
+    ...mutation,
+    deleteFailedAiMessage,
+    retryFailedAiMessage,
+  };
 };
 
 export const useDeleteSession = () => {
@@ -148,6 +210,7 @@ export const useGenerateStudyAid = () => {
     mutationFn: ({ sessionId, type }: { sessionId: string; type: string }) =>
       aiApi.generateStudyAid(sessionId, type),
     onSuccess: (data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: aiKeys.tokens() });
       queryClient.setQueryData(aiKeys.history(variables.sessionId), (old: any) => {
         const existing = old || [];
         if (!existing.some((msg: any) => msg.id === data.message.id)) {

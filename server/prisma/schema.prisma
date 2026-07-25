@@ -53,6 +53,10 @@ model User {
   isAnonymized  Boolean  @default(false)
   deletedAt     DateTime? @db.Timestamptz
   anonymizedAt  DateTime? @db.Timestamptz
+  aiTokens               Int       @default(2500)
+  aiTokensMax            Int       @default(2500)
+  lastTokenRestorationAt DateTime  @default(now()) @db.Timestamptz
+  nextRestorationAt      DateTime? @db.Timestamptz
   createdAt     DateTime @default(now()) @db.Timestamptz
   updatedAt     DateTime @updatedAt @db.Timestamptz
 

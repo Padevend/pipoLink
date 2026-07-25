@@ -7,6 +7,7 @@ import { injectPlanMiddleware, planMiddleware } from "../../app/middlewares/plan
 export const AiRouter = new Hono();
 
 AiRouter
+  .get("/tokens", authMiddleware, callAction(AiController, "getTokensStatus"))
   .post("/chat", authMiddleware, injectPlanMiddleware, callAction(AiController, "chat"))
   .get("/sessions", authMiddleware, callAction(AiController, "getSessions"))
   .delete("/sessions/:id", authMiddleware, callAction(AiController, "deleteSession"))
@@ -14,7 +15,7 @@ AiRouter
   .get("/sessions/:id/documents", authMiddleware, callAction(AiController, "getDocuments"))
   .post("/sessions/:id/documents", authMiddleware, callAction(AiController, "addDocument"))
   .delete("/sessions/:id/documents/:documentId", authMiddleware, callAction(AiController, "removeDocument"))
-  .post("/sessions/:id/generate", authMiddleware, planMiddleware, callAction(AiController, "generateStudyAid"))
+  .post("/sessions/:id/generate", authMiddleware, injectPlanMiddleware, callAction(AiController, "generateStudyAid"))
   .post("/upload-attachment", authMiddleware, callAction(AiController, "uploadAttachment"))
   .post("/upload-attachement", authMiddleware, callAction(AiController, "uploadAttachment"))
   .post("/uplaod-attachement", authMiddleware, callAction(AiController, "uploadAttachment"))

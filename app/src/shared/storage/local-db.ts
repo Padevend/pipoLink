@@ -122,6 +122,15 @@ export const localDb = {
     return rows.map((r) => normalizeMessage(JSON.parse(r.payload_json)));
   },
 
+  deleteMessage(id: string): void {
+    db.runSync('DELETE FROM messages WHERE id = ?', [id]);
+  },
+
+  deleteAiMessage(id: string): void {
+    db.runSync('DELETE FROM ai_messages WHERE id = ?', [id]);
+  },
+  // ============================================================================================
+
   queuePendingMessage(row: Omit<PendingMessageRow, 'retry_count'>): void {
     db.runSync(
       `INSERT OR REPLACE INTO pending_messages (id, conversation_id, content_plain, message_type, created_at, retry_count)

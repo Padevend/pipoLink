@@ -76,7 +76,7 @@ export type MessageType = "TEXT" | "IMAGE" | "DOCUMENT" | "MIXED" | "SYSTEM";
 /**
  * Message status
  */
-export type MessageStatus = "send" | "delivered" | "read";
+export type MessageStatus = "send" | "delivered" | "read" | "fail";
 
 /**
  * Attachment metadata received from the server.

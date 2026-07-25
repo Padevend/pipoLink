@@ -5,6 +5,7 @@ import { prisma } from "./config/database.js";
 import { initWebSocket } from "./src/modules/websocket/index.js";
 import { startKeyRotationJob } from "./app/jobs/key-rotation.job.js";
 import { startSubscriptionExpirationJob } from "./app/jobs/subscription-expiration.job.js";
+import { startAiTokenRestorationJob } from "./app/jobs/ai-token-restoration.job.js";
 import { readFile } from "fs/promises";
 import { join } from "path";
 import { serveStatic } from "hono/serve-static";
@@ -45,6 +46,7 @@ async function bootstrap() {
   initWebSocket(server as any);
   startKeyRotationJob();
   startSubscriptionExpirationJob();
+  startAiTokenRestorationJob();
 }
 
 bootstrap().catch((err) => {

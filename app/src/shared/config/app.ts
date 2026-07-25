@@ -5,6 +5,6 @@ export const APP_CONFIG = {
   apiBaseUrl: process.env.EXPO_PUBLIC_API_URL ?? 'https://api-plink.lyrastudio.org',
   links: {
     message_decryption_docs: "https://pipolink.lyrastudio.org/docs/message-decryption",
-    ticky_brand: "https://ticky-landing.azaraits.cloud"
+    ticky_brand: "https://ticky-landing.azariats.cloud"
   }
 } as const;

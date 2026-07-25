@@ -1,11 +1,22 @@
 import { api } from './client';
 import type { Document } from './types';
 
+export interface AiTokenStatus {
+  tokens: number;
+  maxTokens: number;
+  plan: string;
+  windowHours: number;
+  lastTokenRestorationAt: string;
+  nextRestorationAt: string | null;
+  timeRemainingMs: number;
+}
+
 export interface AiChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   createdAt: string;
+  status?: 'send' | 'delivered' | 'read' | 'fail';
 }
 
 export interface AiSessionResponse {
@@ -26,10 +37,16 @@ export interface AiSession {
 
 export const aiApi = {
   /**
+   * Get AI token status (balance, window, remaining time)
+   */
+  getTokenStatus: () =>
+    api.get<AiTokenStatus>('/ai/tokens'),
+
+  /**
    * Send a message to the AI
    */
   sendMessage: (payload: { message: string; sessionId?: string }) =>
-    api.post<{ session: AiSession; message: AiChatMessage, request: AiChatMessage }>('/ai/chat', payload),
+    api.post<{ session: AiSession; message: AiChatMessage; request: AiChatMessage; tokens?: AiTokenStatus }>('/ai/chat', payload),
 
   /**
    * List AI chat sessions

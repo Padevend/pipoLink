@@ -2,9 +2,10 @@ import { AttachmentDocument } from "@/features/attachments/components/attachment
 import { AttachmentImage } from "@/features/attachments/components/attachment-image";
 import { MessageAttachment } from "@/shared/api/types";
 import { Avatar } from "@/shared/ui/avatar";
+import { LinkifiedText } from "@/shared/ui/linkified-text";
 import { cn } from '@/shared/utils/cn';
 import { format } from "date-fns";
-import { Check, CheckCheck, Clock } from "lucide-react-native";
+import { AlertCircle, Check, CheckCheck, Clock } from "lucide-react-native";
 import React, { useCallback, useState } from "react";
 import { Pressable, Text, View } from 'react-native';
 import Animated, {
@@ -23,7 +24,9 @@ interface MessageBubbleProps {
   isMine: boolean;
   hasAttachments: boolean;
   onReply?: (message: DecryptedMessage) => void;
+  onRetry?: (message: DecryptedMessage) => void;
   onDelete?: (messageId: string) => void;
+  onDeleteLocal?: (messageId: string) => void;
   onPressReplyQuote?: (messageId: string) => void;
 }
 
@@ -35,12 +38,15 @@ export const MessageBubble = React.memo(function MessageBubble({
   isMine,
   hasAttachments,
   onReply,
+  onRetry,
   onDelete,
+  onDeleteLocal,
   onPressReplyQuote,
   isGroup,
 }: MessageBubbleProps) {
   const [menuVisible, setMenuVisible] = useState(false);
   const hasText = !!message.decryptedContent || !hasAttachments;
+  const isFailed = message.status === 'fail';
 
   const getReplyPreview = (rep: DecryptedMessage) => {
     if (rep.is_deleted) return 'Ce message a été supprimé';
@@ -68,11 +74,13 @@ export const MessageBubble = React.memo(function MessageBubble({
 
   const renderStatusIcon = () => {
     if (!isMine) return null;
+    if (isFailed) {
+      return <AlertCircle size={12} strokeWidth={2.5} color="#EF4444" />;
+    }
     if (message.id.startsWith('temp-')) {
       return <Clock size={11} strokeWidth={2.5} color={GRIS_VALIDATION} />;
     }
     if (message.status === 'read' || message.status === 'delivered') {
-      // Blanc sur fond orange ou blanc sur fond sombre
       return <CheckCheck size={11} strokeWidth={2.5} color={isMine ? '#FFFFFF' : ORANGE_PRINCIPAL} />;
     }
 
@@ -99,8 +107,16 @@ export const MessageBubble = React.memo(function MessageBubble({
             {menuVisible && (
               <BubbleMenu
                 isMine={isMine}
+                isFailed={isFailed}
                 onReply={() => onReply?.(message)}
-                onDelete={() => onDelete?.(message.id)}
+                onRetry={() => onRetry?.(message)}
+                onDelete={() => {
+                  if (isFailed) {
+                    onDeleteLocal ? onDeleteLocal(message.id) : onDelete?.(message.id);
+                  } else {
+                    onDelete?.(message.id);
+                  }
+                }}
                 onClose={() => setMenuVisible(false)}
               />
             )}
@@ -197,17 +213,18 @@ export const MessageBubble = React.memo(function MessageBubble({
                     </View>
                   )}
 
-                  {/* Corps du Texte */}
+                  {/* Corps du Texte — liens détectés automatiquement et cliquables */}
                   {hasText && (
-                    <Text
+                    <LinkifiedText
                       className={cn(
                         'text-xs leading-relaxed font-medium tracking-tight',
                         isMine ? 'text-white' : 'text-zinc-900 dark:text-zinc-50',
                         message.decryptFailed && 'font-mono text-[11px] text-red-500 dark:text-red-400 font-bold'
                       )}
+                      linkClassName={isMine ? 'text-white underline font-bold' : undefined}
                     >
                       {message.decryptedContent ?? message.cipherText}
-                    </Text>
+                    </LinkifiedText>
                   )}
                 </>
               )}

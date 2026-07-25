@@ -52,6 +52,29 @@ export class MessagingService {
       });
 
       if (existingChat) {
+        if (payload.encryptedKeys && payload.encryptedKeys.length > 0) {
+          await prisma.$transaction(async (trx) => {
+            for (const row of payload.encryptedKeys) {
+              await trx.chatMemberKey.upsert({
+                where: {
+                  chat_id_device_id: {
+                    chat_id: existingChat.id,
+                    device_id: row.deviceId,
+                  },
+                },
+                create: {
+                  id: crypto.randomUUID(),
+                  chat_id: existingChat.id,
+                  device_id: row.deviceId,
+                  encrypted_chat_key: row.encryptedKey,
+                },
+                update: {
+                  encrypted_chat_key: row.encryptedKey,
+                },
+              });
+            }
+          });
+        }
         return existingChat;
       }
     }
