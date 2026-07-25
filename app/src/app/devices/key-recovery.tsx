@@ -9,6 +9,7 @@ import { AssociateDevicePanel } from '@/features/devices/components/associate-de
 import { useAuth, useToast } from '@/providers';
 import { authApi } from '@/shared/api/auth';
 import { createKeyBackup, generateIdentityKeys, restoreKeyBackup } from '@/shared/crypto';
+import { clearCachedChatKeys } from '@/shared/crypto/reset-device';
 import { SECURE_STORAGE_KEYS, SecureStorageService } from '@/shared/lib/storage';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
@@ -139,6 +140,10 @@ export default function KeyRecoveryScreen(): JSX.Element {
         completeRes.device as any,
       );
 
+      // Purge stale chat keys from a previous session — the new device
+      // will fetch its own ChatMemberKeys from the server on demand.
+      await clearCachedChatKeys();
+
       // Clean up temp storage
       await SecureStorageService.remove('temp_login_email');
       await SecureStorageService.remove('temp_login_password');
@@ -207,6 +212,10 @@ export default function KeyRecoveryScreen(): JSX.Element {
               } catch {
                 // non bloquant : la sauvegarde sera recréée au prochain changement de mot de passe
               }
+
+              // Purge ALL cached chat keys so ensureChatKeyForChat
+              // triggers the 404 → rotation path for old conversations.
+              await clearCachedChatKeys();
 
               await SecureStorageService.remove('temp_login_email');
               await SecureStorageService.remove('temp_login_password');

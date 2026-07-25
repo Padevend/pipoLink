@@ -5,11 +5,13 @@ import { MailerService } from "./mailer.service.js";
 import { RealtimeBus } from "../../src/modules/websocket/gateway/realtime-bus.js";
 import { WsEventName } from "../../src/modules/websocket/events/event-names.js";
 import {PaymentOperation,RandomGenerator} from "@hachther/mesomb";
+import { AiTokenService } from "./ai-token.service.js";
 
 // Prix de l'abonnement Premium, fixé côté serveur (le montant client est ignoré)
 const PREMIUM_PRICE_XAF = 2500;
 
 export class PaymentService {
+  private aiTokenService = new AiTokenService();
   /**
    * Initiates a mobile money payment collection via MeSomb.
    * Le montant client (_amount) est ignoré : le prix est fixé côté serveur.
@@ -194,6 +196,9 @@ export class PaymentService {
     if (!trxResult.payment || !trxResult.subscription) return trxResult.payment;
 
     const { payment, subscription, user } = trxResult;
+
+    // Sync AI token plan limits (8000 tokens for PREMIUM)
+    await this.aiTokenService.syncUserPlanTokens(payment.user_id, "PREMIUM");
 
     // Send invoice email asynchronously
     if (user?.email) {

@@ -8,6 +8,12 @@ import { WsEventName } from "../../src/modules/websocket/events/event-names.js";
 export class AiController {
   private service = new AiService();
 
+  async getTokensStatus(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const status = await this.service.getTokensStatus(userId);
+    return ApiResponse.success(c, status, "Statut des jetons IA récupéré.");
+  }
+
   async chat(c: HttpContext) {
     const userId = c.get("userId") as string;
     const plan = c.get("plan") as string || "FREE";

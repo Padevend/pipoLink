@@ -12,6 +12,7 @@ import { groupMessagesByDate } from '@/features/messaging/lib/group-messages-by-
 import { queryClient, useAuth } from '@/providers';
 import { messagingApi, type Conversation } from '@/shared/api/messaging';
 import type { PaginatedResponse } from '@/shared/api/types';
+import { useDraft } from '@/shared/hooks/use-draft';
 import { Input } from '@/shared/ui/input';
 import { cn } from '@/shared/utils/cn';
 import type { InfiniteData } from '@tanstack/react-query';
@@ -28,7 +29,8 @@ export function ChatView({ conversation }: ChatViewProps) {
   const { user } = useAuth();
   const { data, fetchNextPage, hasNextPage } = useMessages(conversationId, { enabled: !conversation?.isPending });
   const sendMessage = useSendMessage(conversationId);
-  const [text, setText] = useState('');
+  // Brouillon local par conversation (restauré à la réouverture, TTL 24 h)
+  const { text, setText, clearDraft } = useDraft(`chat_${conversationId}`);
   const [responseTo, setResponseTo] = useState<DecryptedMessage | null>(null);
   const flatListRef = useRef<FlatList>(null);
   const [hasScrolledInitial, setHasScrolledInitial] = useState(false);
@@ -152,7 +154,7 @@ export function ChatView({ conversation }: ChatViewProps) {
       isPending: conversation?.isPending,
       recipientUserId: conversation?.recipientUserId,
     });
-    setText('');
+    clearDraft();
     setResponseTo(null);
   };
 
@@ -178,7 +180,7 @@ export function ChatView({ conversation }: ChatViewProps) {
         size: asset.fileSize,
       },
     });
-    setText('');
+    clearDraft();
     setResponseTo(null);
   };
 
@@ -236,6 +238,8 @@ export function ChatView({ conversation }: ChatViewProps) {
               isMine={isMe}
               hasAttachments={hasAttachments} 
               isGroup={type === 'group'}
+              onRetry={(message) => sendMessage.retryFailedMessage(message)}
+              onDeleteLocal={(id) => sendMessage.deleteFailedMessageLocally(id)}
               onDelete={async () => {
                 try {
                   await messagingApi.deleteMessage(conversationId, msg.id);
@@ -356,7 +360,7 @@ export function ChatView({ conversation }: ChatViewProps) {
 
           <Pressable
             onPress={handleSend}
-            disabled={!text.trim() || sendMessage.isPending}
+            disabled={!text.trim()}
             className={cn(
               'h-9 w-9 items-center justify-center rounded-lg transition-all',
               text.trim()

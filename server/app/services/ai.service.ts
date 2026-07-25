@@ -3,6 +3,7 @@ import { ErrorCode } from "../helpers/error-codes.js";
 import { DateTime } from "luxon";
 import { env } from "../../config/envManager.js";
 import { FileService } from "./file.service.js";
+import { AiTokenService } from "./ai-token.service.js";
 import crypto from "crypto";
 
 function formatDocument(doc: any) {
@@ -40,13 +41,19 @@ function formatDocument(doc: any) {
 
 /**
  * Service de gestion du chat IA.
- * Gère les sessions, les quotas par plan, et appelle le provider IA.
+ * Gère les sessions, les quotas de jetons par plan, et appelle le provider IA.
  */
 export class AiService {
   private fileService = new FileService();
+  private tokenService = new AiTokenService();
 
-  async chat(userId: string, sessionId: string | null, message: string, plan: string) {
-    await this._checkQuota(userId, plan);
+  async getTokensStatus(userId: string) {
+    return await this.tokenService.getUserTokenStatus(userId);
+  }
+
+  async chat(userId: string, sessionId: string | null, message: string, _plan: string) {
+    // Vérification du solde de jetons
+    await this.tokenService.ensureSufficientTokens(userId, 20);
 
     let session = sessionId
       ? await prisma.aiSession.findFirst({ where: { id: sessionId, user_id: userId } })
@@ -76,7 +83,11 @@ export class AiService {
       data: { session_id: session.id, role: "assistant", content: aiResponse },
     });
 
-    return { session, message: aiMessage, request };
+    // Consommation et déduction des jetons
+    const cost = this.tokenService.estimateTokenCost(message, aiResponse, false);
+    const tokens = await this.tokenService.consumeTokens(userId, cost);
+
+    return { session, message: aiMessage, request, tokens };
   }
 
   async getSessions(userId: string) {
@@ -150,6 +161,9 @@ export class AiService {
   }
 
   async generateStudyAid(userId: string, sessionId: string, type: string) {
+    // Vérification du solde de jetons (base 120 jetons pour génération d'outils)
+    await this.tokenService.ensureSufficientTokens(userId, 120);
+
     const session = await prisma.aiSession.findFirst({
       where: { id: sessionId, user_id: userId },
       include: { documents: true }
@@ -202,7 +216,11 @@ export class AiService {
       },
     });
 
-    return { message: aiMessage };
+    // Consommation des jetons
+    const cost = this.tokenService.estimateTokenCost(type, content, true);
+    const tokens = await this.tokenService.consumeTokens(userId, cost);
+
+    return { message: aiMessage, tokens };
   }
 
   async uploadAttachment(userId: string, payload: Record<string, unknown>, file: Buffer, meta: { originalName: string; mimeType: string }) {

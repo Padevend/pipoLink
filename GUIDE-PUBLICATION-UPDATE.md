@@ -33,7 +33,7 @@ Une mise à jour de gravité `low` ou `medium` sera **téléchargée silencieuse
 
 **Commande modèle :**
 ```bash
-eas update --branch production --message '{"severity":"medium","version":"1.0.2","changelog":["Amélioration des performances du chat","Correction mineure UI"]}'
+eas update --branch production --message '{"severity":"medium","version":"1.1.0","changelog":["Nouvelle architecture IA / Recherche (Agent IA, Agent deeliaison)",""]}'
 ```
 *(Modifiez `production` par `preview` pour tester d'abord en staging).*
 
@@ -50,7 +50,7 @@ Une mise à jour `high` ou `critical` déclenchera un **écran de blocage imméd
 
 **Commande exacte :**
 ```bash
-eas update --branch production --message '{"severity":"critical","version":"1.0.3","changelog":["Correctif de sécurité critique (E2EE)"]}'
+eas update --branch production --message '{"severity":"critical","changelog":["Correctif de sécurité critique (E2EE)","Fix stockage Google Drive (quota service account)", "Brouillons d'input par chat (messagerie + IA)", "Liens cliquables dans les bulles de message", ""]}'
 ```
 
 ---

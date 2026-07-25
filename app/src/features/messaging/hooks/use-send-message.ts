@@ -49,7 +49,7 @@ export function useSendMessage(conversationId: string) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: async (input: SendMessageInput) => {
       let online = true;
       try {
@@ -117,7 +117,6 @@ export function useSendMessage(conversationId: string) {
         });
 
         await cacheChatKey(chat.id, chatKey);
-        chatKey.fill(0);
 
         activeConversationId = chat.id;
         newChatId = chat.id;
@@ -178,11 +177,9 @@ export function useSendMessage(conversationId: string) {
         },
       );
 
-      return { previous, tempId };
+      return { previous, tempId, optimistic };
     },
     onError: (_error, _input, context) => {
-      // Au lieu de rollback tout le cache (ce qui écrase les autres messages en cours),
-      // on supprime simplement le message temporaire qui a échoué.
       console.error('Erreur lors de l’envoi du message :', _error);
       if (context?.tempId) {
         queryClient.setQueryData<InfiniteData<PaginatedResponse<DecryptedMessage>>>(
@@ -193,11 +190,19 @@ export function useSendMessage(conversationId: string) {
               ...old,
               pages: old.pages.map((page) => ({
                 ...page,
-                items: page.items.filter((m) => m.id !== context.tempId),
+                items: page.items.map((m) =>
+                  m.id === context.tempId ? { ...m, status: 'fail' as const } : m
+                ),
               })),
             };
           }
         );
+
+        if (context.optimistic) {
+          localDb.upsertMessages(conversationId, [
+            { ...context.optimistic, status: 'fail' } as Message,
+          ]);
+        }
       }
     },
     onSuccess: (result, _input, context) => {
@@ -307,4 +312,36 @@ export function useSendMessage(conversationId: string) {
       }
     },
   });
+
+  const deleteFailedMessageLocally = (messageId: string) => {
+    queryClient.setQueryData<InfiniteData<PaginatedResponse<DecryptedMessage>>>(
+      ['messages', conversationId],
+      (old) => {
+        if (!old?.pages) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            items: page.items.filter((m) => m.id !== messageId),
+          })),
+        };
+      }
+    );
+    localDb.deleteMessage(messageId);
+  };
+
+  const retryFailedMessage = (msg: DecryptedMessage) => {
+    deleteFailedMessageLocally(msg.id);
+    mutation.mutate({
+      content: msg.decryptedContent || msg.cipherText,
+      type: (msg.type as any) || 'text',
+      replyToId: msg.responseToId ?? undefined,
+    });
+  };
+
+  return {
+    ...mutation,
+    deleteFailedMessageLocally,
+    retryFailedMessage,
+  };
 }
