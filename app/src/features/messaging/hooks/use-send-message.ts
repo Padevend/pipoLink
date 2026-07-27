@@ -157,7 +157,7 @@ export function useSendMessage(conversationId: string) {
           ]
           : [],
         decryptedContent:
-          input.content.trim() || (input.file ? `📎 ${input.file.name}` : ''),
+          input.content.trim() || (input.file ? `${input.file.name}` : ''),
         decryptFailed: false,
       };
 

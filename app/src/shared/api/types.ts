@@ -150,6 +150,7 @@ export interface Message {
   responseToId?: string | null;
   responseTo?: Message | null;
   is_deleted?: boolean;
+  decryptedContent?: string | null;
 }
 
 export interface MessageSender {

@@ -6,12 +6,18 @@ import {
   useGenerateStudyAid,
   useMyAiAttachments,
   useRemoveDocumentFromSession,
-  useSessionDocuments
+  useSessionDocuments,
+  useTruncateAiMessages,
 } from '@/entities/ai/hooks';
 import { useMyDocuments } from '@/entities/document/hooks';
 import LibraryModal from '@/features/chat-ai/components/biblio-modal';
 import SourceModal from '@/features/chat-ai/components/modal-source';
+import { StudyAidSmartRenderer } from '@/features/chat-ai/components/study-aid/study-aid-smart-renderer';
+import { ThoughtStreamLoader } from '@/features/chat-ai/components/thought-stream-loader';
+import BubbleMenu from '@/features/messaging/components/Bubble-menu';
+import { useAuth } from '@/providers';
 import type { Document } from '@/shared/api/types';
+import { useCopyToClipboard } from '@/shared/hooks/use-copy-to-clipboard';
 import { useDraft } from '@/shared/hooks/use-draft';
 import { useSafeArea } from '@/shared/hooks/use-safe-area';
 import { Input } from '@/shared/ui/input';
@@ -29,7 +35,7 @@ import {
   Sparkles,
   Zap,
 } from 'lucide-react-native';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -59,7 +65,7 @@ export default function AiChatScreen() {
 
   const { data: history, isLoading: historyLoading } = useAiHistory(sessionId);
   const { data: activeDocs, isLoading: docsLoading } = useSessionDocuments(sessionId);
-  
+
   const { data: myDocsData, isLoading: myDocsLoading } = useMyDocuments();
   const { data: aiDocsData, isLoading: aiDocsLoading } = useMyAiAttachments();
   const libraryDocs = useMemo(() => {
@@ -72,21 +78,34 @@ export default function AiChatScreen() {
   const removeDocMutation = useRemoveDocumentFromSession();
   const generateMutation = useGenerateStudyAid();
   const chatMutation = useAiChat();
+  const truncateMutation = useTruncateAiMessages();
+  const { copyToClipboard } = useCopyToClipboard();
+
+  const { user } = useAuth();
+  const isPremium =
+    user?.subscription?.plan === 'PREMIUM' && user?.subscription?.status === 'ACTIVE';
 
   const flatListRef = useRef<FlatList>(null);
   // Brouillon local par session IA (restauré à la réouverture, TTL 24 h)
   const { text, setText, clearDraft } = useDraft(`ai_${sessionId}`);
   const [sourcesModalVisible, setSourcesModalVisible] = useState(false);
   const [addSourceVisible, setAddSourceVisible] = useState(false);
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [lastStudyAidType, setLastStudyAidType] = useState<string>('chat');
+
+  // Cross-lock: prevents concurrent chat + study aid requests
+  const isAnyPending = chatMutation.isPending || generateMutation.isPending;
 
   const handleSend = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() || isAnyPending) return;
     const msg = text.trim();
     clearDraft();
     try {
       await chatMutation.mutateAsync({ message: msg, sessionId });
       flatListRef.current?.scrollToEnd({ animated: true });
     } catch (err) {
+      // Ignore abort/stale errors silently
+      if (err instanceof Error && (err.message === 'STALE_RESPONSE' || err.name === 'AbortError')) return;
       console.warn('[useAiChat] failed:', err);
     }
   };
@@ -115,62 +134,19 @@ export default function AiChatScreen() {
   };
 
   const handleGenerateStudyAid = async (type: string) => {
+    if (isAnyPending) return;
+    setLastStudyAidType(type);
     try {
       await generateMutation.mutateAsync({ sessionId, type });
       flatListRef.current?.scrollToEnd({ animated: true });
     } catch (err) {
+      if (err instanceof Error && (err.message === 'STALE_RESPONSE' || err.name === 'AbortError')) return;
       console.warn('[generateStudyAid] failed:', err);
     }
   };
 
   const renderMessageContent = (content: string, isAi: boolean) => {
-    if (!isAi) {
-      return <Text className="text-sm leading-5 font-medium text-white">{content}</Text>;
-    }
-
-    const lines = content.split('\n');
-    return lines.map((line, idx) => {
-      if (line.startsWith('### ')) {
-        return (
-          <Text key={idx} className="text-sm font-bold text-zinc-900 dark:text-zinc-50 mt-3 mb-1">
-            {line.replace('### ', '')}
-          </Text>
-        );
-      }
-      if (line.startsWith('**') && line.endsWith('**')) {
-        return (
-          <Text key={idx} className="text-xs font-bold text-zinc-800 dark:text-zinc-200 mt-1 mb-0.5">
-            {line.replace(/\*\*/g, '')}
-          </Text>
-        );
-      }
-      if (line.startsWith('- [ ] ')) {
-        return (
-          <Text key={idx} className="text-xs leading-5 text-zinc-600 dark:text-zinc-400 ml-1.5 my-0.5">
-            ☐ {line.replace('- [ ] ', '')}
-          </Text>
-        );
-      }
-      if (line.startsWith('- [x] ')) {
-        return (
-          <Text key={idx} className="text-xs font-semibold leading-5 text-orange-500 ml-1.5 my-0.5">
-            ☑ {line.replace('- [x] ', '')}
-          </Text>
-        );
-      }
-      if (line.startsWith('- ') || line.startsWith('* ')) {
-        return (
-          <Text key={idx} className="text-xs leading-5 text-zinc-600 dark:text-zinc-400 ml-2 my-0.5">
-            • {line.substring(2)}
-          </Text>
-        );
-      }
-      return (
-        <Text key={idx} className="text-xs leading-5 text-zinc-700 dark:text-zinc-300 my-0.5">
-          {line}
-        </Text>
-      );
-    });
+    return <StudyAidSmartRenderer content={content} isAi={isAi} />;
   };
 
   const { data: tokensData } = useAiTokens();
@@ -182,9 +158,17 @@ export default function AiChatScreen() {
     return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
   }, [tokensData?.timeRemainingMs]);
 
+  const prevHistoryLengthRef = useRef(0);
+  useEffect(() => {
+    if (history && history.length > prevHistoryLengthRef.current) {
+      flatListRef.current?.scrollToEnd({ animated: true });
+    }
+    prevHistoryLengthRef.current = history?.length ?? 0;
+  }, [history?.length]);
+
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
-      
+
       {/* Header Mat */}
       <View className="flex-row items-center justify-between border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
         <Pressable
@@ -195,7 +179,6 @@ export default function AiChatScreen() {
         </Pressable>
 
         <View className="flex-row items-center gap-1.5">
-          <Sparkles size={16} color="#F97316" />
           <Text className="font-bold text-sm text-zinc-900 dark:text-zinc-50">Hiro Notebook</Text>
         </View>
 
@@ -224,13 +207,13 @@ export default function AiChatScreen() {
       </View>
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
-        
+
         {/* Pilules Horizontales d'Outils d'Étude */}
-        <View className="border-b border-zinc-100 bg-zinc-50/60 dark:border-zinc-900 dark:bg-zinc-900/20 py-2">
+        <View className="border-b border-zinc-100 bg-zinc-50/60 dark:border-zinc-900 dark:bg-zinc-900/20 py-2 z-50">
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 6 }}>
             {STUDY_AIDS.map((aid) => {
               const Icon = aid.icon;
-              const isDisabled = generateMutation.isPending || activeDocs?.length === 0;
+              const isDisabled = isAnyPending || activeDocs?.length === 0;
               return (
                 <Pressable
                   key={aid.id}
@@ -268,20 +251,70 @@ export default function AiChatScreen() {
             renderItem={({ item }) => {
               const isAi = item.role === 'assistant';
               const isFailed = item.status === 'fail';
+              const isMenuOpen = activeMenuId === item.id;
+
+              const handleResend = async () => {
+                setActiveMenuId(null);
+                await truncateMutation.mutateAsync({ sessionId, messageId: item.id, inclusive: false });
+                try {
+                  await chatMutation.mutateAsync({ message: item.content, sessionId });
+                  flatListRef.current?.scrollToEnd({ animated: true });
+                } catch (err) {
+                  console.warn('[handleResend] failed:', err);
+                }
+              };
+
+              const handleEdit = async () => {
+                setActiveMenuId(null);
+                await truncateMutation.mutateAsync({ sessionId, messageId: item.id, inclusive: true });
+                setText(item.content);
+              };
+
+              const handleDelete = async () => {
+                setActiveMenuId(null);
+                await truncateMutation.mutateAsync({ sessionId, messageId: item.id, inclusive: true });
+              };
+
+              const handleCopy = () => {
+                setActiveMenuId(null);
+                void copyToClipboard(item.content, isAi ? 'Réponse IA copieuse !' : 'Message copié !');
+              };
+
               return (
-                <View className={cn('mb-3 max-w-[85%]', isAi ? 'self-start items-start' : 'self-end items-end')}>
-                  <View
-                    className={cn(
-                      'px-4 py-2.5 rounded-2xl',
-                      isAi
-                        ? 'rounded-tl-sm border border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/60'
-                        : isFailed
-                        ? 'rounded-tr-sm bg-red-500/90 border border-red-400'
-                        : 'rounded-tr-sm bg-orange-500',
-                    )}
+                <View className={cn('mb-3 max-w-[92%] relative z-10', isAi ? 'self-start items-start' : 'self-end items-end')}>
+                  {/* Menu Flottant Satiné (BubbleMenu) */}
+                  {isMenuOpen && (
+                    <BubbleMenu
+                      isMine={!isAi}
+                      isFailed={isFailed}
+                      onCopy={handleCopy}
+                      onResend={!isAi && !isFailed ? () => void handleResend() : undefined}
+                      onEdit={!isAi && !isFailed ? () => void handleEdit() : undefined}
+                      onDelete={!isAi ? () => void handleDelete() : undefined}
+                      onRetry={isFailed ? () => chatMutation.retryFailedAiMessage(sessionId, item) : undefined}
+                      onClose={() => setActiveMenuId(null)}
+                    />
+                  )}
+
+                  <Pressable
+                    onLongPress={() => setActiveMenuId(item.id)}
+                    delayLongPress={220}
+                    onPress={() => isMenuOpen && setActiveMenuId(null)}
+                    className="active:opacity-95"
                   >
-                    {renderMessageContent(item.content, isAi)}
-                  </View>
+                    <View
+                      className={cn(
+                        'px-4 py-2.5 rounded-2xl',
+                        isAi
+                          ? 'rounded-tl-sm border border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/60'
+                          : isFailed
+                            ? 'rounded-tr-sm bg-red-500/90 border border-red-400'
+                            : 'rounded-tr-sm bg-orange-500',
+                      )}
+                    >
+                      {renderMessageContent(item.content, isAi)}
+                    </View>
+                  </Pressable>
 
                   {isFailed && (
                     <View className="flex-row items-center gap-2 mt-1 px-1">
@@ -316,18 +349,14 @@ export default function AiChatScreen() {
                 </Text>
               </View>
             }
-            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
           />
         )}
 
-        {/* Indicateur de frappe / chargement IA */}
-        {(chatMutation.isPending || generateMutation.isPending) && (
-          <View className="flex-row items-center gap-2 px-4 py-2.5 self-start ml-4 mb-3 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800">
-            <ActivityIndicator size="small" color="#F97316" />
-            <Text className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
-              {generateMutation.isPending ? "Génération de l'outil d'étude..." : "Hiro réfléchit..."}
-            </Text>
-          </View>
+        {/* Indicateur de réflexion / chargement IA — ThoughtStreamLoader dynamique */}
+        {isAnyPending && (
+          <ThoughtStreamLoader
+            type={generateMutation.isPending ? lastStudyAidType : 'chat'}
+          />
         )}
 
         {/* Bannières d'avertissement de Jetons IA */}
@@ -341,17 +370,19 @@ export default function AiChatScreen() {
                 Restauration automatique dans {remainingTimeText || 'quelques minutes'}.
               </Text>
             </View>
-            <Pressable
-              onPress={() => router.push('/settings/subscription')}
-              className="rounded-lg bg-orange-500 px-3 py-1.5 active:bg-orange-600"
-            >
-              <Text className="text-[11px] font-bold text-white">Passer Premium</Text>
-            </Pressable>
+            {!isPremium && (
+              <Pressable
+                onPress={() => router.push('/settings/subscription')}
+                className="rounded-lg bg-orange-500 px-3 py-1.5 active:bg-orange-600"
+              >
+                <Text className="text-[11px] font-bold text-white">Passer Premium</Text>
+              </Pressable>
+            )}
           </View>
         )}
 
         {/* Barre de Saisie Opaque */}
-        <View 
+        <View
           className="border-t border-zinc-100 bg-white p-3 dark:border-zinc-900 dark:bg-zinc-950"
           style={{ paddingBottom: Math.max(insets.bottom, 12) }}
         >
@@ -370,10 +401,10 @@ export default function AiChatScreen() {
 
             <Pressable
               onPress={() => void handleSend()}
-              disabled={!text.trim() || generateMutation.isPending || (!!tokensData && tokensData.tokens < 20)}
+              disabled={!text.trim() || isAnyPending || (!!tokensData && tokensData.tokens < 20)}
               className={cn(
                 'h-9 w-9 items-center justify-center rounded-lg active:opacity-90',
-                text.trim() && !generateMutation.isPending && (!tokensData || tokensData.tokens >= 20)
+                text.trim() && !isAnyPending && (!tokensData || tokensData.tokens >= 20)
                   ? 'bg-orange-500'
                   : 'bg-transparent opacity-30',
               )}
@@ -420,7 +451,6 @@ export default function AiChatScreen() {
           myDocsLoading={myDocsLoading || aiDocsLoading}
         />
       </Modal>
-
     </SafeAreaView>
   );
 }

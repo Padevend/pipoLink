@@ -32,8 +32,7 @@ const DEFAULT_TIMEOUT_MS = 12_000;
 const RETRY_DELAY_MS = 1_000;
 
 /**
- * fetch avec timeout (AbortController) + 1 retry sur erreur réseau/timeout
- * pour les GET uniquement (idempotents).
+ * fetch avec timeout (AbortController) + support du signal d'annulation externe.
  */
 async function fetchWithTimeout(
   url: string,
@@ -42,11 +41,25 @@ async function fetchWithTimeout(
 ): Promise<Response> {
   const attempt = async (): Promise<Response> => {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const timer = setTimeout(() => controller.abort("Timeout local dépassé"), timeoutMs);
+
+    let onExternalAbort: (() => void) | null = null;
+    if (init.signal) {
+      if (init.signal.aborted) {
+        controller.abort(init.signal.reason);
+      } else {
+        onExternalAbort = () => controller.abort(init.signal?.reason);
+        init.signal.addEventListener('abort', onExternalAbort);
+      }
+    }
+
     try {
       return await fetch(url, { ...init, signal: controller.signal });
     } finally {
       clearTimeout(timer);
+      if (init.signal && onExternalAbort) {
+        init.signal.removeEventListener('abort', onExternalAbort);
+      }
     }
   };
 

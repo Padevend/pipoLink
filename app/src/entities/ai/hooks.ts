@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRef } from 'react';
 import { aiApi } from '@/shared/api/ai';
 import { localDb } from '@/shared/storage/local-db';
 import { generateUUID } from '@/shared/utils/uuid';
@@ -60,10 +61,32 @@ export const useAiHistory = (sessionId: string) => {
 
 export const useAiChat = () => {
   const queryClient = useQueryClient();
+  const abortRef = useRef<AbortController | null>(null);
+  const activeRequestIdRef = useRef<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: async (payload: { message: string; sessionId?: string; tempId?: string }) => {
-      return aiApi.sendMessage({ message: payload.message, sessionId: payload.sessionId });
+      // Single In-Flight: abort any previous pending request
+      if (abortRef.current) {
+        abortRef.current.abort();
+      }
+
+      const controller = new AbortController();
+      abortRef.current = controller;
+      const requestId = generateUUID();
+      activeRequestIdRef.current = requestId;
+
+      const result = await aiApi.sendMessage(
+        { message: payload.message, sessionId: payload.sessionId },
+        { signal: controller.signal }
+      );
+
+      // Stale response guard: reject if a newer request was launched
+      if (activeRequestIdRef.current !== requestId) {
+        throw new Error('STALE_RESPONSE');
+      }
+
+      return result;
     },
     onMutate: async (payload) => {
       const tempId = payload.tempId || `temp-${generateUUID()}`;
@@ -75,7 +98,12 @@ export const useAiChat = () => {
       }
       return { tempId, sessionId: payload.sessionId, message: payload.message };
     },
-    onError: (_error, _variables, context) => {
+    onError: (error, _variables, context) => {
+      // Silently ignore aborted/stale requests — not a real error
+      if (error instanceof Error && (error.message === 'STALE_RESPONSE' || error.name === 'AbortError')) {
+        return;
+      }
+
       if (context?.sessionId && context?.tempId) {
         queryClient.setQueryData(aiKeys.history(context.sessionId), (old: any) => {
           let existing = old || [];
@@ -95,7 +123,7 @@ export const useAiChat = () => {
         ]);
       }
     },
-    onSuccess: (data, payload, context) => {
+    onSuccess: (data, _payload, context) => {
       queryClient.setQueryData(aiKeys.sessions(), (old: any) => {
         const existing = old || [];
         if (!existing.some((s: any) => s.id === data.session.id)) {
@@ -135,6 +163,9 @@ export const useAiChat = () => {
         });
       }
     },
+    onSettled: () => {
+      abortRef.current = null;
+    },
   });
 
   const deleteFailedAiMessage = (sessionId: string, messageId: string) => {
@@ -150,11 +181,33 @@ export const useAiChat = () => {
     mutation.mutate({ message: msg.content, sessionId });
   };
 
+  const abort = () => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+  };
+
   return {
     ...mutation,
     deleteFailedAiMessage,
     retryFailedAiMessage,
+    abort,
   };
+};
+
+export const useCreateAiSession = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { title: string; documentIds?: string[] }) =>
+      aiApi.createSession(payload),
+    onSuccess: (data) => {
+      queryClient.setQueryData(aiKeys.sessions(), (old: any) => {
+        const existing = old || [];
+        return [data.session, ...existing];
+      });
+    },
+  });
 };
 
 export const useDeleteSession = () => {
@@ -168,6 +221,28 @@ export const useDeleteSession = () => {
         return existing.filter((s: any) => s.id !== variables);
       });
       queryClient.setQueryData(aiKeys.history(variables), []);
+    },
+  });
+};
+
+export const useTruncateAiMessages = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ sessionId, messageId, inclusive = true }: { sessionId: string; messageId: string; inclusive?: boolean }) =>
+      aiApi.truncateMessages(sessionId, messageId, inclusive),
+    onMutate: async ({ sessionId, messageId, inclusive = true }) => {
+      queryClient.setQueryData(aiKeys.history(sessionId), (old: any) => {
+        const existing: any[] = old || [];
+        const index = existing.findIndex((m) => m.id === messageId);
+        if (index === -1) return existing;
+        const newHistory = inclusive ? existing.slice(0, index) : existing.slice(0, index + 1);
+        localDb.upsertAiMessages(sessionId, newHistory);
+        return newHistory;
+      });
+    },
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({ queryKey: aiKeys.history(variables.sessionId) });
     },
   });
 };
@@ -206,9 +281,36 @@ export const useRemoveDocumentFromSession = () => {
 
 export const useGenerateStudyAid = () => {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ sessionId, type }: { sessionId: string; type: string }) =>
-      aiApi.generateStudyAid(sessionId, type),
+  const abortRef = useRef<AbortController | null>(null);
+  const activeRequestIdRef = useRef<string | null>(null);
+
+  const mutation = useMutation({
+    mutationFn: async ({ sessionId, type }: { sessionId: string; type: string }) => {
+      // Single In-Flight: abort any previous pending generation
+      if (abortRef.current) {
+        abortRef.current.abort();
+      }
+
+      const controller = new AbortController();
+      abortRef.current = controller;
+      const requestId = generateUUID();
+      activeRequestIdRef.current = requestId;
+
+      const result = await aiApi.generateStudyAid(sessionId, type, { signal: controller.signal });
+
+      // Stale response guard
+      if (activeRequestIdRef.current !== requestId) {
+        throw new Error('STALE_RESPONSE');
+      }
+
+      return result;
+    },
+    onError: (error) => {
+      // Silently ignore aborted/stale requests
+      if (error instanceof Error && (error.message === 'STALE_RESPONSE' || error.name === 'AbortError')) {
+        return;
+      }
+    },
     onSuccess: (data, variables) => {
       void queryClient.invalidateQueries({ queryKey: aiKeys.tokens() });
       queryClient.setQueryData(aiKeys.history(variables.sessionId), (old: any) => {
@@ -219,7 +321,19 @@ export const useGenerateStudyAid = () => {
         return existing;
       });
     },
+    onSettled: () => {
+      abortRef.current = null;
+    },
   });
+
+  const abort = () => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+  };
+
+  return { ...mutation, abort };
 };
 
 export const useMyAiAttachments = () => {

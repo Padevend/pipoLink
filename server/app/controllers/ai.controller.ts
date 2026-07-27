@@ -47,6 +47,28 @@ export class AiController {
     return ApiResponse.success(c, null, "Session supprimée.");
   }
 
+  async createSession(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const { title, documentIds } = await c.req.json() as { title: string; documentIds?: string[] };
+    if (!title?.trim()) {
+      return ApiResponse.error(c, "TITLE_REQUIRED", "Le titre du notebook est requis.", 400);
+    }
+    const result = await this.service.createSession(userId, title.trim(), documentIds);
+    return ApiResponse.success(c, result, "Session créée.", 201);
+  }
+
+  async truncateMessages(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const sessionId = c.req.param("id");
+    const messageId = c.req.param("messageId");
+    if (!sessionId || !messageId) {
+      return ApiResponse.error(c, "ID_REQUIRED", "IDs de session et message requis.", 400);
+    }
+    const { inclusive } = (await c.req.json().catch(() => ({}))) as { inclusive?: boolean };
+    await this.service.truncateMessagesFrom(userId, sessionId, messageId, inclusive ?? true);
+    return ApiResponse.success(c, null, "Messages tronqués.");
+  }
+
   async getDocuments(c: HttpContext) {
     const userId = c.get("userId") as string;
     const sessionId = c.req.param("id");

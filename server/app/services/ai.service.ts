@@ -1,9 +1,10 @@
 import { prisma } from "../../config/database.js";
 import { ErrorCode } from "../helpers/error-codes.js";
 import { DateTime } from "luxon";
-import { env } from "../../config/envManager.js";
 import { FileService } from "./file.service.js";
 import { AiTokenService } from "./ai-token.service.js";
+import { TokenPricingService } from "./token-pricing.service.js";
+import { RagService, type RagTokensUsed } from "./rag.service.js";
 import crypto from "crypto";
 
 function formatDocument(doc: any) {
@@ -46,14 +47,17 @@ function formatDocument(doc: any) {
 export class AiService {
   private fileService = new FileService();
   private tokenService = new AiTokenService();
+  private rag = new RagService();
+  private pricingService = new TokenPricingService();
 
   async getTokensStatus(userId: string) {
     return await this.tokenService.getUserTokenStatus(userId);
   }
 
   async chat(userId: string, sessionId: string | null, message: string, _plan: string) {
-    // Vérification du solde de jetons
-    await this.tokenService.ensureSufficientTokens(userId, 20);
+    // Tarif fixe pour une question / chat IA
+    const cost = this.pricingService.getOperationCost("QUESTION_IA");
+    await this.tokenService.ensureSufficientTokens(userId, cost);
 
     let session = sessionId
       ? await prisma.aiSession.findFirst({ where: { id: sessionId, user_id: userId } })
@@ -72,19 +76,33 @@ export class AiService {
       data: { session_id: session.id, role: "user", content: message },
     });
 
+    const previousMessages = await prisma.aiMessage.findMany({
+      where: { session_id: session.id, id: { not: request.id } },
+      orderBy: { createdAt: "asc" },
+      take: 10,
+    });
+
+    const conversationHistory = previousMessages.map((m) => ({
+      role: m.role as "user" | "assistant",
+      content: m.content,
+    }));
+
     const sessionWithDocs = await prisma.aiSession.findUnique({
       where: { id: session.id },
       include: { documents: true }
     });
 
-    const aiResponse = await this._callProvider(message, sessionWithDocs?.documents || []);
+    const { answer } = await this._callProvider(
+      message,
+      sessionWithDocs?.documents || [],
+      conversationHistory
+    );
 
     const aiMessage = await prisma.aiMessage.create({
-      data: { session_id: session.id, role: "assistant", content: aiResponse },
+      data: { session_id: session.id, role: "assistant", content: answer },
     });
 
-    // Consommation et déduction des jetons
-    const cost = this.tokenService.estimateTokenCost(message, aiResponse, false);
+    // Déduction du coût fixe en Jetons
     const tokens = await this.tokenService.consumeTokens(userId, cost);
 
     return { session, message: aiMessage, request, tokens };
@@ -110,6 +128,61 @@ export class AiService {
 
   async deleteSession(userId: string, sessionId: string) {
     await prisma.aiSession.deleteMany({ where: { id: sessionId, user_id: userId } });
+  }
+
+  async createSession(userId: string, title: string, documentIds?: string[]) {
+    const session = await prisma.aiSession.create({
+      data: {
+        user_id: userId,
+        title: title || "Notebook sans titre",
+      },
+    });
+
+    if (documentIds && documentIds.length > 0) {
+      await prisma.aiSession.update({
+        where: { id: session.id },
+        data: {
+          documents: {
+            connect: documentIds.map((id) => ({ id })),
+          },
+        },
+      });
+    }
+
+    const sessionWithDocs = await prisma.aiSession.findUnique({
+      where: { id: session.id },
+      include: { documents: true },
+    });
+
+    return { session: sessionWithDocs };
+  }
+
+  async truncateMessagesFrom(userId: string, sessionId: string, messageId: string, inclusive = true) {
+    const session = await prisma.aiSession.findFirst({
+      where: { id: sessionId, user_id: userId }
+    });
+    if (!session) throw { code: ErrorCode.NOT_FOUND, status: 404, message: "Session introuvable." };
+
+    const targetMsg = await prisma.aiMessage.findUnique({
+      where: { id: messageId }
+    });
+    if (!targetMsg) return;
+
+    if (inclusive) {
+      await prisma.aiMessage.deleteMany({
+        where: {
+          session_id: sessionId,
+          createdAt: { gte: targetMsg.createdAt }
+        }
+      });
+    } else {
+      await prisma.aiMessage.deleteMany({
+        where: {
+          session_id: sessionId,
+          createdAt: { gt: targetMsg.createdAt }
+        }
+      });
+    }
   }
 
   async getSessionDocuments(userId: string, sessionId: string) {
@@ -161,8 +234,9 @@ export class AiService {
   }
 
   async generateStudyAid(userId: string, sessionId: string, type: string) {
-    // Vérification du solde de jetons (base 120 jetons pour génération d'outils)
-    await this.tokenService.ensureSufficientTokens(userId, 120);
+    // Calcul du tarif fixe en Jetons PipoLink pour ce type d'outil (ex: Summary: 15, Quiz: 25...)
+    const cost = this.pricingService.getOperationCost(type);
+    await this.tokenService.ensureSufficientTokens(userId, cost);
 
     const session = await prisma.aiSession.findFirst({
       where: { id: sessionId, user_id: userId },
@@ -179,33 +253,21 @@ export class AiService {
     }
 
     let content = "";
-    const ragApiUrl = env.get("RAG_AGENT_API_URL");
+    const FALLBACK = `### Service en cours de conception\n\nDésolé, la génération automatique d'outils d'étude (${type}) est actuellement indisponible ou en cours de conception.`;
 
-    if (ragApiUrl) {
+    if (this.rag.isAvailable()) {
       try {
-        const response = await fetch(`${ragApiUrl}/api/v1/generate-study-aid`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            document_ids: session.documents.map((d) => d.id),
-            type,
-          }),
+        const data = await this.rag.generateStudyAid({
+          document_ids: session.documents.map((d) => d.id),
+          type,
         });
-
-        if (response.ok) {
-          const data = await response.json() as { content: string };
-          content = data.content;
-        } else {
-          throw new Error(`RAG API responded with status ${response.status}`);
-        }
+        content = data.content;
       } catch (err) {
         console.error('[RAG Agent generateStudyAid Error] Falling back:', err);
-        content = `### Service en cours de conception\n\nDésolé, la génération automatique d'outils d'étude (${type}) est actuellement indisponible ou en cours de conception.`;
+        content = FALLBACK;
       }
     } else {
-      content = `### Service en cours de conception\n\nDésolé, la génération automatique d'outils d'étude (${type}) est actuellement indisponible ou en cours de conception.`;
+      content = FALLBACK;
     }
 
     const aiMessage = await prisma.aiMessage.create({
@@ -216,8 +278,7 @@ export class AiService {
       },
     });
 
-    // Consommation des jetons
-    const cost = this.tokenService.estimateTokenCost(type, content, true);
+    // Déduction du coût fixe en Jetons PipoLink
     const tokens = await this.tokenService.consumeTokens(userId, cost);
 
     return { message: aiMessage, tokens };
@@ -284,26 +345,21 @@ export class AiService {
       });
     }
 
-    // RAG Ingestion
-    const ragApiUrl = env.get("RAG_AGENT_API_URL");
-    if (ragApiUrl) {
+    // RAG Ingestion (non-bloquante)
+    if (this.rag.isAvailable()) {
       Promise.resolve().then(async () => {
         try {
-          const formData = new FormData();
-          const fileBlob = new Blob([new Uint8Array(file)], { type: meta.mimeType });
-          formData.append("file", fileBlob, meta.originalName);
-          formData.append("document_id", document.id);
-          formData.append("filiere", filiere);
-          formData.append("niveau", niveau);
-          formData.append("ue", ue);
-          formData.append("type", document.type);
-
-          const res = await fetch(`${ragApiUrl}/api/v1/ingest`, {
-            method: "POST",
-            body: formData,
+          await this.rag.ingest({
+            file,
+            originalName: meta.originalName,
+            mimeType: meta.mimeType,
+            documentId: document.id,
+            filiere,
+            niveau,
+            ue,
+            type: document.type,
+            ownerId: userId,
           });
-
-          if (!res.ok) console.error(`[RAG Ingest AI Attachment] failed: ${res.statusText}`);
         } catch (err) {
           console.error(`[RAG Ingest AI Attachment] Error:`, err);
         }
@@ -347,12 +403,11 @@ export class AiService {
     // Delete from DB
     await prisma.document.delete({ where: { id: documentId } });
 
-    // Delete from RAG
-    const ragApiUrl = env.get("RAG_AGENT_API_URL");
-    if (ragApiUrl) {
+    // Delete from RAG (non-bloquante)
+    if (this.rag.isAvailable()) {
       Promise.resolve().then(async () => {
         try {
-          await fetch(`${ragApiUrl}/api/v1/documents/${documentId}`, { method: "DELETE" });
+          await this.rag.deleteDocument(documentId);
         } catch (err) {
           console.error(`[RAG Delete] Error connecting to RAG agent for document ${documentId}:`, err);
         }
@@ -362,56 +417,33 @@ export class AiService {
 
   // ── Méthodes privées ──────────────────────────────────────────────────────
 
-  private async _checkQuota(userId: string, plan: string) {
-    if (plan === "PREMIUM") return;
-
-    const startOfDay = DateTime.utc().startOf("day").toJSDate();
-    const count = await prisma.aiMessage.count({
-      where: {
-        role:      "user",
-        session:   { user_id: userId },
-        createdAt: { gte: startOfDay },
-      },
-    });
-
-    if (count >= 20) {
-      throw { code: ErrorCode.QUOTA_EXCEEDED, status: 402, message: "Limite de 20 messages IA par jour atteinte. Passez en PREMIUM." };
-    }
-  }
-
-  private async _callProvider(message: string, documents: any[]): Promise<string> {
+  private async _callProvider(
+    message: string,
+    documents: any[],
+    conversationHistory: Array<{ role: "user" | "assistant" | "system"; content: string }> = [],
+    maxTokens?: number
+  ): Promise<{ answer: string; tokensUsed?: RagTokensUsed }> {
     if (!documents || documents.length === 0) {
-      return "Hiro : Je n'ai aucune source documentaire associée à cette conversation. Veuillez associer un document de votre bibliothèque pour que je puisse y faire référence.";
+      return {
+        answer: "Hiro : Je n'ai aucune source documentaire associée à cette conversation. Veuillez associer un document de votre bibliothèque pour que je puisse y faire référence.",
+      };
     }
 
-    const ragApiUrl = env.get("RAG_AGENT_API_URL");
+    const FALLBACK = "Désolé, le service de recherche intelligente et de RAG est actuellement en cours de conception ou indisponible.";
 
-    if (ragApiUrl) {
-      try {
-        const response = await fetch(`${ragApiUrl}/api/v1/query`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            query: message,
-            document_ids: documents.map((d) => d.id),
-            conversation_history: [],
-          }),
-        });
+    if (!this.rag.isAvailable()) return { answer: FALLBACK };
 
-        if (response.ok) {
-          const data = await response.json() as { answer: string };
-          return data.answer;
-        } else {
-          throw new Error(`RAG API responded with status ${response.status}`);
-        }
-      } catch (err) {
-        console.error('[RAG Agent Error] Falling back:', err);
-        return "Désolé, le service de recherche intelligente et de RAG est actuellement en cours de conception ou indisponible.";
-      }
+    try {
+      const data = await this.rag.query({
+        query: message,
+        document_ids: documents.map((d) => d.id),
+        conversation_history: conversationHistory,
+        max_tokens: maxTokens,
+      });
+      return { answer: data.answer, tokensUsed: data.tokens_used };
+    } catch (err) {
+      console.error('[RAG Agent Error] Falling back:', err);
+      return { answer: FALLBACK };
     }
-
-    return "Désolé, le service de recherche intelligente et de RAG est actuellement en cours de conception ou indisponible.";
   }
 }

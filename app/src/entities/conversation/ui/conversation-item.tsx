@@ -5,6 +5,7 @@ import { decryptMessage } from '@/shared/crypto';
 import { Avatar } from '@/shared/ui/avatar';
 import { cn } from '@/shared/utils/cn';
 import { formatDistanceToNow } from 'date-fns';
+import { AlertCircle, Clock } from 'lucide-react-native';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -63,8 +64,17 @@ export const ConversationItem = React.memo(function ConversationItem({ conversat
   const cacheKey = lastMessage ? `${lastMessage.id}:${lastMessage.iv}` : null;
   const cachedPreview = cacheKey ? previewCache.get(cacheKey) : undefined;
 
+  const directPlain = useMemo(() => {
+    if (!lastMessage) return null;
+    if (lastMessage.decryptedContent) return lastMessage.decryptedContent;
+    if (lastMessage.status === 'fail' || lastMessage.id?.startsWith('temp-')) {
+      return lastMessage.cipherText || 'Message non envoyé';
+    }
+    return null;
+  }, [lastMessage]);
+
   useEffect(() => {
-    if (!lastMessage || cachedPreview !== undefined) return;
+    if (!lastMessage || directPlain !== null || cachedPreview !== undefined) return;
     const getKey = async () => {
       try {
         setChatKey(await ensureChatKeyForChat(conversation.id));
@@ -73,17 +83,22 @@ export const ConversationItem = React.memo(function ConversationItem({ conversat
       }
     };
     getKey();
-  }, [conversation.id, lastMessage, cachedPreview]);
+  }, [conversation.id, lastMessage, directPlain, cachedPreview]);
 
   // Déchiffrement du dernier message (async → state, avec cache module-level)
   const [decryptedLastMessage, setDecryptedLastMessage] = useState<string>(() => {
     if (!lastMessage) return 'Aucun message';
+    if (directPlain !== null) return directPlain;
     return cachedPreview !== undefined ? cachedPreview : 'Message sécurisé';
   });
 
   useEffect(() => {
     if (!lastMessage) {
       setDecryptedLastMessage('Aucun message');
+      return;
+    }
+    if (directPlain !== null) {
+      setDecryptedLastMessage(directPlain);
       return;
     }
     if (cachedPreview !== undefined) {
@@ -107,7 +122,10 @@ export const ConversationItem = React.memo(function ConversationItem({ conversat
     return () => {
       cancelled = true;
     };
-  }, [lastMessage, chatKey, cachedPreview, cacheKey]);
+  }, [lastMessage, chatKey, directPlain, cachedPreview, cacheKey]);
+
+  const isSending = lastMessage && (lastMessage.status === 'send' || lastMessage.id?.startsWith('temp-'));
+  const isFailed = lastMessage && lastMessage.status === 'fail';
 
   return (
     <Pressable
@@ -147,18 +165,28 @@ export const ConversationItem = React.memo(function ConversationItem({ conversat
 
         <View className="flex-row items-center justify-between gap-4">
           
-          {/* Aperçu du dernier message échangé */}
-          <Text
-            numberOfLines={1}
-            className={cn(
-              'flex-1 text-xs leading-relaxed',
-              isUnread
-                ? 'text-zinc-900 dark:text-zinc-200 font-bold'
-                : 'text-zinc-400 dark:text-zinc-500'
+          {/* Aperçu du dernier message échangé + icône de statut */}
+          <View className="flex-1 flex-row items-center gap-1.5 overflow-hidden">
+            {isFailed && (
+              <AlertCircle size={13} color="#EF4444" strokeWidth={2.5} />
             )}
-          >
-            {decryptedLastMessage}
-          </Text>
+            {isSending && (
+              <Clock size={12} color="#A1A1AA" strokeWidth={2.5} />
+            )}
+            <Text
+              numberOfLines={1}
+              className={cn(
+                'flex-1 text-xs leading-relaxed',
+                isFailed
+                  ? 'text-red-500 font-medium'
+                  : isUnread
+                    ? 'text-zinc-900 dark:text-zinc-200 font-bold'
+                    : 'text-zinc-400 dark:text-zinc-500'
+              )}
+            >
+              {decryptedLastMessage}
+            </Text>
+          </View>
 
           {/* Pastille de notification : Format technique, carré adouci et orange vif sans ombre */}
           {isUnread && (

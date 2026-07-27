@@ -3,7 +3,7 @@ import { prisma } from "../../config/database.js";
 import { ErrorCode } from "../helpers/error-codes.js";
 import { FileService } from "./file.service.js";
 import { FolderResolverService } from "./folder-resolver.service.js";
-import { env } from "../../config/envManager.js";
+import { RagService } from "./rag.service.js";
 
 const docInclude = {
   uploadedBy: {
@@ -77,6 +77,7 @@ function formatDocument(doc: {
 export class LibraryService {
   private fileService = new FileService();
   private folderResolver = new FolderResolverService();
+  private rag = new RagService();
 
   private visibilityWhere(role: string): Record<string, unknown> {
     const where: Record<string, unknown> = {};
@@ -276,27 +277,20 @@ export class LibraryService {
     });
 
     // Ingestion RAG en tâche de fond non-bloquante
-    const ragApiUrl = env.get("RAG_AGENT_API_URL");
-    if (ragApiUrl) {
+    if (this.rag.isAvailable()) {
       Promise.resolve().then(async () => {
         try {
-          const formData = new FormData();
-          const fileBlob = new Blob([new Uint8Array(file)], { type: meta.mimeType });
-          formData.append("file", fileBlob, meta.originalName);
-          formData.append("document_id", document.id);
-          formData.append("filiere", filiere || "Général");
-          formData.append("niveau", niveau || "Général");
-          formData.append("ue", ue || "Général");
-          formData.append("type", document.type);
-
-          const res = await fetch(`${ragApiUrl}/api/v1/ingest`, {
-            method: "POST",
-            body: formData,
+          await this.rag.ingest({
+            file,
+            originalName: meta.originalName,
+            mimeType: meta.mimeType,
+            documentId: document.id,
+            filiere: filiere || "Général",
+            niveau: niveau || "Général",
+            ue: ue || "Général",
+            type: document.type,
+            ownerId: userId,
           });
-
-          if (!res.ok) {
-            console.error(`[RAG Ingest] Ingestion failed for document ${document.id}: ${res.statusText}`);
-          }
         } catch (err) {
           console.error(`[RAG Ingest] Error connecting to RAG agent for document ${document.id}:`, err);
         }
@@ -348,16 +342,10 @@ export class LibraryService {
     await prisma.document.delete({ where: { id: documentId } });
 
     // Suppression de l'index RAG en tâche de fond non-bloquante
-    const ragApiUrl = env.get("RAG_AGENT_API_URL");
-    if (ragApiUrl) {
+    if (this.rag.isAvailable()) {
       Promise.resolve().then(async () => {
         try {
-          const res = await fetch(`${ragApiUrl}/api/v1/documents/${documentId}`, {
-            method: "DELETE",
-          });
-          if (!res.ok) {
-            console.error(`[RAG Delete] Failed to delete document ${documentId} from index: ${res.statusText}`);
-          }
+          await this.rag.deleteDocument(documentId);
         } catch (err) {
           console.error(`[RAG Delete] Error connecting to RAG agent for document ${documentId}:`, err);
         }
@@ -397,31 +385,15 @@ export class LibraryService {
     query: string,
     filters?: Record<string, unknown>,
   ) {
-    // L'app ne connaît jamais l'état du service : elle affiche simplement
-    // `message` s'il est présent, et `results` sinon. Basculer le RAG en
-    // production ne demande donc aucune mise à jour de l'app.
     const FALLBACK = {
       results: [] as never[],
       message: "Fonctionnalité temporairement indisponible ou en maintenance.",
     };
 
-    const ragApiUrl = env.get("RAG_AGENT_API_URL");
-    if (!ragApiUrl) return FALLBACK;
+    if (!this.rag.isAvailable()) return FALLBACK;
 
     try {
-      const response = await fetch(`${ragApiUrl}/api/v1/semantic-search`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, user_id: userId, filters: filters ?? {} }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`RAG API returned status ${response.status}`);
-      }
-
-      const data = (await response.json()) as {
-        results?: { document_id: string; title?: string; score?: number; excerpt?: string }[];
-      };
+      const data = await this.rag.semanticSearch({ query, user_id: userId, filters: filters ?? {} });
       const ragResults = data.results ?? [];
       if (ragResults.length === 0) return { results: [] };
 

@@ -1,10 +1,10 @@
-import { useAiChat, useAddDocumentToSession, useMyAiAttachments } from '@/entities/ai/hooks';
+import { useCreateAiSession, useMyAiAttachments } from '@/entities/ai/hooks';
 import { useMyDocuments } from '@/entities/document/hooks';
 import { Input } from '@/shared/ui/input';
 import { cn } from '@/shared/utils/cn';
 import { formatBytes } from '@/shared/lib/file';
 import { router } from 'expo-router';
-import { ArrowLeft, FileText, Plus, Sparkles, FolderOpen, ArrowRight, Upload, Trash2 } from 'lucide-react-native';
+import { ArrowLeft, FileText, Plus, FolderOpen, ArrowRight, Trash2 } from 'lucide-react-native';
 import { useState, useMemo } from 'react';
 import {
   ActivityIndicator,
@@ -23,13 +23,11 @@ import type { Document } from '@/shared/api/types';
 
 export default function NewAiChatScreen() {
   const insets = useSafeArea();
-  const chatMutation = useAiChat();
-  const addDocMutation = useAddDocumentToSession();
+  const createSessionMutation = useCreateAiSession();
   const { data: myDocsData, isLoading: myDocsLoading } = useMyDocuments();
   const { data: aiDocsData, isLoading: aiDocsLoading } = useMyAiAttachments();
 
   const [title, setTitle] = useState('');
-  const [text, setText] = useState('');
   const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
   const [selectedDocsMap, setSelectedDocsMap] = useState<Record<string, Document>>({});
   const [isInitializing, setIsInitializing] = useState(false);
@@ -66,33 +64,25 @@ export default function NewAiChatScreen() {
       .filter((d): d is Document => !!d);
   }, [libraryDocs, selectedDocs, selectedDocsMap]);
 
+  const canCreate = title.trim().length > 0 && !createSessionMutation.isPending && !isInitializing;
+
   const handleCreate = async () => {
-    if (!text.trim()) return;
+    if (!canCreate) return;
     setIsInitializing(true);
     setStatusMessage('Création du notebook...');
 
     try {
-      const prompt = text.trim();
-      
-      const result = await chatMutation.mutateAsync({ 
-        message: prompt, 
-        sessionId: undefined 
+      const result = await createSessionMutation.mutateAsync({
+        title: title.trim(),
+        documentIds: selectedDocs.length > 0 ? selectedDocs : undefined,
       });
 
-      const newSessionId = result.session.id;
-
-      if (selectedDocs.length > 0) {
-        setStatusMessage('Association des documents sources...');
-        for (const docId of selectedDocs) {
-          await addDocMutation.mutateAsync({ sessionId: newSessionId, documentId: docId });
-        }
-      }
-
       setStatusMessage('Préparation du studio d\'étude...');
-      router.replace(`/ai/${newSessionId}`);
+      router.replace(`/ai/${result.session.id}`);
     } catch (err) {
       console.error('[CreateNotebook] failed:', err);
       setIsInitializing(false);
+      setStatusMessage('');
     }
   };
 
@@ -133,7 +123,7 @@ export default function NewAiChatScreen() {
           {/* Section: Title */}
           <View className="mb-10">
             <Text className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-2 pl-1">
-              Titre du Notebook
+              Titre du Notebook *
             </Text>
             <Input
               placeholder="Ex: Analyse Algèbre Linéaire, Révisions Médicales..."
@@ -206,21 +196,6 @@ export default function NewAiChatScreen() {
               </View>
             )}
           </View>
-
-          {/* Section: First Prompt */}
-          <View className="mb-10">
-            <Text className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-2 pl-1">
-              Première Requête
-            </Text>
-            <Input
-              placeholder="Ex: Fais-moi un résumé du chapitre 3 ou Génère un quiz..."
-              value={text}
-              onChangeText={setText}
-              multiline
-              containerClassName="bg-zinc-50 border-zinc-200 dark:bg-zinc-950 dark:border-zinc-800 rounded-xl min-h-[100px] items-start pt-2"
-              className="text-sm text-zinc-900 dark:text-zinc-50"
-            />
-          </View>
         </ScrollView>
 
         {/* Footer Actions Opaque et Mat */}
@@ -230,16 +205,16 @@ export default function NewAiChatScreen() {
         >
           <Pressable
             onPress={handleCreate}
-            disabled={!text.trim() || chatMutation.isPending}
+            disabled={!canCreate}
             className={cn(
               "flex-row items-center justify-center gap-2 w-full h-11 rounded-xl active:opacity-95",
-              text.trim() && !chatMutation.isPending ? "bg-orange-500" : "bg-zinc-100 dark:bg-zinc-800"
+              canCreate ? "bg-orange-500" : "bg-zinc-100 dark:bg-zinc-800"
             )}
           >
-            <Text className={cn("text-xs font-bold uppercase tracking-wide", text.trim() && !chatMutation.isPending ? "text-white" : "text-zinc-400 dark:text-zinc-500")}>
-              Créer & Lancer l'analyse
+            <Text className={cn("text-xs font-bold uppercase tracking-wide", canCreate ? "text-white" : "text-zinc-400 dark:text-zinc-500")}>
+              Créer le Notebook
             </Text>
-            <ArrowRight size={14} color={text.trim() && !chatMutation.isPending ? "#FFFFFF" : "#A1A1AA"} />
+            <ArrowRight size={14} color={canCreate ? "#FFFFFF" : "#A1A1AA"} />
           </Pressable>
         </View>
       </KeyboardAvoidingView>

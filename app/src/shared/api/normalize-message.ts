@@ -67,6 +67,7 @@ export function normalizeMessage(raw: RawMessage): Message {
     responseToId: raw.responseTo?.id ?? null,
     responseTo: raw.responseTo ? normalizeMessage(raw.responseTo) : null,
     is_deleted: raw.is_deleted ?? false,
+    decryptedContent: (raw as any).decryptedContent ?? (raw as any).decrypted_content ?? null,
   };
 }
 

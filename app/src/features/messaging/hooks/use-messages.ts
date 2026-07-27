@@ -35,6 +35,18 @@ export function useMessages(conversationId: string, options?: { enabled?: boolea
         // Decrypt the cached items immediately
         const cachedItems: DecryptedMessage[] = await Promise.all(
           sortMessagesAsc(cached).map(async (m) => {
+            if (m.status === 'fail' || m.id.startsWith('temp-') || m.decryptedContent) {
+              return {
+                ...m,
+                decryptedContent: m.decryptedContent || m.cipherText,
+                decryptFailed: false,
+                responseToDecrypted: m.responseTo ? {
+                  ...m.responseTo,
+                  decryptedContent: m.responseTo.decryptedContent || m.responseTo.cipherText,
+                  decryptFailed: false
+                } : null
+              };
+            }
             if (!chatKey) return { ...m, decryptedContent: null, decryptFailed: true };
             const text = await decryptMessage(m.cipherText, m.iv, chatKey);
             let responseToDecrypted: DecryptedMessage | null = null;
@@ -72,6 +84,18 @@ export function useMessages(conversationId: string, options?: { enabled?: boolea
             const decryptWith = (key: Uint8Array | null) =>
               Promise.all(
                 sortMessagesAsc(networkRaw.items).map(async (m): Promise<DecryptedMessage> => {
+                  if (m.status === 'fail' || m.id.startsWith('temp-') || m.decryptedContent) {
+                    return {
+                      ...m,
+                      decryptedContent: m.decryptedContent || m.cipherText,
+                      decryptFailed: false,
+                      responseToDecrypted: m.responseTo ? {
+                        ...m.responseTo,
+                        decryptedContent: m.responseTo.decryptedContent || m.responseTo.cipherText,
+                        decryptFailed: false
+                      } : null
+                    };
+                  }
                   if (!key) return { ...m, decryptedContent: null, decryptFailed: true };
                   const text = await decryptMessage(m.cipherText, m.iv, key);
                   let responseToDecrypted: DecryptedMessage | null = null;
@@ -177,6 +201,18 @@ export function useMessages(conversationId: string, options?: { enabled?: boolea
 
       const items: DecryptedMessage[] = await Promise.all(
         sorted.map(async (m) => {
+          if (m.status === 'fail' || m.id.startsWith('temp-') || m.decryptedContent) {
+            return {
+              ...m,
+              decryptedContent: m.decryptedContent || m.cipherText,
+              decryptFailed: false,
+              responseToDecrypted: m.responseTo ? {
+                ...m.responseTo,
+                decryptedContent: m.responseTo.decryptedContent || m.responseTo.cipherText,
+                decryptFailed: false
+              } : null
+            };
+          }
           if (!chatKey) {
             return { ...m, decryptedContent: null, decryptFailed: true };
           }

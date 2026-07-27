@@ -47,14 +47,7 @@ export default function LibraryExplorerComponnent({
 
     const handleSemanticSearchPress = useCallback(() => {
         if (!isPremium) {
-            Alert.alert(
-                'Fonctionnalité Premium',
-                'La recherche sémantique (recherche en langage naturel dans vos documents) nécessite un abonnement Premium.',
-                [
-                    { text: 'Annuler', style: 'cancel' },
-                    { text: "Voir l'offre", onPress: () => router.push('/settings/subscription' as never) },
-                ],
-            );
+            router.push('/settings/subscription')
             return;
         }
         router.push('/modal/semantic-search' as never);

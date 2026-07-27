@@ -47,6 +47,7 @@ const EnvSchema = {
 
   // ── RAG Agent ────────────────────────────────────────
   RAG_AGENT_API_URL: vine.string().optional(),
+  RAG_API_KEY: vine.string().optional(),
 };
 
 export default EnvSchema;

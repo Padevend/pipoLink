@@ -1,30 +1,34 @@
 import { prisma } from "../../config/database.js";
 import { ErrorCode } from "../helpers/error-codes.js";
+import { PIPOLINK_PLANS, PipoLinkPlanType } from "../config/pipolink-pricing.config.js";
 
 export const TOKEN_PLANS = {
   FREE: {
-    maxTokens: 2500,
-    windowHours: 6,
-    windowMs: 6 * 60 * 60 * 1000, // 6 hours
+    maxTokens: PIPOLINK_PLANS.FREE.maxTokens,
+    windowDays: PIPOLINK_PLANS.FREE.windowDays,
+    windowHours: PIPOLINK_PLANS.FREE.windowDays * 24,
+    windowMs: PIPOLINK_PLANS.FREE.windowMs,
   },
   PREMIUM: {
-    maxTokens: 8000,
-    windowHours: 3.5,
-    windowMs: 3.5 * 60 * 60 * 1000, // 3 hours 30 minutes
+    maxTokens: PIPOLINK_PLANS.PREMIUM.maxTokens,
+    windowDays: PIPOLINK_PLANS.PREMIUM.windowDays,
+    windowHours: PIPOLINK_PLANS.PREMIUM.windowDays * 24,
+    windowMs: PIPOLINK_PLANS.PREMIUM.windowMs,
   },
 } as const;
 
 export class AiTokenService {
   /**
-   * Returns token configuration depending on subscription plan.
+   * Retourne la configuration de jetons PipoLink selon le plan d'abonnement.
    */
   getTokenConfig(plan: string) {
     const isPremium = plan?.toUpperCase() === "PREMIUM";
-    return isPremium ? TOKEN_PLANS.PREMIUM : TOKEN_PLANS.FREE;
+    const planKey: PipoLinkPlanType = isPremium ? "PREMIUM" : "FREE";
+    return TOKEN_PLANS[planKey];
   }
 
   /**
-   * Retrieves and automatically restores tokens if restoration window expired.
+   * Récupère et restaure automatiquement le solde de Jetons PipoLink si l'échéance mensuelle (30 jours) est atteinte.
    */
   async getUserTokenStatus(userId: string) {
     const user = await prisma.user.findUnique({
@@ -46,14 +50,14 @@ export class AiTokenService {
     let nextRestoration = user.nextRestorationAt;
     let updated = false;
 
-    // Adjust max token limit if plan changed without updating max
-    let targetMax = config.maxTokens;
+    // Ajuste le plafond de Jetons PipoLink si le plan a changé
+    const targetMax = config.maxTokens;
     if (user.aiTokensMax !== targetMax) {
       currentTokens = Math.min(currentTokens, targetMax);
       updated = true;
     }
 
-    // Check if token restoration is due
+    // Vérifie si le renouvellement mensuel (30 jours) est échu
     if (nextRestoration && now >= nextRestoration) {
       currentTokens = targetMax;
       lastRestoration = now;
@@ -89,6 +93,7 @@ export class AiTokenService {
       tokens: currentTokens,
       maxTokens: targetMax,
       plan,
+      windowDays: config.windowDays,
       windowHours: config.windowHours,
       lastTokenRestorationAt: lastRestoration,
       nextRestorationAt: nextRestoration,
@@ -97,20 +102,19 @@ export class AiTokenService {
   }
 
   /**
-   * Check if user has sufficient tokens before starting an AI operation.
+   * Vérifie si l'utilisateur possède suffisamment de Jetons PipoLink avant une opération.
    */
-  async ensureSufficientTokens(userId: string, requiredMinTokens = 20) {
+  async ensureSufficientTokens(userId: string, requiredCost: number) {
     const status = await this.getUserTokenStatus(userId);
-    if (status.tokens < requiredMinTokens) {
-      const remainingMinutes = Math.ceil(status.timeRemainingMs / (60 * 1000));
-      const hours = Math.floor(remainingMinutes / 60);
-      const mins = remainingMinutes % 60;
-      const timeStr = hours > 0 ? `${hours}h ${mins}min` : `${mins}min`;
+
+    if (status.tokens < requiredCost) {
+      const remainingDays = Math.ceil(status.timeRemainingMs / (24 * 60 * 60 * 1000));
+      const timeStr = remainingDays > 1 ? `${remainingDays} jours` : `${Math.ceil(status.timeRemainingMs / (60 * 60 * 1000))} heures`;
 
       throw {
         code: ErrorCode.QUOTA_EXCEEDED,
         status: 402,
-        message: `Solde de jetons d'IA insuffisant (${status.tokens}/${status.maxTokens}). Prochain renouvellement dans ${timeStr}. Passez au plan PREMIUM pour 8 000 jetons/3h30.`,
+        message: `Solde de Jetons PipoLink insuffisant (${status.tokens}/${status.maxTokens}). Cette opération requiert ${requiredCost} jetons. Prochain renouvellement dans ${timeStr}. Passez au plan PREMIUM pour 2 000 Jetons PipoLink/mois.`,
         data: status,
       };
     }
@@ -118,7 +122,7 @@ export class AiTokenService {
   }
 
   /**
-   * Deducts tokens after an AI interaction.
+   * Décrémente le solde de Jetons PipoLink du coût fixe de l'opération.
    */
   async consumeTokens(userId: string, amount: number) {
     const status = await this.getUserTokenStatus(userId);
@@ -128,7 +132,6 @@ export class AiTokenService {
     const newTokens = Math.max(0, status.tokens - amount);
     let nextRestoration = status.nextRestorationAt;
 
-    // If we consume tokens and nextRestoration is not set or passed, set it
     if (!nextRestoration || now >= nextRestoration) {
       nextRestoration = new Date(now.getTime() + config.windowMs);
     }
@@ -152,17 +155,14 @@ export class AiTokenService {
   }
 
   /**
-   * Helper to estimate token cost of prompt + response.
+   * Estimation indicative maintenue pour rétrocompatibilité.
    */
-  estimateTokenCost(promptText: string, responseText = "", isStudyAid = false): number {
-    const promptTokens = Math.ceil(promptText.length / 4);
-    const responseTokens = Math.ceil(responseText.length / 4);
-    const baseCost = isStudyAid ? 120 : 20;
-    return Math.max(baseCost, promptTokens + responseTokens);
+  estimateTokenCost(_promptText: string, _responseText = "", isStudyAid = false): number {
+    return isStudyAid ? 25 : 5;
   }
 
   /**
-   * Called when subscription plan changes (e.g. Free -> Premium or Premium -> Free)
+   * Synchronise le solde et plafond de Jetons PipoLink lors des changements de plan.
    */
   async syncUserPlanTokens(userId: string, plan: string) {
     const isPremium = plan?.toUpperCase() === "PREMIUM";
@@ -173,7 +173,7 @@ export class AiTokenService {
     if (!user) return;
 
     if (isPremium) {
-      // Upgrade to Premium: give 8000 tokens immediately and set 3.5h window
+      // Upgrade Premium: octroie 2000 Jetons PipoLink avec renouvellement mensuel (30 jours)
       await prisma.user.update({
         where: { id: userId },
         data: {
@@ -184,7 +184,7 @@ export class AiTokenService {
         },
       });
     } else {
-      // Downgrade to Free: cap tokens at 2500 max, 6h window
+      // Passation au plan Free: plafonne à 300 Jetons PipoLink max avec renouvellement mensuel
       const cappedTokens = Math.min(user.aiTokens, config.maxTokens);
       await prisma.user.update({
         where: { id: userId },
@@ -199,12 +199,11 @@ export class AiTokenService {
   }
 
   /**
-   * Scheduled cron job handler to restore token windows for all users whose timer expired.
+   * Cron job mensuel de restauration des Jetons PipoLink expirés.
    */
   async processTokenRestorationCron() {
     const now = new Date();
 
-    // 1. Process users who reached or passed their nextRestorationAt
     const usersToRestore = await prisma.user.findMany({
       where: {
         OR: [

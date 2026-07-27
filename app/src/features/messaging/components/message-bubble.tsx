@@ -1,3 +1,4 @@
+import { useCopyToClipboard } from '@/shared/hooks/use-copy-to-clipboard';
 import { AttachmentDocument } from "@/features/attachments/components/attachment-document";
 import { AttachmentImage } from "@/features/attachments/components/attachment-image";
 import { MessageAttachment } from "@/shared/api/types";
@@ -45,8 +46,16 @@ export const MessageBubble = React.memo(function MessageBubble({
   isGroup,
 }: MessageBubbleProps) {
   const [menuVisible, setMenuVisible] = useState(false);
+  const { copyToClipboard } = useCopyToClipboard();
   const hasText = !!message.decryptedContent || !hasAttachments;
   const isFailed = message.status === 'fail';
+
+  const handleCopy = useCallback(() => {
+    const textToCopy = message.decryptedContent || message.cipherText;
+    if (textToCopy) {
+      void copyToClipboard(textToCopy, 'Message copié !');
+    }
+  }, [message.decryptedContent, message.cipherText, copyToClipboard]);
 
   const getReplyPreview = (rep: DecryptedMessage) => {
     if (rep.is_deleted) return 'Ce message a été supprimé';
@@ -109,6 +118,7 @@ export const MessageBubble = React.memo(function MessageBubble({
                 isMine={isMine}
                 isFailed={isFailed}
                 onReply={() => onReply?.(message)}
+                onCopy={hasText ? handleCopy : undefined}
                 onRetry={() => onRetry?.(message)}
                 onDelete={() => {
                   if (isFailed) {
@@ -157,7 +167,7 @@ export const MessageBubble = React.memo(function MessageBubble({
                 <Text className={cn("text-xs italic font-medium", isMine ? "text-zinc-400" : "text-zinc-400 dark:text-zinc-500")}>
                   Ce message a été supprimé
                 </Text>
-              ) : message.decryptFailed ? (
+              ) : message.decryptFailed && message.status !== "fail" ? (
                 <View className="text-xs">
                   <Text className={cn("text-xs font-medium italic", isMine ? "text-zinc-400" : "text-zinc-400 dark:text-zinc-500")}>Ce message n'a pas pu être déchiffré</Text>
                   <Pressable

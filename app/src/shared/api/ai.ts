@@ -45,14 +45,27 @@ export const aiApi = {
   /**
    * Send a message to the AI
    */
-  sendMessage: (payload: { message: string; sessionId?: string }) =>
-    api.post<{ session: AiSession; message: AiChatMessage; request: AiChatMessage; tokens?: AiTokenStatus }>('/ai/chat', payload),
+  sendMessage: (
+    payload: { message: string; sessionId?: string },
+    options?: { signal?: AbortSignal; timeoutMs?: number }
+  ) =>
+    api.post<{ session: AiSession; message: AiChatMessage; request: AiChatMessage; tokens?: AiTokenStatus }>(
+      '/ai/chat',
+      payload,
+      { timeoutMs: 60_000, ...options }
+    ),
 
   /**
    * List AI chat sessions
    */
   getSessions: () =>
     api.get<AiSession[]>('/ai/sessions'),
+
+  /**
+   * Create a new AI session (notebook) with a title and optional document IDs
+   */
+  createSession: (payload: { title: string; documentIds?: string[] }) =>
+    api.post<{ session: AiSession }>('/ai/sessions', payload),
 
   /**
    * Get history for a session
@@ -65,6 +78,12 @@ export const aiApi = {
    */
   deleteSessions: (sessionId: string) =>
     api.delete<void>(`/ai/sessions/${sessionId}`),
+
+  /**
+   * Truncate messages in session starting from or after messageId
+   */
+  truncateMessages: (sessionId: string, messageId: string, inclusive = true) =>
+    api.post<void>(`/ai/sessions/${sessionId}/messages/${messageId}/truncate`, { inclusive }),
 
   /**
    * Get documents associated with a session
@@ -87,8 +106,16 @@ export const aiApi = {
   /**
    * Generate study aids (summary, faq, quiz, etc.)
    */
-  generateStudyAid: (sessionId: string, type: string) =>
-    api.post<{ message: AiChatMessage }>(`/ai/sessions/${sessionId}/generate`, { type }),
+  generateStudyAid: (
+    sessionId: string,
+    type: string,
+    options?: { signal?: AbortSignal; timeoutMs?: number }
+  ) =>
+    api.post<{ message: AiChatMessage }>(
+      `/ai/sessions/${sessionId}/generate`,
+      { type },
+      { timeoutMs: 90_000, ...options }
+    ),
 
   /**
    * Get private AI attachments
