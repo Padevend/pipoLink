@@ -138,10 +138,22 @@ export const useAiChat = () => {
         void queryClient.invalidateQueries({ queryKey: aiKeys.tokens() });
       }
 
+      if (data.tokens) {
+        queryClient.setQueryData(aiKeys.tokens(), data.tokens);
+      } else {
+        void queryClient.invalidateQueries({ queryKey: aiKeys.tokens() });
+      }
+
       if (data.session.id) {
         queryClient.setQueryData(aiKeys.history(data.session.id), (old: any) => {
           let existing = old || [];
           
+          // Nettoyer le message temporaire optimiste
+          if (context?.tempId) {
+            existing = existing.filter((msg: any) => msg.id !== context.tempId);
+          } else {
+            existing = existing.filter((msg: any) => !msg.id.startsWith('temp-'));
+          }
           // Nettoyer le message temporaire optimiste
           if (context?.tempId) {
             existing = existing.filter((msg: any) => msg.id !== context.tempId);
@@ -312,6 +324,7 @@ export const useGenerateStudyAid = () => {
       }
     },
     onSuccess: (data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: aiKeys.tokens() });
       void queryClient.invalidateQueries({ queryKey: aiKeys.tokens() });
       queryClient.setQueryData(aiKeys.history(variables.sessionId), (old: any) => {
         const existing = old || [];

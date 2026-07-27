@@ -43,6 +43,7 @@ function formatDocument(doc: any) {
 /**
  * Service de gestion du chat IA.
  * Gère les sessions, les quotas de jetons par plan, et appelle le provider IA.
+ * Gère les sessions, les quotas de jetons par plan, et appelle le provider IA.
  */
 export class AiService {
   private fileService = new FileService();

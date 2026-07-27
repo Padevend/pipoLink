@@ -86,6 +86,9 @@ export const MessageBubble = React.memo(function MessageBubble({
     if (isFailed) {
       return <AlertCircle size={12} strokeWidth={2.5} color="#EF4444" />;
     }
+    if (isFailed) {
+      return <AlertCircle size={12} strokeWidth={2.5} color="#EF4444" />;
+    }
     if (message.id.startsWith('temp-')) {
       return <Clock size={11} strokeWidth={2.5} color={GRIS_VALIDATION} />;
     }
@@ -223,6 +226,7 @@ export const MessageBubble = React.memo(function MessageBubble({
                     </View>
                   )}
 
+                  {/* Corps du Texte — liens détectés automatiquement et cliquables */}
                   {/* Corps du Texte — liens détectés automatiquement et cliquables */}
                   {hasText && (
                     <LinkifiedText

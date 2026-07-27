@@ -11,6 +11,16 @@ export interface AiTokenStatus {
   timeRemainingMs: number;
 }
 
+export interface AiTokenStatus {
+  tokens: number;
+  maxTokens: number;
+  plan: string;
+  windowHours: number;
+  lastTokenRestorationAt: string;
+  nextRestorationAt: string | null;
+  timeRemainingMs: number;
+}
+
 export interface AiChatMessage {
   id: string;
   role: 'user' | 'assistant';
