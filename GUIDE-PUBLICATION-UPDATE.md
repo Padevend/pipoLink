@@ -33,7 +33,7 @@ Une mise à jour de gravité `low` ou `medium` sera **téléchargée silencieuse
 
 **Commande modèle :**
 ```bash
-eas update --branch production --message '{"severity":"medium","version":"1.1.0","changelog":["Nouvelle architecture IA / Recherche (Agent IA, Agent deeliaison)",""]}'
+eas update --branch production --message '{"severity":"medium","version":"1.1.0","changelog":["Amelioration interface IA", "Amelioration interactivite des outils d\'aide à l\'etude", "Correction systeme de recuperation de cle"]}'
 ```
 *(Modifiez `production` par `preview` pour tester d'abord en staging).*
 
