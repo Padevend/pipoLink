@@ -103,7 +103,7 @@ export default function LibraryScreen() {
 
           {/* Bouton principal - Focus Orange Électrique */}
           <Button
-            label="Explorer les dossiers"
+            label="Explorer la bibliothèque"
             leftIcon={<BookOpen size={16} color="#fff" />}
             onPress={() => router.push("/library/library")}
             className="mt-4 mb-8 rounded-xl h-12 bg-orange-500 dark:bg-orange-600 active:opacity-90"

@@ -77,13 +77,21 @@ function upsertMessageInCache(conversationId: string, incoming: DecryptedMessage
         const tempIndex = page.items.findIndex(
           (m) =>
             m.id.startsWith('temp-') &&
-            m.sender_id === incoming.sender_id &&
-            m.decryptedContent === incoming.decryptedContent
+            m.sender_id === incoming.sender_id
         );
 
         if (tempIndex !== -1) {
+          const tempMsg = page.items[tempIndex];
+          const plain = incoming.decryptedContent || tempMsg.decryptedContent || null;
+          const mergedIncoming: DecryptedMessage = {
+            ...tempMsg,
+            ...incoming,
+            decryptedContent: plain,
+            decryptFailed: plain ? false : incoming.decryptFailed,
+            responseToDecrypted: incoming.responseToDecrypted || tempMsg.responseToDecrypted || null,
+          };
           const newItems = [...page.items];
-          newItems[tempIndex] = incoming;
+          newItems[tempIndex] = mergedIncoming;
           return { ...page, items: sortMessagesAsc(newItems) as DecryptedMessage[] };
         }
 

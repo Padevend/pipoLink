@@ -7,7 +7,7 @@ import { LinkifiedText } from "@/shared/ui/linkified-text";
 import { cn } from '@/shared/utils/cn';
 import { format } from "date-fns";
 import { AlertCircle, Check, CheckCheck, Clock } from "lucide-react-native";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Pressable, Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -108,6 +108,17 @@ export const MessageBubble = React.memo(function MessageBubble({
     message.attachments?.length === 1 &&
     message.attachments[0].mimeType.startsWith('image/') &&
     !message.decryptedContent;
+
+  const formattedTime = useMemo(() => {
+    if (!message.created_at) return '';
+    try {
+      const d = new Date(message.created_at);
+      if (isNaN(d.getTime())) return '';
+      return format(d, 'HH:mm');
+    } catch {
+      return '';
+    }
+  }, [message.created_at]);
 
   return (
     <View className={cn('mb-2 w-full flex-row', isMine ? 'justify-end pl-10' : 'justify-start pr-10')}>
@@ -237,7 +248,7 @@ export const MessageBubble = React.memo(function MessageBubble({
                       )}
                       linkClassName={isMine ? 'text-white underline font-bold' : undefined}
                     >
-                      {message.decryptedContent ?? message.cipherText}
+                      {message.decryptedContent as string}
                     </LinkifiedText>
                   )}
                 </>
@@ -256,7 +267,7 @@ export const MessageBubble = React.memo(function MessageBubble({
         {/* Métadonnées temporelles et statut */}
         <View className="mt-1 flex-row items-center gap-x-1 px-1">
           <Text className="font-mono text-[9px] font-bold text-zinc-400 dark:text-zinc-500/70">
-            {format(new Date(message.created_at), 'HH:mm')}
+            {formattedTime}
           </Text>
           {renderStatusIcon()}
         </View>

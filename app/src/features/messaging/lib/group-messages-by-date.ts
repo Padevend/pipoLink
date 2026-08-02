@@ -8,11 +8,17 @@ export type MessageListItem =
   | { type: 'message'; id: string; message: DecryptedMessage }
   | { type: 'unread-separator'; id: string };
 
-function dateLabel(iso: string): string {
-  const d = parseISO(iso);
-  if (isToday(d)) return "Aujourd'hui";
-  if (isYesterday(d)) return 'Hier';
-  return format(d, 'EEEE d MMMM', { locale: fr });
+function dateLabel(iso?: string): string {
+  if (!iso) return "Aujourd'hui";
+  try {
+    const d = parseISO(iso);
+    if (isNaN(d.getTime())) return "Aujourd'hui";
+    if (isToday(d)) return "Aujourd'hui";
+    if (isYesterday(d)) return 'Hier';
+    return format(d, 'EEEE d MMMM', { locale: fr });
+  } catch {
+    return "Aujourd'hui";
+  }
 }
 
 export function groupMessagesByDate(messages: DecryptedMessage[], userId?: string): MessageListItem[] {
@@ -25,9 +31,11 @@ export function groupMessagesByDate(messages: DecryptedMessage[], userId?: strin
 
   for (let i = 0; i < messages.length; i++) {
     const m = messages[i];
-    const label = dateLabel(m.created_at);
+    const safeCreatedAt = m.created_at || new Date().toISOString();
+    const label = dateLabel(safeCreatedAt);
     if (label !== lastLabel) {
-      out.push({ type: 'date', id: `date-${m.created_at.slice(0, 10)}`, label });
+      const dateSlice = safeCreatedAt.length >= 10 ? safeCreatedAt.slice(0, 10) : `${i}`;
+      out.push({ type: 'date', id: `date-${dateSlice}-${i}`, label });
       lastLabel = label;
     }
     

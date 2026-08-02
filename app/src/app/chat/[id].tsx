@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { conversationKeys, useConversations } from '@/entities/conversation/hooks';
@@ -19,12 +19,12 @@ const ORANGE_PRINCIPAL = '#FF6B00';
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
-  const { data: conversations } = useConversations();
+  const { data: conversations, isLoading: isConversationsLoading } = useConversations();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const conversation = conversations?.find((c) => c.id === id);
 
-  const { data: targetUser, isLoading: isUserLoading } = useGetUser(!conversation ? id || '' : '');
+  const { data: targetUser, isLoading: isUserLoading } = useGetUser(!conversation && !isConversationsLoading ? id || '' : '');
 
   const mockConversation = useMemo(() => {
     if (!targetUser) return undefined;
@@ -94,7 +94,7 @@ export default function ChatScreen() {
   }, [activeConversation, user?.id]);
 
   // ÉCRAN 1 : Attente du chargement
-  if (!activeConversation && isUserLoading) {
+  if (!activeConversation && (isConversationsLoading || isUserLoading)) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-zinc-950">
         <ActivityIndicator size="small" color={ORANGE_PRINCIPAL} />

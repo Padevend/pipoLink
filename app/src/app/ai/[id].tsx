@@ -170,36 +170,36 @@ export default function AiChatScreen() {
     <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
 
       {/* Header Mat */}
-      <View className="flex-row items-center justify-between border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
+      <View className="flex-row items-center justify-between border-b border-zinc-100/80 bg-white px-4 py-2.5 dark:border-zinc-900 dark:bg-zinc-950">
         <Pressable
           onPress={() => router.back()}
-          className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 dark:bg-zinc-900 active:bg-zinc-100 dark:active:bg-zinc-800"
+          className="h-8 w-8 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-900 active:bg-zinc-200 dark:active:bg-zinc-800"
         >
-          <ArrowLeft size={16} color="#71717A" />
+          <ArrowLeft size={15} color="#71717A" />
         </Pressable>
 
         <View className="flex-row items-center gap-1.5">
-          <Text className="font-bold text-sm text-zinc-900 dark:text-zinc-50">Hiro Notebook</Text>
+          <Text className="font-semibold text-xs text-zinc-900 dark:text-zinc-100 tracking-tight">Hiro Notebook</Text>
         </View>
 
         <View className="flex-row items-center gap-2">
           {/* Badge de Jetons IA */}
           <Pressable
             onPress={() => router.push('/settings/subscription')}
-            className="flex-row items-center gap-1 rounded-lg bg-orange-50 border border-orange-200/60 dark:bg-orange-950/30 dark:border-orange-900/40 px-2 py-1 active:opacity-80"
+            className="flex-row items-center gap-1 rounded-full bg-orange-500/10 border border-orange-500/20 px-2.5 py-1 active:opacity-80"
           >
-            <Zap size={12} color="#F97316" />
-            <Text className="text-[11px] font-bold text-orange-600 dark:text-orange-400">
+            <Zap size={11} color="#F97316" />
+            <Text className="text-[10px] font-bold text-orange-600 dark:text-orange-400">
               {tokensData ? tokensData.tokens.toLocaleString() : '...'}
             </Text>
           </Pressable>
 
           <Pressable
             onPress={() => setSourcesModalVisible(true)}
-            className="flex-row items-center gap-1.5 h-8 rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 px-2.5 active:bg-zinc-100 dark:active:bg-zinc-800"
+            className="flex-row items-center gap-1.5 h-7 rounded-full bg-zinc-100 border border-zinc-200/60 dark:bg-zinc-900 dark:border-zinc-800 px-2.5 active:bg-zinc-200 dark:active:bg-zinc-800"
           >
-            <FolderOpen size={14} color="#71717A" />
-            <Text className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300">
+            <FolderOpen size={12} color="#71717A" />
+            <Text className="text-[10px] font-semibold text-zinc-700 dark:text-zinc-300">
               Sources ({activeDocs?.length ?? 0})
             </Text>
           </Pressable>
@@ -209,7 +209,7 @@ export default function AiChatScreen() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
 
         {/* Pilules Horizontales d'Outils d'Étude */}
-        <View className="border-b border-zinc-100 bg-zinc-50/60 dark:border-zinc-900 dark:bg-zinc-900/20 py-2 z-50">
+        <View className="border-b border-zinc-100/60 bg-zinc-50/40 dark:border-zinc-900/60 dark:bg-zinc-950/40 py-2 z-50">
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 6 }}>
             {STUDY_AIDS.map((aid) => {
               const Icon = aid.icon;
@@ -220,14 +220,14 @@ export default function AiChatScreen() {
                   disabled={isDisabled}
                   onPress={() => handleGenerateStudyAid(aid.id)}
                   className={cn(
-                    "flex-row items-center gap-1.5 px-3 h-8 rounded-lg border",
+                    "flex-row items-center gap-1.5 px-3 h-7 rounded-full border",
                     isDisabled
-                      ? "bg-zinc-50 dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800/50 opacity-40"
-                      : "bg-white border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-50 dark:active:bg-zinc-800"
+                      ? "bg-zinc-50/60 dark:bg-zinc-900/40 border-zinc-200/40 dark:border-zinc-800/40 opacity-40"
+                      : "bg-white border-zinc-200/80 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800 shadow-2xs"
                   )}
                 >
-                  <Icon size={12} color={isDisabled ? "#A1A1AA" : "#F97316"} />
-                  <Text className={cn("text-[11px] font-bold uppercase tracking-wide", isDisabled ? "text-zinc-400 dark:text-zinc-600" : "text-zinc-700 dark:text-zinc-300")}>
+                  <Icon size={11} color={isDisabled ? "#A1A1AA" : "#F97316"} />
+                  <Text className={cn("text-[10px] font-semibold tracking-tight", isDisabled ? "text-zinc-400 dark:text-zinc-600" : "text-zinc-700 dark:text-zinc-300")}>
                     {aid.label}
                   </Text>
                 </Pressable>
@@ -247,7 +247,10 @@ export default function AiChatScreen() {
             data={history}
             keyExtractor={(item) => item.id}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 24 }}
+            ItemSeparatorComponent={() => (
+              <View className="h-[1px] bg-zinc-100 dark:bg-zinc-900 my-5 max-w-[680px] w-full self-center" />
+            )}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 32 }}
             renderItem={({ item }) => {
               const isAi = item.role === 'assistant';
               const isFailed = item.status === 'fail';
@@ -277,11 +280,11 @@ export default function AiChatScreen() {
 
               const handleCopy = () => {
                 setActiveMenuId(null);
-                void copyToClipboard(item.content, isAi ? 'Réponse IA copieuse !' : 'Message copié !');
+                void copyToClipboard(item.content, isAi ? 'Réponse IA copiée !' : 'Message copié !');
               };
 
               return (
-                <View className={cn('mb-3 max-w-[92%] relative z-10', isAi ? 'self-start items-start' : 'self-end items-end')}>
+                <View className="w-full max-w-[680px] self-center relative z-10 my-1">
                   {/* Menu Flottant Satiné (BubbleMenu) */}
                   {isMenuOpen && (
                     <BubbleMenu
@@ -302,22 +305,29 @@ export default function AiChatScreen() {
                     onPress={() => isMenuOpen && setActiveMenuId(null)}
                     className="active:opacity-95"
                   >
-                    <View
-                      className={cn(
-                        'px-4 py-2.5 rounded-2xl',
-                        isAi
-                          ? 'rounded-tl-sm border border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/60'
-                          : isFailed
-                            ? 'rounded-tr-sm bg-red-500/90 border border-red-400'
-                            : 'rounded-tr-sm bg-orange-500',
-                      )}
-                    >
-                      {renderMessageContent(item.content, isAi)}
-                    </View>
+                    {isAi ? (
+                      /* Bloc Réponse HIRO - Pleine Largeur avec Bordure Latérale d'Accent */
+                      <View className="w-full mt-2">
+                        <Text className="text-[11px] font-bold tracking-widest text-zinc-400 dark:text-zinc-500 uppercase mb-2">
+                          HIRO
+                        </Text>
+                        <View className="py-0.5">
+                          {renderMessageContent(item.content, isAi)}
+                        </View>
+                      </View>
+                    ) : (
+                      /* Pavé Énoncé / Question Utilisateur - Fond Sobre & Angles Droits */
+                      <View className="w-full bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/70 dark:border-zinc-800/70 p-4 rounded-[4px]">
+                        <Text className="text-[10px] font-semibold tracking-wider text-zinc-400 dark:text-zinc-500 uppercase mb-1.5">
+                          Énoncé
+                        </Text>
+                        {renderMessageContent(item.content, isAi)}
+                      </View>
+                    )}
                   </Pressable>
 
                   {isFailed && (
-                    <View className="flex-row items-center gap-2 mt-1 px-1">
+                    <View className="flex-row items-center gap-2 mt-2 px-1">
                       <Text className="text-[10px] text-red-500 font-bold">Échec de l'envoi</Text>
                       <Pressable
                         onPress={() => chatMutation.retryFailedAiMessage(sessionId, item)}
@@ -349,13 +359,13 @@ export default function AiChatScreen() {
                 </Text>
               </View>
             }
-          />
-        )}
-
-        {/* Indicateur de réflexion / chargement IA — ThoughtStreamLoader dynamique */}
-        {isAnyPending && (
-          <ThoughtStreamLoader
-            type={generateMutation.isPending ? lastStudyAidType : 'chat'}
+            ListFooterComponent={
+              isAnyPending ? (
+                <ThoughtStreamLoader
+                  type={generateMutation.isPending ? lastStudyAidType : 'chat'}
+                />
+              ) : null
+            }
           />
         )}
 

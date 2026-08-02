@@ -58,21 +58,16 @@ export function InteractiveTimelineCard({ content }: { content: string }) {
   return (
     <Animated.View
       entering={FadeInDown.duration(200)}
-      className="my-3 rounded-2xl border border-orange-200/80 dark:border-orange-950/60 bg-gradient-to-b from-orange-50/90 to-white dark:from-zinc-900 dark:to-zinc-950 p-4 shadow-md"
+      className=" bg-white dark:bg-zinc-950 pl-3.5 pr-3 py-2.5"
     >
-      {/* Header Chronologie */}
-      <View className="flex-row items-center gap-2 border-b border-orange-100 dark:border-zinc-800 pb-3 mb-4">
-        <View className="p-2 rounded-xl bg-orange-500/10 dark:bg-orange-500/20">
-          <Clock size={18} color="#F97316" />
-        </View>
-        <View>
-          <Text className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
-            Chronologie & Frise Temporelle
-          </Text>
-          <Text className="text-[11px] text-zinc-500 dark:text-zinc-400">
-            {nodes.length} jalons chronologiques clés
-          </Text>
-        </View>
+      {/* Header Chronologie Minimaliste */}
+      <View className="flex-row items-center gap-1.5 border-b border-zinc-200/50 dark:border-zinc-800/50 pb-1.5 mb-1.5">
+        <Text className="text-[9px] font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400">
+          Chronologie
+        </Text>
+        <Text className="text-[9px] text-zinc-400 dark:text-zinc-500">
+          {nodes.length} jalons clés
+        </Text>
       </View>
 
       {/* Frise Temporelle Connectée */}
@@ -81,27 +76,27 @@ export function InteractiveTimelineCard({ content }: { content: string }) {
           const isLast = index === nodes.length - 1;
 
           return (
-            <View key={node.id} className="flex-row items-start relative mb-4">
+            <View key={node.id} className="flex-row items-start relative mb-2.5">
               {/* Ligne verticale de connexion */}
               {!isLast && (
-                <View className="absolute left-[11px] top-6 bottom-[-16px] w-[2px] bg-orange-200 dark:bg-zinc-800" />
+                <View className="absolute left-[11px] top-5 bottom-[-10px] w-[1.5px] bg-zinc-200 dark:bg-zinc-800" />
               )}
 
               {/* Noeud de jalon */}
-              <View className="h-6 w-6 rounded-full bg-orange-500 items-center justify-center border-2 border-white dark:border-zinc-900 shadow-sm z-10 mr-3 mt-0.5">
-                <Text className="text-[10px] font-extrabold text-white">
+              <View className="h-4 w-4 rounded-full bg-orange-500 items-center justify-center border-2 border-white dark:border-zinc-950 z-10 mr-2.5 mt-0.5">
+                <Text className="text-[8px] font-bold text-white">
                   {node.id}
                 </Text>
               </View>
 
               {/* Contenu du jalon */}
-              <View className="flex-1 p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 shadow-sm">
+              <View className="flex-1 p-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200/40 dark:border-zinc-800/40">
                 <View className="flex-row items-center justify-between mb-1">
-                  <Text className="text-xs font-bold text-zinc-900 dark:text-zinc-100 flex-1">
+                  <Text className="text-[10px] font-semibold text-zinc-900 dark:text-zinc-100 flex-1">
                     {node.title}
                   </Text>
                   {node.period && (
-                    <Text className="text-[10px] font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/50 px-2 py-0.5 rounded ml-2">
+                    <Text className="text-[8px] font-bold text-orange-600 dark:text-orange-400 bg-orange-500/10 px-1.5 py-0.5 rounded-full ml-1">
                       {node.period}
                     </Text>
                   )}

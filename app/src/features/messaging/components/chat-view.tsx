@@ -273,9 +273,10 @@ export function ChatView({ conversation }: ChatViewProps) {
           );
         }}
         onScrollToIndexFailed={(info) => {
-          setTimeout(() => {
-            flatListRef.current?.scrollToIndex({ index: info.index, animated: false, viewPosition: 0 });
-          }, 500);
+          flatListRef.current?.scrollToOffset({
+            offset: (info.averageItemLength || 50) * info.index,
+            animated: false,
+          });
         }}
       />
       

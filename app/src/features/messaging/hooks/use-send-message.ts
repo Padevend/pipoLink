@@ -258,17 +258,34 @@ export function useSendMessage(conversationId: string) {
 
           // 2. Nettoyer le tempId et insérer le message réel s'il manque
           const newPages = old.pages.map((page, index) => {
+            const optimisticMsg = page.items.find(m => m.id === context?.tempId);
             let newItems = page.items.filter((m) => m.id !== context?.tempId);
 
-            // On insère le message dans la première page s'il n'existe nulle part
-            if (index === 0 && !realExists) {
-              // Retrouver le message optimiste pour préserver decryptedContent
-              const optimisticMsg = page.items.find(m => m.id === context?.tempId);
+            if (realExists) {
+              // Si le message réel existe déjà (via WS), préserver decryptedContent de l'optimiste
+              newItems = newItems.map((m) => {
+                if (m.id === message.id) {
+                  const plain = m.decryptedContent || optimisticMsg?.decryptedContent || null;
+                  return {
+                    ...m,
+                    decryptedContent: plain,
+                    decryptFailed: plain ? false : m.decryptFailed,
+                    responseToDecrypted: m.responseToDecrypted || optimisticMsg?.responseToDecrypted || null,
+                  };
+                }
+                return m;
+              });
+            } else if (index === 0) {
+              // Retrouver le message optimiste pour préserver decryptedContent en clair
+              const plainText = optimisticMsg?.decryptedContent || (message as any).decryptedContent || null;
               newItems.push({
                 ...(optimisticMsg || {}),
                 ...message,
                 id: message.id,
                 status: 'send',
+                decryptedContent: plainText,
+                decryptFailed: false,
+                responseToDecrypted: optimisticMsg?.responseToDecrypted || null,
               } as DecryptedMessage);
             }
 

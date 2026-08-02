@@ -92,81 +92,76 @@ export function InteractiveFaqCard({ content }: { content: string }) {
   return (
     <Animated.View
       entering={FadeInDown.duration(200)}
-      className="my-3 rounded-2xl border border-orange-200/80 dark:border-orange-950/60 bg-gradient-to-b from-orange-50/90 to-white dark:from-zinc-900 dark:to-zinc-950 p-4 shadow-md"
+      className=" bg-white dark:bg-zinc-950 pl-3.5 pr-3 py-2.5"
     >
-      {/* Header FAQ */}
-      <View className="flex-row items-center justify-between border-b border-orange-100 dark:border-zinc-800 pb-3 mb-3">
-        <View className="flex-row items-center gap-2">
-          <View className="p-2 rounded-xl bg-orange-500/10 dark:bg-orange-500/20">
-            <HelpCircle size={18} color="#F97316" />
-          </View>
-          <View>
-            <Text className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
-              Foire Aux Questions (FAQ)
-            </Text>
-            <Text className="text-[11px] text-zinc-500 dark:text-zinc-400">
-              {items.length} questions fréquentes structurées
-            </Text>
-          </View>
+      {/* Header FAQ Minimaliste */}
+      <View className="flex-row items-center justify-between border-b border-zinc-200/50 dark:border-zinc-800/50 pb-1.5 mb-1.5">
+        <View className="flex-row items-center gap-1.5">
+          <Text className="text-[9px] font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400">
+            FAQ
+          </Text>
+          <Text className="text-[9px] text-zinc-400 dark:text-zinc-500">
+            {items.length} questions
+          </Text>
         </View>
 
         <View className="flex-row items-center gap-1">
           <Pressable
             onPress={handleExpandAll}
-            className="px-2 py-1 rounded-lg bg-orange-100 dark:bg-orange-950/50 active:bg-orange-200"
+            className="px-1.5 py-0.5 active:opacity-70"
           >
-            <Text className="text-[10px] font-bold text-orange-600 dark:text-orange-400">
-              Tout déplier
+            <Text className="text-[9px] font-semibold text-orange-600 dark:text-orange-400">
+              Tout ouvrir
             </Text>
           </Pressable>
         </View>
       </View>
 
-      {/* Barre de Recherche */}
-      <View className="flex-row items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 mb-3">
-        <Search size={14} color="#A1A1AA" />
+      {/* Barre de Recherche Discrète */}
+      <View className="flex-row items-center gap-1.5 px-2.5 h-7 rounded bg-zinc-50/80 dark:bg-zinc-900/80 border border-zinc-200/50 dark:border-zinc-800/50 mb-1.5">
+        <Search size={10} color="#A1A1AA" />
         <TextInput
-          placeholder="Rechercher une question..."
+          placeholder="Rechercher..."
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholderTextColor="#A1A1AA"
-          className="flex-1 text-xs text-zinc-800 dark:text-zinc-200 py-1"
+          className="flex-1 text-[10px] text-zinc-800 dark:text-zinc-200 py-0"
         />
       </View>
 
       {/* Accordéon FAQ */}
-      <View className="gap-2.5">
+      <View className="gap-1">
         {filteredItems.map((item, index) => {
-          const isExpanded = expandedIds[item.id] ?? index === 0; // Ouvre la première par défaut
+          const isExpanded = expandedIds[item.id] ?? index === 0;
 
           return (
             <View
               key={item.id}
-              className="rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm"
+              className="rounded border border-zinc-200/40 dark:border-zinc-800/40 bg-white dark:bg-zinc-900/50 overflow-hidden"
             >
               {/* Question Header */}
               <Pressable
                 onPress={() => toggleExpand(item.id)}
-                className="flex-row items-center justify-between p-3 bg-zinc-50/50 dark:bg-zinc-900 active:bg-orange-50/50 dark:active:bg-zinc-800/60"
+                className="flex-row items-center justify-between p-2 bg-zinc-50/30 dark:bg-zinc-900/30 active:bg-zinc-100/60 dark:active:bg-zinc-800/30"
               >
-                <View className="flex-row items-start gap-2 flex-1 pr-2">
-                  <Text className="text-xs font-bold text-orange-500 mt-0.5">
+                <View className="flex-row items-start gap-1.5 flex-1 pr-1.5">
+                  <Text className="text-[9px] font-bold text-orange-500 mt-0.5">
                     Q{index + 1}.
                   </Text>
-                  <Text className="text-xs font-semibold text-zinc-800 dark:text-zinc-100 flex-1 leading-4">
+                  <Text className="text-[9px] font-medium text-zinc-800 dark:text-zinc-200 flex-1 leading-3.5">
                     {item.question}
                   </Text>
                 </View>
                 {isExpanded ? (
-                  <ChevronUp size={16} color="#F97316" />
+                  <ChevronUp size={11} color="#F97316" />
                 ) : (
-                  <ChevronDown size={16} color="#A1A1AA" />
+                  <ChevronDown size={11} color="#A1A1AA" />
                 )}
               </Pressable>
 
               {/* Réponse déchiffrée Markdown */}
               {isExpanded && (
-                <View className="p-3 border-t border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900/90">
+                <View className="p-2 border-t border-zinc-100 dark:border-zinc-800/40 bg-white dark:bg-zinc-900">
                   <MarkdownLatexRenderer content={item.answer} isAi={true} />
                 </View>
               )}

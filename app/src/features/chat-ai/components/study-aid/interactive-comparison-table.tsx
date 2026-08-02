@@ -66,56 +66,51 @@ export function InteractiveComparisonCard({ content }: { content: string }) {
   return (
     <Animated.View
       entering={FadeInDown.duration(200)}
-      className="my-3 rounded-2xl border border-orange-200/80 dark:border-orange-950/60 bg-gradient-to-b from-orange-50/90 to-white dark:from-zinc-900 dark:to-zinc-950 p-4 shadow-md"
+      className=" bg-white dark:bg-zinc-950 pl-3.5 pr-3 py-2.5"
     >
-      {/* Header Comparaison */}
-      <View className="flex-row items-center justify-between border-b border-orange-100 dark:border-zinc-800 pb-3 mb-3">
-        <View className="flex-row items-center gap-2">
-          <View className="p-2 rounded-xl bg-orange-500/10 dark:bg-orange-500/20">
-            <Columns size={18} color="#F97316" />
-          </View>
-          <View>
-            <Text className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
-              Comparaison Comparative
-            </Text>
-            <Text className="text-[11px] text-zinc-500 dark:text-zinc-400">
-              {subjects.length} éléments comparés sur {data.rows.length} critères
-            </Text>
-          </View>
+      {/* Header Comparaison Minimaliste */}
+      <View className="flex-row items-center justify-between border-b border-zinc-200/50 dark:border-zinc-800/50 pb-1.5 mb-1.5">
+        <View className="flex-row items-center gap-1.5">
+          <Text className="text-[9px] font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400">
+            Comparaison
+          </Text>
+          <Text className="text-[9px] text-zinc-400 dark:text-zinc-500">
+            {subjects.length} sujets • {data.rows.length} critères
+          </Text>
         </View>
 
         {/* Switcher Mode de Vue */}
-        <View className="flex-row items-center p-0.5 rounded-xl bg-zinc-200/70 dark:bg-zinc-800 border border-zinc-300/50 dark:border-zinc-700">
+        <View className="flex-row items-center p-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/50 dark:border-zinc-700/50">
           <Pressable
             onPress={() => setViewMode('cards')}
             className={cn(
-              'p-1.5 rounded-lg flex-row items-center gap-1',
-              viewMode === 'cards' ? 'bg-white dark:bg-zinc-900 shadow-sm' : ''
+              'p-1 rounded-full flex-row items-center gap-1 px-2',
+              viewMode === 'cards' ? 'bg-white dark:bg-zinc-900 shadow-2xs' : ''
             )}
           >
-            <LayoutGrid size={13} color={viewMode === 'cards' ? '#F97316' : '#A1A1AA'} />
+            <LayoutGrid size={12} color={viewMode === 'cards' ? '#F97316' : '#A1A1AA'} />
           </Pressable>
           <Pressable
             onPress={() => setViewMode('table')}
             className={cn(
-              'p-1.5 rounded-lg flex-row items-center gap-1',
-              viewMode === 'table' ? 'bg-white dark:bg-zinc-900 shadow-sm' : ''
+              'p-1 rounded-full flex-row items-center gap-1 px-2',
+              viewMode === 'table' ? 'bg-white dark:bg-zinc-900 shadow-2xs' : ''
             )}
           >
-            <TableIcon size={13} color={viewMode === 'table' ? '#F97316' : '#A1A1AA'} />
+            <TableIcon size={12} color={viewMode === 'table' ? '#F97316' : '#A1A1AA'} />
           </Pressable>
         </View>
       </View>
 
       {/* Barre de Recherche de Critères */}
-      <View className="flex-row items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 mb-3">
-        <Search size={14} color="#A1A1AA" />
+      <View className="flex-row items-center gap-1.5 px-2.5 h-7 rounded bg-zinc-50/80 dark:bg-zinc-900/80 border border-zinc-200/50 dark:border-zinc-800/50 mb-1.5">
+        <Search size={10} color="#A1A1AA" />
         <TextInput
-          placeholder="Filtrer les critères..."
+          placeholder="Filtrer..."
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholderTextColor="#A1A1AA"
-          className="flex-1 text-xs text-zinc-800 dark:text-zinc-200 py-1"
+          className="flex-1 text-[10px] text-zinc-800 dark:text-zinc-200 py-0"
         />
       </View>
 
@@ -123,23 +118,23 @@ export function InteractiveComparisonCard({ content }: { content: string }) {
       {viewMode === 'cards' && (
         <View>
           {/* Onglets des sujets */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-3">
-            <View className="flex-row gap-1.5">
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-1.5">
+            <View className="flex-row gap-1">
               {subjects.map((subj, idx) => (
                 <Pressable
                   key={idx}
                   onPress={() => setActiveTab(idx)}
                   className={cn(
-                    'px-3 py-1.5 rounded-xl border text-xs font-bold transition-all',
+                    'px-2.5 py-0.5 rounded-full border transition-all',
                     activeTab === idx
-                      ? 'bg-orange-500 border-orange-500 shadow-sm'
-                      : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800'
+                      ? 'bg-orange-500/20 border-orange-500/40'
+                      : 'bg-white dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800/60'
                   )}
                 >
                   <Text
                     className={cn(
-                      'text-xs font-bold',
-                      activeTab === idx ? 'text-white' : 'text-zinc-700 dark:text-zinc-300'
+                      'text-[10px] font-semibold',
+                      activeTab === idx ? 'text-orange-600 dark:text-orange-400' : 'text-zinc-700 dark:text-zinc-300'
                     )}
                   >
                     {subj}
@@ -150,15 +145,15 @@ export function InteractiveComparisonCard({ content }: { content: string }) {
           </ScrollView>
 
           {/* Grille des critères pour l'onglet actif */}
-          <View className="gap-2">
+          <View className="gap-1.5">
             {filteredRows.map((row, rIdx) => {
               const val = row.values[activeTab] || 'N/A';
               return (
                 <View
                   key={rIdx}
-                  className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 shadow-sm"
+                  className="p-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200/40 dark:border-zinc-800/40"
                 >
-                  <Text className="text-[11px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wide mb-1">
+                  <Text className="text-[9px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wide mb-0.5">
                     {row.criteria}
                   </Text>
                   <MarkdownLatexRenderer content={val} isAi={true} />
@@ -171,19 +166,19 @@ export function InteractiveComparisonCard({ content }: { content: string }) {
 
       {/* MODE TABLEAU INTERACTIF */}
       {viewMode === 'table' && (
-        <View className="rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden bg-white dark:bg-zinc-900 shadow-sm">
-          <ScrollView horizontal showsHorizontalScrollIndicator={true}>
+        <View className="rounded-lg border border-zinc-200/60 dark:border-zinc-800/60 overflow-hidden bg-white dark:bg-zinc-900/80">
+          <ScrollView horizontal showsHorizontalScrollIndicator={true} className="max-h-[200px]">
             <View>
               {/* En-tête de Table */}
-              <View className="flex-row bg-orange-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-800">
-                <View className="p-2.5 min-w-[110px] border-r border-zinc-200 dark:border-zinc-700">
-                  <Text className="text-[11px] font-bold text-orange-600 dark:text-orange-400">
+              <View className="flex-row bg-zinc-50 dark:bg-zinc-800/40 border-b border-zinc-200/60 dark:border-zinc-800/60">
+                <View className="p-1.5 min-w-[80px] border-r border-zinc-200/60 dark:border-zinc-800/60">
+                  <Text className="text-[9px] font-bold text-orange-600 dark:text-orange-400">
                     {data.headers[0]}
                   </Text>
                 </View>
                 {subjects.map((s, idx) => (
-                  <View key={idx} className="p-2.5 min-w-[130px] border-r border-zinc-200 dark:border-zinc-700">
-                    <Text className="text-[11px] font-bold text-zinc-900 dark:text-zinc-100">
+                  <View key={idx} className="p-1.5 min-w-[100px] border-r border-zinc-200/60 dark:border-zinc-800/60">
+                    <Text className="text-[9px] font-bold text-zinc-900 dark:text-zinc-100">
                       {s}
                     </Text>
                   </View>
@@ -195,17 +190,17 @@ export function InteractiveComparisonCard({ content }: { content: string }) {
                 <View
                   key={rIdx}
                   className={cn(
-                    'flex-row border-b border-zinc-100 dark:border-zinc-800/50',
-                    rIdx % 2 === 1 ? 'bg-zinc-50/50 dark:bg-zinc-900/40' : 'bg-white dark:bg-zinc-900'
+                    'flex-row border-b border-zinc-100 dark:border-zinc-800/40',
+                    rIdx % 2 === 1 ? 'bg-zinc-50/30 dark:bg-zinc-900/30' : 'bg-white dark:bg-zinc-900'
                   )}
                 >
-                  <View className="p-2.5 min-w-[110px] border-r border-zinc-100 dark:border-zinc-800/40 justify-center">
-                    <Text className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                  <View className="p-1.5 min-w-[80px] border-r border-zinc-100 dark:border-zinc-800/40 justify-center">
+                    <Text className="text-[10px] font-semibold text-zinc-800 dark:text-zinc-200">
                       {row.criteria}
                     </Text>
                   </View>
                   {row.values.map((v, cIdx) => (
-                    <View key={cIdx} className="p-2.5 min-w-[130px] border-r border-zinc-100 dark:border-zinc-800/40 justify-center">
+                    <View key={cIdx} className="p-1.5 min-w-[100px] border-r border-zinc-100 dark:border-zinc-800/40 justify-center">
                       <MarkdownLatexRenderer content={v} isAi={true} />
                     </View>
                   ))}

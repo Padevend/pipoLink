@@ -89,7 +89,7 @@ export function InteractiveQuizCard({ content }: { content: string }) {
   ).length;
 
   const handleSelectOption = (qId: number, optionKey: string) => {
-    if (selectedAnswers[qId]) return; // Verrouille après sélection pour donner un vrai feedback de quiz
+    if (selectedAnswers[qId]) return;
     setSelectedAnswers((prev) => ({ ...prev, [qId]: optionKey }));
     setShowExplanations((prev) => ({ ...prev, [qId]: true }));
   };
@@ -102,64 +102,31 @@ export function InteractiveQuizCard({ content }: { content: string }) {
   return (
     <Animated.View
       entering={FadeInDown.duration(200)}
-      className="my-3 rounded-2xl border border-orange-200/80 dark:border-orange-950/60 bg-gradient-to-b from-orange-50/90 to-white dark:from-zinc-900 dark:to-zinc-950 p-4 shadow-md"
+      className=" bg-white dark:bg-zinc-950 pl-3.5 pr-3 py-2.5"
     >
-      {/* Header du Quiz */}
-      <View className="flex-row items-center justify-between border-b border-orange-100 dark:border-zinc-800 pb-3 mb-3">
-        <View className="flex-row items-center gap-2">
-          <View className="p-2 rounded-xl bg-orange-500/10 dark:bg-orange-500/20">
-            <Sparkles size={18} color="#F97316" />
-          </View>
-          <View>
-            <Text className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
-              Quiz Interactif
-            </Text>
-            <Text className="text-[11px] text-zinc-500 dark:text-zinc-400">
-              {answeredCount} sur {totalQuestions} questions répondues
-            </Text>
-          </View>
+      {/* Header du Quiz Minimaliste */}
+      <View className="flex-row items-center justify-between border-b border-zinc-200/50 dark:border-zinc-800/50 pb-1.5 mb-1.5">
+        <View className="flex-row items-center gap-1.5">
+          <Text className="text-[9px] font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400">
+            Quiz Interactif
+          </Text>
+          <Text className="text-[9px] text-zinc-400 dark:text-zinc-500">
+            {answeredCount} / {totalQuestions}
+          </Text>
         </View>
 
         {answeredCount > 0 && (
           <Pressable
             onPress={handleReset}
-            className="flex-row items-center gap-1 px-2.5 py-1.5 rounded-lg bg-orange-100 dark:bg-orange-950/50 active:bg-orange-200"
+            className="p-1.5 active:opacity-70"
           >
-            <RefreshCw size={12} color="#F97316" />
-            <Text className="text-[11px] font-bold text-orange-600 dark:text-orange-400">
-              Réinitialiser
-            </Text>
+            <RefreshCw size={11} color="#A1A1AA" />
           </Pressable>
         )}
       </View>
 
-      {/* Barre de Score de Progression */}
-      {answeredCount === totalQuestions && (
-        <Animated.View
-          entering={FadeIn.duration(200)}
-          className="mb-4 p-3 rounded-xl bg-orange-500/10 border border-orange-500/30 flex-row items-center justify-between"
-        >
-          <View className="flex-row items-center gap-2">
-            <Sparkles size={20} color="#F97316" />
-            <View>
-              <Text className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
-                Quiz Terminé !
-              </Text>
-              <Text className="text-[11px] text-zinc-600 dark:text-zinc-400">
-                Score final : {correctCount} / {totalQuestions} ({Math.round((correctCount / totalQuestions) * 100)}%)
-              </Text>
-            </View>
-          </View>
-          <View className="px-3 py-1 rounded-full bg-orange-500">
-            <Text className="text-xs font-extrabold text-white">
-              {Math.round((correctCount / totalQuestions) * 100)}%
-            </Text>
-          </View>
-        </Animated.View>
-      )}
-
       {/* Liste des Questions */}
-      <View className="gap-4">
+      <View className="gap-1.5">
         {questions.map((q, qIndex) => {
           const userAns = selectedAnswers[q.id];
           const isAnswered = !!userAns;
@@ -168,36 +135,36 @@ export function InteractiveQuizCard({ content }: { content: string }) {
           return (
             <View
               key={q.id}
-              className="p-3.5 rounded-xl bg-white dark:bg-zinc-900/90 border border-zinc-200/80 dark:border-zinc-800 shadow-sm"
+              className="rounded border border-zinc-200/40 dark:border-zinc-800/40 bg-white dark:bg-zinc-900/50 p-2.5"
             >
-              <View className="flex-row items-start gap-2 mb-2.5">
-                <Text className="text-xs font-bold text-orange-500 mt-0.5">
+              <View className="flex-row items-start gap-1.5 mb-1.5">
+                <Text className="text-[9px] font-bold text-orange-500 mt-0.5">
                   {qIndex + 1}.
                 </Text>
-                <Text className="flex-1 text-xs font-semibold text-zinc-800 dark:text-zinc-100 leading-4">
+                <Text className="flex-1 text-[10px] font-medium text-zinc-800 dark:text-zinc-200 leading-4">
                   {q.question}
                 </Text>
               </View>
 
               {/* Options A, B, C, D */}
-              <View className="gap-2">
+              <View className="gap-1">
                 {q.options.map((opt) => {
                   const isSelected = userAns === opt.key;
                   const isOptionCorrect = opt.key === q.correctAnswer;
 
-                  let optionStyle = 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900';
+                  let optionStyle = 'border-zinc-200/60 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50';
                   let textStyle = 'text-zinc-700 dark:text-zinc-300';
                   let icon = null;
 
                   if (isAnswered) {
                     if (isOptionCorrect) {
-                      optionStyle = 'border-emerald-500 bg-emerald-500/10 dark:bg-emerald-950/30';
-                      textStyle = 'text-emerald-700 dark:text-emerald-300 font-bold';
-                      icon = <CheckCircle2 size={14} color="#22C55E" />;
+                      optionStyle = 'border-emerald-500/40 bg-emerald-500/10 dark:bg-emerald-950/20';
+                      textStyle = 'text-emerald-700 dark:text-emerald-300 font-semibold';
+                      icon = <CheckCircle2 size={12} color="#22C55E" />;
                     } else if (isSelected) {
-                      optionStyle = 'border-red-500 bg-red-500/10 dark:bg-red-950/30';
-                      textStyle = 'text-red-700 dark:text-red-300 font-bold';
-                      icon = <XCircle size={14} color="#EF4444" />;
+                      optionStyle = 'border-red-500/40 bg-red-500/10 dark:bg-red-950/20';
+                      textStyle = 'text-red-700 dark:text-red-300 font-semibold';
+                      icon = <XCircle size={12} color="#EF4444" />;
                     }
                   }
 
@@ -207,14 +174,14 @@ export function InteractiveQuizCard({ content }: { content: string }) {
                       disabled={isAnswered}
                       onPress={() => handleSelectOption(q.id, opt.key)}
                       className={cn(
-                        'flex-row items-center justify-between p-2.5 rounded-lg border transition-all active:scale-[0.99]',
+                        'flex-row items-center justify-between p-1.5 rounded border transition-all active:scale-[0.98]',
                         optionStyle
                       )}
                     >
-                      <View className="flex-row items-center gap-2 flex-1 pr-2">
+                      <View className="flex-row items-center gap-1.5 flex-1 pr-1">
                         <View
                           className={cn(
-                            'h-5 w-5 rounded-full items-center justify-center border text-[10px] font-bold',
+                            'h-3.5 w-3.5 rounded-full items-center justify-center border text-[9px] font-bold',
                             isSelected
                               ? isCorrect
                                 ? 'bg-emerald-500 border-emerald-500'
@@ -226,16 +193,16 @@ export function InteractiveQuizCard({ content }: { content: string }) {
                         >
                           <Text
                             className={cn(
-                              'text-[10px] font-bold',
+                              'text-[8px] font-bold',
                               isSelected || (isAnswered && isOptionCorrect)
                                 ? 'text-white'
-                                : 'text-zinc-600 dark:text-zinc-400'
+                                : 'text-zinc-500 dark:text-zinc-400'
                             )}
                           >
                             {opt.key}
                           </Text>
                         </View>
-                        <Text className={cn('text-xs flex-1 leading-4', textStyle)}>
+                        <Text className={cn('text-[10px] flex-1 leading-4', textStyle)}>
                           {opt.text}
                         </Text>
                       </View>
@@ -247,22 +214,21 @@ export function InteractiveQuizCard({ content }: { content: string }) {
 
               {/* Explication */}
               {isAnswered && (q.explanation || isCorrect) && (
-                <Animated.View
-                  entering={FadeIn.duration(150)}
-                  className="mt-3 p-2.5 rounded-lg bg-orange-50/70 dark:bg-zinc-800/80 border border-orange-200/50 dark:border-zinc-700/50 flex-row items-start gap-2"
-                >
-                  <HelpCircle size={14} color="#F97316" className="mt-0.5" />
-                  <View className="flex-1">
-                    <Text className="text-[11px] font-bold text-orange-700 dark:text-orange-300">
-                      {isCorrect ? 'Excellente réponse !' : `Réponse correcte : Option ${q.correctAnswer}`}
-                    </Text>
-                    {q.explanation && (
-                      <Text className="text-[11px] text-zinc-600 dark:text-zinc-300 mt-0.5 leading-4">
-                        {q.explanation}
+                <View className="mt-1.5 pl-1.5 border-l-2 border-orange-500/30 dark:border-orange-500/50">
+                  <View className="flex-row items-start gap-1">
+                    <HelpCircle size={11} color="#F97316" className="mt-0.5" />
+                    <View className="flex-1">
+                      <Text className="text-[9px] font-semibold text-orange-600 dark:text-orange-400">
+                        {isCorrect ? 'Correct' : `Réponse : ${q.correctAnswer}`}
                       </Text>
-                    )}
+                      {q.explanation && (
+                        <Text className="text-[9px] text-zinc-600 dark:text-zinc-400 mt-0.5 leading-3">
+                          {q.explanation}
+                        </Text>
+                      )}
+                    </View>
                   </View>
-                </Animated.View>
+                </View>
               )}
             </View>
           );

@@ -28,6 +28,15 @@ export class AiTokenService {
   }
 
   /**
+   * Calcule le temps restant en heures pour un utilisateur spécifique.
+   * Utile pour l'interface utilisateur afin d'afficher les minutages corrects.
+   */
+  getTimeRemainingHours(plan: string): number {
+    const config = this.getTokenConfig(plan);
+    return config.windowMs / (60 * 60 * 1000);
+  }
+
+  /**
    * Récupère et restaure automatiquement le solde de Jetons PipoLink si l'échéance mensuelle (30 jours) est atteinte.
    */
   async getUserTokenStatus(userId: string) {

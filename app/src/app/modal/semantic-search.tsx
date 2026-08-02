@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { FileText, Search, Sparkles, Wrench, X } from 'lucide-react-native';
+import { Book, BookOpen, FileText, Search, Sparkles, Wrench, X } from 'lucide-react-native';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -37,7 +37,7 @@ export default function SemanticSearchModal() {
       {/* HEADER */}
       <View className="flex-row items-center justify-between border-b border-zinc-100 bg-white px-5 py-3 dark:border-zinc-900 dark:bg-zinc-950">
         <View className="flex-row items-center gap-2">
-          <Sparkles size={15} color="#F97316" />
+          <BookOpen size={15} color="#F97316" />
           <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
             Recherche IA
           </Text>
@@ -92,7 +92,7 @@ export default function SemanticSearchModal() {
         ) : (
           <FlatList
             data={result?.results ?? []}
-            keyExtractor={(item) => item.document_id}
+            keyExtractor={(item) => item.document_id + Math.random().toString()}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
             ItemSeparatorComponent={() => <View className="h-2" />}

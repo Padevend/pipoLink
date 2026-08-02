@@ -5,7 +5,7 @@ import { decryptMessage } from '@/shared/crypto';
 import { Avatar } from '@/shared/ui/avatar';
 import { cn } from '@/shared/utils/cn';
 import { formatDistanceToNow } from 'date-fns';
-import { AlertCircle, Clock } from 'lucide-react-native';
+import { AlertCircle, Check, CheckCheck, Clock } from 'lucide-react-native';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -124,8 +124,34 @@ export const ConversationItem = React.memo(function ConversationItem({ conversat
     };
   }, [lastMessage, chatKey, directPlain, cachedPreview, cacheKey]);
 
-  const isSending = lastMessage && (lastMessage.status === 'send' || lastMessage.id?.startsWith('temp-'));
+  const isMine = useMemo(() => {
+    if (!lastMessage || !user?.id) return false;
+    return lastMessage.sender_id === user.id || lastMessage.sender?.id === user.id;
+  }, [lastMessage, user?.id]);
+
   const isFailed = lastMessage && lastMessage.status === 'fail';
+
+  const renderStatusIcon = () => {
+    if (!lastMessage || !isMine) return null;
+
+    if (lastMessage.status === 'fail') {
+      return <AlertCircle size={12} color="#EF4444" strokeWidth={2.5} />;
+    }
+    if (lastMessage.id?.startsWith('temp-')) {
+      return <Clock size={12} color="#A1A1AA" strokeWidth={2.5} />;
+    }
+    if (lastMessage.status === 'read') {
+      return <CheckCheck size={12} color="#FF6B00" strokeWidth={2.5} />;
+    }
+    if (lastMessage.status === 'delivered') {
+      return <CheckCheck size={12} color="#A1A1AA" strokeWidth={2.5} />;
+    }
+    if (lastMessage.status === 'send') {
+      return <Check size={12} color="#A1A1AA" strokeWidth={2.5} />;
+    }
+
+    return null;
+  };
 
   return (
     <Pressable
@@ -167,12 +193,7 @@ export const ConversationItem = React.memo(function ConversationItem({ conversat
           
           {/* Aperçu du dernier message échangé + icône de statut */}
           <View className="flex-1 flex-row items-center gap-1.5 overflow-hidden">
-            {isFailed && (
-              <AlertCircle size={13} color="#EF4444" strokeWidth={2.5} />
-            )}
-            {isSending && (
-              <Clock size={12} color="#A1A1AA" strokeWidth={2.5} />
-            )}
+            {renderStatusIcon()}
             <Text
               numberOfLines={1}
               className={cn(

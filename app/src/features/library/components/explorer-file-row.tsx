@@ -87,7 +87,7 @@ export function RenderDocumentItem({ item, onPress }: { item: Document, onPress:
       </View>
 
       {/* Ligne Inférieure : Auteur & Compteur de téléchargements */}
-      <View className="flex-row items-center justify-between w-full pt-1.5 border-t border-zinc-150 dark:border-zinc-800">
+      <View className="flex-row items-center justify-between w-full pt-1.5 border-t border-gray-200 dark:border-zinc-800">
         <Text className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 max-w-[85px]" numberOfLines={1}>
           @{item.uploadedBy?.username || 'Anonyme'}
         </Text>

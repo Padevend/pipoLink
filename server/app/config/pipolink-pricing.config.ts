@@ -26,14 +26,14 @@ export type PipoLinkOperationType = keyof typeof PIPOLINK_OPERATION_COSTS;
 
 export const PIPOLINK_PLANS = {
   FREE: {
-    maxTokens: 300,       // 300 Jetons PipoLink par mois
-    windowDays: 30,       // Renouvellement mensuel (30 jours)
-    windowMs: 30 * 24 * 60 * 60 * 1000,
+    maxTokens: 300,       // 300 Jetons PipoLink toutes les 2 heures
+    windowDays: 2 / 24,   // 2 heures
+    windowMs: 2 * 60 * 60 * 1000, // 2 heures
   },
   PREMIUM: {
-    maxTokens: 2000,      // 2000 Jetons PipoLink par mois
-    windowDays: 30,       // Renouvellement mensuel (30 jours)
-    windowMs: 30 * 24 * 60 * 60 * 1000,
+    maxTokens: 2000,      // 2000 Jetons PipoLink toutes les heures
+    windowDays: 1 / 24,   // 1 heure
+    windowMs: 1 * 60 * 60 * 1000, // 1 heure
   },
 } as const;
 

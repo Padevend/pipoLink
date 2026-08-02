@@ -152,62 +152,53 @@ export function InteractiveFlashcardCard({ content }: { content: string }) {
   return (
     <Animated.View
       entering={FadeInDown.duration(200)}
-      className="my-3 rounded-2xl border border-orange-200/80 dark:border-orange-950/60 bg-gradient-to-b from-orange-50/90 to-white dark:from-zinc-900 dark:to-zinc-950 p-4"
+      className=" bg-white dark:bg-zinc-950 pl-3.5 pr-3 py-2.5"
     >
-      {/* Header Flashcard */}
-      <View className="flex-row items-center justify-between border-b border-orange-100 dark:border-zinc-800 pb-3 mb-3">
-        <View className="flex-row items-center gap-2">
-          <View className="p-2 rounded-xl bg-orange-500/10 dark:bg-orange-500/20">
-            <Layers size={18} color="#F97316" />
-          </View>
-          <View>
-            <Text className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
-              Flashcards Interactives
-            </Text>
-            <Text className="text-[11px] text-zinc-500 dark:text-zinc-400">
-              Carte {currentIndex + 1} sur {cards.length} ({knownCount} maîtrisées)
-            </Text>
-          </View>
+      {/* Header Flashcard Minimaliste */}
+      <View className="flex-row items-center justify-between border-b border-zinc-200/50 dark:border-zinc-800/50 pb-1.5 mb-1.5">
+        <View className="flex-row items-center gap-1.5">
+          <Text className="text-[9px] font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400">
+            Carte mémoire
+          </Text>
+          <Text className="text-[9px] text-zinc-400 dark:text-zinc-500">
+            {currentIndex + 1} / {cards.length}
+          </Text>
         </View>
 
         <Pressable
           onPress={handleReset}
-          className="p-2 rounded-lg bg-orange-100 dark:bg-orange-950/50 active:bg-orange-200"
+          className="p-1.5 active:opacity-70"
         >
-          <RotateCcw size={14} color="#F97316" />
+          <RotateCcw size={12} color="#A1A1AA" />
         </Pressable>
       </View>
 
-      {/* Barre de Progression */}
-      <View className="h-1.5 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full mb-4 overflow-hidden">
+      {/* Barre de Progression Discrète */}
+      <View className="h-0.5 w-full bg-zinc-200/60 dark:bg-zinc-800 rounded-full mb-2 overflow-hidden">
         <View
-          className="h-full bg-orange-500 rounded-full transition-all duration-300"
+          className="h-full bg-orange-500/60 rounded-full transition-all duration-300"
           style={{ width: `${((currentIndex + 1) / cards.length) * 100}%` }}
         />
       </View>
 
       {/* Carte à Retournement 3D */}
-      <Pressable onPress={toggleFlip} className="min-h-[160px] relative justify-center mb-4">
+      <Pressable onPress={toggleFlip} className="min-h-[140px] relative justify-center mb-2">
         {/* RECTO / QUESTION */}
         <Animated.View
           style={[frontStyle]}
           className={cn(
-            'p-5 rounded-2xl border bg-white dark:bg-zinc-900 shadow-sm justify-between min-h-[160px]',
-            isFlipped ? 'hidden' : 'flex',
-            'border-zinc-200 dark:border-zinc-800'
+            'min-h-[140px] justify-center',
+            isFlipped ? 'hidden' : 'flex'
           )}
         >
-          <View className="flex-row items-center justify-between mb-2">
-            <Text className="text-[10px] font-extrabold uppercase tracking-wider text-orange-500 bg-orange-50 dark:bg-orange-950/50 px-2 py-0.5 rounded">
-              Question / Recto
+          <View className="flex-row items-start justify-between mb-2">
+            <Text className="text-[9px] font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400">
+              Question
             </Text>
-            <View className="flex-row items-center gap-1">
-              <Eye size={12} color="#A1A1AA" />
-              <Text className="text-[10px] text-zinc-400">Toucher pour révéler</Text>
-            </View>
+            <Text className="text-[9px] text-zinc-400">Toucher pour révéler</Text>
           </View>
 
-          <View className="my-auto py-2">
+          <View className="my-auto">
             <MarkdownLatexRenderer content={currentCard.front || 'Question...'} isAi={true} />
           </View>
         </Animated.View>
@@ -216,55 +207,54 @@ export function InteractiveFlashcardCard({ content }: { content: string }) {
         <Animated.View
           style={[backStyle]}
           className={cn(
-            'p-5 rounded-2xl border bg-orange-50/90 dark:bg-zinc-900 shadow-sm justify-between min-h-[160px]',
-            !isFlipped ? 'hidden' : 'flex',
-            'border-orange-300/80 dark:border-orange-950/60'
+            'max-h-auto justify-center',
+            !isFlipped ? 'hidden' : 'flex'
           )}
         >
-          <View className="flex-row items-center justify-between mb-2">
-            <Text className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded">
-              Réponse / Verso
+          <View className="flex-row items-start justify-between mb-2">
+            <Text className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+              Réponse
             </Text>
-            <Text className="text-[10px] text-zinc-400">Toucher pour tourner</Text>
+            <Text className="text-[9px] text-zinc-400">Toucher pour révéler</Text>
           </View>
 
-          <View className="my-auto py-2">
+          <View className="my-auto">
             <MarkdownLatexRenderer content={currentCard.back || 'Réponse...'} isAi={true} />
           </View>
         </Animated.View>
       </Pressable>
 
       {/* Actions de Maîtrise & Navigation */}
-      <View className="flex-row items-center justify-between gap-2">
+      <View className="flex-row items-center justify-between gap-2 mt-3">
         <Pressable
           disabled={currentIndex === 0}
           onPress={handlePrev}
           className={cn(
-            'p-2.5 rounded-xl border flex-row items-center justify-center',
+            'p-1.5 rounded-full border',
             currentIndex === 0
-              ? 'border-zinc-200 dark:border-zinc-800 opacity-40'
+              ? 'border-zinc-200/50 dark:border-zinc-800/50 opacity-40'
               : 'border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 active:bg-zinc-100'
           )}
         >
-          <ChevronLeft size={18} color="#71717A" />
+          <ChevronLeft size={14} color="#A1A1AA" />
         </Pressable>
 
-        <View className="flex-1 flex-row items-center gap-2 justify-center">
+        <View className="flex-row items-center gap-2">
           <Pressable
             onPress={() => handleMarkKnown(false)}
-            className="flex-1 py-2.5 px-3 rounded-xl border border-red-200 dark:border-red-950/60 bg-red-50 dark:bg-red-950/30 items-center active:scale-95"
+            className="py-1 px-2.5 rounded-full border border-red-500/30 bg-red-500/10 items-center active:scale-95"
           >
-            <Text className="text-xs font-bold text-red-600 dark:text-red-400">
-              À réviser
+            <Text className="text-[10px] font-semibold text-red-600 dark:text-red-400">
+              Réviser
             </Text>
           </Pressable>
 
           <Pressable
             onPress={() => handleMarkKnown(true)}
-            className="flex-1 py-2.5 px-3 rounded-xl border border-emerald-200 dark:border-emerald-950/60 bg-emerald-50 dark:bg-emerald-950/30 items-center active:scale-95 flex-row justify-center gap-1"
+            className="py-1 px-2.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 items-center active:scale-95 flex-row justify-center gap-1"
           >
-            <Check size={14} color="#22C55E" />
-            <Text className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+            <Check size={11} color="#22C55E" />
+            <Text className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
               Maîtrisé
             </Text>
           </Pressable>
@@ -274,15 +264,22 @@ export function InteractiveFlashcardCard({ content }: { content: string }) {
           disabled={currentIndex === cards.length - 1}
           onPress={handleNext}
           className={cn(
-            'p-2.5 rounded-xl border flex-row items-center justify-center',
+            'p-1.5 rounded-full border',
             currentIndex === cards.length - 1
-              ? 'border-zinc-200 dark:border-zinc-800 opacity-40'
+              ? 'border-zinc-200/50 dark:border-zinc-800/50 opacity-40'
               : 'border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 active:bg-zinc-100'
           )}
         >
-          <ChevronRight size={18} color="#71717A" />
+          <ChevronRight size={14} color="#A1A1AA" />
         </Pressable>
       </View>
+      
+      {/* Retour discret au début */}
+      {currentIndex > 0 && (
+        <Pressable onPress={handleReset} className="items-center mt-2">
+          <Text className="text-[9px] text-zinc-400 underline">Recommencer</Text>
+        </Pressable>
+      )}
     </Animated.View>
   );
 }
