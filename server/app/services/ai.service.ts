@@ -93,18 +93,30 @@ export class AiService {
       include: { documents: true }
     });
 
-    const { answer } = await this._callProvider(
-      message,
-      sessionWithDocs?.documents || [],
-      conversationHistory
-    );
+    let answer: string;
+    let ragSuccess = false;
+
+    try {
+      const result = await this._callProvider(
+        message,
+        sessionWithDocs?.documents || [],
+        conversationHistory
+      );
+      answer = result.answer;
+      ragSuccess = true;
+    } catch (err: any) {
+      // Le provider a échoué — on renvoie le message de fallback sans facturer
+      answer = err.fallbackMessage ?? "Désolé, le service est actuellement indisponible en raison d'une forte demande. Veuillez réessayer.";
+    }
 
     const aiMessage = await prisma.aiMessage.create({
       data: { session_id: session.id, role: "assistant", content: answer },
     });
 
-    // Déduction du coût fixe en Jetons
-    const tokens = await this.tokenService.consumeTokens(userId, cost);
+    // Déduction du coût fixe en Jetons — UNIQUEMENT si la requête a réussi
+    const tokens = ragSuccess
+      ? await this.tokenService.consumeTokens(userId, cost)
+      : await this.tokenService.getUserTokenStatus(userId);
 
     return { session, message: aiMessage, request, tokens };
   }
@@ -254,6 +266,7 @@ export class AiService {
     }
 
     let content = "";
+    let ragSuccess = false;
     const FALLBACK = `### Service en cours de conception\n\nDésolé, la génération automatique d'outils d'étude (${type}) est actuellement indisponible ou en cours de conception.`;
 
     if (this.rag.isAvailable()) {
@@ -263,6 +276,7 @@ export class AiService {
           type,
         });
         content = data.content;
+        ragSuccess = true;
       } catch (err) {
         console.error('[RAG Agent generateStudyAid Error] Falling back:', err);
         content = FALLBACK;
@@ -279,8 +293,10 @@ export class AiService {
       },
     });
 
-    // Déduction du coût fixe en Jetons PipoLink
-    const tokens = await this.tokenService.consumeTokens(userId, cost);
+    // Déduction du coût fixe en Jetons PipoLink — UNIQUEMENT si la requête a réussi
+    const tokens = ragSuccess
+      ? await this.tokenService.consumeTokens(userId, cost)
+      : await this.tokenService.getUserTokenStatus(userId);
 
     return { message: aiMessage, tokens };
   }
@@ -425,14 +441,17 @@ export class AiService {
     maxTokens?: number
   ): Promise<{ answer: string; tokensUsed?: RagTokensUsed }> {
     if (!documents || documents.length === 0) {
-      return {
-        answer: "Hiro : Je n'ai aucune source documentaire associée à cette conversation. Veuillez associer un document de votre bibliothèque pour que je puisse y faire référence.",
+      // Pas de documents → pas d'erreur facturable, mais pas de réponse RAG non plus
+      throw {
+        fallbackMessage: "Hiro : Je n'ai aucune source documentaire associée à cette conversation. Veuillez associer un document de votre bibliothèque pour que je puisse y faire référence.",
       };
     }
 
     const FALLBACK = "Désolé, le service de recherche intelligente et de RAG est actuellement en cours de conception ou indisponible.";
 
-    if (!this.rag.isAvailable()) return { answer: FALLBACK };
+    if (!this.rag.isAvailable()) {
+      throw { fallbackMessage: FALLBACK };
+    }
 
     try {
       const data = await this.rag.query({
@@ -444,7 +463,7 @@ export class AiService {
       return { answer: data.answer, tokensUsed: data.tokens_used };
     } catch (err) {
       console.error('[RAG Agent Error] Falling back:', err);
-      return { answer: FALLBACK };
+      throw { fallbackMessage: FALLBACK };
     }
   }
 }
