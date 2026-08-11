@@ -1,60 +1,345 @@
-import katex from 'katex';
-import MarkdownIt from 'markdown-it';
 import React, { useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { useTheme } from '@/shared/hooks/use-theme';
 
+const MarkdownIt = require('markdown-it');
+
+// ── Markdown-It instance with full features ───────────────────────────
 const md = new MarkdownIt({
   html: true,
   linkify: true,
+  typographer: true,
   breaks: true,
 });
 
-const KATEX_CSS = `
-.katex{font:normal 1.15em KaTeX_Main,Times New Roman,serif;line-height:1.2;position:relative;text-indent:0;text-rendering:auto}.katex *{-ms-high-contrast-adjust:none!important;border-color:currentColor}.katex .katex-version:after{content:"0.18.1"}.katex .katex-mathml{border:0;-webkit-clip-path:inset(50%);clip-path:inset(50%);height:1px;overflow:hidden;padding:0;position:absolute;width:1px}.katex .katex-html>.katex-newline{display:block}.katex .katex-base{position:relative;white-space:nowrap;width:-webkit-min-content;width:-moz-min-content;width:min-content}.katex .katex-base,.katex .katex-strut{display:inline-block}.katex .textbf{font-weight:700}.katex .textit{font-style:italic}.katex .textrm{font-family:KaTeX_Main}.katex .textsf{font-family:KaTeX_SansSerif}.katex .texttt{font-family:KaTeX_Typewriter}.katex .mathnormal{font-family:KaTeX_Math;font-style:italic}.katex .mathit{font-family:KaTeX_Main;font-style:italic}.katex .mathrm{font-style:normal}.katex .mathbf{font-family:KaTeX_Main;font-weight:700}.katex .boldsymbol{font-family:KaTeX_Math;font-style:italic;font-weight:700}.katex .amsrm,.katex .mathbb,.katex .textbb{font-family:KaTeX_AMS}.katex .mathcal{font-family:KaTeX_Caligraphic}.katex .mathfrak,.katex .textfrak{font-family:KaTeX_Fraktur}.katex .mathboldfrak,.katex .textboldfrak{font-family:KaTeX_Fraktur;font-weight:700}.katex .mathtt{font-family:KaTeX_Typewriter}.katex .mathscr,.katex .textscr{font-family:KaTeX_Script}.katex .mathsf,.katex .textsf{font-family:KaTeX_SansSerif}.katex .mathboldsf,.katex .textboldsf{font-family:KaTeX_SansSerif;font-weight:700}.katex .mathitsf,.katex .mathsfit,.katex .textitsf{font-family:KaTeX_SansSerif;font-style:italic}.katex .mainrm{font-family:KaTeX_Main;font-style:normal}.katex .vlist-t{border-collapse:collapse;display:inline-table;table-layout:fixed}.katex .vlist-r{display:table-row}.katex .vlist{display:table-cell;position:relative;vertical-align:bottom}.katex .vlist>span{display:block;height:0;position:relative}.katex .vlist>span>span{display:inline-block}.katex .vlist>span>.pstrut{overflow:hidden;width:0}.katex .vlist-t2{margin-right:-2px}.katex .vlist-s{display:table-cell;font-size:1px;min-width:2px;vertical-align:bottom;width:2px}.katex .katex-vbox{align-items:baseline;display:inline-flex;flex-direction:column}.katex .katex-thinbox{display:inline-flex;flex-direction:row;max-width:0;width:0}.katex .msupsub{text-align:left}.katex .mfrac>span>span{text-align:center}.katex .mfrac .frac-line{border-bottom-style:solid;display:inline-block;width:100%}.katex .katex-hdashline,.katex .katex-hline,.katex .katex-overline .overline-line,.katex .katex-rule,.katex .katex-underline .underline-line,.katex .mfrac .frac-line{min-height:1px}.katex .mspace{display:inline-block}.katex .katex-smash{display:inline;line-height:0}.katex .clap,.katex .llap,.katex .rlap{position:relative;width:0}.katex .clap>.katex-inner,.katex .llap>.katex-inner,.katex .rlap>.katex-inner{position:absolute}.katex .clap>.katex-fix,.katex .llap>.katex-fix,.katex .rlap>.katex-fix{display:inline-block}.katex .llap>.katex-inner{right:0}.katex .clap>.katex-inner,.katex .rlap>.katex-inner{left:0}.katex .clap>.katex-inner>span{margin-left:-50%;margin-right:50%}.katex .katex-rule{border:0 solid;display:inline-block;position:relative}.katex .katex-hline,.katex .katex-overline .overline-line,.katex .katex-underline .underline-line{border-bottom-style:solid;display:inline-block;width:100%}.katex .katex-hdashline{border-bottom-style:dashed;display:inline-block;width:100%}.katex .sqrt>.katex-root{margin-left:.2777777778em;margin-right:-.5555555556em}.katex-display{display:block;margin:1em 0;text-align:center;overflow-x:auto;overflow-y:hidden;padding:4px 0}.katex-display>.katex{display:inline-block;text-align:center;white-space:nowrap}
-`;
+// ── LaTeX pre-processing (before markdown-it parses) ──────────────────
+// Protects math delimiters from markdown-it mangling them.
 
-function renderMathInContent(text: string): string {
+function escapeMathBlocks(text: string): string {
   if (!text) return '';
-  // 1. Display math $$ ... $$ or \[ ... \]
-  let processed = text.replace(/(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\])/g, (match) => {
-    const raw = match.startsWith('$$') ? match.slice(2, -2) : match.slice(2, -2);
-    try {
-      return katex.renderToString(raw.trim(), { displayMode: true, throwOnError: false });
-    } catch {
-      return match;
-    }
+
+  // Protect display math: $$ ... $$ and \[ ... \]
+  let result = text.replace(/(\$\$[\s\S]*?\$\$)/g, (match) => {
+    const inner = match.slice(2, -2).trim();
+    return `<div class="math-display" data-math="${encodeURIComponent(inner)}"></div>`;
   });
 
-  // 2. Inline math $ ... $ or \( ... \)
-  processed = processed.replace(/(\$[^$\n]+\$|\\\([\s\S]*?\\\))/g, (match) => {
-    const raw = match.startsWith('$') ? match.slice(1, -1) : match.slice(2, -2);
-    try {
-      return katex.renderToString(raw.trim(), { displayMode: false, throwOnError: false });
-    } catch {
-      return match;
-    }
+  result = result.replace(/(\\)\[[\s\S]*?\\]/g, (match) => {
+    const inner = match.slice(2, -2).trim();
+    return `<div class="math-display" data-math="${encodeURIComponent(inner)}"></div>`;
   });
 
-  return processed;
+  // Protect inline math: $ ... $ (not $$) and \( ... \)
+  result = result.replace(/(?<!\$)\$(?!\$)([^$\n]+?)\$(?!\$)/g, (_match, inner) => {
+    return `<span class="math-inline" data-math="${encodeURIComponent(inner.trim())}"></span>`;
+  });
+
+  result = result.replace(/\\\([\s\S]*?\\\)/g, (match) => {
+    const inner = match.slice(2, -2).trim();
+    return `<span class="math-inline" data-math="${encodeURIComponent(inner)}"></span>`;
+  });
+
+  return result;
 }
 
+// ── Auto-height injection script ──────────────────────────────────────
 const AUTO_HEIGHT_SCRIPT = `
   (function() {
+    var lastHeight = 0;
     function postHeight() {
-      var height = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
-      window.ReactNativeWebView.postMessage(String(height));
+      var h = Math.max(
+        document.documentElement.scrollHeight,
+        document.body.scrollHeight,
+        document.documentElement.offsetHeight
+      );
+      if (h !== lastHeight && h > 0) {
+        lastHeight = h;
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'height', value: h }));
+      }
     }
-    window.addEventListener('load', postHeight);
-    if (window.ResizeObserver) {
-      new ResizeObserver(postHeight).observe(document.body);
+
+    // Render KaTeX math elements after DOM ready
+    function renderMath() {
+      if (typeof katex === 'undefined') return;
+      document.querySelectorAll('.math-display[data-math]').forEach(function(el) {
+        try {
+          katex.render(decodeURIComponent(el.getAttribute('data-math')), el, {
+            displayMode: true,
+            throwOnError: false,
+            output: 'html',
+            strict: false,
+          });
+        } catch(e) {
+          el.textContent = decodeURIComponent(el.getAttribute('data-math'));
+        }
+      });
+      document.querySelectorAll('.math-inline[data-math]').forEach(function(el) {
+        try {
+          katex.render(decodeURIComponent(el.getAttribute('data-math')), el, {
+            displayMode: false,
+            throwOnError: false,
+            output: 'html',
+            strict: false,
+          });
+        } catch(e) {
+          el.textContent = decodeURIComponent(el.getAttribute('data-math'));
+        }
+      });
     }
-    setTimeout(postHeight, 100);
-    setTimeout(postHeight, 300);
+
+    function init() {
+      renderMath();
+      postHeight();
+    }
+
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      setTimeout(init, 0);
+    } else {
+      document.addEventListener('DOMContentLoaded', init);
+    }
+    window.addEventListener('load', function() { renderMath(); postHeight(); });
+
+    // Observe for late renders
+    if (window.MutationObserver) {
+      new MutationObserver(function() { setTimeout(postHeight, 50); })
+        .observe(document.body, { childList: true, subtree: true, characterData: true });
+    }
+    setTimeout(postHeight, 200);
+    setTimeout(postHeight, 600);
+    setTimeout(postHeight, 1200);
   })();
   true;
 `;
 
+// ── HTML template builder ─────────────────────────────────────────────
+function buildHtml(renderedMarkdown: string, isDark: boolean): string {
+  const bg = isDark ? '#09090B' : '#FFFFFF';
+  const text = isDark ? '#E4E4E7' : '#27272A';
+  const textMuted = isDark ? '#A1A1AA' : '#71717A';
+  const textStrong = isDark ? '#FAFAFA' : '#09090B';
+  const border = isDark ? '#27272A' : '#E4E4E7';
+  const borderLight = isDark ? '#1E1E22' : '#F4F4F5';
+  const codeBg = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)';
+  const codeBlockBg = isDark ? '#18181B' : '#0F0F11';
+  const blockquoteBorder = isDark ? '#F97316' : '#F97316';
+  const blockquoteBg = isDark ? 'rgba(249,115,22,0.06)' : 'rgba(249,115,22,0.04)';
+  const tableBg = isDark ? '#18181B' : '#F9FAFB';
+  const tableStripeBg = isDark ? '#1A1A1F' : '#F4F4F5';
+  const accent = '#F97316';
+  const linkColor = isDark ? '#FB923C' : '#EA580C';
+  const mathBg = isDark ? 'rgba(249,115,22,0.08)' : 'rgba(249,115,22,0.05)';
+  const mathBorder = isDark ? 'rgba(249,115,22,0.2)' : 'rgba(249,115,22,0.15)';
+  const mathColor = isDark ? '#FDBA74' : '#C2410C';
+
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      background: transparent;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 13.5px;
+      line-height: 1.72;
+      color: ${text};
+      -webkit-text-size-adjust: 100%;
+      -webkit-font-smoothing: antialiased;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    /* ── Headings ── */
+    h1, h2, h3, h4, h5, h6 {
+      font-weight: 700;
+      color: ${textStrong};
+      margin-top: 1.4em;
+      margin-bottom: 0.5em;
+      line-height: 1.35;
+    }
+    h1 { font-size: 1.35rem; font-weight: 800; }
+    h2 { font-size: 1.15rem; padding-bottom: 0.3em; border-bottom: 1px solid ${border}; }
+    h3 { font-size: 1rem; color: ${accent}; }
+    h4 { font-size: 0.92rem; font-weight: 600; }
+    h5 { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: ${textMuted}; }
+    h6 { font-size: 0.82rem; font-weight: 600; color: ${textMuted}; }
+    h1:first-child, h2:first-child, h3:first-child { margin-top: 0; }
+
+    /* ── Paragraphs ── */
+    p { margin: 0.65em 0; }
+    p:first-child { margin-top: 0; }
+    p:last-child { margin-bottom: 0; }
+
+    /* ── Bold / Italic / Strikethrough ── */
+    strong { font-weight: 700; color: ${textStrong}; }
+    em { font-style: italic; }
+    del, s { text-decoration: line-through; color: ${textMuted}; }
+    mark { background: rgba(249,115,22,0.2); color: ${textStrong}; padding: 1px 4px; border-radius: 3px; }
+
+    /* ── Links ── */
+    a { color: ${linkColor}; text-decoration: none; font-weight: 500; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Lists ── */
+    ul, ol { padding-left: 1.5em; margin: 0.6em 0; }
+    li { margin-bottom: 0.35em; }
+    li > p { margin: 0.25em 0; }
+    li::marker { color: ${accent}; font-weight: 600; }
+    ul ul, ol ol, ul ol, ol ul { margin: 0.25em 0; }
+
+    /* ── Task lists (GitHub style) ── */
+    li.task-list-item { list-style: none; margin-left: -1.5em; }
+    li.task-list-item input[type="checkbox"] {
+      margin-right: 0.5em;
+      accent-color: ${accent};
+    }
+
+    /* ── Blockquotes ── */
+    blockquote {
+      margin: 0.8em 0;
+      padding: 0.6em 1em;
+      border-left: 3px solid ${blockquoteBorder};
+      background: ${blockquoteBg};
+      border-radius: 0 6px 6px 0;
+      color: ${textMuted};
+    }
+    blockquote p { margin: 0.3em 0; }
+    blockquote blockquote { margin-left: 0; border-left-color: ${border}; }
+
+    /* ── Inline code ── */
+    code {
+      font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.82em;
+      background: ${codeBg};
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 500;
+      word-break: break-word;
+    }
+
+    /* ── Fenced code blocks ── */
+    pre {
+      background: ${codeBlockBg};
+      color: #34D399;
+      padding: 14px 16px;
+      border-radius: 10px;
+      margin: 0.8em 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid ${isDark ? '#27272A' : '#E5E5E5'};
+    }
+    pre code {
+      background: none;
+      padding: 0;
+      color: inherit;
+      font-size: 0.82em;
+      line-height: 1.65;
+      border-radius: 0;
+    }
+
+    /* ── Tables ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1em 0;
+      font-size: 0.88em;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid ${border};
+    }
+    thead { background: ${tableBg}; }
+    th {
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 0.82em;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: ${accent};
+      border-bottom: 2px solid ${border};
+    }
+    td {
+      padding: 9px 14px;
+      border-bottom: 1px solid ${borderLight};
+      vertical-align: top;
+    }
+    tr:nth-child(even) { background: ${tableStripeBg}; }
+    tr:last-child td { border-bottom: none; }
+
+    /* ── Horizontal rules ── */
+    hr {
+      border: none;
+      border-top: 1px solid ${border};
+      margin: 1.5em 0;
+    }
+
+    /* ── Images ── */
+    img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      margin: 0.8em 0;
+    }
+
+    /* ── Definition lists ── */
+    dl { margin: 0.8em 0; }
+    dt { font-weight: 700; color: ${textStrong}; margin-top: 0.6em; }
+    dd { margin-left: 1.5em; margin-bottom: 0.4em; color: ${textMuted}; }
+
+    /* ── Footnotes ── */
+    .footnote-ref { font-size: 0.75em; vertical-align: super; color: ${accent}; }
+    .footnotes { font-size: 0.85em; margin-top: 2em; border-top: 1px solid ${border}; padding-top: 1em; color: ${textMuted}; }
+
+    /* ── KaTeX math rendering ── */
+    .math-display {
+      margin: 0.8em 0;
+      padding: 10px 14px;
+      background: ${mathBg};
+      border: 1px solid ${mathBorder};
+      border-radius: 8px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      text-align: center;
+    }
+    .math-display .katex-display {
+      margin: 0;
+      padding: 0;
+      overflow-x: auto;
+    }
+    .math-display .katex { color: ${mathColor}; font-size: 1.05em; }
+
+    .math-inline .katex { color: ${mathColor}; font-size: 0.95em; }
+
+    /* ── Admonitions (> **Note:** or > ⚠️) ── */
+    blockquote > p > strong:first-child {
+      color: ${accent};
+    }
+
+    /* ── Abbreviations ── */
+    abbr { text-decoration: underline dotted; cursor: help; }
+
+    /* ── Superscript / Subscript ── */
+    sup { font-size: 0.75em; vertical-align: super; }
+    sub { font-size: 0.75em; vertical-align: sub; }
+
+    /* ── Selection color ── */
+    ::selection { background: rgba(249,115,22,0.3); }
+  </style>
+</head>
+<body>
+  <div id="content">${renderedMarkdown}</div>
+</body>
+</html>`;
+}
+
+// ── Component ─────────────────────────────────────────────────────────
 export interface ScientificMarkdownProps {
   content: string;
   isDark?: boolean;
@@ -62,114 +347,46 @@ export interface ScientificMarkdownProps {
 
 export const ScientificMarkdown = React.memo(function ScientificMarkdown({
   content,
-  isDark = false,
+  isDark: isDarkProp,
 }: ScientificMarkdownProps) {
-  const [height, setHeight] = useState(30);
+  const { colorScheme } = useTheme();
+  const isDark = isDarkProp ?? colorScheme === 'dark';
+  const [height, setHeight] = useState(40);
 
   const htmlContent = useMemo(() => {
-    const withMath = renderMathInContent(content);
-    const renderedHtml = md.render(withMath);
-
-    return `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-          <style>
-            ${KATEX_CSS}
-            * { box-sizing: border-box; }
-            html, body {
-              margin: 0;
-              padding: 0;
-              background-color: transparent;
-              font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
-              font-size: 14px;
-              line-height: 1.6;
-              color: ${isDark ? '#E4E4E7' : '#27272A'};
-              -webkit-text-size-adjust: 100%;
-            }
-            h1, h2, h3, h4 {
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-              font-weight: 700;
-              margin-top: 1.2em;
-              margin-bottom: 0.4em;
-              color: ${isDark ? '#FAFAFA' : '#09090B'};
-            }
-            h1 { font-size: 1.25rem; }
-            h2 { font-size: 1.1rem; }
-            h3 { font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; color: #F97316; }
-            p { margin: 0.6em 0; }
-            p:first-child { margin-top: 0; }
-            p:last-child { margin-bottom: 0; }
-            ul, ol { padding-left: 1.4em; margin: 0.6em 0; }
-            li { margin-bottom: 0.3em; }
-            code {
-              font-family: monospace;
-              font-size: 0.85em;
-              background-color: ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'};
-              padding: 2px 5px;
-              border-radius: 4px;
-            }
-            pre {
-              background-color: ${isDark ? '#18181B' : '#09090B'};
-              color: #34D399;
-              padding: 12px;
-              border-radius: 8px;
-              overflow-x: auto;
-              font-size: 0.85em;
-            }
-            pre code { background: none; padding: 0; color: inherit; }
-            blockquote {
-              margin: 0.8em 0;
-              padding-left: 12px;
-              color: ${isDark ? '#A1A1AA' : '#52525B'};
-              font-style: italic;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin: 1em 0;
-              font-size: 0.9em;
-            }
-            th, td {
-              border: 1px solid ${isDark ? '#27272A' : '#E4E4E7'};
-              padding: 8px 12px;
-              text-align: left;
-            }
-            th {
-              background-color: ${isDark ? '#18181B' : '#F4F4F5'};
-              font-weight: 600;
-            }
-            hr {
-              border: none;
-              border-top: 1px solid ${isDark ? '#27272A' : '#E4E4E7'};
-              margin: 1.5em 0;
-            }
-          </style>
-        </head>
-        <body>
-          <div id="content">${renderedHtml}</div>
-        </body>
-      </html>
-    `;
+    // 1. Protect math delimiters from markdown-it mangling
+    const withProtectedMath = escapeMathBlocks(content);
+    // 2. Render markdown
+    const renderedHtml = md.render(withProtectedMath);
+    // 3. Build full HTML page
+    return buildHtml(renderedHtml, isDark);
   }, [content, isDark]);
 
   return (
-    <View style={{ height: Math.max(height, 20), width: '100%' }}>
+    <View style={{ height: Math.max(height, 24), width: '100%' }}>
       <WebView
         originWhitelist={['*']}
         source={{ html: htmlContent }}
         injectedJavaScript={AUTO_HEIGHT_SCRIPT}
         onMessage={(event) => {
-          const newHeight = Number(event.nativeEvent.data);
-          if (!isNaN(newHeight) && newHeight > 0) {
-            setHeight(newHeight);
+          try {
+            const msg = JSON.parse(event.nativeEvent.data);
+            if (msg.type === 'height' && typeof msg.value === 'number' && msg.value > 0) {
+              setHeight(msg.value + 2);
+            }
+          } catch {
+            // Fallback: plain number (legacy)
+            const n = Number(event.nativeEvent.data);
+            if (!isNaN(n) && n > 0) setHeight(n + 2);
           }
         }}
         scrollEnabled={false}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
-        style={{ backgroundColor: 'transparent' }}
+        nestedScrollEnabled={false}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        style={{ backgroundColor: 'transparent', opacity: 0.99 }}
       />
     </View>
   );

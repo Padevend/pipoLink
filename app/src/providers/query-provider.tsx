@@ -19,8 +19,8 @@ const queryClient = new QueryClient({
       structuralSharing: true
     },
     mutations: {
-      retry: 3,
-      networkMode: "offlineFirst"
+      retry: 0,
+      networkMode: "online"
     },
   },
 });

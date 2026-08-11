@@ -21,6 +21,7 @@ expo-env.d.ts
 *.mobileprovision
 keystore-info.json
 google-services.json
+GUIDE-GOOGLE-STORAGE.md
 
 # Metro
 .metro-health-check*

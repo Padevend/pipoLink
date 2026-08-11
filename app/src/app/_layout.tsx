@@ -22,6 +22,7 @@ import {
   WebSocketProvider,
 } from '@/providers';
 import { I18nProvider } from '@/providers/i18n-provider';
+import { useAiNotifications } from '@/entities/ai/use-ai-notifications';
 import { useKeyboardBehavior } from '@/shared/hooks/use-keyboardBehavior';
 import { ASYNC_STORAGE_KEYS, AsyncStorageService } from '@/shared/lib/storage';
 import { KeyboardAvoidingView, ActivityIndicator, View, LogBox } from 'react-native';
@@ -98,6 +99,12 @@ function AppStartup() {
   return null;
 }
 
+/** Listens for AI response events and shows toast notifications when off-screen. */
+function AiNotificationListener() {
+  useAiNotifications();
+  return null;
+}
+
 export default function RootLayout(): JSX.Element {
   const [isDbReady, setIsDbReady] = useState(false);
 
@@ -126,6 +133,7 @@ export default function RootLayout(): JSX.Element {
             <AppTreeWithKeyboardAvoiding>
               <Stack screenOptions={{ headerShown: false }} initialRouteName='index' />
               <AppStartup />
+              <AiNotificationListener />
             </AppTreeWithKeyboardAvoiding>
           </AppProviders>
           <StatusBar style="auto" />

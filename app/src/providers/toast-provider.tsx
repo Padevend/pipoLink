@@ -7,6 +7,7 @@ export type ToastType = 'success' | 'error' | 'warning' | 'info';
 export interface ToastInput {
   type: ToastType;
   message: string;
+  onPress?: () => void;
 }
 
 interface ToastItem extends ToastInput {
@@ -104,7 +105,10 @@ function SwipeableToast({
       ]}
     >
       {/* BOÎTIER MAITRE : Style Rectiligne Mat Solide */}
-      <View className="flex-row items-center p-3 rounded-xl border bg-white border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800">
+      <Pressable
+        onPress={isTop && toast.onPress ? () => { onDismiss(toast.id); toast.onPress?.(); } : undefined}
+        className="flex-row items-center p-3 rounded-xl border bg-white border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800"
+      >
         
         {/* Icône monochrome rigide d'intonation */}
         <View className="w-5 h-5 items-center justify-center mr-2.5">
@@ -127,7 +131,7 @@ function SwipeableToast({
             <X size={12} color="#71717A" />
           </Pressable>
         )}
-      </View>
+      </Pressable>
     </Animated.View>
   );
 }

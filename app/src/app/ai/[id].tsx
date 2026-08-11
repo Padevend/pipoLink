@@ -1,14 +1,14 @@
 import {
   useAddDocumentToSession,
-  useAiChat,
   useAiHistory,
   useAiTokens,
-  useGenerateStudyAid,
   useMyAiAttachments,
   useRemoveDocumentFromSession,
   useSessionDocuments,
   useTruncateAiMessages,
 } from '@/entities/ai/hooks';
+import { useAiRequest } from '@/entities/ai/use-ai-request';
+import { AiRequestManager } from '@/entities/ai/ai-request-manager';
 import { useMyDocuments } from '@/entities/document/hooks';
 import LibraryModal from '@/features/chat-ai/components/biblio-modal';
 import SourceModal from '@/features/chat-ai/components/modal-source';
@@ -35,7 +35,7 @@ import {
   Sparkles,
   Zap,
 } from 'lucide-react-native';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -63,8 +63,14 @@ export default function AiChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const sessionId = id as string;
 
-  const { data: history, isLoading: historyLoading } = useAiHistory(sessionId);
-  const { data: activeDocs, isLoading: docsLoading } = useSessionDocuments(sessionId);
+  const { data: history, isLoading: historyLoading, isError: historyError, refetch: refetchHistory } = useAiHistory(sessionId);
+  const { data: activeDocs, isLoading: docsLoading, isError: docsError, refetch: refetchDocs } = useSessionDocuments(sessionId);
+
+  const isPageError = historyError || docsError;
+  const retryAll = useCallback(() => {
+    void refetchHistory();
+    void refetchDocs();
+  }, [refetchHistory, refetchDocs]);
 
   const { data: myDocsData, isLoading: myDocsLoading } = useMyDocuments();
   const { data: aiDocsData, isLoading: aiDocsLoading } = useMyAiAttachments();
@@ -76,8 +82,7 @@ export default function AiChatScreen() {
 
   const addDocMutation = useAddDocumentToSession();
   const removeDocMutation = useRemoveDocumentFromSession();
-  const generateMutation = useGenerateStudyAid();
-  const chatMutation = useAiChat();
+  const { sendMessage, generateStudyAid, isPending: isAnyPending } = useAiRequest(sessionId);
   const truncateMutation = useTruncateAiMessages();
   const { copyToClipboard } = useCopyToClipboard();
 
@@ -93,21 +98,12 @@ export default function AiChatScreen() {
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [lastStudyAidType, setLastStudyAidType] = useState<string>('chat');
 
-  // Cross-lock: prevents concurrent chat + study aid requests
-  const isAnyPending = chatMutation.isPending || generateMutation.isPending;
-
-  const handleSend = async () => {
+  const handleSend = () => {
     if (!text.trim() || isAnyPending) return;
     const msg = text.trim();
     clearDraft();
-    try {
-      await chatMutation.mutateAsync({ message: msg, sessionId });
-      flatListRef.current?.scrollToEnd({ animated: true });
-    } catch (err) {
-      // Ignore abort/stale errors silently
-      if (err instanceof Error && (err.message === 'STALE_RESPONSE' || err.name === 'AbortError')) return;
-      console.warn('[useAiChat] failed:', err);
-    }
+    sendMessage(msg);
+    flatListRef.current?.scrollToEnd({ animated: true });
   };
 
   const handleAddDocument = async (doc: Document) => {
@@ -133,16 +129,11 @@ export default function AiChatScreen() {
     }
   };
 
-  const handleGenerateStudyAid = async (type: string) => {
+  const handleGenerateStudyAid = (type: string) => {
     if (isAnyPending) return;
     setLastStudyAidType(type);
-    try {
-      await generateMutation.mutateAsync({ sessionId, type });
-      flatListRef.current?.scrollToEnd({ animated: true });
-    } catch (err) {
-      if (err instanceof Error && (err.message === 'STALE_RESPONSE' || err.name === 'AbortError')) return;
-      console.warn('[generateStudyAid] failed:', err);
-    }
+    generateStudyAid(type);
+    flatListRef.current?.scrollToEnd({ animated: true });
   };
 
   const renderMessageContent = (content: string, isAi: boolean) => {
@@ -241,10 +232,28 @@ export default function AiChatScreen() {
           <View className="flex-1 justify-center items-center">
             <ActivityIndicator size="small" color="#F97316" />
           </View>
+        ) : isPageError ? (
+          <View className="flex-1 justify-center items-center px-6">
+            <View className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/20 mb-3">
+              <Sparkles size={24} color="#EF4444" />
+            </View>
+            <Text className="text-sm font-bold tracking-tight text-zinc-800 dark:text-zinc-200 text-center">
+              Impossible de charger cette session
+            </Text>
+            <Text className="mt-1.5 text-xs text-zinc-400 dark:text-zinc-500 text-center max-w-[260px] leading-4">
+              Le serveur n'a pas pu répondre. Vérifiez votre connexion et réessayez.
+            </Text>
+            <Pressable
+              onPress={retryAll}
+              className="mt-4 rounded-lg bg-orange-500 px-5 py-2 active:bg-orange-600"
+            >
+              <Text className="text-xs font-bold text-white">Réessayer</Text>
+            </Pressable>
+          </View>
         ) : (
           <FlatList
             ref={flatListRef}
-            data={history}
+            data={history ?? []}
             keyExtractor={(item) => item.id}
             showsVerticalScrollIndicator={false}
             ItemSeparatorComponent={() => (
@@ -259,12 +268,8 @@ export default function AiChatScreen() {
               const handleResend = async () => {
                 setActiveMenuId(null);
                 await truncateMutation.mutateAsync({ sessionId, messageId: item.id, inclusive: false });
-                try {
-                  await chatMutation.mutateAsync({ message: item.content, sessionId });
-                  flatListRef.current?.scrollToEnd({ animated: true });
-                } catch (err) {
-                  console.warn('[handleResend] failed:', err);
-                }
+                sendMessage(item.content);
+                flatListRef.current?.scrollToEnd({ animated: true });
               };
 
               const handleEdit = async () => {
@@ -294,7 +299,7 @@ export default function AiChatScreen() {
                       onResend={!isAi && !isFailed ? () => void handleResend() : undefined}
                       onEdit={!isAi && !isFailed ? () => void handleEdit() : undefined}
                       onDelete={!isAi ? () => void handleDelete() : undefined}
-                      onRetry={isFailed ? () => chatMutation.retryFailedAiMessage(sessionId, item) : undefined}
+                      onRetry={isFailed ? () => AiRequestManager.retryFailedMessage(sessionId, item) : undefined}
                       onClose={() => setActiveMenuId(null)}
                     />
                   )}
@@ -330,13 +335,13 @@ export default function AiChatScreen() {
                     <View className="flex-row items-center gap-2 mt-2 px-1">
                       <Text className="text-[10px] text-red-500 font-bold">Échec de l'envoi</Text>
                       <Pressable
-                        onPress={() => chatMutation.retryFailedAiMessage(sessionId, item)}
+                        onPress={() => AiRequestManager.retryFailedMessage(sessionId, item)}
                         className="bg-orange-500/10 px-2 py-0.5 rounded"
                       >
                         <Text className="text-[10px] font-bold text-orange-500">Réessayer</Text>
                       </Pressable>
                       <Pressable
-                        onPress={() => chatMutation.deleteFailedAiMessage(sessionId, item.id)}
+                        onPress={() => AiRequestManager.deleteFailedMessage(sessionId, item.id)}
                         className="bg-red-500/10 px-2 py-0.5 rounded"
                       >
                         <Text className="text-[10px] font-bold text-red-500">Supprimer</Text>
@@ -362,7 +367,7 @@ export default function AiChatScreen() {
             ListFooterComponent={
               isAnyPending ? (
                 <ThoughtStreamLoader
-                  type={generateMutation.isPending ? lastStudyAidType : 'chat'}
+                  type={lastStudyAidType}
                 />
               ) : null
             }

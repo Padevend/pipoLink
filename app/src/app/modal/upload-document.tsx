@@ -2,11 +2,11 @@ import * as DocumentPicker from 'expo-document-picker';
 import { router } from 'expo-router';
 import { CheckCircle2, FileText, Upload, X } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useMyDocuments, useUploadDocument } from '@/entities/document/hooks';
-import { useAuth, useToast } from '@/providers';
+import { useUploadDocument } from '@/entities/document/hooks';
+import { useToast } from '@/providers';
 import type { PickedLibraryFile } from '@/shared/api/library';
 import type { DocumentType } from '@/shared/api/types';
 import { AcademicPathPicker, type AcademicPath } from '@/shared/ui/academic-path-picker';
@@ -23,30 +23,11 @@ const DOC_TYPES: { label: string; value: DocumentType }[] = [
   { label: 'Résumé', value: 'RESUME' },
 ];
 
-const FREE_MAX_BYTES = 5 * 1024 * 1024;
-const PREMIUM_MAX_BYTES = 50 * 1024 * 1024;
-const FREE_DOC_LIMIT = 5;
-const PLAN_ERROR_CODES = new Set([
-  'PREMIUM_REQUIRED',
-  'QUOTA_EXCEEDED',
-  'LIMIT_EXCEEDED',
-  'FILE_TOO_LARGE',
-]);
-
-function showUpsellAlert(message: string) {
-  Alert.alert('Passer Premium ?', message, [
-    { text: 'Annuler', style: 'cancel' },
-    { text: "Voir l'offre", onPress: () => router.push('/settings/subscription' as never) },
-  ]);
-}
+const MAX_FILE_BYTES = 50 * 1024 * 1024;
 
 export default function UploadDocumentModal() {
   const { showToast } = useToast();
-  const { user } = useAuth();
-  const isPremium =
-    user?.subscription?.plan === 'PREMIUM' && user?.subscription?.status === 'ACTIVE';
   const uploadMutation = useUploadDocument();
-  const { data: myDocsData } = useMyDocuments();
   const insets = useSafeAreaInsets();
 
   const [title, setTitle] = useState('');
@@ -86,23 +67,10 @@ export default function UploadDocumentModal() {
   const handleUpload = async () => {
     if (!file || !title.trim() || !path) return;
 
-    // Pré-checks côté client (le serveur vérifie aussi)
-    const maxBytes = isPremium ? PREMIUM_MAX_BYTES : FREE_MAX_BYTES;
-    if (file.size && file.size > maxBytes) {
-      const maxLabel = isPremium ? '50 Mo' : '5 Mo';
-      showToast({ type: 'error', message: `Fichier trop volumineux (max ${maxLabel}).` });
-      if (!isPremium) {
-        showUpsellAlert('Les comptes gratuits sont limités à 5 Mo par fichier. Passez Premium pour uploader jusqu\'à 50 Mo.');
-      }
+    // Pré-check côté client : taille max 50 Mo
+    if (file.size && file.size > MAX_FILE_BYTES) {
+      showToast({ type: 'error', message: 'Fichier trop volumineux (max 50 Mo).' });
       return;
-    }
-    if (!isPremium) {
-      const totalDocs = myDocsData?.pages[0]?.total ?? 0;
-      if (totalDocs >= FREE_DOC_LIMIT) {
-        showToast({ type: 'error', message: 'Limite de 5 documents atteinte.' });
-        showUpsellAlert('Les comptes gratuits sont limités à 5 documents. Supprimez-en ou passez Premium pour une bibliothèque illimitée.');
-        return;
-      }
     }
 
     try {
@@ -122,12 +90,8 @@ export default function UploadDocumentModal() {
       });
       router.back();
     } catch (e: any) {
-      if (e?.code && PLAN_ERROR_CODES.has(e.code)) {
-        showToast({ type: 'error', message: e.message });
-        if (!isPremium) showUpsellAlert('Débloquez toutes les limites avec l\'abonnement Premium.');
-        return;
-      }
-      showToast({ type: 'error', message: 'Échec de l’upload — vérifiez votre connexion.' });
+      const msg = e?.message || 'Échec de l\'upload — vérifiez votre connexion.';
+      showToast({ type: 'error', message: msg });
     }
   };
 

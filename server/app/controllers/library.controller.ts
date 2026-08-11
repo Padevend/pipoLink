@@ -1,6 +1,7 @@
 import { HttpContext } from "../../config/app.js";
 import { LibraryService } from "../services/library.service.js";
 import { ApiResponse } from "../helpers/api-response.js";
+import { ErrorCode } from "../helpers/error-codes.js";
 import { uploadDocumentValidator, moderateDocumentValidator } from "../validators/library.validator.js";
 import { RealtimeBus } from "../../src/modules/websocket/gateway/realtime-bus.js";
 import { WsEventName } from "../../src/modules/websocket/events/event-names.js";
@@ -52,7 +53,6 @@ export class LibraryController {
 
   async uploadDocument(c: HttpContext) {
     const userId = c.get("userId") as string;
-    const plan = c.get("plan") as string || "FREE";
     const body = await c.req.parseBody();
     const file = body["file"];
     const payloadRaw = body["payload"] ? JSON.parse(body["payload"] as string) : {};
@@ -60,36 +60,30 @@ export class LibraryController {
     await uploadDocumentValidator.validate(payloadRaw);
 
     if (file instanceof File) {
-      if (plan === "FREE") {
-        // Enforce 5MB limit for free users
-        if (file.size > 5 * 1024 * 1024) {
-          return ApiResponse.error(
-            c,
-            "LIMIT_EXCEEDED",
-            "Les comptes GRATUITS sont limités à 5 Mo par fichier. Passez en PREMIUM pour uploader jusqu'à 50 Mo.",
-            402
-          );
-        }
-
-        // Enforce 5 documents limit for free users (AI attachments excluded)
-        const count = await prisma.document.count({
-          where: { uploaded_by_id: userId, type: { not: "AI_ATTACHMENT" } },
-        });
-        if (count >= 5) {
-          return ApiResponse.error(
-            c,
-            "LIMIT_EXCEEDED",
-            "Les comptes GRATUITS sont limités à 5 documents dans leur bibliothèque. Veuillez en supprimer ou passer en PREMIUM.",
-            402
-          );
-        }
+      // Rate limit : max 20 uploads par jour par utilisateur
+      const DAILY_UPLOAD_LIMIT = 20;
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const todayCount = await prisma.document.count({
+        where: {
+          uploaded_by_id: userId,
+          type: { not: "AI_ATTACHMENT" },
+          createdAt: { gte: oneDayAgo },
+        },
+      });
+      if (todayCount >= DAILY_UPLOAD_LIMIT) {
+        return ApiResponse.error(
+          c,
+          ErrorCode.RATE_LIMITED,
+          `Vous avez atteint la limite de ${DAILY_UPLOAD_LIMIT} uploads par jour. Réessayez demain.`,
+          429
+        );
       }
 
-      // Cap global (PREMIUM inclus)
+      // Cap global : 50 Mo par fichier
       if (file.size > 50 * 1024 * 1024) {
         return ApiResponse.error(
           c,
-          "FILE_TOO_LARGE",
+          ErrorCode.FILE_TOO_LARGE,
           "La taille maximale par fichier est de 50 Mo.",
           413
         );

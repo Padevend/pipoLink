@@ -47,14 +47,24 @@ export const useAiHistory = (sessionId: string) => {
         localDb.upsertAiMessages(sessionId, remote.messages);
         return remote.messages;
       } catch (e) {
-        return localDb.getAiMessages(sessionId);
+        // Fallback to local cache — wrapped in its own try/catch to never crash
+        try {
+          return localDb.getAiMessages(sessionId);
+        } catch {
+          return [];
+        }
       }
     },
     enabled: !!sessionId,
+    retry: 1,
     initialData: () => {
       if (!sessionId) return undefined;
-      const cached = localDb.getAiMessages(sessionId);
-      return cached.length > 0 ? cached : undefined;
+      try {
+        const cached = localDb.getAiMessages(sessionId);
+        return cached.length > 0 ? cached : undefined;
+      } catch {
+        return undefined;
+      }
     },
   });
 };
@@ -138,22 +148,10 @@ export const useAiChat = () => {
         void queryClient.invalidateQueries({ queryKey: aiKeys.tokens() });
       }
 
-      if (data.tokens) {
-        queryClient.setQueryData(aiKeys.tokens(), data.tokens);
-      } else {
-        void queryClient.invalidateQueries({ queryKey: aiKeys.tokens() });
-      }
-
       if (data.session.id) {
         queryClient.setQueryData(aiKeys.history(data.session.id), (old: any) => {
           let existing = old || [];
           
-          // Nettoyer le message temporaire optimiste
-          if (context?.tempId) {
-            existing = existing.filter((msg: any) => msg.id !== context.tempId);
-          } else {
-            existing = existing.filter((msg: any) => !msg.id.startsWith('temp-'));
-          }
           // Nettoyer le message temporaire optimiste
           if (context?.tempId) {
             existing = existing.filter((msg: any) => msg.id !== context.tempId);
@@ -262,8 +260,15 @@ export const useTruncateAiMessages = () => {
 export const useSessionDocuments = (sessionId: string) => {
   return useQuery({
     queryKey: [...aiKeys.history(sessionId), 'documents'],
-    queryFn: () => aiApi.getSessionDocuments(sessionId),
+    queryFn: async () => {
+      try {
+        return await aiApi.getSessionDocuments(sessionId);
+      } catch {
+        return [];
+      }
+    },
     enabled: !!sessionId,
+    retry: 1,
   });
 };
 
@@ -324,7 +329,6 @@ export const useGenerateStudyAid = () => {
       }
     },
     onSuccess: (data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: aiKeys.tokens() });
       void queryClient.invalidateQueries({ queryKey: aiKeys.tokens() });
       queryClient.setQueryData(aiKeys.history(variables.sessionId), (old: any) => {
         const existing = old || [];
