@@ -21,13 +21,14 @@ export function useAiRequest(sessionId?: string) {
   );
 
   const isPending = sessionId
-    ? AiRequestManager.isPending(sessionId)
+    ? (state.currentRequest?.sessionId === sessionId ||
+       state.queue.some((q) => q.sessionId === sessionId))
     : false;
 
   const isGloballyPending =
     state.currentRequest !== null || state.queue.length > 0;
 
-  const queueLength = AiRequestManager.getQueueLength();
+  const queueLength = state.queue.length + (state.currentRequest ? 1 : 0);
 
   const sendMessage = useCallback(
     (message: string, targetSessionId?: string) => {

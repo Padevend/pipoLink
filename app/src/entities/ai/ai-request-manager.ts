@@ -49,6 +49,8 @@ class AiRequestManagerImpl {
   private _abortController: AbortController | null = null;
   private _listeners = new Map<AiManagerEvent, Set<Listener>>();
   private _processing = false;
+  /** Cached snapshot — rebuilt only when the queue actually changes. */
+  private _cachedState: AiManagerState | null = null;
 
   // ── Event system ────────────────────────────────────────────────────────
 
@@ -63,6 +65,10 @@ class AiRequestManagerImpl {
   }
 
   private emit(event: AiManagerEvent, data?: any) {
+    // Invalidate the cached snapshot whenever the queue state changes
+    if (event === 'queue-updated') {
+      this._cachedState = null;
+    }
     this._listeners.get(event)?.forEach((fn) => {
       try { fn(data); } catch (e) { console.warn(`[AiManager] listener error (${event}):`, e); }
     });
@@ -136,10 +142,13 @@ class AiRequestManagerImpl {
   }
 
   getState(): AiManagerState {
-    return {
-      currentRequest: this._current,
-      queue: [...this._queue],
-    };
+    if (!this._cachedState) {
+      this._cachedState = {
+        currentRequest: this._current,
+        queue: [...this._queue],
+      };
+    }
+    return this._cachedState;
   }
 
   getQueueLength(): number {
