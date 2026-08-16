@@ -13,6 +13,15 @@ export function useDocuments({ page, limit, search }: { page: number; limit: num
     queryFn: () => api.getDocuments(page, limit, search),
   });
 
+  const { mutateAsync: enqueueIngestion, isPending: ingestionLoading } = useMutation({
+    mutationFn: () => api.enqueueDocumentIngestion(),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      showToast({ type: "success", message: `${data.queued} document(s) ajouté(s) à la file d’ingestion.`, duration: 4000 });
+    },
+    onError: (err: any) => showToast({ type: "error", message: err.message || "Impossible de lancer l’ingestion.", duration: 4000 }),
+  });
+
   const { mutateAsync: deleteDocMutate, isPending: actionLoading } = useMutation({
     mutationFn: (docId: string) => api.deleteDocument(docId),
     onSuccess: () => {
@@ -34,6 +43,8 @@ export function useDocuments({ page, limit, search }: { page: number; limit: num
     loading,
     error,
     deleteDocument: deleteDocMutate,
+    enqueueIngestion,
+    ingestionLoading,
     actionLoading,
   };
 }

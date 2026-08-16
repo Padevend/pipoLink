@@ -48,6 +48,8 @@ export async function pushNewMessage(
       type: "MESSAGE",
       messageId: message.id,
       chatId: conversationId,
+      conversationId,
+      notificationId: message.id,
       chatType: chat.type,
       chatName: chat.name ?? "",
       senderName: sender?.username ?? "",

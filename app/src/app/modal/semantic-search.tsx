@@ -19,6 +19,9 @@ export default function SemanticSearchModal() {
   const semanticSearch = useSemanticSearch();
 
   const result = semanticSearch.data;
+  const uniqueResults = Array.from(
+    new Map((result?.results ?? []).map((item) => [item.document_id, item])).values(),
+  );
   const canSubmit = query.trim().length >= 3 && !semanticSearch.isPending;
 
   const handleSearch = () => {
@@ -91,8 +94,8 @@ export default function SemanticSearchModal() {
           </View>
         ) : (
           <FlatList
-            data={result?.results ?? []}
-            keyExtractor={(item) => item.document_id + Math.random().toString()}
+            data={uniqueResults}
+            keyExtractor={(item) => item.document_id}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
             ItemSeparatorComponent={() => <View className="h-2" />}

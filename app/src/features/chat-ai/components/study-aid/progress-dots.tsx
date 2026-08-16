@@ -1,5 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
+import { cn } from "@/shared/utils/cn";
 
 interface ProgressDotsProps {
   total: number;

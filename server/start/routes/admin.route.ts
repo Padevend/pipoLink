@@ -15,6 +15,7 @@ AdminRouter
   .post("/users/:id/ban", callAction(AdminController, "banUser"))
   .post("/users/:id/restore", callAction(AdminController, "restoreUser"))
   .get("/documents", callAction(AdminController, "getDocuments"))
+  .post("/documents/ingest", callAction(AdminController, "enqueueDocumentIngestion"))
   .delete("/documents/:id", callAction(AdminController, "deleteDocument"))
   .get("/subscriptions", callAction(AdminController, "getSubscriptions"))
   .get("/payments", callAction(AdminController, "getPayments"))

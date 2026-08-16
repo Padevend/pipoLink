@@ -28,20 +28,18 @@ export async function refreshExistingConversationKeys(): Promise<void> {
 
     console.log('[refreshExistingConversationKeys] Rafraîchissement de', existingChatIds.length, 'conversations');
 
-    // Détection parallèle de l'état des clés et rotation séquentielle pour éviter les appels massifs.
-    const results = await Promise.allSettled(
-      existingChatIds.map(async (chatId) => {
+    // One conversation at a time: recovery must not flood the API or rotate
+    // several group keys concurrently on a mobile connection.
+    const results: PromiseSettledResult<void>[] = [];
+    for (const chatId of existingChatIds) {
+      try {
         const status = await getChatKeyStatus(chatId);
-        if (status === 'valid') {
-          console.log('[refreshExistingConversationKeys] Clé déjà valide pour', chatId);
-          return;
-        }
-
-        console.log('[refreshExistingConversationKeys] Rotation forcée de', chatId, '(statut:', status, ')');
-        await rotateChatKeyForRecovery(chatId);
-        console.log('[refreshExistingConversationKeys] Conversation', chatId, 'mise à jour');
-      })
-    );
+        if (status !== 'valid') await rotateChatKeyForRecovery(chatId);
+        results.push({ status: 'fulfilled', value: undefined });
+      } catch (reason) {
+        results.push({ status: 'rejected', reason });
+      }
+    }
 
     const failed = results.filter(r => r.status === 'rejected');
     if (failed.length > 0) {

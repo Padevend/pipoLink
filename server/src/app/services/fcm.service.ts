@@ -68,7 +68,7 @@ export class FCMService {
               priority: "high",
               notification: {
                 sound: "default",
-                channelId: "pipolink",
+                channelId: "pipolink-v2",
               },
             },
             apns: {
@@ -181,7 +181,7 @@ export class FCMService {
           title: 'PipoLink',
           body: payload.type === 'MESSAGE' ? 'Nouveau message' : (payload.title || 'Nouvelle notification'),
           data: payload,
-          channelId: 'default',
+          channelId: 'pipolink-v2',
         }));
         const response = await fetch('https://exp.host/--/api/v2/push/send', {
           method: 'POST',

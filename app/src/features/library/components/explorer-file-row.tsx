@@ -3,6 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import type { Document } from '@/shared/api/types';
 import { formatBytes } from '@/shared/lib/file';
+import { displayFileName } from '@/shared/lib/display-file-name';
 
 export interface ExplorerFileRowProps {
   document: Document;
@@ -28,7 +29,7 @@ export function ExplorerFileRow({ document, onPress }: ExplorerFileRowProps): JS
             numberOfLines={1}
             className="text-xs font-bold tracking-tight text-zinc-900 dark:text-zinc-50"
           >
-            {document.fileName}
+            {displayFileName(document.fileName)}
           </Text>
           
           <View className="flex-row items-center mt-1 gap-x-2">
@@ -42,6 +43,7 @@ export function ExplorerFileRow({ document, onPress }: ExplorerFileRowProps): JS
             <Text className="font-mono text-[10px] text-zinc-400 dark:text-zinc-500">
               {formatBytes(document.fileSize)}
             </Text>
+            {document.recommendationReason ? <Text numberOfLines={1} className="text-[10px] text-orange-500">{document.recommendationReason}</Text> : null}
           </View>
         </View>
       </View>
@@ -82,7 +84,7 @@ export function RenderDocumentItem({ item, onPress }: { item: Document, onPress:
           className="text-xs font-bold tracking-tight text-zinc-800 dark:text-zinc-100"
           numberOfLines={2}
         >
-          {item.title || item.fileName}
+          {item.title || displayFileName(item.fileName)}
         </Text>
       </View>
 

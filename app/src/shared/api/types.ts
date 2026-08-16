@@ -227,6 +227,7 @@ export interface Document {
   uploadedById: string;
   uploadedBy: DocumentUploader;
   createdAt: string;
+  recommendationReason?: string;
 }
 
 export interface LibraryFolder {

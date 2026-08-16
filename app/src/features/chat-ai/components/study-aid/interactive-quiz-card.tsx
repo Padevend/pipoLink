@@ -102,15 +102,15 @@ export function InteractiveQuizCard({ content }: { content: string }) {
   return (
     <Animated.View
       entering={FadeInDown.duration(200)}
-      className=" bg-white dark:bg-zinc-950 pl-3.5 pr-3 py-2.5"
+      className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/60"
     >
       {/* Header du Quiz Minimaliste */}
       <View className="flex-row items-center justify-between border-b border-zinc-200/50 dark:border-zinc-800/50 pb-1.5 mb-1.5">
         <View className="flex-row items-center gap-1.5">
-          <Text className="text-[9px] font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400">
+          <Text className="text-[11px] font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400">
             Quiz Interactif
           </Text>
-          <Text className="text-[9px] text-zinc-400 dark:text-zinc-500">
+          <Text className="text-[11px] text-zinc-400 dark:text-zinc-500">
             {answeredCount} / {totalQuestions}
           </Text>
         </View>
@@ -138,7 +138,7 @@ export function InteractiveQuizCard({ content }: { content: string }) {
               className="rounded border border-zinc-200/40 dark:border-zinc-800/40 bg-white dark:bg-zinc-900/50 p-2.5"
             >
               <View className="flex-row items-start gap-1.5 mb-1.5">
-                <Text className="text-[9px] font-bold text-orange-500 mt-0.5">
+                <Text className="text-[11px] font-bold text-orange-500 mt-0.5">
                   {qIndex + 1}.
                 </Text>
                 <Text className="flex-1 text-[10px] font-medium text-zinc-800 dark:text-zinc-200 leading-4">
@@ -181,7 +181,7 @@ export function InteractiveQuizCard({ content }: { content: string }) {
                       <View className="flex-row items-center gap-1.5 flex-1 pr-1">
                         <View
                           className={cn(
-                            'h-3.5 w-3.5 rounded-full items-center justify-center border text-[9px] font-bold',
+                            'h-3.5 w-3.5 rounded-full items-center justify-center border text-[11px] font-bold',
                             isSelected
                               ? isCorrect
                                 ? 'bg-emerald-500 border-emerald-500'
@@ -218,11 +218,11 @@ export function InteractiveQuizCard({ content }: { content: string }) {
                   <View className="flex-row items-start gap-1">
                     <HelpCircle size={11} color="#F97316" className="mt-0.5" />
                     <View className="flex-1">
-                      <Text className="text-[9px] font-semibold text-orange-600 dark:text-orange-400">
+                      <Text className="text-[11px] font-semibold text-orange-600 dark:text-orange-400">
                         {isCorrect ? 'Correct' : `Réponse : ${q.correctAnswer}`}
                       </Text>
                       {q.explanation && (
-                        <Text className="text-[9px] text-zinc-600 dark:text-zinc-400 mt-0.5 leading-3">
+                        <Text className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 leading-3">
                           {q.explanation}
                         </Text>
                       )}

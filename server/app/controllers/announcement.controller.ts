@@ -78,6 +78,7 @@ export class AnnouncementController {
       if (tokens.length > 0) {
         void this.fcm.sendDataPush(tokens, {
           type: "ANNOUNCEMENT",
+          notificationId: announcement.id,
           announcementId: announcement.id,
           title: announcement.title,
           body: (announcement.content ?? "").slice(0, 500),

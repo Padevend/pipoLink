@@ -11,22 +11,15 @@ export interface AiTokenStatus {
   timeRemainingMs: number;
 }
 
-export interface AiTokenStatus {
-  tokens: number;
-  maxTokens: number;
-  plan: string;
-  windowHours: number;
-  lastTokenRestorationAt: string;
-  nextRestorationAt: string | null;
-  timeRemainingMs: number;
-}
-
 export interface AiChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   createdAt: string;
   status?: 'send' | 'delivered' | 'read' | 'fail';
+  kind?: 'chat' | 'study-aid';
+  studyAidType?: 'summary' | 'faq' | 'quiz' | 'flashcards' | 'timeline' | 'comparison';
+  clientOrder?: number;
 }
 
 export interface AiSessionResponse {

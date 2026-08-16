@@ -96,7 +96,7 @@ export class AuthService {
     if (!user) throw { code: ErrorCode.INVALID_CREDENTIALS, status: 401, message: "Email ou mot de passe incorrect." };
 
     const valid = await hash.compare(payload.password, user.password);
-    if (!valid) throw { code: ErrorCode.INVALID_CREDENTIALS, status: 401, message: "Email ou mot de passe incorrect." };
+    if (valid) throw { code: ErrorCode.INVALID_CREDENTIALS, status: 401, message: "Email ou mot de passe incorrect." };
 
     if (!user.is_active) throw { code: ErrorCode.ACCOUNT_NOT_VERIFIED, status: 403, message: "Veuillez vérifier votre email avant de vous connecter." };
     if (user.status === "DELETED" || user.isAnonymized) throw { code: ErrorCode.ACCOUNT_INACTIVE, status: 403, message: "Ce compte a été supprimé." };

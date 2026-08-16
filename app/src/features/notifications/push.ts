@@ -126,6 +126,9 @@ function navigateFromNotificationData(data?: Record<string, unknown>): void {
       router.push(`/chat/${conversationId}` as any);
     }, 300);
   }
+  if (data && typeof data.announcementId === 'string' && data.announcementId) {
+    setTimeout(() => { router.push('/announcements' as any); }, 300);
+  }
 }
 
 /**
@@ -164,6 +167,7 @@ export function setupNotificationResponseListener(): () => void {
         if (wsManager.getStatus() === 'connected') return;
         const data = (remoteMessage.data ?? {}) as PushData;
         if (data.type === 'MESSAGE' && data.messageId && !markSeen(data.messageId)) return;
+        if ((data.type === 'ANNOUNCEMENT' || data.type === 'ADMIN_BROADCAST') && data.notificationId && !markSeen(data.notificationId)) return;
         await displayPush(data);
       }),
     );

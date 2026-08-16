@@ -152,15 +152,15 @@ export function InteractiveFlashcardCard({ content }: { content: string }) {
   return (
     <Animated.View
       entering={FadeInDown.duration(200)}
-      className=" bg-white dark:bg-zinc-950 pl-3.5 pr-3 py-2.5"
+      className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/60"
     >
       {/* Header Flashcard Minimaliste */}
       <View className="flex-row items-center justify-between border-b border-zinc-200/50 dark:border-zinc-800/50 pb-1.5 mb-1.5">
         <View className="flex-row items-center gap-1.5">
-          <Text className="text-[9px] font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400">
+          <Text className="text-[11px] font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400">
             Carte mémoire
           </Text>
-          <Text className="text-[9px] text-zinc-400 dark:text-zinc-500">
+          <Text className="text-[11px] text-zinc-400 dark:text-zinc-500">
             {currentIndex + 1} / {cards.length}
           </Text>
         </View>
@@ -182,20 +182,20 @@ export function InteractiveFlashcardCard({ content }: { content: string }) {
       </View>
 
       {/* Carte à Retournement 3D */}
-      <Pressable onPress={toggleFlip} className="min-h-[140px] relative justify-center mb-2">
+      <Pressable onPress={toggleFlip} className="min-h-[180px] relative justify-center mb-2">
         {/* RECTO / QUESTION */}
         <Animated.View
           style={[frontStyle]}
           className={cn(
-            'min-h-[140px] justify-center',
+            'min-h-[180px] justify-center',
             isFlipped ? 'hidden' : 'flex'
           )}
         >
           <View className="flex-row items-start justify-between mb-2">
-            <Text className="text-[9px] font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400">
+            <Text className="text-[11px] font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400">
               Question
             </Text>
-            <Text className="text-[9px] text-zinc-400">Toucher pour révéler</Text>
+            <Text className="text-[11px] text-zinc-400">Toucher pour révéler</Text>
           </View>
 
           <View className="my-auto">
@@ -212,10 +212,10 @@ export function InteractiveFlashcardCard({ content }: { content: string }) {
           )}
         >
           <View className="flex-row items-start justify-between mb-2">
-            <Text className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            <Text className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
               Réponse
             </Text>
-            <Text className="text-[9px] text-zinc-400">Toucher pour révéler</Text>
+            <Text className="text-[11px] text-zinc-400">Toucher pour révéler</Text>
           </View>
 
           <View className="my-auto">
@@ -277,7 +277,7 @@ export function InteractiveFlashcardCard({ content }: { content: string }) {
       {/* Retour discret au début */}
       {currentIndex > 0 && (
         <Pressable onPress={handleReset} className="items-center mt-2">
-          <Text className="text-[9px] text-zinc-400 underline">Recommencer</Text>
+          <Text className="text-[11px] text-zinc-400 underline">Recommencer</Text>
         </Pressable>
       )}
     </Animated.View>

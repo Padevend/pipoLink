@@ -10,6 +10,7 @@ import { useAuth, useToast } from '@/providers';
 import { authApi } from '@/shared/api/auth';
 import { createKeyBackup, generateIdentityKeys, restoreKeyBackup } from '@/shared/crypto';
 import { clearCachedChatKeys } from '@/shared/crypto/reset-device';
+import { refreshExistingConversationKeys } from '@/features/messaging/lib/refresh-conversation-keys';
 import { SECURE_STORAGE_KEYS, SecureStorageService } from '@/shared/lib/storage';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
@@ -214,8 +215,9 @@ export default function KeyRecoveryScreen(): JSX.Element {
               }
 
               // Purge ALL cached chat keys so ensureChatKeyForChat
-              // triggers the 404 → rotation path for old conversations.
+              // triggers a bounded key refresh for existing conversations.
               await clearCachedChatKeys();
+              await refreshExistingConversationKeys();
 
               await SecureStorageService.remove('temp_login_email');
               await SecureStorageService.remove('temp_login_password');

@@ -66,15 +66,15 @@ export function InteractiveComparisonCard({ content }: { content: string }) {
   return (
     <Animated.View
       entering={FadeInDown.duration(200)}
-      className=" bg-white dark:bg-zinc-950 pl-3.5 pr-3 py-2.5"
+      className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/60"
     >
       {/* Header Comparaison Minimaliste */}
-      <View className="flex-row items-center justify-between border-b border-zinc-200/50 dark:border-zinc-800/50 pb-1.5 mb-1.5">
+      <View className="flex-row items-center justify-between border-b border-zinc-200/50 dark:border-zinc-800/50 pb-3 mb-3">
         <View className="flex-row items-center gap-1.5">
-          <Text className="text-[9px] font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400">
+          <Text className="text-[11px] font-bold uppercase tracking-widest text-orange-600 dark:text-orange-400">
             Comparaison
           </Text>
-          <Text className="text-[9px] text-zinc-400 dark:text-zinc-500">
+          <Text className="text-[11px] text-zinc-400 dark:text-zinc-500">
             {subjects.length} sujets • {data.rows.length} critères
           </Text>
         </View>
@@ -103,14 +103,14 @@ export function InteractiveComparisonCard({ content }: { content: string }) {
       </View>
 
       {/* Barre de Recherche de Critères */}
-      <View className="flex-row items-center gap-1.5 px-2.5 h-7 rounded bg-zinc-50/80 dark:bg-zinc-900/80 border border-zinc-200/50 dark:border-zinc-800/50 mb-1.5">
+      <View className="flex-row items-center gap-1.5 px-3 h-10 rounded-xl bg-zinc-50/80 dark:bg-zinc-900/80 border border-zinc-200/50 dark:border-zinc-800/50 mb-1.5">
         <Search size={10} color="#A1A1AA" />
         <TextInput
           placeholder="Filtrer..."
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholderTextColor="#A1A1AA"
-          className="flex-1 text-[10px] text-zinc-800 dark:text-zinc-200 py-0"
+          className="flex-1 text-[12px] text-zinc-800 dark:text-zinc-200 py-0"
         />
       </View>
 
@@ -133,7 +133,7 @@ export function InteractiveComparisonCard({ content }: { content: string }) {
                 >
                   <Text
                     className={cn(
-                      'text-[10px] font-semibold',
+                      'text-[12px] font-semibold',
                       activeTab === idx ? 'text-orange-600 dark:text-orange-400' : 'text-zinc-700 dark:text-zinc-300'
                     )}
                   >
@@ -151,9 +151,9 @@ export function InteractiveComparisonCard({ content }: { content: string }) {
               return (
                 <View
                   key={rIdx}
-                  className="p-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200/40 dark:border-zinc-800/40"
+                  className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/40 dark:border-zinc-800/40"
                 >
-                  <Text className="text-[9px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wide mb-0.5">
+                  <Text className="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wide mb-0.5">
                     {row.criteria}
                   </Text>
                   <MarkdownLatexRenderer content={val} isAi={true} />
@@ -172,13 +172,13 @@ export function InteractiveComparisonCard({ content }: { content: string }) {
               {/* En-tête de Table */}
               <View className="flex-row bg-zinc-50 dark:bg-zinc-800/40 border-b border-zinc-200/60 dark:border-zinc-800/60">
                 <View className="p-1.5 min-w-[80px] border-r border-zinc-200/60 dark:border-zinc-800/60">
-                  <Text className="text-[9px] font-bold text-orange-600 dark:text-orange-400">
+                  <Text className="text-[10px] font-bold text-orange-600 dark:text-orange-400">
                     {data.headers[0]}
                   </Text>
                 </View>
                 {subjects.map((s, idx) => (
                   <View key={idx} className="p-1.5 min-w-[100px] border-r border-zinc-200/60 dark:border-zinc-800/60">
-                    <Text className="text-[9px] font-bold text-zinc-900 dark:text-zinc-100">
+                    <Text className="text-[10px] font-bold text-zinc-900 dark:text-zinc-100">
                       {s}
                     </Text>
                   </View>
@@ -195,7 +195,7 @@ export function InteractiveComparisonCard({ content }: { content: string }) {
                   )}
                 >
                   <View className="p-1.5 min-w-[80px] border-r border-zinc-100 dark:border-zinc-800/40 justify-center">
-                    <Text className="text-[10px] font-semibold text-zinc-800 dark:text-zinc-200">
+                    <Text className="text-[12px] font-semibold text-zinc-800 dark:text-zinc-200">
                       {row.criteria}
                     </Text>
                   </View>

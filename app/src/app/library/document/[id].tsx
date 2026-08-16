@@ -20,6 +20,7 @@ import { useDocument } from '@/entities/document/hooks';
 import { downloadManager } from '@/features/downloads/services/download.manager';
 import { useToast } from '@/providers';
 import { formatBytes } from '@/shared/lib/file';
+import { displayFileName } from '@/shared/lib/display-file-name';
 import { getStaticUri } from '@/shared/lib/static';
 import { Button } from '@/shared/ui/button';
 import { Skeleton } from '@/shared/ui/skeleton';
@@ -96,7 +97,7 @@ export default function DocumentDetailScreen() {
               </View>
               
               <Text className="text-lg font-bold tracking-tight text-center text-zinc-900 dark:text-zinc-50 px-2">
-                {doc.fileName}
+                {displayFileName(doc.fileName)}
               </Text>
 
               {/* Badges Opaques */}

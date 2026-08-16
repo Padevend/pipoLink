@@ -12,7 +12,8 @@ import {
   User,
   Download,
   FileIcon,
-  AlertTriangle
+  AlertTriangle,
+  DatabaseZap
 } from "lucide-react";
 
 export function DocumentsFeat() {
@@ -34,6 +35,8 @@ export function DocumentsFeat() {
     error,
     deleteDocument,
     actionLoading,
+    enqueueIngestion,
+    ingestionLoading,
   } = useDocuments({ page, limit, search: searchQuery });
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -41,6 +44,15 @@ export function DocumentsFeat() {
     setPage(1);
     setSearchQuery(search.trim());
   };
+
+  const handleIngestion = async () => {
+    try {
+      await enqueueIngestion();
+    } catch {
+      // Error feedback is handled by the mutation.
+    }
+  };
+
 
   const executeDelete = async () => {
     if (!docToDelete) return;
@@ -108,6 +120,14 @@ export function DocumentsFeat() {
           <button type="submit" className="hidden" />
         </form>
         
+        <button
+          onClick={handleIngestion}
+          disabled={ingestionLoading}
+          className="inline-flex items-center gap-2 rounded-xl border border-orange-500/20 bg-orange-500 px-3.5 py-2 text-xs font-bold text-white shadow-sm shadow-orange-500/20 transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {ingestionLoading ? <Loader2 size={14} className="animate-spin" /> : <DatabaseZap size={14} />}
+          <span>Ingérer les documents en attente</span>
+        </button>
         <div className="text-xs text-zinc-400 font-bold uppercase tracking-wider">
           {total} document(s) trouvé(s)
         </div>
@@ -124,13 +144,14 @@ export function DocumentsFeat() {
                 <th className="px-6 py-3.5">Partagé par</th>
                 <th className="px-6 py-3.5">Téléchargements</th>
                 <th className="px-6 py-3.5">Date de Partage</th>
+                <th className="px-6 py-3.5">IA</th>
                 <th className="px-6 py-3.5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-zinc-400">
+                  <td colSpan={7} className="px-6 py-12 text-center text-zinc-400">
                     <div className="flex justify-center items-center space-x-2">
                       <Loader2 className="animate-spin text-orange-500" size={16} strokeWidth={2.5} />
                       <span className="text-xs font-semibold">Chargement de la bibliothèque...</span>
@@ -139,7 +160,7 @@ export function DocumentsFeat() {
                 </tr>
               ) : documents.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-zinc-400 text-xs font-medium">
+                  <td colSpan={7} className="px-6 py-12 text-center text-zinc-400 text-xs font-medium">
                     Aucun document trouvé.
                   </td>
                 </tr>
@@ -183,6 +204,11 @@ export function DocumentsFeat() {
                       </div>
                     </td>
 
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-bold ${doc.isIngested ? "bg-emerald-50 text-emerald-700" : doc.ingestionStatus === "FAILED" ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700"}`}>
+                        {doc.isIngested ? "Ingéré" : doc.ingestionStatus === "PROCESSING" ? "En cours" : doc.ingestionStatus === "FAILED" ? "Échec" : "En attente"}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 text-zinc-500 text-xs font-medium">
                       <div className="flex items-center space-x-1.5">
                         <Calendar size={13} className="text-zinc-400" />

@@ -4,6 +4,7 @@ import { ErrorCode } from "../helpers/error-codes.js";
 import { FileService } from "./file.service.js";
 import { FolderResolverService } from "./folder-resolver.service.js";
 import { RagService } from "./rag.service.js";
+import { documentIngestionQueue } from "./document-ingestion-queue.service.js";
 
 const docInclude = {
   uploadedBy: {
@@ -30,6 +31,9 @@ function formatDocument(doc: {
   mimeType: string;
   downloadCount: number;
   moderationStatus: string;
+  isIngested: boolean;
+  ingestionStatus: string;
+  ingestionError: string | null;
   folder_id: string | null;
   uploaded_by_id: string;
   createdAt: Date;
@@ -59,6 +63,9 @@ function formatDocument(doc: {
     mimeType: doc.mimeType,
     downloadCount: doc.downloadCount,
     moderationStatus: doc.moderationStatus,
+    isIngested: doc.isIngested,
+    ingestionStatus: doc.ingestionStatus,
+    ingestionError: doc.ingestionError,
     folderId: doc.folder_id,
     uploadedById: doc.uploaded_by_id,
     createdAt: doc.createdAt,
@@ -76,8 +83,9 @@ function formatDocument(doc: {
  */
 export class LibraryService {
   private fileService = new FileService();
-  private folderResolver = new FolderResolverService();
   private rag = new RagService();
+  private folderResolver = new FolderResolverService();
+
 
   private visibilityWhere(role: string): Record<string, unknown> {
     const where: Record<string, unknown> = {};
@@ -276,28 +284,13 @@ export class LibraryService {
       data: { user_id: userId, action: "DOCUMENT_UPLOADED", targetId: document.id },
     });
 
-    // Ingestion RAG en tâche de fond non-bloquante
-    if (this.rag.isAvailable()) {
-      Promise.resolve().then(async () => {
-        try {
-          await this.rag.ingest({
-            file,
-            originalName: meta.originalName,
-            mimeType: meta.mimeType,
-            documentId: document.id,
-            filiere: filiere || "Général",
-            niveau: niveau || "Général",
-            ue: ue || "Général",
-            type: document.type,
-            ownerId: userId,
-          });
-        } catch (err) {
-          console.error(`[RAG Ingest] Error connecting to RAG agent for document ${document.id}:`, err);
-        }
-      });
-    }
+    await documentIngestionQueue.enqueue(document.id);
 
     return formatDocument(document);
+  }
+
+  async enqueueOutstandingIngestion() {
+    return documentIngestionQueue.enqueueOutstanding();
   }
 
   async downloadDocument(documentId: string, role: string, userId?: string) {
@@ -446,35 +439,50 @@ export class LibraryService {
   }
 
   async getRecommanded(userId: string) {
-    const userDocs = await prisma.document.findMany({
-      where: { uploaded_by_id: userId, type: { not: "AI_ATTACHMENT" } },
-      select: { filiere: true, niveau: true, ue: true },
-      take: 20,
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { profile: { select: { filiere: true, niveau: true } } },
     });
-
-    const filieres = Array.from(new Set(userDocs.map((d) => d.filiere).filter(Boolean)));
-    const niveaux = Array.from(new Set(userDocs.map((d) => d.niveau).filter(Boolean)));
-    const ues = Array.from(new Set(userDocs.map((d) => d.ue).filter(Boolean)));
-
-    const where: Record<string, any> = {
-      OR: [
-        { filiere: { in: filieres } },
-        { niveau: { in: niveaux } },
-        { ue: { in: ues } },
-      ],
-      uploaded_by_id: { not: userId },
-      moderationStatus: "APPROVED",
-      isPublic: true,
-      type: { not: "AI_ATTACHMENT" },
-    };
+    const [userDocs, downloadRows] = await Promise.all([
+      prisma.document.findMany({
+        where: { uploaded_by_id: userId, type: { not: "AI_ATTACHMENT" } },
+        select: { filiere: true, niveau: true, ue: true },
+        take: 30, orderBy: { createdAt: "desc" },
+      }),
+      prisma.download.findMany({
+        where: { user_id: userId }, select: { document_id: true },
+        take: 30, orderBy: { createdAt: "desc" },
+      }),
+    ]);
+    const downloadedDocs = downloadRows.length
+      ? await prisma.document.findMany({
+          where: { id: { in: downloadRows.map((row) => row.document_id) } },
+          select: { filiere: true, niveau: true, ue: true },
+        })
+      : [];
+    const signals = [...userDocs, ...downloadedDocs];
+    const filieres = Array.from(new Set([user?.profile?.filiere, ...signals.map((doc) => doc.filiere)].filter(Boolean)));
+    const niveaux = Array.from(new Set([user?.profile?.niveau, ...signals.map((doc) => doc.niveau)].filter(Boolean)));
+    const ues = Array.from(new Set(signals.map((doc) => doc.ue).filter(Boolean)));
+    const relevance: any[] = [];
+    if (filieres.length) relevance.push({ filiere: { in: filieres } });
+    if (niveaux.length) relevance.push({ niveau: { in: niveaux } });
+    if (ues.length) relevance.push({ ue: { in: ues } });
 
     const docs = await prisma.document.findMany({
-      where,
-      include: docInclude,
-      orderBy: { createdAt: "desc" },
-      take: 10,
+      where: {
+        uploaded_by_id: { not: userId }, moderationStatus: "APPROVED", isPublic: true,
+        type: { not: "AI_ATTACHMENT" }, ...(relevance.length ? { OR: relevance } : {}),
+      },
+      include: docInclude, orderBy: [{ downloadCount: "desc" }, { createdAt: "desc" }], take: 30,
     });
-
-    return { documents: docs.map(formatDocument) };
+    return { documents: docs.map((doc) => {
+      const formatted = formatDocument(doc);
+      const reason = ues.includes(doc.ue) ? `Correspond à votre UE : `
+        : filieres.includes(doc.filiere) && niveaux.includes(doc.niveau) ? "Correspond à votre filière et niveau"
+        : filieres.includes(doc.filiere) ? "Correspond à votre filière"
+        : "Populaire auprès d’étudiants similaires";
+      return { ...formatted, recommendationReason: reason };
+    }).sort((a, b) => Number(b.ue && ues.includes(b.ue)) - Number(a.ue && ues.includes(a.ue))).slice(0, 10) };
   }
 }

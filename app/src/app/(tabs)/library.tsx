@@ -1,4 +1,5 @@
 import { useInitLibrary } from "@/entities/document/hooks/use-library";
+import { useAuth } from "@/providers";
 import { ExplorerFileRow, RenderDocumentItem } from "@/features/library/components/explorer-file-row";
 import { Button } from "@/shared/ui/button";
 import DataUIProvider from "@/shared/ui/data-ui-provider";
@@ -17,6 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const ORANGE_PRINCIPAL = '#FF6B00';
 
 export default function LibraryScreen() {
+  const { user } = useAuth();
   const {
     isLoadingPopular,
     isLoadingRecommended,
@@ -29,7 +31,7 @@ export default function LibraryScreen() {
 
     refetchPopular,
     refetchRecommended
-  } = useInitLibrary()
+  } = useInitLibrary(user?.profile ?? undefined)
 
   const openDocument = useCallback(
     (id: string) => {

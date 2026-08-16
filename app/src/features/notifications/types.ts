@@ -43,7 +43,7 @@ export interface NotificationChannelSettings {
 
 /** Sensible defaults matching the current hard-coded channel in push.ts */
 export const DEFAULT_CHANNEL_SETTINGS: NotificationChannelSettings = {
-  id: 'default',
+  id: 'pipolink-v2',
   name: 'PipoLink',
   importance: AndroidImportance.MAX,
   bypassDnd: false,

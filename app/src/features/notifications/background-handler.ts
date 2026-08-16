@@ -35,6 +35,7 @@ function loadMessaging(): MessagingModule | null {
 
 export type PushData = {
   type?: 'MESSAGE' | 'ANNOUNCEMENT' | 'ADMIN_BROADCAST' | string;
+  notificationId?: string;
   // MESSAGE
   messageId?: string;
   chatId?: string;
@@ -138,7 +139,7 @@ export async function displayPush(data: PushData): Promise<void> {
         id: data.messageId,
         title,
         body,
-        data: { conversationId: data.chatId },
+        data: { conversationId: data.chatId, notificationId: data.notificationId ?? data.messageId },
         android: {
           channelId,
           smallIcon: 'ic_launcher',
@@ -154,7 +155,7 @@ export async function displayPush(data: PushData): Promise<void> {
         id: data.announcementId || undefined,
         title: data.title || 'Nouvelle annonce',
         body: data.body || '',
-        data: data.announcementId ? { announcementId: data.announcementId } : {},
+        data: { announcementId: data.announcementId ?? '', notificationId: data.notificationId ?? data.announcementId ?? '' },
         android: {
           channelId,
           smallIcon: 'ic_launcher',

@@ -5,6 +5,7 @@ import { FileService } from "./file.service.js";
 import { AiTokenService } from "./ai-token.service.js";
 import { TokenPricingService } from "./token-pricing.service.js";
 import { RagService, type RagTokensUsed } from "./rag.service.js";
+import { documentIngestionQueue } from "./document-ingestion-queue.service.js";
 import crypto from "crypto";
 
 function formatDocument(doc: any) {
@@ -362,26 +363,7 @@ export class AiService {
       });
     }
 
-    // RAG Ingestion (non-bloquante)
-    if (this.rag.isAvailable()) {
-      Promise.resolve().then(async () => {
-        try {
-          await this.rag.ingest({
-            file,
-            originalName: meta.originalName,
-            mimeType: meta.mimeType,
-            documentId: document.id,
-            filiere,
-            niveau,
-            ue,
-            type: document.type,
-            ownerId: userId,
-          });
-        } catch (err) {
-          console.error(`[RAG Ingest AI Attachment] Error:`, err);
-        }
-      });
-    }
+    await documentIngestionQueue.enqueue(document.id);
 
     return formatDocument(document);
   }

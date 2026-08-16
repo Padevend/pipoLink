@@ -313,6 +313,14 @@ model Document {
   folder_id        String?  @db.Uuid
   uploaded_by_id   String   @db.Uuid
   hash             String?
+  /// Persistent RAG ingestion queue state.
+  isIngested       Boolean  @default(false)
+  ingestionStatus  String   @default("PENDING")
+  ingestionAttempts Int     @default(0)
+  ingestionError   String?
+  ingestionQueuedAt DateTime @default(now()) @db.Timestamptz
+  ingestionStartedAt DateTime? @db.Timestamptz
+  ingestedAt       DateTime? @db.Timestamptz
   createdAt        DateTime @default(now()) @db.Timestamptz
 
   uploadedBy User  @relation("UserDocuments", fields: [uploaded_by_id], references: [id], onDelete: Cascade)
@@ -322,6 +330,7 @@ model Document {
   @@index([niveau, filiere, ue])
   @@index([downloadCount(sort: Desc)])
   @@index([createdAt(sort: Desc)])
+  @@index([isIngested, ingestionStatus, ingestionQueuedAt])
   @@map("documents")
 }
 

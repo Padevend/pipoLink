@@ -1,9 +1,10 @@
 import { aiApi } from '@/shared/api/ai';
-import type { AiChatMessage, AiSession, AiTokenStatus } from '@/shared/api/ai';
+import type { AiChatMessage } from '@/shared/api/ai';
 import { queryClient } from '@/providers';
 import { aiKeys } from './hooks';
 import { localDb } from '@/shared/storage/local-db';
 import { generateUUID } from '@/shared/utils/uuid';
+import { mergeAiMessages } from './message-order';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -49,6 +50,7 @@ class AiRequestManagerImpl {
   private _abortController: AbortController | null = null;
   private _listeners = new Map<AiManagerEvent, Set<Listener>>();
   private _processing = false;
+  private _clientOrder = 0;
   /** Cached snapshot — rebuilt only when the queue actually changes. */
   private _cachedState: AiManagerState | null = null;
 
@@ -90,6 +92,7 @@ class AiRequestManagerImpl {
           content: message,
           status: 'send',
           createdAt: new Date().toISOString(),
+          clientOrder: ++this._clientOrder,
         },
       ];
     });
@@ -290,7 +293,7 @@ class AiRequestManagerImpl {
         newMessages.push(result.message);
       }
 
-      const updated = [...existing, ...newMessages];
+      const updated = mergeAiMessages(existing, newMessages);
       localDb.upsertAiMessages(result.session.id, updated);
       return updated;
     });
@@ -312,7 +315,10 @@ class AiRequestManagerImpl {
     queryClient.setQueryData(aiKeys.history(item.sessionId), (old: any) => {
       const existing = old || [];
       if (!existing.some((msg: any) => msg.id === result.message.id)) {
-        return [...existing, result.message];
+        const studyAid: AiChatMessage = { ...result.message, kind: result.message.kind ?? 'study-aid', studyAidType: result.message.studyAidType ?? item.payload.studyAidType as AiChatMessage['studyAidType'] };
+        const updated = mergeAiMessages(existing, [studyAid]);
+        localDb.upsertAiMessages(item.sessionId, updated);
+        return updated;
       }
       return existing;
     });

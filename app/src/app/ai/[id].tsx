@@ -32,6 +32,7 @@ import {
   HelpCircle,
   Layers,
   Send,
+  Plus,
   Sparkles,
   Zap,
 } from 'lucide-react-native';
@@ -43,7 +44,6 @@ import {
   Modal,
   Platform,
   Pressable,
-  ScrollView,
   Text,
   View
 } from 'react-native';
@@ -97,9 +97,10 @@ export default function AiChatScreen() {
   const [addSourceVisible, setAddSourceVisible] = useState(false);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [lastStudyAidType, setLastStudyAidType] = useState<string>('chat');
+  const [studyMenuOpen, setStudyMenuOpen] = useState(false);
 
   const handleSend = () => {
-    if (!text.trim() || isAnyPending) return;
+    if (!text.trim()) return;
     const msg = text.trim();
     clearDraft();
     sendMessage(msg);
@@ -130,14 +131,15 @@ export default function AiChatScreen() {
   };
 
   const handleGenerateStudyAid = (type: string) => {
-    if (isAnyPending) return;
+    if (!activeDocs?.length) return;
+    setStudyMenuOpen(false);
     setLastStudyAidType(type);
     generateStudyAid(type);
     flatListRef.current?.scrollToEnd({ animated: true });
   };
 
-  const renderMessageContent = (content: string, isAi: boolean) => {
-    return <StudyAidSmartRenderer content={content} isAi={isAi} />;
+  const renderMessageContent = (content: string, isAi: boolean, studyAidType?: 'summary' | 'faq' | 'quiz' | 'flashcards' | 'timeline' | 'comparison') => {
+    return <StudyAidSmartRenderer content={content} isAi={isAi} studyAidType={studyAidType} />;
   };
 
   const { data: tokensData } = useAiTokens();
@@ -198,34 +200,6 @@ export default function AiChatScreen() {
       </View>
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
-
-        {/* Pilules Horizontales d'Outils d'Étude */}
-        <View className="border-b border-zinc-100/60 bg-zinc-50/40 dark:border-zinc-900/60 dark:bg-zinc-950/40 py-2 z-50">
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 6 }}>
-            {STUDY_AIDS.map((aid) => {
-              const Icon = aid.icon;
-              const isDisabled = isAnyPending || activeDocs?.length === 0;
-              return (
-                <Pressable
-                  key={aid.id}
-                  disabled={isDisabled}
-                  onPress={() => handleGenerateStudyAid(aid.id)}
-                  className={cn(
-                    "flex-row items-center gap-1.5 px-3 h-7 rounded-full border",
-                    isDisabled
-                      ? "bg-zinc-50/60 dark:bg-zinc-900/40 border-zinc-200/40 dark:border-zinc-800/40 opacity-40"
-                      : "bg-white border-zinc-200/80 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800 shadow-2xs"
-                  )}
-                >
-                  <Icon size={11} color={isDisabled ? "#A1A1AA" : "#F97316"} />
-                  <Text className={cn("text-[10px] font-semibold tracking-tight", isDisabled ? "text-zinc-400 dark:text-zinc-600" : "text-zinc-700 dark:text-zinc-300")}>
-                    {aid.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        </View>
 
         {/* Historique des Messages */}
         {historyLoading ? (
@@ -317,7 +291,7 @@ export default function AiChatScreen() {
                           HIRO
                         </Text>
                         <View className="py-0.5">
-                          {renderMessageContent(item.content, isAi)}
+                          {renderMessageContent(item.content, isAi, item.studyAidType)}
                         </View>
                       </View>
                     ) : (
@@ -326,7 +300,7 @@ export default function AiChatScreen() {
                         <Text className="text-[10px] font-semibold tracking-wider text-zinc-400 dark:text-zinc-500 uppercase mb-1.5">
                           Énoncé
                         </Text>
-                        {renderMessageContent(item.content, isAi)}
+                        {renderMessageContent(item.content, isAi, item.studyAidType)}
                       </View>
                     )}
                   </Pressable>
@@ -395,77 +369,21 @@ export default function AiChatScreen() {
             )}
           </View>
         )}
-
-        {/* Barre de Saisie Opaque */}
-        <View
-          className="border-t border-zinc-100 bg-white p-3 dark:border-zinc-900 dark:bg-zinc-950"
-          style={{ paddingBottom: Math.max(insets.bottom, 12) }}
-        >
-          <View className="flex-row items-end gap-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-1">
-            <View className="flex-1">
-              <Input
-                placeholder={tokensData && tokensData.tokens < 20 ? "Solde de jetons insuffisant..." : "Posez votre question..."}
-                value={text}
-                onChangeText={setText}
-                editable={!tokensData || tokensData.tokens >= 20}
-                multiline
-                containerClassName="bg-transparent border-0 min-h-[36px] max-h-[100px] px-2"
-                className="text-xs text-zinc-900 dark:text-zinc-50"
-              />
+        {/* Composer */}
+        <View className="border-t border-zinc-100 bg-white px-4 pt-3 dark:border-zinc-900 dark:bg-zinc-950" style={{ paddingBottom: Math.max(insets.bottom, 14) }}>
+          <View className="relative mx-auto w-full max-w-[680px]">
+            {studyMenuOpen && (<View className="absolute bottom-[66px] left-0 right-0 z-50 rounded-2xl border border-zinc-200 bg-white p-2 shadow-lg dark:border-zinc-800 dark:bg-zinc-900"><Text className="mb-2 px-2 pt-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400">Outils de révision</Text><View className="flex-row flex-wrap">{STUDY_AIDS.map((aid) => { const Icon = aid.icon; const disabled = !activeDocs?.length; return <Pressable key={aid.id} disabled={disabled} onPress={() => handleGenerateStudyAid(aid.id)} className={cn("w-1/2 flex-row items-center gap-2 rounded-xl px-3 py-3", disabled && "opacity-40")}><View className="h-8 w-8 items-center justify-center rounded-lg bg-orange-500/10"><Icon size={15} color="#F97316" /></View><Text className="text-xs font-semibold text-zinc-800 dark:text-zinc-100">{aid.label}</Text></Pressable>; })}</View></View>)}
+            <View className="flex-row items-end rounded-[22px] border border-zinc-200 bg-zinc-50 p-1.5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+              <Pressable onPress={() => setStudyMenuOpen((open) => !open)} className={cn("mb-0.5 h-9 w-9 items-center justify-center rounded-full", studyMenuOpen ? "bg-orange-500" : "bg-white dark:bg-zinc-800")}><Plus size={18} color={studyMenuOpen ? "#FFFFFF" : "#71717A"} /></Pressable>
+              <View className="min-h-[42px] flex-1 justify-center px-1"><Input placeholder={tokensData && tokensData.tokens < 20 ? "Solde de jetons insuffisant" : "Demandez une explication, un plan ou une analyse"} value={text} onChangeText={setText} editable={!tokensData || tokensData.tokens >= 20} multiline containerClassName="min-h-[42px] border-0 bg-transparent px-1" className="text-[13px] leading-5 text-zinc-900 dark:text-zinc-50" /></View>
+              <Pressable onPress={() => void handleSend()} disabled={!text.trim() || (!!tokensData && tokensData.tokens < 20)} className={cn("mb-0.5 h-9 w-9 items-center justify-center rounded-full", text.trim() && (!tokensData || tokensData.tokens >= 20) ? "bg-zinc-900 dark:bg-white" : "bg-zinc-200 dark:bg-zinc-800")}><Send size={16} color={text.trim() ? "#FFFFFF" : "#A1A1AA"} /></Pressable>
             </View>
-
-            <Pressable
-              onPress={() => void handleSend()}
-              disabled={!text.trim() || isAnyPending || (!!tokensData && tokensData.tokens < 20)}
-              className={cn(
-                'h-9 w-9 items-center justify-center rounded-lg active:opacity-90',
-                text.trim() && !isAnyPending && (!tokensData || tokensData.tokens >= 20)
-                  ? 'bg-orange-500'
-                  : 'bg-transparent opacity-30',
-              )}
-            >
-              <Send size={14} color={text.trim() ? '#FFFFFF' : '#71717A'} />
-            </Pressable>
+            <Text className="mt-2 text-center text-[10px] text-zinc-400">HIRO peut se tromper. Vérifiez les notions importantes.</Text>
           </View>
         </View>
       </KeyboardAvoidingView>
-
-      {/* Modal 1: Gestion des Sources Actives */}
-      <Modal
-        visible={sourcesModalVisible}
-        animationType="slide"
-        transparent={true}
-        statusBarTranslucent
-        onRequestClose={() => setSourcesModalVisible(false)}
-      >
-        <SourceModal
-          setSourcesModalVisible={setSourcesModalVisible}
-          docsLoading={docsLoading}
-          activeDocs={activeDocs}
-          handleRemoveDocument={handleRemoveDocument}
-          setAddSourceVisible={setAddSourceVisible}
-          removeDocMutation={removeDocMutation}
-          handleAddDocument={handleAddDocument}
-        />
-      </Modal>
-
-      {/* Modal 2: Sélection de documents de la bibliothèque */}
-      <Modal
-        visible={addSourceVisible}
-        animationType="slide"
-        statusBarTranslucent
-        transparent={true}
-        onRequestClose={() => setAddSourceVisible(false)}
-      >
-        <LibraryModal
-          setAddSourceVisible={setAddSourceVisible}
-          libraryDocs={libraryDocs}
-          activeDocs={activeDocs}
-          handleAddDocument={handleAddDocument}
-          handleRemoveDocumentGlobal={handleRemoveDocumentGlobal}
-          myDocsLoading={myDocsLoading || aiDocsLoading}
-        />
-      </Modal>
+      <Modal visible={sourcesModalVisible} animationType="slide" transparent statusBarTranslucent onRequestClose={() => setSourcesModalVisible(false)}><SourceModal setSourcesModalVisible={setSourcesModalVisible} docsLoading={docsLoading} activeDocs={activeDocs} handleRemoveDocument={handleRemoveDocument} setAddSourceVisible={setAddSourceVisible} removeDocMutation={removeDocMutation} handleAddDocument={handleAddDocument} /></Modal>
+      <Modal visible={addSourceVisible} animationType="slide" statusBarTranslucent transparent onRequestClose={() => setAddSourceVisible(false)}><LibraryModal setAddSourceVisible={setAddSourceVisible} libraryDocs={libraryDocs} activeDocs={activeDocs} handleAddDocument={handleAddDocument} handleRemoveDocumentGlobal={handleRemoveDocumentGlobal} myDocsLoading={myDocsLoading || aiDocsLoading} /></Modal>
     </SafeAreaView>
   );
 }

@@ -75,8 +75,8 @@ export async function getChatKeyStatus(chatId: string): Promise<'valid' | 'inval
  * À utiliser après récupération de clés pour forcer la génération de nouvelles clés pour un chat spécifique.
  */
 export async function rotateChatKeyForRecovery(chatId: string): Promise<void> {
+  await SecureStorageService.remove('chat_key_' + chatId);
   await rotateOnce(chatId);
-  await SecureStorageService.remove(`chat_key_${chatId}`);
 }
 
 /**
@@ -85,7 +85,6 @@ export async function rotateChatKeyForRecovery(chatId: string): Promise<void> {
  */
 export async function purgeConversationCache(): Promise<void> {
   // Pas besoin d'importer clearCachedChatKeys pour éviter les imports circulaires
-  const { CHAT_KEY_REGISTRY } = await import('@/shared/lib/storage').then(m => m.SECURE_STORAGE_KEYS);
   const { clearCachedChatKeys } = await import('@/shared/crypto/reset-device').then(m => m);
   await clearCachedChatKeys();
 }

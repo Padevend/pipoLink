@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import { aiApi } from '@/shared/api/ai';
 import { localDb } from '@/shared/storage/local-db';
 import { generateUUID } from '@/shared/utils/uuid';
+import { mergeAiMessages, sortAiMessages } from './message-order';
 
 export const aiKeys = {
   all: ['ai'] as const,
@@ -45,11 +46,11 @@ export const useAiHistory = (sessionId: string) => {
       try {
         const remote = await aiApi.getSessionHistory(sessionId);
         localDb.upsertAiMessages(sessionId, remote.messages);
-        return remote.messages;
+        return sortAiMessages(remote.messages);
       } catch (e) {
         // Fallback to local cache — wrapped in its own try/catch to never crash
         try {
-          return localDb.getAiMessages(sessionId);
+          return sortAiMessages(localDb.getAiMessages(sessionId));
         } catch {
           return [];
         }
@@ -167,7 +168,7 @@ export const useAiChat = () => {
             newMessages.push(data.message);
           }
           
-          const updated = [...existing, ...newMessages];
+          const updated = mergeAiMessages(existing, newMessages);
           localDb.upsertAiMessages(data.session.id, updated);
           return updated;
         });

@@ -1,5 +1,7 @@
+import crypto from "node:crypto";
 import { HttpContext } from "../../config/app.js";
 import { prisma } from "../../config/database.js";
+import { documentIngestionQueue } from "../services/document-ingestion-queue.service.js";
 import { ApiResponse } from "../helpers/api-response.js";
 import { NotificationService } from "../services/notification.service.js";
 import { FCMService } from "../../src/app/services/fcm.service.js";
@@ -462,6 +464,9 @@ export class AdminController {
           mimeType: doc.mimeType,
           downloadCount: doc.downloadCount,
           moderationStatus: doc.moderationStatus,
+          isIngested: doc.isIngested,
+          ingestionStatus: doc.ingestionStatus,
+          ingestionError: doc.ingestionError,
           createdAt: doc.createdAt,
           uploadedBy: {
             id: doc.uploaded_by_id,
@@ -487,6 +492,19 @@ export class AdminController {
   /**
    * Supprime un document.
    */
+  async enqueueDocumentIngestion(c: HttpContext) {
+    try {
+      const queued = await documentIngestionQueue.enqueueOutstanding();
+      const adminId = c.get("userId") as string;
+      await prisma.auditLog.create({ data: { user_id: adminId, action: "DOCUMENT_INGESTION_QUEUED", targetId: null } });
+      return ApiResponse.success(c, { queued }, `${queued} document(s) ajouté(s) à la file d’ingestion.`);
+    } catch (error) {
+      console.error("[AdminController.enqueueDocumentIngestion] Error:", error);
+      return ApiResponse.error(c, "INTERNAL_ERROR", "Impossible de lancer l’ingestion.", 500);
+    }
+  }
+
+
   async deleteDocument(c: HttpContext) {
     try {
       const documentId = c.req.param("id") as string;
@@ -738,6 +756,7 @@ export class AdminController {
         if (tokens.length > 0) {
           void this.fcm.sendDataPush(tokens, {
             type: "ADMIN_BROADCAST",
+            notificationId: crypto.randomUUID(),
             title: payload.title,
             body: payload.body,
           });

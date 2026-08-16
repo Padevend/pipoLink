@@ -1,4 +1,4 @@
-const API_URL = "https://api-plink.lyrastudio.org";//"http://127.0.0.1:3000"//"https://api-plink.lyrastudio.org";
+const API_URL = "http://127.0.0.1:3000"//"https://api-plink.lyrastudio.org";
 
 import type { User } from "@/entities/users";
 export type { User };
@@ -28,6 +28,9 @@ export interface Document {
   mimeType: string;
   downloadCount: number;
   moderationStatus: string;
+  isIngested: boolean;
+  ingestionStatus: "PENDING" | "PROCESSING" | "INGESTED" | "FAILED";
+  ingestionError?: string | null;
   createdAt: string;
   uploadedBy: {
     id: string;
@@ -117,6 +120,7 @@ class APIServices{
     this.updateUserRole = this.updateUserRole.bind(this);
     this.getDocuments = this.getDocuments.bind(this);
     this.deleteDocument = this.deleteDocument.bind(this);
+    this.enqueueDocumentIngestion = this.enqueueDocumentIngestion.bind(this);
     this.getSubscriptions = this.getSubscriptions.bind(this);
     this.getPayments = this.getPayments.bind(this);
     this.getUpdates = this.getUpdates.bind(this);
@@ -205,6 +209,11 @@ class APIServices{
   async getDocuments(page = 1, limit = 10, search = ""): Promise<{ documents: Document[]; total: number; page: number; limit: number; totalPages: number }> {
     return this.sendRequest(`/admin/documents?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`);
   }
+
+  async enqueueDocumentIngestion(): Promise<{ queued: number }> {
+    return this.sendRequest("/admin/documents/ingest", { method: "POST" });
+  }
+
 
   async deleteDocument(id: string): Promise<void> {
     return this.sendRequest(`/admin/documents/${id}`, { method: "DELETE" });
