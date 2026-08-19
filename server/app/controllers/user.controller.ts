@@ -82,9 +82,9 @@ export class UserController {
    */
   async deleteAccount(c: HttpContext) {
     const userId = c.get("userId") as string;
-    const { password } = await c.validateUsing(deleteAccountValidator);
+    const { email } = await c.validateUsing(deleteAccountValidator);
 
-    const result = await this.deletionService.execute(userId, password);
+    const result = await this.deletionService.execute(userId, email);
     return ApiResponse.success(c, result, "Compte supprimé avec succès.");
   }
 }

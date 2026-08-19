@@ -6,6 +6,6 @@ import vine from "@vinejs/vine";
  */
 export const deleteAccountValidator = vine.compile(
   vine.object({
-    password: vine.string().minLength(1),
+    email: vine.string().email(),
   })
 );

@@ -63,7 +63,7 @@ export default function DeleteAccountScreen() {
     formState: { errors },
   } = useForm<DeleteAccountFormValues>({
     resolver: zodResolver(deleteAccountSchema),
-    defaultValues: { password: '' },
+    defaultValues: { email: '' },
   });
 
   const onSubmit = (data: DeleteAccountFormValues) => {
@@ -77,7 +77,7 @@ export default function DeleteAccountScreen() {
           style: 'destructive',
           onPress: () => {
             mutate(
-              { password: data.password },
+              { email: data.email },
               {
                 onSuccess: async () => {
                   queryClient.clear();
@@ -185,21 +185,20 @@ export default function DeleteAccountScreen() {
         {/* Formulaire de validation */}
         <Animated.View entering={FadeInDown.delay(160).springify()} className="gap-y-3.5">
           <Text className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 px-1">
-            Pour confirmer, saisissez votre mot de passe :
+            Pour confirmer, saisissez votre email :
           </Text>
 
           <Controller
             control={control}
-            name="password"
+            name="email"
             render={({ field: { onChange, value } }) => (
               <Input
-                placeholder="Mot de passe"
+                placeholder="Email"
                 value={value}
                 onChangeText={onChange}
-                secureTextEntry
                 autoCapitalize="none"
                 leftIcon={Lock}
-                error={errors.password?.message}
+                error={errors.email?.message}
               />
             )}
           />

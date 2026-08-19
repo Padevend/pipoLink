@@ -6,7 +6,7 @@ export interface ChangePasswordPayload {
 }
 
 export interface DeleteAccountPayload {
-  password: string;
+  email: string;
 }
 
 export interface DeleteAccountResponse {

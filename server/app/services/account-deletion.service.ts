@@ -61,11 +61,11 @@ export class AccountDeletionService {
    * Point d'entrée principal — exécute le workflow complet de suppression de compte.
    *
    * @param userId   - ID de l'utilisateur à supprimer
-   * @param password - Mot de passe pour vérification d'identité
+   * @param email - Email pour vérification d'identité
    * @returns        - Résultat de succès si la transaction a commit
-   * @throws         - 401 mot de passe incorrect, 409 déjà supprimé, 500 erreur interne
+   * @throws         - 401 email incorrect, 409 déjà supprimé, 500 erreur interne
    */
-  async execute(userId: string, password: string): Promise<AccountDeletionResult> {
+  async execute(userId: string, email: string): Promise<AccountDeletionResult> {
     // ── 1. Vérification d'identité ──────────────────────────────────────────
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -85,13 +85,11 @@ export class AccountDeletionService {
       };
     }
 
-    // Vérifier le mot de passe
-    const passwordValid = await hash.compare(password, user.password);
-    if (!passwordValid) {
+    if (user.email !== email) {
       throw {
         code: ErrorCode.INVALID_CREDENTIALS,
         status: 401,
-        message: "Mot de passe incorrect.",
+        message: "Email incorrect.",
       };
     }
 

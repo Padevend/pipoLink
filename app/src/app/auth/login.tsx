@@ -1,86 +1,85 @@
 import { ImageBackground, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LoginForm } from '@/features/auth/components/login-form';
 import { AppLogo } from '@/shared/ui/app-logo';
-import { useEffect } from 'react';
-import { useTheme } from '@/shared/hooks/use-theme';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function LoginScreen() {
-  const {setMode} = useTheme()
   const insets = useSafeAreaInsets();
-
-  useEffect(()=>{
-    setMode("dark")
-  }, [])
 
   return (
     <View className="flex-1 bg-zinc-950">
       <StatusBar style="light" />
 
-      {/* ARRIÈRE-PLAN IMMERSIF NET */}
-      <View className="absolute inset-0 w-full h-full">
-        <ImageBackground
-          source={require("@/assets/images/bg_002.jpg")}
-          className="w-full h-full"
-          resizeMode="cover"
-        >
-          {/* Filtre mat de contraste solide (opaque à 85% pour bloquer les bruits de l'image) */}
-          <View className="absolute inset-0 bg-zinc-950/85 dark:bg-black/90" />
-        </ImageBackground>
-      </View>
-
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={insets.top}
         className="flex-1"
       >
         <ScrollView
-          contentContainerStyle={{
-            flexGrow: 1,
-            justifyContent: 'center',
-            paddingTop: insets.top + 32,
-            paddingBottom: insets.bottom + 32,
-            paddingLeft: insets.left + 16,
-            paddingRight: insets.right + 16
-          }}
+          contentContainerStyle={{ flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          className="flex-1"
+          bounces={false}
         >
-          {/* IDENTITÉ VISUELLE GÉOMÉTRIQUE */}
-          <View className="items-center mb-6">
-            <View className="mb-4 bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
-              <AppLogo size="lg" showWordmark={false} />
-            </View>
+          {/* Image de fond avec overlay sombre pour un rendu ultra propre */}
+            <ImageBackground
+              source={require("@/assets/images/bg_002.jpg")}
+              className="absolute inset-0 w-full h-full min-h-[280px] h-[40vh] "
+              resizeMode="cover"
+            />
+          {/* 1. SECTION HAUTE (HERO IMMERSIF ~ 35-40% DE L'ÉCRAN) */}
+          <View className="relative w-full min-h-[280px] h-[40vh] justify-between px-6 pb-10" style={{ paddingTop: insets.top + 16 }}>
             
-            <Text className="text-center text-xl font-bold text-white tracking-tight">
-              Espace Académique
-            </Text>
-            
-            <Text className="text-center text-xs font-semibold leading-5 text-zinc-400 mt-2 px-4">
-              Connectez-vous à votre portail sécurisé pour accéder à vos cours, notes et services.
-            </Text>
-          </View>
+            {/* Superposition de dégradé sombre et flou artistique */}
+            <View className="absolute inset-0 bg-zinc-950/70 backdrop-blur-md" />
+            <View className="absolute inset-0 bg-gradient-to-b from-zinc-950/40 via-zinc-950/80 to-zinc-950" />
 
-          {/* FORMULAIRE EN PANNEAU MAT (Adaptatif Light/Dark) */}
-          <View className="w-full rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-900 dark:bg-zinc-950">
-            
-            {/* En-tête interne rectiligne */}
-            <View className="mb-4 items-center">
-              <Text className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-                Identification
+            {/* En-tête Héro */}
+            <View className="flex-row items-center justify-between z-10">
+              <AppLogo size="md" showWordmark={false} />
+              <View className="px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20">
+                <Text className="text-[10px] font-bold uppercase tracking-widest text-orange-400">
+                   Académique
+                </Text>
+              </View>
+            </View>
+
+            {/* Accroche Éditoriale */}
+            <View className="z-10 mt-auto">
+              <Text className="text-xs font-bold uppercase tracking-widest text-orange-500 mb-1.5">
+                Portail d'Apprentissage
               </Text>
-              {/* Ligne d'accent orange plat géométrique */}
-              <View className="h-[2px] w-5 bg-orange-500 mt-1.5" />
+              <Text className="text-3xl font-black tracking-tight text-white leading-none">
+                Connexion à{"\n"}l'espace
+              </Text>
+              <Text className="text-xs font-medium text-zinc-400 mt-2 max-w-[320px] leading-relaxed">
+                Accédez à vos sessions de travail, vos notes actualisées et vos outils d'assistance IA.
+              </Text>
             </View>
-
-            {/* Formulaire fonctionnel */}
-            <LoginForm />
-            
           </View>
 
+          {/* 2. SECTION BASSE (PANNEAU DU FORMULAIRE PLEINE LARGEUR ~ 60-65% DE L'ÉCRAN) */}
+          <View 
+            className="flex-1 w-full bg-white dark:bg-zinc-900 rounded-t-[36px] px-6 pt-7 border-t border-zinc-200/50 dark:border-zinc-800/80 shadow-2xl"
+            style={{ paddingBottom: Math.max(insets.bottom + 24, 32) }}
+          >
+            {/* Barre de drag visuelle subtile */}
+            <View className="w-12 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700 self-center mb-6 opacity-60" />
+
+            {/* Header du Formulaire */}
+            <View className="mb-6 flex-row items-center justify-between border-b border-zinc-100 dark:border-zinc-800/80 pb-3">
+              <View className="flex-row items-center gap-2">
+                <View className="h-2 w-2 rounded-full bg-emerald-500" />
+                <Text className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                  Identification Sécurisée
+                </Text>
+              </View>
+            </View>
+
+            {/* Formulaire Intégré */}
+            <LoginForm />
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

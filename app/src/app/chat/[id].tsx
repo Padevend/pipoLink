@@ -152,29 +152,41 @@ export default function ChatScreen() {
             <ArrowLeft size={16} color="#A1A1AA" />
           </Pressable>
 
-          <View className="">
-            <Avatar name={chatName} uri={chatAvatar} size="sm" role={userAccountRole} />
-          </View>
-
-          <View className="flex-1 justify-center">
-            <Text
-              className="text-sm font-black tracking-tight text-zinc-900 dark:text-zinc-50"
-              numberOfLines={1}
-            >
-              {chatName}
-            </Text>
-
-            {/* Catégorie technique du chat */}
-            <View className="flex-row items-center gap-1 mt-0.5">
-              <View className={cn(
-                "h-1.5 w-1.5 rounded-full",
-                activeConversation?.type === 'group' ? "bg-orange-500" : "bg-zinc-400 dark:bg-zinc-500"
-              )} />
-              <Text className="font-mono text-[9px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
-                {activeConversation?.type === 'group' ? 'Canal // Groupe' : 'Canal // Privé'}
-              </Text>
+          <Pressable
+            className='w-full flex-row items-center gap-2'
+            onPress={() => {
+              setMenuOpen(false);
+              if (activeConversation.type === 'group') {
+                router.push(`/group/${id}` as any);
+              } else {
+                router.push(`/user/${otherMembers[0]?.id}`);
+              }
+            }}
+          >
+            <View className="">
+              <Avatar name={chatName} uri={chatAvatar} size="sm" role={userAccountRole} />
             </View>
-          </View>
+
+            <View className="flex-1 justify-center">
+              <Text
+                className="text-sm font-black tracking-tight text-zinc-900 dark:text-zinc-50"
+                numberOfLines={1}
+              >
+                {chatName}
+              </Text>
+
+              {/* Catégorie technique du chat */}
+              <View className="flex-row items-center gap-1 mt-0.5">
+                <View className={cn(
+                  "h-1.5 w-1.5 rounded-full",
+                  activeConversation?.type === 'group' ? "bg-orange-500" : "bg-zinc-400 dark:bg-zinc-500"
+                )} />
+                <Text className="font-mono text-[9px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+                  {activeConversation?.type === 'group' ? 'Canal // Groupe' : 'Canal // Privé'}
+                </Text>
+              </View>
+            </View>
+          </Pressable>
         </View>
 
         {/* Boutons d'outils du haut */}
@@ -264,6 +276,6 @@ export default function ChatScreen() {
 
       {/* Zone principale des messages de discussion */}
       <ChatView conversation={activeConversation} />
-    </SafeAreaView>
+    </SafeAreaView >
   );
 }

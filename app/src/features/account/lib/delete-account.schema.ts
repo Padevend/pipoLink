@@ -1,9 +1,7 @@
 import { z } from 'zod';
 
 export const deleteAccountSchema = z.object({
-  password: z
-    .string()
-    .min(1, 'Le mot de passe est requis pour confirmer la suppression.'),
+  email: z.string().email('Veuillez entrer une adresse e-mail valide.'),
 });
 
 export type DeleteAccountFormValues = z.infer<typeof deleteAccountSchema>;

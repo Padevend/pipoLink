@@ -101,76 +101,73 @@ export function LoginForm() {
     }
   };
 
-  // VUE 1 : SÉLECTION DU MODE DE CONNEXION (Mat & Linéaire)
+  // VUE 1 : SÉLECTION DU MODE DE CONNEXION
   if (mode === 'choose') {
     return (
       <View className="w-full">
-        <Text className="mb-4 text-center text-[11px] font-semibold text-zinc-400 dark:text-zinc-500">
-          Sélectionnez la méthode d'authentification requise par votre équipement :
+        <Text className="mb-4 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          Sélectionnez la méthode d'authentification adaptée à votre équipement :
         </Text>
 
-        {/* Bloc Unique Mat et Opaque */}
-        <View className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-900 dark:bg-zinc-950 mb-5">
-
+        <View className="gap-y-3">
           {/* Option A : Appareil Principal */}
           <Pressable
             onPress={() => setMode('primary')}
-            className="flex-row items-center justify-between p-4 active:bg-zinc-50 dark:active:bg-zinc-900/50"
+            className="flex-row items-center justify-between p-4 rounded-2xl border border-zinc-200/80 bg-zinc-50/80 dark:bg-zinc-800/40 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800/80 transition-all"
           >
-            <View className="flex-row items-center gap-3 flex-1">
-              <View className="h-8 w-8 items-center justify-center rounded-lg bg-orange-50 border border-orange-200 dark:bg-orange-950/30 dark:border-orange-900/50">
-                <Laptop size={14} color="#F97316" />
+            <View className="flex-row items-center gap-3.5 flex-1">
+              <View className="h-11 w-11 items-center justify-center rounded-xl bg-orange-500/10 border border-orange-500/20">
+                <Laptop size={20} color="#F97316" />
               </View>
               <View className="flex-1">
-                <Text className="text-xs font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
                   Appareil principal
                 </Text>
-                <Text className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 mt-0.5">
-                  Compte local — email et mot de passe de l'étudiant
+                <Text className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  Email et mot de passe de votre compte étudiant
                 </Text>
               </View>
             </View>
-            <ChevronRight size={14} color="#71717A" />
+            <ChevronRight size={18} color="#A1A1AA" />
           </Pressable>
-
-          {/* Séparateur interne pixelisé */}
-          <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-900" />
 
           {/* Option B : Associer un Appareil */}
           <Pressable
             onPress={() => router.push('/auth/link-device' as any)}
-            className="flex-row items-center justify-between p-4 active:bg-zinc-50 dark:active:bg-zinc-900/50"
+            className="flex-row items-center justify-between p-4 rounded-2xl border border-zinc-200/80 bg-zinc-50/80 dark:bg-zinc-800/40 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800/80 transition-all"
           >
-            <View className="flex-row items-center gap-3 flex-1">
-              <View className="h-8 w-8 items-center justify-center rounded-lg bg-teal-50 border border-teal-200 dark:bg-teal-950/30 dark:border-teal-900/50">
-                <Link2 size={14} color="#14B8A6" />
+            <View className="flex-row items-center gap-3.5 flex-1">
+              <View className="h-11 w-11 items-center justify-center rounded-xl bg-teal-500/10 border border-teal-500/20">
+                <Link2 size={20} color="#14B8A6" />
               </View>
               <View className="flex-1">
-                <Text className="text-xs font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
                   Associer cet appareil
                 </Text>
-                <Text className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 mt-0.5">
-                  Équipement secondaire — Validation via QR ou code
+                <Text className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  Équipement secondaire (Validation QR / code)
                 </Text>
               </View>
             </View>
-            <ChevronRight size={14} color="#71717A" />
+            <ChevronRight size={18} color="#A1A1AA" />
           </Pressable>
         </View>
 
-        {/* Pied du formulaire : Lien alternatif */}
-        <View className="flex flex-col justify-center items-center gap-1.5 pt-2">
-          <Text className="text-xs font-semibold text-zinc-400 dark:text-zinc-500">
-            Nouveau sur la plateforme ?
-          </Text>
-          <Pressable
-            onPress={() => router.push('/auth/register')}
-            className="flex-1 flex-row w-full py-5 mt-2 items-center justify-center gap-2 border border-orange-500 bg-orange-500 rounded-xl"
-          >
-            <UserPlus size={15} color="#FFF" strokeWidth={2.5} />
-            <Text className="text-[11px] font-bold text-white uppercase tracking-wider">Créer un compte</Text>
-          </Pressable>
+        {/* Séparateur fluide */}
+        <View className="flex-row items-center my-5">
+          <View className="flex-1 h-[1px] bg-zinc-200/80 dark:bg-zinc-800" />
+          <Text className="px-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Nouveau venu ?</Text>
+          <View className="flex-1 h-[1px] bg-zinc-200/80 dark:bg-zinc-800" />
         </View>
+
+        {/* Bouton d'Inscription */}
+        <Pressable
+          onPress={() => router.push('/auth/register')}
+          className="flex-row items-center justify-center gap-2.5 py-5 px-6 rounded-2xl bg-orange-500 active:opacity-90"
+        >
+          <UserPlus size={16} className="text-white" color={Platform.OS === 'ios' ? undefined : '#FFF'} strokeWidth={2.5} />
+          <Text className="text-xs font-bold text-white dark:text-zinc-900 uppercase tracking-wider">Créer un nouveau compte</Text>
+        </Pressable>
       </View>
     );
   }
@@ -178,18 +175,18 @@ export function LoginForm() {
   // VUE 2 : FORMULAIRE COMPTE LOCAL
   return (
     <View className="w-full">
-      {/* Bouton de retour rigide */}
+      {/* Bouton de retour épuré */}
       <Pressable
         onPress={() => setMode('choose')}
-        className="flex-row items-center gap-1.5 mb-4 self-start px-1 py-1"
+        className="flex-row items-center gap-2 mb-4 self-start px-3 py-1.5 rounded-full bg-orange-500/10 dark:bg-orange-500/20 active:opacity-80"
       >
-        <ArrowLeft size={12} color="#F97316" />
-        <Text className="text-xs font-bold text-orange-500 dark:text-orange-400">
-          Modes de connexion
+        <ArrowLeft size={14} color="#F97316" />
+        <Text className="text-xs font-bold text-orange-600 dark:text-orange-400">
+          Changer de méthode
         </Text>
       </Pressable>
 
-      <View className="gap-y-3.5">
+      <View className="gap-y-4">
         <Input
           label="Adresse Email"
           placeholder="nom@universite.edu"
@@ -199,7 +196,7 @@ export function LoginForm() {
           leftIcon={Mail}
           keyboardType="email-address"
           autoCapitalize="none"
-          containerClassName="bg-transparent"
+          containerClassName="bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200/80 dark:border-zinc-800"
         />
 
         <View className="w-full gap-y-1.5">
@@ -213,26 +210,26 @@ export function LoginForm() {
             secureTextEntry={!showPassword}
             rightIcon={showPassword ? EyeOff : Eye}
             onRightIconPress={() => setShowPassword(!showPassword)}
-            containerClassName="bg-transparent"
+            containerClassName="bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200/80 dark:border-zinc-800"
           />
           <Pressable
             onPress={() => router.push('/auth/forgot-password')}
             className="self-end mt-1 px-1"
           >
-            <Text className="text-[11px] font-bold text-orange-500 dark:text-orange-400">
+            <Text className="text-xs font-semibold text-orange-500 dark:text-orange-400">
               Mot de passe oublié ?
             </Text>
           </Pressable>
         </View>
       </View>
 
-      {/* Validation d'Action */}
+      {/* Validation d'Action (Largeur Totale) */}
       <View className="mt-6">
         <Button
           label="Se connecter"
           onPress={() => void handlePrimaryLogin()}
           loading={isLoading}
-          className="bg-orange-500 rounded-xl h-11"
+          className="bg-orange-500 hover:bg-orange-600 active:bg-orange-700 rounded-2xl h-14"
         />
       </View>
     </View>
