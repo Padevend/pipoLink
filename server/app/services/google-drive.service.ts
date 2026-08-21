@@ -1,36 +1,47 @@
 import { google, drive_v3 } from "googleapis";
 import { env } from "../../config/envManager.js";
 import stream from "stream";
-import path from "path";
 
 export class GoogleDriveService {
   private drive: drive_v3.Drive;
   private folderId: string;
+  private configured: boolean;
 
   constructor() {
-    const credsPath = env.get("GOOGLE_DRIVE_CREDENTIALS_PATH") as string | undefined;
-    this.folderId = env.get("GOOGLE_DRIVE_FOLDER_ID") as string | undefined || "";
+    const clientId = env.get("GOOGLE_CLIENT_ID") as string | undefined;
+    const clientSecret = env.get("GOOGLE_CLIENT_SECRET") as string | undefined;
+    const redirectUri = env.get("GOOGLE_REDIRECT_URI") as string | undefined;
+    const refreshToken = env.get("GOOGLE_REFRESH_TOKEN") as string | undefined;
+    this.folderId = (env.get("GOOGLE_DRIVE_FOLDER_ID") as string | undefined) || "";
 
-    if (!credsPath || !this.folderId) {
+    this.configured = !!(clientId && clientSecret && refreshToken && this.folderId);
+
+    if (!this.configured) {
       console.warn("Google Drive configuration missing. Files will not be uploaded to Drive.");
     }
 
-    const auth = new google.auth.GoogleAuth({
-      keyFile: credsPath ? path.resolve(process.cwd(), credsPath) : undefined,
-      scopes: ["https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"],
-    });
+    const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
 
-    this.drive = google.drive({ version: "v3", auth });
+    if (refreshToken) {
+      oauth2Client.setCredentials({ refresh_token: refreshToken });
+    }
+
+    this.drive = google.drive({ version: "v3", auth: oauth2Client });
   }
 
   public get isConfigured(): boolean {
-    return !!env.get("GOOGLE_DRIVE_CREDENTIALS_PATH") && !!env.get("GOOGLE_DRIVE_FOLDER_ID");
+    return this.configured;
   }
 
   /**
    * Upload a file buffer to Google Drive
    */
-  async uploadFile(buffer: Buffer, fileName: string, mimeType: string, targetFolderId?: string): Promise<{ url: string; size: number, fileId: string }> {
+  async uploadFile(
+    buffer: Buffer,
+    fileName: string,
+    mimeType: string,
+    targetFolderId?: string
+  ): Promise<{ url: string; size: number; fileId: string }> {
     if (!this.isConfigured) {
       throw new Error("Google Drive is not configured.");
     }
@@ -48,13 +59,16 @@ export class GoogleDriveService {
       body: bufferStream,
     };
 
-    // Upload to Drive
     const res = await this.drive.files.create({
       requestBody: fileMetadata,
       media: media,
       fields: "id, name, webContentLink, webViewLink, size",
       supportsAllDrives: true,
       supportsTeamDrives: true,
+    }, {
+      params: {
+        uploadType: "resumable"
+      }
     });
 
     const fileId = res.data.id;
@@ -62,7 +76,6 @@ export class GoogleDriveService {
       throw new Error("Failed to retrieve file ID from Google Drive.");
     }
 
-    // Set permission to anyone with link can view/download
     await this.drive.permissions.create({
       fileId: fileId,
       requestBody: {
@@ -72,8 +85,6 @@ export class GoogleDriveService {
       supportsAllDrives: true,
     });
 
-    // We can query again to ensure webContentLink is generated, but creating permissions usually exposes it.
-    // If not present, fallback to webViewLink
     const url = res.data.webContentLink || res.data.webViewLink || "";
     const size = res.data.size ? parseInt(res.data.size, 10) : buffer.length;
 
@@ -87,7 +98,7 @@ export class GoogleDriveService {
     if (!this.isConfigured) {
       return;
     }
-    
+
     try {
       await this.drive.files.delete({
         fileId: fileId,

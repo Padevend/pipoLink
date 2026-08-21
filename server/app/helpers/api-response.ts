@@ -55,7 +55,7 @@ export class ApiResponse {
    * @param status  - Code HTTP
    * @param details - Données contextuelles optionnelles
    */
-  static error(c: HttpContext, code: string, message: string, status: number, details?: unknown) {
+  static error(c: HttpContext, code: string, message: string, status: number, details?: Record<string,any>) {
     return c.json({
       success: false,
       error: code,

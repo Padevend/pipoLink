@@ -33,6 +33,12 @@ const EnvSchema = {
   GOOGLE_DRIVE_FOLDER_ID: vine.string().optional(),
   GOOGLE_DRIVE_AI_FOLDER_ID: vine.string().optional(),
 
+  // GOOGLE AUTH
+  GOOGLE_CLIENT_ID: vine.string(),
+  GOOGLE_CLIENT_SECRET: vine.string(),
+  GOOGLE_REDIRECT_URI: vine.string(),
+  GOOGLE_REFRESH_TOKEN: vine.string(),
+
   // ── Redis ───────────────────────────────────────────
   REDIS_URL: vine.string().optional(),
 

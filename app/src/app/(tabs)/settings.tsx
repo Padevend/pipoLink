@@ -145,7 +145,7 @@ export default function SettingsScreen() {
           <Text className="mb-2 mt-10 text-center text-[9px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
             Créer avec par Zyra Studio
           </Text>
-          <View className="w-[90%] mx-auto h-[1px] bg-zinc-200 dark:bg-zinc-400 mb-2"/>
+          <View className="w-[90%] mx-auto h-[1px] bg-zinc-200 dark:bg-zinc-800 mb-2"/>
           
           <SettingItem
               icon={CalendarPlus}

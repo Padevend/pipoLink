@@ -18,9 +18,8 @@ export interface InputProps extends TextInputProps {
   containerClassName?: string;
 }
 
-// Couleurs alignées sur la palette Tailwind (orange-500 et zinc-400)
-const ORANGE_PRINCIPAL = '#F97316';
-const GRIS_NEUTRE = '#A1A1AA';
+const ORANGE_PRINCIPAL = '#FF6B00';
+const GRIS_NEUTRE = '#71717A';
 
 export function Input({
   label,
@@ -47,47 +46,46 @@ export function Input({
   };
 
   return (
-    <View className={cn('w-full', containerClassName)}>
-      {/* Label moderne, aéré et cohérent avec le LoginForm */}
+    <View className={cn('w-full gap-1', containerClassName)}>
+      {/* Label technique style terminal */}
       {label && (
-        <Text className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5 ml-1">
+        <Text className="font-mono text-[9px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 ml-1">
           {label}
         </Text>
       )}
       
-      {/* Conteneur arrondi avec transition fluide (focus et erreur) */}
+      {/* Conteneur brut à géométrie stricte */}
       <View 
         className={cn(
-          'w-full flex-row rounded-2xl border px-4 transition-all duration-200',
+          'w-full flex-row rounded-lg bg-zinc-100 dark:bg-zinc-900/40 border px-3 transition-all',
           props.multiline 
-            ? 'items-start py-3 min-h-[100px] max-h-[160px]' 
-            : 'items-center min-h-[52px]', // H-13 environ, pour une large zone de frappe
+            ? 'items-start py-2 min-h-[40px] max-h-[160px]' 
+            : 'items-center min-h-15',
           error 
             ? 'border-red-500 bg-red-500/5 dark:border-red-500/30' 
             : isFocused 
-              ? 'border-orange-500 bg-white dark:border-orange-500/50 dark:bg-zinc-900/80 shadow-sm shadow-orange-500/10' 
-              : 'border-zinc-200/80 bg-zinc-100/80 dark:border-zinc-800/80 dark:bg-zinc-800/50'
+              ? 'border-orange-500 bg-white dark:border-orange-600 dark:bg-zinc-900' 
+              : 'border-zinc-100 dark:border-zinc-900'
         )}
       >
         {/* Icône Gauche */}
         {LeftIcon && (
           <LeftIcon 
-            size={20} 
+            size={14} 
             color={isFocused ? ORANGE_PRINCIPAL : GRIS_NEUTRE} 
-            className={cn(props.multiline ? 'mr-3 mt-1' : 'mr-3')}
+            className={cn(props.multiline ? 'mr-2.5 mt-1' : 'mr-5')}
           />
         )}
         
-        {/* Champ de Saisie Natif */}
+        {/* Champ de Saisie Natif Rectifié */}
         <TextInput
           onFocus={handleFocus}
           onBlur={handleBlur}
           placeholderTextColor="#A1A1AA"
           textAlignVertical={props.multiline ? 'top' : 'center'}
-          style={props.multiline ? { paddingTop: 0, paddingBottom: 0 } : undefined}
+          style={props.multiline ? { paddingTop: 2, paddingBottom: 2 } : undefined}
           className={cn(
-            'flex-1 text-sm font-medium text-zinc-900 dark:text-zinc-50 py-0',
-            props.multiline ? 'min-h-[76px]' : 'h-full',
+            'flex-1 text-sm font-medium text-zinc-900 dark:text-zinc-50 py-0 min-h-[40px] max-h-[160px]',
             className
           )}
           placeholder={props.placeholder}
@@ -100,24 +98,24 @@ export function Input({
           {...props}
         />
         
-        {/* Icône Droite (Ex: Œil pour mot de passe) */}
+        {/* Icône Droite */}
         {RightIcon && (
           <Pressable 
             onPress={onRightIconPress} 
-            hitSlop={16} // Augmente la zone de clic
-            className={cn(props.multiline ? 'ml-3 mt-1' : 'ml-3')}
+            hitSlop={12}
+            className={cn(props.multiline ? 'ml-2.5 mt-1' : 'ml-2.5')}
           >
             <RightIcon 
-              size={20} 
+              size={14} 
               color={GRIS_NEUTRE} 
             />
           </Pressable>
         )}
       </View>
       
-      {/* Alerte système d'erreur claire */}
+      {/* Alerte système d'erreur */}
       {error && (
-        <Text className="text-[11px] font-semibold text-red-500 dark:text-red-400 mt-1.5 ml-1">
+        <Text className="font-mono text-[9px] font-bold uppercase tracking-wider text-red-500 dark:text-red-400 ml-1 mt-0.5">
           {error}
         </Text>
       )}

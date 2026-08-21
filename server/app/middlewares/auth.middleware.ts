@@ -42,7 +42,10 @@ export async function authMiddleware(c: Context, next: Next) {
       }
     });
     if (!user || user.status === "DELETED" || user.isAnonymized) {
-      return ApiResponse.error(c as HttpContext, ErrorCode.UNAUTHORIZED, "Utilisateur non trouvé ou supprimé.", 401);
+      return ApiResponse.error(c as HttpContext, ErrorCode.UNAUTHORIZED, "Utilisateur non trouvé ou supprimé.", 401, {
+        action: "forceLogout",
+        code: ErrorCode.UNAUTHORIZED
+      });
     }
     
     // Spec §6.4 — Vérification obligatoire du statut Device.revokedAt

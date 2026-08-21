@@ -1,5 +1,5 @@
 import { AlertCircle, CheckCircle2, Info, X } from 'lucide-react-native';
-import { createContext, type ReactNode, useContext, useMemo, useState, useRef } from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, PanResponder, Pressable, Text, View, useWindowDimensions } from 'react-native';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
@@ -28,7 +28,7 @@ export function useToast() {
   return context;
 }
 
-// Composant Toast individuel gérant le geste de balayage gauche (Swipe-to-dismiss)
+// Composant Toast individuel gérant le geste de balayage et les animations de pile
 function SwipeableToast({
   toast,
   index,
@@ -43,18 +43,48 @@ function SwipeableToast({
   meta: any;
 }) {
   const { width } = useWindowDimensions();
+  
+  // Valeurs animées pour la fluidité des transitions de la pile
   const pan = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1 - index * 0.05)).current;
+  const transYAnim = useRef(new Animated.Value(index * 18)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current; // Commence à 0 pour le fade-in
+  const isMounted = useRef(false);
 
-  // Calculs d'empilement géométrique strict
-  const position = index; 
-  const isTop = position === 0;
+  const isTop = index === 0;
 
-  // Décalage vertical et effet d'échelle plat pour la pile
-  const translateY = position * 6;
-  const scale = 1 - position * 0.04;
-  const opacity = position === 0 ? 1 : position === 1 ? 0.7 : 0.4;
+  // Animation réactive au changement de position (index)
+  useEffect(() => {
+    // Animation d'entrée pour un nouveau toast (index 0 initial)
+    if (!isMounted.current && index === 0) {
+      transYAnim.setValue(-30);
+      scaleAnim.setValue(0.9);
+    }
+    isMounted.current = true;
 
-  // Configuration du PanResponder pour le slide à gauche sur le toast supérieur
+    // Transition fluide vers la nouvelle position
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1 - index * 0.06, // Réduction de 6% par couche
+        useNativeDriver: true,
+        friction: 8,
+        tension: 50,
+      }),
+      Animated.spring(transYAnim, {
+        toValue: index * 18, // Décalage vertical très distinct (18px)
+        useNativeDriver: true,
+        friction: 8,
+        tension: 50,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: index === 0 ? 1 : index === 1 ? 0.85 : 0.4, // Transparence progressive
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [index, transYAnim, scaleAnim, opacityAnim]);
+
+  // Configuration du PanResponder pour le slide à gauche
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gestureState) => {
@@ -66,17 +96,19 @@ function SwipeableToast({
         }
       },
       onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dx < -width * 0.35) {
+        if (gestureState.dx < -width * 0.3) {
+          // Si balayé suffisamment loin, on l'éjecte
           Animated.timing(pan, {
             toValue: -width,
-            duration: 150,
+            duration: 200,
             useNativeDriver: true,
           }).start(() => onDismiss(toast.id));
         } else {
+          // Sinon, on le remet à sa place
           Animated.spring(pan, {
             toValue: 0,
             useNativeDriver: true,
-            bounciness: 0, // Retrait du rebond pour rester sur un mouvement mat rigide
+            bounciness: 0,
           }).start();
         }
       },
@@ -94,41 +126,42 @@ function SwipeableToast({
           left: 0,
           right: 0,
           top: 0,
-          zIndex: total - index,
-          opacity,
+          zIndex: total - index, // Le plus haut index (0) a le plus grand zIndex
+          opacity: opacityAnim,
           transform: [
             { translateX: pan },
-            { translateY },
-            { scale },
+            { translateY: transYAnim },
+            { scale: scaleAnim },
           ],
         },
       ]}
     >
-      {/* BOÎTIER MAITRE : Style Rectiligne Mat Solide */}
+      {/* BOÎTIER MAITRE : Design moderne avec ombre portée forte pour détacher les couches */}
       <Pressable
         onPress={isTop && toast.onPress ? () => { onDismiss(toast.id); toast.onPress?.(); } : undefined}
-        className="flex-row items-center p-3 rounded-xl border bg-white border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800"
+        className={`flex-row items-center p-3.5 rounded-[18px] border bg-white/95 backdrop-blur-xl border-zinc-200/80 dark:bg-zinc-900/95 dark:border-zinc-800/80`}
       >
         
-        {/* Icône monochrome rigide d'intonation */}
-        <View className="w-5 h-5 items-center justify-center mr-2.5">
-          <IconComponent size={14} color={meta.color} strokeWidth={2.5} />
+        {/* Icône */}
+        <View className="w-8 h-8 items-center justify-center rounded-xl bg-zinc-50 dark:bg-zinc-950 mr-3 border border-zinc-100 dark:border-zinc-800">
+          <IconComponent size={16} color={meta.color} strokeWidth={2.5} />
         </View>
 
-        {/* Message du Toast */}
-        <View className="flex-1 pr-1">
-          <Text className="text-xs font-semibold leading-5 text-zinc-900 dark:text-zinc-50">
+        {/* Message */}
+        <View className="flex-1 pr-2">
+          <Text className="text-[13px] font-bold leading-5 text-zinc-900 dark:text-zinc-50">
             {toast.message}
           </Text>
         </View>
 
-        {/* Bouton fermeture discret rectiligne */}
+        {/* Bouton fermeture */}
         {isTop && (
           <Pressable
             onPress={() => onDismiss(toast.id)}
-            className="w-6 h-6 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700 active:bg-zinc-100 dark:active:bg-zinc-700"
+            hitSlop={8}
+            className="w-7 h-7 items-center justify-center rounded-full bg-zinc-50 border border-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 active:bg-zinc-100 dark:active:bg-zinc-700 transition-colors"
           >
-            <X size={12} color="#71717A" />
+            <X size={14} color="#71717A" strokeWidth={2.5} />
           </Pressable>
         )}
       </Pressable>
@@ -141,8 +174,11 @@ export function ToastProvider({ children }: { children: ReactNode }): JSX.Elemen
 
   const showToast = (toast: ToastInput): void => {
     const id = `${Date.now()}-${Math.random()}`;
+    
+    // Ajoute le toast et limite strictement à 3 éléments maximum
     setToasts((current) => [{ id, ...toast }, ...current].slice(0, 3));
     
+    // Auto-dismiss après 4 secondes
     setTimeout(() => {
       setToasts((current) => current.filter((item) => item.id !== id));
     }, 4000);
@@ -155,14 +191,14 @@ export function ToastProvider({ children }: { children: ReactNode }): JSX.Elemen
   const getMeta = (type: ToastType) => {
     switch (type) {
       case 'success':
-        return { color: '#F97316', icon: CheckCircle2 }; // Orange identitaire standardisé
+        return { color: '#F97316', icon: CheckCircle2 }; // Orange identitaire
       case 'error':
-        return { color: '#EF4444', icon: AlertCircle }; // Rouge système
+        return { color: '#EF4444', icon: AlertCircle };
       case 'warning':
-        return { color: '#F59E0B', icon: AlertCircle }; // Ambre standard
+        return { color: '#F59E0B', icon: AlertCircle };
       case 'info':
       default:
-        return { color: '#71717A', icon: Info }; // Zinc intermédiaire
+        return { color: '#71717A', icon: Info };
     }
   };
 
@@ -172,12 +208,12 @@ export function ToastProvider({ children }: { children: ReactNode }): JSX.Elemen
     <ToastContext.Provider value={value}>
       {children}
       
-      {/* Conteneur fixe de la pile de toasts aligné géométriquement (px-4) */}
+      {/* Conteneur fixe, non-cliquable dans le vide */}
       {toasts.length > 0 && (
         <View 
           pointerEvents="box-none" 
-          className="absolute left-4 right-4 top-14 z-50"
-          style={{ height: 72 }}
+          className="absolute left-5 right-5 top-16 z-[999]"
+          style={{ height: 100 }}
         >
           {toasts.map((toast, index) => (
             <SwipeableToast
