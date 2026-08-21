@@ -23,6 +23,7 @@ google-services.json
 google-service01.json
 release-key.keystore
 credentials.json
+.env
 
 # Metro
 .metro-health-check*

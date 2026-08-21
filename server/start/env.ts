@@ -13,6 +13,7 @@ const EnvSchema = {
 
   // ── Base de données ──────────────────────────────────
   DATABASE_URL: vine.string(),
+  DATABASE_CA_PATH: vine.string(),
 
   // ── Sécurité ─────────────────────────────────────────
   JWT_SECRET:    vine.string(),
