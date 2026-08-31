@@ -1,19 +1,18 @@
 import sharp from "sharp";
-import fs from "fs";
-import path from "path";
 import mime from "mime-types";
 import { env } from "../../config/envManager.js";
 import { ErrorCode } from "../helpers/error-codes.js";
-import { GoogleDriveService } from "./google-drive.service.js";
+import { StorageService } from "../storage/services/storage.service.js";
+import type { DriverType } from "../storage/interface/storage-provider.interface.js";
 
 /**
  * Service de gestion des fichiers uploadés.
  * Validation MIME, taille, extension.
  * Traitement des images via Sharp.
- * Stockage local dans le dossier STORAGE_PATH ou Google Drive.
+ * Délègue le stockage brut au StorageService (multi-driver).
  */
 export class FileService {
-  private driveService = new GoogleDriveService();
+  private storage = new StorageService();
 
   // Extensions et MIME types autorisés par catégorie
   private readonly ALLOWED_DOCUMENTS = [
@@ -32,123 +31,90 @@ export class FileService {
    *
    * @param userId - Identifiant de l'utilisateur (utilisé pour nommer le fichier)
    * @param buffer - Buffer de l'image uploadée
+   * @param driver - Driver de stockage à utiliser (optionnel)
    * @returns      - URL relative du fichier enregistré
    */
-  async processAvatar(userId: string, buffer: Buffer): Promise<string> {
-    const outputPath = this._ensureDir("avatars");
-    const fileName   = `${userId}.webp`;
-    const filePath   = path.join(outputPath, fileName);
-
-    await sharp(buffer)
+  async processAvatar(userId: string, buffer: Buffer, driver?: DriverType): Promise<string> {
+    const processed = await sharp(buffer)
       .resize(256, 256, { fit: "cover" })
       .webp({ quality: 80 })
-      .toFile(filePath);
+      .toBuffer();
 
-    return `/storage/avatars/${fileName}`;
+    const fileName = `${userId}.webp`;
+    const result = await this.storage.uploadFile(processed, fileName, "image/webp", "avatars", driver);
+    return result.url;
   }
 
   /**
    * Valide et enregistre un document académique.
    * Vérifie le type MIME, la taille maximale.
-   * Si Google Drive est configuré, sauvegarde le fichier sur Drive.
-   * Sinon, stocke localement en mode fallback.
+   * Utilise le driver spécifié ou le driver par défaut.
    *
    * @param buffer       - Buffer du fichier
-   * @param originalName - Nom original du fichier
    * @param mimeType     - Type MIME déclaré par le client
+   * @param originalName - Nom original du fichier
+   * @param driver       - Driver de stockage à utiliser (optionnel)
    * @returns            - { url, size }
    * @throws             - INVALID_FILE_TYPE, FILE_TOO_LARGE
    */
-  async storeDocument(buffer: Buffer, mimeType: string, originalName?: string): Promise<{ url: string; size: number }> {
+  async storeDocument(buffer: Buffer, mimeType: string, originalName?: string, driver?: DriverType): Promise<{ url: string; size: number }> {
     this._validateMime(mimeType, [...this.ALLOWED_DOCUMENTS, ...this.ALLOWED_IMAGES]);
     this._validateSize(buffer.length, env.get("MAX_FILE_SIZE_MB") * 1024 * 1024);
 
     const ext      = mime.extension(mimeType) || "bin";
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const driveName = originalName ? `${Date.now()}-${originalName}` : fileName;
+    const fileName = originalName
+      ? `${Date.now()}-${originalName}`
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-    if (this.driveService.isConfigured) {
-      try {
-        const driveResult = await this.driveService.uploadFile(buffer, driveName, mimeType);
-        return { url: driveResult.url, size: driveResult.size };
-      } catch (error) {
-        console.error("Google Drive upload failed, falling back to local storage:", error);
-      }
-    }
-
-    const dir      = this._ensureDir("documents");
-    const filePath = path.join(dir, fileName);
-
-    fs.writeFileSync(filePath, buffer);
-
-    return { url: `/storage/documents/${fileName}`, size: buffer.length };
+    const result = await this.storage.uploadFile(buffer, fileName, mimeType, "documents", driver);
+    return { url: result.url, size: result.size };
   }
 
   /**
    * Stocke une pièce jointe de message déjà chiffrée côté client (blob binaire).
    */
-  async storeMessageAttachment(buffer: Buffer): Promise<{ url: string; size: number }> {
+  async storeMessageAttachment(buffer: Buffer, driver?: DriverType): Promise<{ url: string; size: number }> {
     this._validateSize(buffer.length, env.get("MAX_FILE_SIZE_MB") * 1024 * 1024);
 
     const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.enc`;
-    const dir      = this._ensureDir("message-attachments");
-    const filePath = path.join(dir, fileName);
-
-    fs.writeFileSync(filePath, buffer);
-
-    return { url: `/storage/message-attachments/${fileName}`, size: buffer.length };
+    const result = await this.storage.uploadFile(buffer, fileName, "application/octet-stream", "message-attachments", driver);
+    return { url: result.url, size: result.size };
   }
 
   /**
    * Stocke un document personnel pour l'IA.
-   * Ces documents sont placés dans un dossier différent pour des raisons de confidentialité.
+   * Par défaut utilise le driver Google Drive (si configuré) via le paramètre driver,
+   * sinon utilise le driver par défaut.
    */
-  async storeAiAttachment(buffer: Buffer, mimeType: string, originalName?: string): Promise<{ url: string; size: number }> {
+  async storeAiAttachment(buffer: Buffer, mimeType: string, originalName?: string, driver?: DriverType): Promise<{ url: string; size: number }> {
     this._validateMime(mimeType, [...this.ALLOWED_DOCUMENTS, ...this.ALLOWED_IMAGES]);
     this._validateSize(buffer.length, env.get("MAX_FILE_SIZE_MB") * 1024 * 1024);
 
     const ext      = mime.extension(mimeType) || "bin";
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const driveName = originalName ? `${Date.now()}-${originalName}` : fileName;
+    const fileName = originalName
+      ? `${Date.now()}-${originalName}`
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-    if (this.driveService.isConfigured) {
-      try {
-        const driveAiFolderId = env.get("GOOGLE_DRIVE_AI_FOLDER_ID") as string | undefined;
-        const driveResult = await this.driveService.uploadFile(buffer, driveName, mimeType, driveAiFolderId);
-        return { url: driveResult.url, size: driveResult.size };
-      } catch (error) {
-        console.error("Google Drive upload failed for AI attachment, falling back to local storage:", error);
-      }
-    }
-
-    const dir      = this._ensureDir("ai-attachments");
-    const filePath = path.join(dir, fileName);
-    fs.writeFileSync(filePath, buffer);
-    return { url: `/storage/ai-attachments/${fileName}`, size: buffer.length };
+    const result = await this.storage.uploadFile(buffer, fileName, mimeType, "ai-attachments", driver);
+    return { url: result.url, size: result.size };
   }
 
   /**
-   * Supprime un fichier du file system local ou du Drive, à partir de son URL.
+   * Supprime un fichier à partir de son URL ou key.
+   *
+   * Détecte le driver à utiliser en fonction du format de l'URL :
+   * - `/storage/...` → local
+   * - `drive.google.com` → google-drive
+   * - `r2://...` ou URL publique R2 → r2
+   * - `storage.googleapis.com` → gcs
    */
   async deleteFileByUrl(fileUrl: string): Promise<void> {
     if (fileUrl.startsWith("/storage/")) {
-      // Local file
-      const relativePath = fileUrl.replace("/storage/", "");
-      const fullPath = path.join(env.get("STORAGE_PATH"), relativePath);
-      const resolvedStoragePath = path.resolve(env.get("STORAGE_PATH"));
-      const resolvedFullPath = path.resolve(fullPath);
-      
-      if (!resolvedFullPath.startsWith(resolvedStoragePath)) {
-        console.error(`[Security] Path traversal attempt blocked: ${fileUrl}`);
-        return;
-      }
-
-      if (fs.existsSync(resolvedFullPath)) {
-        fs.unlinkSync(resolvedFullPath);
-      }
+      // Local file — key = chemin relatif après /storage/
+      const key = fileUrl.replace("/storage/", "");
+      await this.storage.deleteFile(key, "local");
     } else if (fileUrl.includes("drive.google.com")) {
-      // Drive file - extract ID
-      // URL formats: https://drive.google.com/uc?id=FILE_ID&export=download or https://drive.google.com/file/d/FILE_ID/view
+      // Google Drive — extraire le fileId
       try {
         const urlObj = new URL(fileUrl);
         let fileId = urlObj.searchParams.get("id");
@@ -157,10 +123,34 @@ export class FileService {
           if (parts[1]) fileId = parts[1].split("/")[0];
         }
         if (fileId) {
-          await this.driveService.deleteFile(fileId);
+          await this.storage.deleteFile(fileId, "google-drive");
         }
       } catch (err) {
         console.error("Failed to delete drive file by URL:", err);
+      }
+    } else if (fileUrl.startsWith("r2://") || fileUrl.includes(".r2.dev/")) {
+      // R2 — extraire le key
+      let key: string;
+      if (fileUrl.startsWith("r2://")) {
+        // r2://bucket/key → key
+        key = fileUrl.replace(/^r2:\/\/[^/]+\//, "");
+      } else {
+        // URL publique — extraire le path
+        const urlObj = new URL(fileUrl);
+        key = urlObj.pathname.replace(/^\//, "");
+      }
+      await this.storage.deleteFile(key, "r2");
+    } else if (fileUrl.includes("storage.googleapis.com")) {
+      // GCS — extraire le key depuis l'URL
+      try {
+        const urlObj = new URL(fileUrl);
+        // Format: https://storage.googleapis.com/BUCKET/KEY
+        const pathParts = urlObj.pathname.split("/").filter(Boolean);
+        // Retirer le nom du bucket (premier segment)
+        const key = pathParts.slice(1).join("/");
+        await this.storage.deleteFile(key, "gcs");
+      } catch (err) {
+        console.error("Failed to delete GCS file by URL:", err);
       }
     }
   }
@@ -168,19 +158,17 @@ export class FileService {
   /**
    * Traite et enregistre l'affiche d'une annonce.
    */
-  async saveAnnouncementPoster(buffer: Buffer, mimeType: string, quality: number): Promise<string> {
+  async saveAnnouncementPoster(buffer: Buffer, mimeType: string, quality: number, driver?: DriverType): Promise<string> {
     this._validateMime(mimeType, this.ALLOWED_IMAGES);
     this._validateSize(buffer.length, env.get("MAX_FILE_SIZE_MB") * 1024 * 1024);
 
-    const outputPath = this._ensureDir("announcements");
-    const fileName   = `${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
-    const filePath   = path.join(outputPath, fileName);
+    const processed = await sharp(buffer)
+      .webp({ quality })
+      .toBuffer();
 
-    await sharp(buffer)
-      .webp({ quality: quality })
-      .toFile(filePath);
-
-    return `/storage/announcements/${fileName}`;
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
+    const result = await this.storage.uploadFile(processed, fileName, "image/webp", "announcements", driver);
+    return result.url;
   }
 
   // ── Méthodes privées ──────────────────────────────────────────────────────
@@ -205,16 +193,5 @@ export class FileService {
     if (sizeBytes > maxBytes) {
       throw { code: ErrorCode.FILE_TOO_LARGE, status: 413, message: `Fichier trop volumineux. Maximum : ${maxBytes / 1024 / 1024} MB.` };
     }
-  }
-
-  /**
-   * Crée le répertoire de stockage si inexistant et retourne son chemin.
-   *
-   * @param subDir - Sous-répertoire dans STORAGE_PATH
-   */
-  private _ensureDir(subDir: string): string {
-    const dir = path.join(env.get("STORAGE_PATH"), subDir);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    return dir;
   }
 }

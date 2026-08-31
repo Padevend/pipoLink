@@ -1,11 +1,23 @@
 import { api } from "./api";
 
-export function getStaticUrl(url: string): string {
-    if (url.startsWith("http"))
-        return url;
+/**
+ * Construit l'URL complète pour accéder à une ressource statique.
+ *
+ * Comportement :
+ * - URL absolue (http/https) → retournée telle quelle
+ * - Chemin relatif commençant par `/` → préfixé par l'API URL (rétrocompat)
+ * - Identifiant (ex: UUID) → construit l'URL de téléchargement `/download/:id`
+ */
+export function getStaticUrl(urlOrId: string): string {
+    if (urlOrId.startsWith("http"))
+        return urlOrId;
 
-    if (url.startsWith("/"))
-        url = url.substring(1);
+    // Chemin relatif → rétrocompatibilité
+    if (urlOrId.startsWith("/")) {
+        const path = urlOrId.substring(1);
+        return `${api.publicurl}/${path}`;
+    }
 
-    return `${api.publicurl}/${url}`;
+    // Sinon → c'est un ID, construire l'URL de téléchargement
+    return `${api.publicurl}/download/${urlOrId}`;
 }

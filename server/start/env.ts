@@ -34,6 +34,21 @@ const EnvSchema = {
   GOOGLE_DRIVE_FOLDER_ID: vine.string().optional(),
   GOOGLE_DRIVE_AI_FOLDER_ID: vine.string().optional(),
 
+  // ── Storage SDK Driver ─────────────────────────────────
+  STORAGE_SDK_DRIVER: vine.enum(["local", "google-drive", "r2", "gcs"]).optional(),
+
+  // ── Cloudflare R2 ─────────────────────────────────────
+  R2_ACCOUNT_ID: vine.string().optional(),
+  R2_ACCESS_KEY_ID: vine.string().optional(),
+  R2_SECRET_ACCESS_KEY: vine.string().optional(),
+  R2_BUCKET_NAME: vine.string().optional(),
+  R2_PUBLIC_URL: vine.string().optional(),
+
+  // ── Google Cloud Storage ──────────────────────────────
+  GCS_BUCKET_NAME: vine.string().optional(),
+  GCS_PROJECT_ID: vine.string().optional(),
+  GCS_KEY_FILE_PATH: vine.string().optional(),
+
   // GOOGLE AUTH
   GOOGLE_CLIENT_ID: vine.string(),
   GOOGLE_CLIENT_SECRET: vine.string(),

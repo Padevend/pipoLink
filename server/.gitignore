@@ -1,7 +1,10 @@
 node_modules/
 dist
 .env
-storage
+storage/announcements
+storage/avatars
+storage/documents
+storage/message-attachments
 generated
 migrations
 agents.md

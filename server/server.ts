@@ -22,19 +22,19 @@ async function bootstrap() {
 
   const app = createRouter();
 
-  // router pour servir les fichiers statiques (ex: images, documents)
-  app.use("storage/*", serveStatic({
-    root: './',
-    getContent: async (path): Promise<any> => {
-      try {
-        const filePath = join(process.cwd(), path)
-        const content = await readFile(filePath)
-        return content
-      } catch (error) {
-        return null // Retourne null si le fichier n'existe pas
-      }
-    },
-  }));
+  // // router pour servir les fichiers statiques (ex: images, documents)
+  // app.use("storage/*", serveStatic({
+  //   root: './',
+  //   getContent: async (path): Promise<any> => {
+  //     try {
+  //       const filePath = join(process.cwd(), path)
+  //       const content = await readFile(filePath)
+  //       return content
+  //     } catch (error) {
+  //       return null // Retourne null si le fichier n'existe pas
+  //     }
+  //   },
+  // }));
 
   const server = serve({
     fetch: app.fetch,

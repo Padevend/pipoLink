@@ -14,6 +14,7 @@ import { AdminRouter } from "./routes/admin.route.js";
 import { env } from "../config/envManager.js";
 import { prisma } from "../config/database.js";
 import { corsConfig } from "../config/cors.js";
+import { downloadRouter } from "./routes/download.route.js";
 
 export function createRouter() {
   const app = new Hono();
@@ -51,6 +52,7 @@ export function createRouter() {
   app.route("/announcements", AnnouncementRouter);
 
   app.route("/admin", AdminRouter);
+  app.route("/download", downloadRouter);
 
   return app;
 }

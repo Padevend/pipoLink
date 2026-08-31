@@ -39,7 +39,7 @@ export default function DocumentDetailScreen() {
 
     await downloadManager.start({
       filename: doc.fileName,
-      url: getStaticUri(doc.fileUrl),
+      url: getStaticUri(doc.id),
       documentId: doc.id,
     });
     
