@@ -28,6 +28,17 @@ export const loginValidator = vine.compile(
   })
 );
 
+export const googleAuthValidator = vine.compile(
+  vine.object({
+    idToken: vine.string().minLength(32),
+    nonce: vine.string().minLength(16).maxLength(128),
+    deviceFingerprint: vine.string().minLength(4).maxLength(200).optional(),
+    deviceName: vine.string().maxLength(120).optional(),
+    devicePlatform: vine.string().maxLength(40).optional(),
+  })
+);
+
+
 export const initiatePairingValidator = vine.compile(
   vine.object({
     deviceName:    vine.string().minLength(1).maxLength(120),

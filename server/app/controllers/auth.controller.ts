@@ -5,6 +5,7 @@ import { ApiResponse } from "../helpers/api-response.js";
 import { setCookie, deleteCookie } from "hono/cookie";
 import {
   registerValidator, loginValidator, verifyOtpValidator,
+  googleAuthValidator,
   resendOtpValidator, changePasswordValidator,
   resetPasswordValidator, refreshValidator,
   initiatePairingValidator, approvePairingValidator,
@@ -73,6 +74,13 @@ export class AuthController {
 
     return ApiResponse.success(c, result, "Connexion réussie.");
   }
+
+  async google(c: HttpContext) {
+    const payload = await c.validateUsing(googleAuthValidator);
+    const result = await this.service.googleLogin(payload);
+    return ApiResponse.success(c, result, "Connexion Google réussie.");
+  }
+
 
   async refresh(c: HttpContext) {
     const payload = await c.validateUsing(refreshValidator);

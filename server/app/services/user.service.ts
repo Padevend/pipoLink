@@ -228,6 +228,7 @@ export class UserService {
         username: true,
         matricule: true,
         email: true,
+        role: true,
         profile: {
           select: {
             firstname: true,

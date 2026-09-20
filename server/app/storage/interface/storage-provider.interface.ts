@@ -23,6 +23,7 @@ export interface UploadResult {
  * Interface que chaque driver de stockage doit implémenter.
  */
 export interface StorageDriver {
+  isConfigured(): boolean;
   /**
    * Upload un fichier.
    *

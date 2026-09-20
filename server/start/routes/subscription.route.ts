@@ -6,3 +6,4 @@ import { authMiddleware } from "../../app/middlewares/auth.middleware.js";
 export const SubscriptionRouter = new Hono();
 
 SubscriptionRouter.get("/", authMiddleware, callAction(SubscriptionController, "get"));
+SubscriptionRouter.patch("/auto-renew", authMiddleware, callAction(SubscriptionController, "setAutoRenew"));

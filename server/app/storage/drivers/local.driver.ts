@@ -17,6 +17,9 @@ export class LocalStorageDriver implements StorageDriver {
     this.storagePath = env.get("STORAGE_PATH") || "./storage";
   }
 
+  isConfigured(): boolean { return true; }
+
+
   async uploadFile(buffer: Buffer, name: string, _mimeType: string, subDir?: string): Promise<UploadResult> {
     const dir = subDir
       ? path.join(this.storagePath, subDir)
@@ -44,7 +47,7 @@ export class LocalStorageDriver implements StorageDriver {
     const resolvedFile = path.resolve(filePath);
 
     // Protection traversal
-    if (!resolvedFile.startsWith(resolvedStorage)) {
+    if (!resolvedFile.startsWith(`${resolvedStorage}${path.sep}`)) {
       throw new Error(`[LocalDriver] Path traversal attempt blocked: ${key}`);
     }
 
@@ -61,7 +64,7 @@ export class LocalStorageDriver implements StorageDriver {
     const resolvedFile = path.resolve(filePath);
 
     // Protection traversal
-    if (!resolvedFile.startsWith(resolvedStorage)) {
+    if (!resolvedFile.startsWith(`${resolvedStorage}${path.sep}`)) {
       console.error(`[LocalDriver][Security] Path traversal attempt blocked: ${key}`);
       return;
     }

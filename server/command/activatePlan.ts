@@ -85,6 +85,7 @@ class ActivatePlanCommand {
           plan,
           status: "ACTIVE",
           currentPeriodEnd,
+          activationSource: "MANUAL",
         },
       });
     } else {
@@ -94,6 +95,7 @@ class ActivatePlanCommand {
           plan,
           status: "ACTIVE",
           currentPeriodEnd,
+          activationSource: "MANUAL",
         },
       });
     }

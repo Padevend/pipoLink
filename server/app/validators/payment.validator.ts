@@ -6,5 +6,6 @@ export const paymentInitiateValidator = vine.compile(
     amount: vine.number().min(1).optional(),
     provider: vine.string().minLength(1),
     phone: vine.string().minLength(9).maxLength(15),
+    promoCode: vine.string().maxLength(64).optional(),
   })
 );

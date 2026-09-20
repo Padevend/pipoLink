@@ -38,6 +38,8 @@ export class GoogleDriveStorageDriver implements StorageDriver {
     this.drive = google.drive({ version: "v3", auth: oauth2Client });
   }
 
+  isConfigured(): boolean { return this.configured; }
+
   async uploadFile(buffer: Buffer, name: string, mimeType: string, subDir?: string): Promise<UploadResult> {
     if (!this.configured) {
       throw new Error("[GoogleDriveDriver] Driver non configuré.");

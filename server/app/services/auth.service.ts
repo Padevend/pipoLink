@@ -1,6 +1,8 @@
 import crypto from "node:crypto";
+import { google } from "googleapis";
 import zxcvbn from "zxcvbn";
 
+import { env } from "../../config/envManager.js";
 import { prisma } from "../../config/database.js";
 import { hash } from "../../config/hash.js";
 import { RealtimeBus } from "../../src/modules/websocket/gateway/realtime-bus.js";
@@ -37,9 +39,6 @@ export class AuthService {
       if (existing.is_active) {
         throw { code: ErrorCode.EMAIL_TAKEN, status: 409, message: "Cet email est déjà utilisé." };
       } else {
-        // Le compte existe mais n'a jamais été vérifié.
-        // ATTENTION : On ne met plus à jour le mot de passe ici pour éviter qu'un attaquant 
-        // n'écrase le mot de passe du propriétaire légitime avant vérification.
         userId = existing.id;
       }
     } else {
@@ -96,9 +95,14 @@ export class AuthService {
     if (!user) throw { code: ErrorCode.INVALID_CREDENTIALS, status: 401, message: "Email ou mot de passe incorrect." };
 
     const valid = await hash.compare(payload.password, user.password);
-    if (valid) throw { code: ErrorCode.INVALID_CREDENTIALS, status: 401, message: "Email ou mot de passe incorrect." };
+    if (!valid) throw { code: ErrorCode.INVALID_CREDENTIALS, status: 401, message: "Email ou mot de passe incorrect." };
 
-    if (!user.is_active) throw { code: ErrorCode.ACCOUNT_NOT_VERIFIED, status: 403, message: "Veuillez vérifier votre email avant de vous connecter." };
+    if (!user.is_active) {
+      this.resendOtp({ email: user.email as string, purpose: "EMAIL_VERIFY"})
+      
+      throw { code: ErrorCode.ACCOUNT_NOT_VERIFIED, status: 403, message: "Veuillez vérifier votre email avant de vous connecter." }
+    };
+
     if (user.status === "DELETED" || user.isAnonymized) throw { code: ErrorCode.ACCOUNT_INACTIVE, status: 403, message: "Ce compte a été supprimé." };
     if (user.is_excluded) throw { code: ErrorCode.ACCOUNT_INACTIVE, status: 403, message: "Votre compte a été suspendu." };
 
@@ -212,6 +216,36 @@ export class AuthService {
       keyBackup,
     };
   }
+
+  async googleLogin(payload: { idToken: string; nonce: string; deviceFingerprint?: string; deviceName?: string; devicePlatform?: string }) {
+    const clientIds = [env.get("GOOGLE_ANDROID_CLIENT_ID"), env.get("GOOGLE_IOS_CLIENT_ID"), env.get("GOOGLE_WEB_CLIENT_ID"), env.get("GOOGLE_CLIENT_ID")].filter((value): value is string => Boolean(value));
+    if (clientIds.length === 0) throw { code: "GOOGLE_NOT_CONFIGURED", status: 503, message: "Authentification Google non configurée." };
+    const client = new google.auth.OAuth2();
+    let googleUser: { sub: string; email: string; email_verified?: boolean; given_name?: string; family_name?: string; name?: string };
+    try {
+      const ticket = await client.verifyIdToken({ idToken: payload.idToken, audience: clientIds });
+      const tokenPayload = ticket.getPayload();
+      if (!tokenPayload?.sub || !tokenPayload.email || tokenPayload.email_verified !== true || tokenPayload.nonce !== payload.nonce) throw new Error("Jeton Google non vérifié.");
+      googleUser = tokenPayload as typeof googleUser;
+    } catch {
+      throw { code: ErrorCode.INVALID_CREDENTIALS, status: 401, message: "Jeton Google invalide ou expiré." };
+    }
+    let user = await prisma.user.findFirst({ where: { OR: [{ googleId: googleUser.sub }, { email: googleUser.email.toLowerCase() }] } });
+    const isNewUser = !user;
+    if (!user) {
+      const password = await hash.make(crypto.randomBytes(32).toString("hex"));
+      user = await prisma.user.create({ data: { email: googleUser.email.toLowerCase(), googleId: googleUser.sub, password, username: googleUser.email.split("@")[0], matricule: `GOOGLE-${Date.now()}`, role: "student", is_active: true } });
+      await prisma.userProfile.create({ data: { user_id: user.id, firstname: googleUser.given_name || googleUser.name?.split(" ")[0] || "", lastname: googleUser.family_name || googleUser.name?.split(" ").slice(1).join(" ") || "" } });
+      await prisma.subscription.create({ data: { user_id: user.id, plan: "FREE", status: "ACTIVE" } });
+    } else {
+      if (user.status === "DELETED" || user.isAnonymized || user.is_excluded) throw { code: ErrorCode.ACCOUNT_INACTIVE, status: 403, message: "Ce compte est indisponible." };
+      if (!user.googleId) await prisma.user.update({ where: { id: user.id }, data: { googleId: googleUser.sub, is_active: true } });
+    }
+    await prisma.auditLog.create({ data: { user_id: user.id, action: isNewUser ? "GOOGLE_REGISTER" : "GOOGLE_LOGIN" } });
+    const tokens = await this._generateTokens(user, undefined);
+    return { ...tokens, requiresOnboarding: !user.is_configured };
+  }
+
 
   async refreshTokens(refreshToken: string) {
     const tokenHash = await hash.sha512(refreshToken);

@@ -21,6 +21,7 @@ export class R2StorageDriver implements StorageDriver {
   private client: S3Client;
   private bucket: string;
   private publicUrl: string;
+  private configured = false;
 
   constructor() {
     const accountId = env.get("R2_ACCOUNT_ID") as string | undefined;
@@ -29,7 +30,8 @@ export class R2StorageDriver implements StorageDriver {
     this.bucket = (env.get("R2_BUCKET_NAME") as string | undefined) || "";
     this.publicUrl = (env.get("R2_PUBLIC_URL") as string | undefined) || "";
 
-    if (!accountId || !accessKeyId || !secretAccessKey || !this.bucket) {
+    this.configured = !!(accountId && accessKeyId && secretAccessKey && this.bucket);
+    if (!this.configured) {
       console.warn("[R2Driver] Configuration incomplète. Le driver ne sera pas opérationnel.");
     }
 
@@ -45,7 +47,10 @@ export class R2StorageDriver implements StorageDriver {
     });
   }
 
+  isConfigured(): boolean { return this.configured; }
+
   async uploadFile(buffer: Buffer, name: string, mimeType: string, subDir?: string): Promise<UploadResult> {
+    if (!this.configured) throw new Error("[R2Driver] Driver non configuré.");
     const key = subDir ? `${subDir}/${name}` : name;
 
     await this.client.send(

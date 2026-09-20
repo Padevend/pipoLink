@@ -41,7 +41,7 @@ export class FileService {
       .toBuffer();
 
     const fileName = `${userId}.webp`;
-    const result = await this.storage.uploadFile(processed, fileName, "image/webp", "avatars", driver);
+    const result = await this.upload(processed, fileName, "image/webp", "avatars", "static", driver);
     return result.url;
   }
 
@@ -66,7 +66,7 @@ export class FileService {
       ? `${Date.now()}-${originalName}`
       : `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-    const result = await this.storage.uploadFile(buffer, fileName, mimeType, "documents", driver);
+    const result = await this.upload(buffer, fileName, mimeType, "documents", "library", driver);
     return { url: result.url, size: result.size };
   }
 
@@ -77,7 +77,7 @@ export class FileService {
     this._validateSize(buffer.length, env.get("MAX_FILE_SIZE_MB") * 1024 * 1024);
 
     const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.enc`;
-    const result = await this.storage.uploadFile(buffer, fileName, "application/octet-stream", "message-attachments", driver);
+    const result = await this.upload(buffer, fileName, "application/octet-stream", "message-attachments", "static", driver);
     return { url: result.url, size: result.size };
   }
 
@@ -95,7 +95,7 @@ export class FileService {
       ? `${Date.now()}-${originalName}`
       : `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-    const result = await this.storage.uploadFile(buffer, fileName, mimeType, "ai-attachments", driver);
+    const result = await this.upload(buffer, fileName, mimeType, "ai-attachments", "ai", driver);
     return { url: result.url, size: result.size };
   }
 
@@ -167,8 +167,18 @@ export class FileService {
       .toBuffer();
 
     const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
-    const result = await this.storage.uploadFile(processed, fileName, "image/webp", "announcements", driver);
+    const result = await this.upload(processed, fileName, "image/webp", "announcements", "static", driver);
     return result.url;
+  }
+
+  private chain(kind: "static" | "library" | "ai"): DriverType[] {
+    const development = (env.get("NODE_ENV") || "development") === "development";
+    if (kind === "library") return development ? ["local", "google-drive", "r2", "gcs"] : ["google-drive", "r2", "gcs", "local"];
+    return development ? ["local", "r2", "gcs"] : ["r2", "gcs", "local"];
+  }
+
+  private async upload(buffer: Buffer, name: string, mimeType: string, subDir: string, kind: "static" | "library" | "ai", driver?: DriverType) {
+    return driver ? this.storage.uploadFile(buffer, name, mimeType, subDir, driver) : this.storage.uploadWithFallback(buffer, name, mimeType, subDir, this.chain(kind));
   }
 
   // ── Méthodes privées ──────────────────────────────────────────────────────

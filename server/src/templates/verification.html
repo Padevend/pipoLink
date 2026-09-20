@@ -12,123 +12,132 @@
       margin: 0;
       padding: 0;
       width: 100% !important;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      background-color: #ffffff;
-      color: #0f172a;
+      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: #09090b; /* Fond sombre profond assorti au thème app */
+      color: #09090b;
     }
 
     .wrapper {
       width: 100%;
       table-layout: fixed;
-      background-color: #ffffff;
+      background-color: #09090b;
       padding: 40px 0;
     }
 
     .main-content {
-      max-width: 540px;
+      max-width: 480px;
       margin: 0 auto;
       background: #ffffff;
-      border-radius: 32px;
-      border: 1px solid #f1f5f9;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.03);
+      border-radius: 40px; /* Style chunky / ultra arrondi cohérent avec l'app */
+      border: 2px solid #f4f4f5;
       overflow: hidden;
     }
 
     .header {
-      padding: 50px 40px 30px;
+      padding: 48px 40px 24px;
       text-align: center;
     }
 
     .logo-container {
       display: inline-block;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
     .logo-img {
-      width: 64px;
-      height: 64px;
+      width: 56px;
+      height: 56px;
       border-radius: 16px;
     }
 
     .brand-name {
-      font-size: 22px;
-      font-weight: 700;
-      color: #ea580c;
+      font-size: 20px;
+      font-weight: 900;
+      color: #09090b;
       letter-spacing: -0.5px;
       margin: 12px 0 0;
+      text-transform: uppercase;
     }
 
     .content-body {
-      padding: 0 50px 40px;
+      padding: 0 40px 48px;
       text-align: center;
     }
 
     h2 {
-      font-size: 24px;
-      font-weight: 600;
-      color: #1e293b;
-      margin-bottom: 16px;
-      letter-spacing: -0.02em;
+      font-size: 28px;
+      font-weight: 900;
+      color: #09090b;
+      margin: 0 0 12px;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
     }
 
     p {
-      font-size: 15px;
+      font-size: 14px;
       line-height: 1.6;
-      color: #64748b;
-      margin-bottom: 24px;
+      color: #71717a;
+      margin: 0 0 24px;
+      font-weight: 600;
     }
 
-    /* Bloc OTP Ultra-Minimaliste Glass */
+    /* Bloc OTP Massif & Solide (Style Input Néo-Banque) */
     .otp-container {
-      margin: 40px 0;
-      padding: 40px;
-      background: rgba(255, 247, 237, 0.5);
-      border-radius: 24px;
-      border: 1px solid rgba(251, 146, 60, 0.1);
-      position: relative;
+      margin: 36px 0;
+      padding: 32px 24px;
+      background: #f4f4f5;
+      border-radius: 32px;
+      text-align: center;
     }
 
     .otp-code {
       font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'Courier New', monospace;
-      font-size: 48px;
-      font-weight: 700;
-      color: #ea580c;
-      letter-spacing: 16px;
+      font-size: 42px;
+      font-weight: 900;
+      color: #f97316; /* Orange PipoLink */
+      letter-spacing: 12px;
       margin: 0;
-      padding-left: 16px; /* Pour centrer le texte avec letter-spacing */
+      padding-left: 12px; /* Compensation du letter-spacing final */
     }
 
     .timer-badge {
       display: inline-block;
-      margin-top: 15px;
-      font-size: 11px;
-      font-weight: 700;
-      color: #94a3b8;
+      margin-top: 16px;
+      padding: 6px 14px;
+      background: #ffffff;
+      border-radius: 100px;
+      font-size: 10px;
+      font-weight: 900;
+      color: #71717a;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.15em;
     }
 
     .divider {
-      height: 1px;
-      background: radial-gradient(circle, #e2e8f0 0%, transparent 100%);
-      margin: 30px 0;
+      height: 2px;
+      background: #f4f4f5;
+      margin: 32px 0;
     }
 
     .footer {
       text-align: center;
-      padding-bottom: 40px;
+      padding-top: 24px;
     }
 
     .footer-text {
-      font-size: 12px;
-      color: #94a3b8;
-      line-height: 1.5;
+      font-size: 11px;
+      font-weight: 700;
+      color: #71717a;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      line-height: 1.6;
     }
 
-    @media screen and (max-width: 600px) {
-      .main-content { border-radius: 0; border: none; box-shadow: none; }
-      .content-body { padding: 0 25px 30px; }
-      .otp-code { font-size: 36px; letter-spacing: 10px; }
+    @media screen and (max-width: 520px) {
+      .wrapper { padding: 0; }
+      .main-content { border-radius: 0; border: none; }
+      .content-body { padding: 0 24px 36px; }
+      .header { padding: 36px 24px 20px; }
+      .otp-code { font-size: 32px; letter-spacing: 8px; }
     }
   </style>
 </head>
@@ -143,29 +152,31 @@
       </div>
 
       <div class="content-body">
-        <h2>Vérifiez votre identité</h2>
-        <p>Bonjour {{username}},<br>Utilisez le code ci-dessous pour sécuriser l'accès à votre compte.</p>
+        <h2>Vérification<br>de l'identité</h2>
+        <p>Bonjour <strong>{{username}}</strong>,<br>Utilisez le code ci-dessous pour sécuriser l'accès à votre espace.</p>
         
         <div class="otp-container">
           <div class="otp-code">{{otp}}</div>
-          <span class="timer-badge">Expire dans 15 minutes</span>
+          <div>
+            <span class="timer-badge">Expire dans 15 minutes</span>
+          </div>
         </div>
 
-        <p style="font-size: 13px; margin-bottom: 0;">
-          L'équipe <strong>PipoLink</strong>
+        <p style="font-size: 12px; color: #a1a1aa; margin-bottom: 0; font-weight: 700;">
+          L'équipe <span style="color: #09090b;">PipoLink</span>
         </p>
         
         <div class="divider"></div>
         
-        <p style="font-size: 12px; color: #cbd5e1; margin-bottom: 0;">
-          Si vous n'avez pas sollicité ce code, ignorez simplement cet e-mail.
+        <p style="font-size: 11px; color: #a1a1aa; margin-bottom: 0; line-height: 1.5;">
+          Si vous n'avez pas sollicité ce code, veuillez ignorer cet e-mail en toute sécurité.
         </p>
       </div>
     </div>
 
     <div class="footer">
       <p class="footer-text">
-        &copy; 2026 PipoLink. Tous droits réservés.<br>
+        &copy; 2026 PipoLink. Tous droits réservés.
       </p>
     </div>
   </div>

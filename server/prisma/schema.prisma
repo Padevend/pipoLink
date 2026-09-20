@@ -42,6 +42,7 @@ enum UpdateType {
 model User {
   id            String   @id @default(uuid()) @db.Uuid
   email         String?  @unique
+  googleId      String?  @unique
   password      String
   username      String?
   matricule     String?
@@ -75,6 +76,7 @@ model User {
   aiSessions    AiSession[]
   payments      Payment[]
   notifications Notification[]
+  promoCodeRedemptions PromoCodeRedemption[]
   announcements Announcement[]
   createdInvitations GroupInvitation[] @relation("CreatedInvitations")
 
@@ -274,6 +276,10 @@ model Subscription {
   plan             String    @default("free")
   status           String    @default("active")
   currentPeriodEnd DateTime? @db.Timestamptz
+  activationSource  String    @default("PAYMENT")
+  autoRenew         Boolean   @default(false)
+  promoCode         String?
+  promoEndsAt       DateTime? @db.Timestamptz
   createdAt        DateTime  @default(now()) @db.Timestamptz
   updatedAt        DateTime  @updatedAt @db.Timestamptz
 
@@ -397,6 +403,10 @@ model Payment {
   user_id         String    @db.Uuid
   subscription_id String    @db.Uuid
   amount          Float
+  originalAmount   Float?
+  discountAmount   Float      @default(0)
+  source           String     @default("PAYMENT")
+  promoCode        String?
   currency        String    @default("XAF")
   status          String    @default("PENDING")
   provider        String
@@ -410,6 +420,39 @@ model Payment {
 
   @@map("payments")
 }
+
+model PromoCode {
+  id              String   @id @default(uuid()) @db.Uuid
+  code            String   @unique
+  discountPercent Float    @default(0)
+  freePremiumDays Int      @default(0)
+  maxUses         Int?
+  usedCount       Int      @default(0)
+  startsAt        DateTime @default(now()) @db.Timestamptz
+  expiresAt       DateTime? @db.Timestamptz
+  isActive        Boolean  @default(true)
+  allowedEmails    String[] @default([])
+  createdAt       DateTime @default(now()) @db.Timestamptz
+
+  redemptions PromoCodeRedemption[]
+  @@map("promo_codes")
+}
+
+
+model PromoCodeRedemption {
+  id         String   @id @default(uuid()) @db.Uuid
+  promoCodeId String  @db.Uuid
+  user_id    String   @db.Uuid
+  email      String
+  discountAmount Float
+  redeemedAt DateTime @default(now()) @db.Timestamptz
+  promoCode PromoCode @relation(fields: [promoCodeId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  @@unique([promoCodeId, user_id])
+  @@index([email])
+  @@map("promo_code_redemptions")
+}
+
 
 model Notification {
   id        String   @id @default(uuid()) @db.Uuid

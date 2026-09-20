@@ -74,10 +74,10 @@ export function callAction<T>(
       console.log(error);
       return c.json(
         {
-          code: "INTERNAL_ERROR",
+          code: error.code ?? 'INTERNAL_SERVER_ERROR',
           message: error.message,
         },
-        500,
+        error.status ?? 500,
       );
     }
   };

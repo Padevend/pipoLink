@@ -5,10 +5,14 @@ import fs from "fs";
 
 const adapter = new PrismaPg({
     connectionString: env.get("DATABASE_URL"),
-    ssl: {
-        ca: fs.readFileSync(env.get("DATABASE_CA_PATH")).toString(),
-        rejectUnauthorized: true,
-    }
+    ...(
+        env.get("NODE_ENV") === "production" && {
+            ssl: {
+                ca: fs.readFileSync(env.get("DATABASE_CA_PATH")).toString(),
+                rejectUnauthorized: true,
+            },
+        }
+    ),
 })
 
 export const prisma = new PrismaClient({ adapter });

@@ -1,6 +1,7 @@
 import { readFile } from "fs/promises";
 import path from "path";
 
+import { StorageService } from "../storage/services/storage.service.js";
 import { prisma } from "../../config/database.js";
 import { env } from "../../config/envManager.js";
 import { RagService } from "./rag.service.js";
@@ -14,6 +15,7 @@ const BATCH_SIZE = 3;
  */
 export class DocumentIngestionQueueService {
   private readonly rag = new RagService();
+  private readonly storage = new StorageService();
   private timer?: NodeJS.Timeout;
   private running = false;
 
@@ -102,6 +104,10 @@ export class DocumentIngestionQueueService {
   }
 
   private async readDocument(fileUrl: string): Promise<Buffer> {
+    if (fileUrl.startsWith("r2://")) {
+      const key = fileUrl.replace(/^r2:\/\/[^/]+\//, "");
+      return this.storage.getFile(key, "r2");
+    }
     if (fileUrl.startsWith("/storage/")) {
       const storageRoot = path.resolve(env.get("STORAGE_PATH"));
       const filePath = path.resolve(storageRoot, fileUrl.slice("/storage/".length));

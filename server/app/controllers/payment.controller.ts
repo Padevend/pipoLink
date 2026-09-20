@@ -12,7 +12,7 @@ export class PaymentController {
   async initiate(c: HttpContext) {
     const userId = c.get("userId") as string;
     const payload = await c.validateUsing(paymentInitiateValidator);
-    const payment = await this.service.initiatePayment(userId, payload.amount, payload.provider, payload.phone);
+    const payment = await this.service.initiatePayment(userId, payload.amount, payload.provider, payload.phone, payload.promoCode);
     return ApiResponse.success(c, payment, "Paiement initié.", 201);
   }
 

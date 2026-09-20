@@ -26,6 +26,46 @@ export class AdminController {
   /**
    * Obtient les statistiques générales pour le dashboard.
    */
+  async getBillingStats(c: HttpContext) {
+    const months = Math.min(24, Math.max(1, Number(c.req.query("months") || 12)));
+    const since = new Date(); since.setMonth(since.getMonth() - months + 1); since.setDate(1); since.setHours(0, 0, 0, 0);
+    const [payments, planGroups, usageGroups] = await Promise.all([
+      prisma.payment.findMany({ where: { status: "SUCCESS", source: "PAYMENT", paidAt: { gte: since } }, select: { amount: true, paidAt: true } }),
+      prisma.subscription.groupBy({ by: ["plan"], _count: { _all: true } }),
+      prisma.auditLog.groupBy({ by: ["action"], _count: { _all: true }, orderBy: { _count: { action: "desc" } }, take: 12 }),
+    ]);
+    const timeline = Array.from({ length: months }, (_, index) => { const date = new Date(since); date.setMonth(since.getMonth() + index); const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`; return { period: key, mrr: payments.filter((payment) => { if (!payment.paidAt) return false; const paid = payment.paidAt; return paid.getFullYear() === date.getFullYear() && paid.getMonth() === date.getMonth(); }).reduce((sum, payment) => sum + payment.amount, 0) }; });
+    return ApiResponse.success(c, { timeline, plans: planGroups.map((group) => ({ plan: group.plan, count: group._count._all })), usage: usageGroups.map((group) => ({ action: group.action, count: group._count._all })) }, "Statistiques de facturation récupérées.");
+  }
+
+  async getPromoCodes(c: HttpContext) {
+    const codes = await prisma.promoCode.findMany({ orderBy: { createdAt: "desc" }, include: { _count: { select: { redemptions: true } } } });
+    return ApiResponse.success(c, codes, "Codes promotion récupérés.");
+  }
+
+  async createPromoCode(c: HttpContext) {
+    const body = await c.req.json();
+    const code = String(body.code || "").trim().toUpperCase();
+    const discountPercent = Number(body.discountPercent || 0);
+    const freePremiumDays = Number(body.freePremiumDays || 0);
+    if (!/^[A-Z0-9_-]{3,64}$/.test(code) || discountPercent < 0 || discountPercent > 100 || freePremiumDays < 0) return ApiResponse.error(c, "VALIDATION_ERROR", "Configuration du code invalide.", 400);
+    const created = await prisma.promoCode.create({ data: { code, discountPercent, freePremiumDays, maxUses: body.maxUses == null ? null : Number(body.maxUses), startsAt: body.startsAt ? new Date(body.startsAt) : new Date(), expiresAt: body.expiresAt ? new Date(body.expiresAt) : null, allowedEmails: Array.isArray(body.allowedEmails) ? body.allowedEmails.map((email: string) => email.toLowerCase().trim()) : [] } });
+    return ApiResponse.success(c, created, "Code promotion créé.", 201);
+  }
+
+  async updatePromoCode(c: HttpContext) {
+    const id = c.req.param("id")!;
+    const body = await c.req.json();
+    const updated = await prisma.promoCode.update({ where: { id }, data: { isActive: body.isActive, maxUses: body.maxUses == null ? undefined : Number(body.maxUses), expiresAt: body.expiresAt ? new Date(body.expiresAt) : undefined, allowedEmails: Array.isArray(body.allowedEmails) ? body.allowedEmails.map((email: string) => email.toLowerCase().trim()) : undefined } });
+    return ApiResponse.success(c, updated, "Code promotion mis à jour.");
+  }
+
+  async getPromoRedemptions(c: HttpContext) {
+    const id = c.req.param("id")!;
+    const history = await prisma.promoCodeRedemption.findMany({ where: { promoCodeId: id }, orderBy: { redeemedAt: "desc" }, include: { user: { select: { id: true, username: true, email: true } } } });
+    return ApiResponse.success(c, history, "Historique des utilisations récupéré.");
+  }
+
   async getStats(c: HttpContext) {
     try {
       const startOfMonth = new Date();
@@ -75,7 +115,7 @@ export class AdminController {
           where: { status: "SUCCESS", paidAt: { gte: startOfMonth } },
         }),
         prisma.subscription.count({
-          where: { plan: "PREMIUM", status: "ACTIVE", currentPeriodEnd: { gt: new Date() } },
+          where: { plan: "PREMIUM", status: "ACTIVE", activationSource: "PAYMENT", currentPeriodEnd: { gt: new Date() } },
         })
       ]);
 

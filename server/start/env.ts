@@ -50,10 +50,13 @@ const EnvSchema = {
   GCS_KEY_FILE_PATH: vine.string().optional(),
 
   // GOOGLE AUTH
-  GOOGLE_CLIENT_ID: vine.string(),
-  GOOGLE_CLIENT_SECRET: vine.string(),
-  GOOGLE_REDIRECT_URI: vine.string(),
-  GOOGLE_REFRESH_TOKEN: vine.string(),
+  GOOGLE_CLIENT_ID: vine.string().optional(),
+  GOOGLE_CLIENT_SECRET: vine.string().optional(),
+  GOOGLE_REDIRECT_URI: vine.string().optional(),
+  GOOGLE_REFRESH_TOKEN: vine.string().optional(),
+  GOOGLE_ANDROID_CLIENT_ID: vine.string().optional(),
+  GOOGLE_IOS_CLIENT_ID: vine.string().optional(),
+  GOOGLE_WEB_CLIENT_ID: vine.string().optional(),
 
   // ── Redis ───────────────────────────────────────────
   REDIS_URL: vine.string().optional(),

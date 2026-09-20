@@ -16,7 +16,20 @@ export class PaymentService {
    * Initiates a mobile money payment collection via MeSomb.
    * Le montant client (_amount) est ignoré : le prix est fixé côté serveur.
    */
-  async initiatePayment(userId: string, _amount: number | undefined, provider: string, phone: string) {
+  async initiatePayment(userId: string, _amount: number | undefined, provider: string, phone: string, promoCode?: string) {
+    let chargedAmount = PREMIUM_PRICE_XAF;
+    let discountAmount = 0;
+    let promoFreeDays = 0;
+    let normalizedPromo: string | undefined;
+    if (promoCode) {
+      normalizedPromo = promoCode.trim().toUpperCase();
+      const promo = await prisma.promoCode.findFirst({ where: { code: normalizedPromo, isActive: true, startsAt: { lte: new Date() }, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] } });
+      const billingUser = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
+      if (!promo || (promo.allowedEmails.length > 0 && !promo.allowedEmails.includes(billingUser?.email?.toLowerCase() || "")) || (promo.maxUses !== null && promo.usedCount >= promo.maxUses)) throw { code: "INVALID_PROMO_CODE", status: 400, message: "Code promotion invalide ou expiré." };
+      promoFreeDays = promo.freePremiumDays;
+      discountAmount = promo.freePremiumDays > 0 ? PREMIUM_PRICE_XAF : Math.min(PREMIUM_PRICE_XAF, Math.round(PREMIUM_PRICE_XAF * promo.discountPercent / 100));
+      chargedAmount = PREMIUM_PRICE_XAF - discountAmount;
+    }
     let sub = await prisma.subscription.findUnique({ where: { user_id: userId } });
     if (!sub) {
       sub = await prisma.subscription.create({
@@ -52,12 +65,20 @@ export class PaymentService {
       data: {
         user_id: userId,
         subscription_id: sub.id,
-        amount: PREMIUM_PRICE_XAF,
+        source: chargedAmount === 0 ? "PROMO" : "PAYMENT",
+        originalAmount: PREMIUM_PRICE_XAF,
+        discountAmount,
+        promoCode: normalizedPromo,
+        amount: chargedAmount,
         provider,
         expiresAt: DateTime.now().plus({ hours: 1 }).toJSDate(),
       },
 
     });
+
+    if (chargedAmount === 0) {
+      return await this.completePayment(payment.id, promoFreeDays);
+    }
 
     // Create Audit Log
     await prisma.auditLog.create({
@@ -90,7 +111,7 @@ export class PaymentService {
       // Perform collect transaction
       const response = await mesomb.makeCollect({
         payer: phone,
-        amount: PREMIUM_PRICE_XAF,
+        amount: chargedAmount,
         service: provider, // 'MTN' or 'ORANGE'
         currency: 'XAF',
         country: 'CM',
@@ -138,7 +159,7 @@ export class PaymentService {
   /**
    * Completes a payment, activates the premium subscription plan, sends an invoice email, and broadcasts a WS event.
    */
-  async completePayment(paymentId: string) {
+  async completePayment(paymentId: string, promoFreeDays = 0) {
     const trxResult = await prisma.$transaction(async (trx) => {
       const payment = await trx.payment.findUnique({ where: { id: paymentId } });
       // Un paiement FAILED ne doit JAMAIS être complété (protège aussi le webhook)
@@ -151,7 +172,7 @@ export class PaymentService {
       });
 
       const oldSub = await trx.subscription.findUnique({ where: { id: payment.subscription_id } });
-      let newPeriodEnd = DateTime.now().plus({ months: 1 }).toJSDate();
+      let newPeriodEnd = promoFreeDays > 0 ? DateTime.now().plus({ days: promoFreeDays }).toJSDate() : DateTime.now().plus({ months: 1 }).toJSDate();
       
       if (oldSub && oldSub.status === "ACTIVE" && oldSub.plan === "PREMIUM" && oldSub.currentPeriodEnd) {
         const currentEnd = DateTime.fromJSDate(oldSub.currentPeriodEnd);
@@ -165,6 +186,7 @@ export class PaymentService {
         where: { id: payment.subscription_id },
         data: {
           plan: "PREMIUM",
+          activationSource: payment.source,
           status: "ACTIVE",
           currentPeriodEnd: newPeriodEnd,
         },
@@ -172,15 +194,8 @@ export class PaymentService {
 
       // Fetch user details for invoicing
       const user = await trx.user.findUnique({ where: { id: payment.user_id } });
+      await trx.auditLog.create({ data: { user_id: payment.user_id, action: "PAYMENT_COMPLETED", targetId: payment.id } });
 
-      // Create Audit Logs
-      await trx.auditLog.create({
-        data: {
-          user_id: payment.user_id,
-          action: "PAYMENT_COMPLETED",
-          targetId: payment.id,
-        },
-      });
 
       await trx.auditLog.create({
         data: {
@@ -196,6 +211,8 @@ export class PaymentService {
     if (!trxResult.payment || !trxResult.subscription) return trxResult.payment;
 
     const { payment, subscription, user } = trxResult;
+    if (payment.promoCode) await prisma.promoCode.update({ where: { code: payment.promoCode }, data: { usedCount: { increment: 1 } } }).catch(() => {});
+    if (payment.promoCode && user?.email) await prisma.promoCodeRedemption.create({ data: { promoCodeId: (await prisma.promoCode.findUniqueOrThrow({ where: { code: payment.promoCode } })).id, user_id: payment.user_id, email: user.email, discountAmount: payment.discountAmount } }).catch(() => {});
 
     // Sync AI token plan limits (8000 tokens for PREMIUM)
     await this.aiTokenService.syncUserPlanTokens(payment.user_id, "PREMIUM");

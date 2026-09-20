@@ -11,6 +11,7 @@ AuthRouter
   .post("/verify-otp", callAction(AuthController, "verifyOtp"))
   .post("/resend-otp", callAction(AuthController, "resendOtp"))
   .post("/login", callAction(AuthController, "login"))
+  .post("/google", callAction(AuthController, "google"))
   .post("/refresh", callAction(AuthController, "refresh"))
   .post("/logout", authMiddleware, callAction(AuthController, "logout"))
   .post("/logout-all", authMiddleware, callAction(AuthController, "logoutAll"))

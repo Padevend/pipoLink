@@ -62,6 +62,26 @@ export class StorageService {
     return this.defaultDriver;
   }
 
+  async uploadWithFallback(buffer: Buffer, name: string, mimeType: string, subDir: string, chain: DriverType[]): Promise<UploadResult> {
+    const errors: string[] = [];
+    for (const type of [...new Set(chain)]) {
+      try {
+        const driver = this.resolveDriver(type);
+        if (!driver.isConfigured()) { errors.push(`${type}: non configuré`); continue; }
+        return await driver.uploadFile(buffer, name, mimeType, subDir);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        errors.push(`${type}: ${message}`);
+        console.error(`[StorageService] upload ${type} échoué, fallback suivant`, error);
+      }
+    }
+    throw new Error(`Aucun provider de stockage disponible (${errors.join(" | ")})`);
+  }
+
+  getConfiguredDrivers(): DriverType[] {
+    return (["local", "r2", "gcs", "google-drive"] as DriverType[]).filter((type) => this.resolveDriver(type).isConfigured());
+  }
+
   // ── Private ───────────────────────────────────────────────────────────────
 
   /**
