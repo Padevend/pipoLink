@@ -83,6 +83,17 @@ export interface Update {
   createdAt: string;
 }
 
+export interface BillingStats {
+  timeline: { period: string; mrr: number }[];
+  plans: { plan: string; count: number }[];
+  usage: { action: string; count: number }[];
+}
+
+export interface PromoCode {
+  id: string; code: string; discountPercent: number; freePremiumDays: number; maxUses: number | null; usedCount: number; startsAt: string; expiresAt: string | null; isActive: boolean; allowedEmails: string[]; _count?: { redemptions: number };
+}
+
+
 export interface RevenueStats {
   totalRevenue: number;
   revenueThisMonth: number;
@@ -178,6 +189,16 @@ class APIServices{
   async getMe(): Promise<User> {
     return this.sendRequest("/users/me");
   }
+
+  async getBillingStats(months = 12): Promise<BillingStats> { return this.sendRequest(`/admin/billing-stats?months=${months}`); }
+
+  async getPromoCodes(): Promise<PromoCode[]> { return this.sendRequest("/admin/promo-codes"); }
+
+  async createPromoCode(data: Partial<PromoCode>): Promise<PromoCode> { return this.sendRequest("/admin/promo-codes", { method: "POST", body: JSON.stringify(data) }); }
+
+  async updatePromoCode(id: string, data: Partial<PromoCode>): Promise<PromoCode> { return this.sendRequest(`/admin/promo-codes/${id}`, { method: "PATCH", body: JSON.stringify(data) }); }
+
+  async getPromoRedemptions(id: string): Promise<any[]> { return this.sendRequest(`/admin/promo-codes/${id}/redemptions`); }
 
   async getStats(): Promise<{ stats: SystemStats; events: AuditLog[] }> {
     return this.sendRequest<{ stats: SystemStats; events: AuditLog[] }>("/admin/stats");

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { usePayments } from "../model/use_payments";
+import { BillingAnalytics } from "./billing-analytics";
 import { api, type AuditLog, type SystemStats } from "@/share/lib/api";
 import {
   ChevronLeft,
@@ -78,6 +79,8 @@ export function PaymentsFeat() {
           Consultez et suivez toutes les transactions bancaires et abonnements réglés
         </p>
       </div>
+
+      <BillingAnalytics />
 
       {error && (
         <div className="bg-red-50 border border-red-100 text-red-700 text-xs font-semibold p-4 rounded-xl">

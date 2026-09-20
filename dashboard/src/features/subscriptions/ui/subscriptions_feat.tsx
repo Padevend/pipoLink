@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useSubscriptions } from "../model/use_subscriptions";
+import { PromoCodesPanel } from "./promo-codes-panel";
 import {
   ChevronLeft,
   ChevronRight,
@@ -55,6 +56,7 @@ export function SubscriptionsFeat() {
 
   return (
     <div className="space-y-8 select-none">
+      <PromoCodesPanel />
       {/* HEADER */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-zinc-800">
