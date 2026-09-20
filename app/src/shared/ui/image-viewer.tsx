@@ -1,21 +1,21 @@
 import { Download, X } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import {
-    ActivityIndicator,
-    Dimensions,
-    Image,
-    Modal,
-    Pressable,
-    Text,
-    View
+  ActivityIndicator,
+  Dimensions,
+  Image,
+  Modal,
+  Pressable,
+  Text,
+  View
 } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
-    runOnJS,
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-    withTiming,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 import { saveToGallery } from '../lib/file';
 
@@ -180,11 +180,11 @@ export function ImageViewer({
       <GestureHandlerRootView className="flex-1">
         <View className="flex-1 bg-black justify-center items-center">
 
-          {/* BARRE SUPÉRIEURE FLOUTÉE CONTRASTÉE */}
-          <View className="absolute top-0 left-0 right-0 z-50 flex-row items-center justify-between px-5 pt-14 pb-4 bg-gradient-to-b from-black/60 to-transparent">
-            {/* Indicateur de grossissement intelligent */}
-            <Animated.View style={indicatorStyle} className="px-2.5 py-1 rounded-md bg-white/10 border border-white/5 backdrop-blur-md">
-              <Text className="text-white text-[11px] font-bold tracking-wide uppercase">
+          {/* BARRE SUPÉRIEURE : Plat et Solide */}
+          <View className="absolute top-0 left-0 right-0 z-50 flex-row items-center justify-between px-6 pt-14 pb-4 bg-black">
+            {/* Indicateur de grossissement intelligent (rounded-full) */}
+            <Animated.View style={indicatorStyle} className="px-3.5 py-1.5 rounded-full bg-[#1A1A1A] border-2 border-[#222222]">
+              <Text className="text-white text-[10px] font-black uppercase tracking-widest">
                 {zoomLevel.toFixed(1)}×
               </Text>
             </Animated.View>
@@ -192,12 +192,12 @@ export function ImageViewer({
             {/* Élément de remplissage pour conserver l'alignement si l'indicateur est masqué */}
             <View className="flex-1" />
 
-            {/* Bouton de sortie */}
+            {/* Bouton de sortie (rounded-full) */}
             <Pressable
               onPress={handleClose}
-              className="h-9 w-9 items-center justify-center rounded-full bg-white/10 border border-white/5 backdrop-blur-md active:scale-95 active:bg-white/20 transition-all"
+              className="h-10 w-10 items-center justify-center rounded-full bg-[#1A1A1A] active:opacity-80 transition-opacity"
             >
-              <X size={16} color="#FFFFFF" strokeWidth={2.5} />
+              <X size={18} color="#FFFFFF" strokeWidth={2.5} />
             </Pressable>
           </View>
 
@@ -217,19 +217,19 @@ export function ImageViewer({
             </View>
           </GestureDetector>
 
-          {/* BARRE DE PIED ACTIONS MINIMALISTE */}
-          <View className="absolute bottom-0 left-0 right-0 z-50 pb-12 px-6 bg-gradient-to-t from-black/60 to-transparent items-center">
+          {/* BARRE DE PIED ACTIONS (rounded-full) */}
+          <View className="absolute bottom-0 left-0 right-0 z-50 pb-12 px-6 bg-black items-center">
             <Pressable
               onPress={handleDownload}
               disabled={downloading}
-              className="flex-row items-center gap-x-2 px-5 h-10 rounded-xl bg-white text-black border border-white/10 active:scale-[0.98] disabled:opacity-40 transition-transform"
+              className="flex-row items-center justify-center gap-x-2 px-6 h-14 rounded-full bg-orange-500 active:opacity-80 transition-opacity w-full max-w-xs"
             >
               {downloading ? (
-                <ActivityIndicator size="small" color="#000000" />
+                <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <Download size={14} color="#000000" strokeWidth={2.5} />
+                <Download size={18} color="#FFFFFF" strokeWidth={2.5} />
               )}
-              <Text className="text-black text-[12px] font-bold uppercase tracking-wider">
+              <Text className="text-white text-xs font-black uppercase tracking-widest">
                 {downloading ? 'Enregistrement…' : 'Enregistrer'}
               </Text>
             </Pressable>

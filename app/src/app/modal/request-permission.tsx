@@ -1,5 +1,4 @@
 import { Camera } from "expo-camera";
-import * as FileSystem from "expo-file-system/legacy";
 import { router } from "expo-router";
 import {
   Camera as CameraIcon,
@@ -84,19 +83,19 @@ function PermissionItem({
         <Pressable
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
-          className="flex-row items-center gap-x-3.5 p-4 mb-3 rounded-2xl border border-zinc-100 bg-white dark:border-zinc-900 dark:bg-zinc-900"
+          className="flex-row items-center gap-x-4 p-5 mb-3 rounded-2xl"
         >
-          {/* Icône enveloppée */}
-          <View className="bg-zinc-50 dark:bg-zinc-800 h-10 w-10 items-center justify-center rounded-xl">
-            <Icon size={16} color="#71717A" strokeWidth={2} />
+          {/* Icône enveloppée (rounded-full) */}
+          <View className="bg-white dark:bg-[#222222] h-12 w-12 items-center justify-center rounded-full">
+            <Icon size={20} color="#F97316" strokeWidth={2.5} />
           </View>
 
           {/* Textes explicatifs */}
-          <View className="flex-1">
-            <Text className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
+          <View className="flex-1 justify-center pr-2">
+            <Text className="text-sm font-bold tracking-tight text-zinc-950 dark:text-white" numberOfLines={1}>
               {perm.label}
             </Text>
-            <Text className="text-xs font-medium text-zinc-400 dark:text-zinc-500 mt-0.5 leading-4">
+            <Text className="text-[10px] font-semibold text-zinc-400 mt-1 leading-relaxed">
               {perm.desc}
             </Text>
           </View>
@@ -104,21 +103,21 @@ function PermissionItem({
           {/* États et Badges à droite */}
           <View className="flex-shrink-0">
             {status === "granted" ? (
-              <View className="h-6 w-6 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950/20">
-                <CheckCircle2 size={14} color="#10B981" strokeWidth={2.5} />
+              <View className="h-8 w-8 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                <CheckCircle2 size={16} color="#10B981" strokeWidth={3} />
               </View>
             ) : status === "denied" ? (
-              <View className="rounded-lg bg-red-50 border border-red-100 dark:bg-red-950/20 dark:border-red-900/30 px-2 py-0.5">
-                <Text className="text-[10px] font-bold text-red-500 dark:text-red-400 uppercase tracking-wide">Refusé</Text>
+              <View className="rounded-full bg-red-500/10 border border-red-500/20 px-3 py-1">
+                <Text className="text-[10px] font-black uppercase tracking-widest text-red-500">Refusé</Text>
               </View>
             ) : (
-              <View className={`rounded-lg px-2 py-0.5 border ${
+              <View className={`rounded-full px-3.5 py-1.5 ${
                 perm.required 
-                  ? 'bg-orange-50 border-orange-100 dark:bg-orange-950/20 dark:border-orange-900/30' 
-                  : 'bg-zinc-50 border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700'
+                  ? 'bg-orange-500/10 border border-orange-500/20' 
+                  : 'bg-white dark:bg-[#222222]'
               }`}>
-                <Text className={`text-[10px] font-bold uppercase tracking-wide ${
-                  perm.required ? 'text-orange-500' : 'text-zinc-400 dark:text-zinc-500'
+                <Text className={`text-[10px] font-black uppercase tracking-widest ${
+                  perm.required ? 'text-orange-500' : 'text-zinc-500 dark:text-zinc-400'
                 }`}>
                   {perm.required ? "Requis" : "Optionnel"}
                 </Text>
@@ -195,23 +194,23 @@ export default function PermissionsScreen() {
 
   return (
     <View 
-      className="flex-1 bg-zinc-50 dark:bg-zinc-950" 
+      className="flex-1 bg-white dark:bg-[#0A0A0A]" 
       style={{
-        paddingBottom: insets.bottom + 16,
-        paddingTop: insets.top + 8,
-        paddingLeft: insets.left,
-        paddingRight: insets.right
+        paddingBottom: insets.bottom + 24,
+        paddingTop: insets.top + 12,
+        paddingLeft: insets.left + 24,
+        paddingRight: insets.right + 24
       }}
     >
       {/* Zone d'en-tête (Hero) */}
-      <Animated.View entering={FadeInUp.delay(0).springify()} className="items-center px-7 pt-6 pb-6">
-        <View className="h-14 w-14 items-center justify-center rounded-xl mb-4 bg-white border border-zinc-100 dark:bg-zinc-900 dark:border-zinc-800">
-          <ShieldCheck size={24} color="#F97316" strokeWidth={1.8} />
+      <Animated.View entering={FadeInUp.delay(0).springify()} className="items-center pt-6 pb-8">
+        <View className="h-20 w-20 items-center justify-center rounded-full mb-5 bg-zinc-100 dark:bg-[#1A1A1A]">
+          <ShieldCheck size={32} color="#F97316" strokeWidth={2.5} />
         </View>
-        <Text className="text-base font-bold text-zinc-900 dark:text-zinc-50 mb-1.5">
+        <Text className="text-xl font-black tracking-tight text-zinc-950 dark:text-white mb-2 text-center">
           Autorisations requises
         </Text>
-        <Text className="text-xs font-medium text-center text-zinc-400 dark:text-zinc-500 leading-5 px-3">
+        <Text className="text-xs font-bold text-center text-zinc-500 dark:text-zinc-400 leading-relaxed px-2">
           PipoLink requiert ces accès afin de valider vos documents d'étude, téléverser vos fichiers de stockage et sécuriser votre terminal.
         </Text>
       </Animated.View>
@@ -219,7 +218,7 @@ export default function PermissionsScreen() {
       {/* Liste défilante des permissions */}
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 4 }}
+        contentContainerStyle={{ paddingTop: 4 }}
         showsVerticalScrollIndicator={false}
       >
         {PERMISSIONS.map((perm, i) => (
@@ -233,23 +232,23 @@ export default function PermissionsScreen() {
       </ScrollView>
 
       {/* Pied de page (Actions de validation) */}
-      <View className="px-4 py-4 gap-y-2.5">
+      <View className="py-4 gap-y-3">
         <Pressable
           onPress={handleRequestAll}
           disabled={loading}
-          className="h-11 items-center justify-center rounded-xl bg-orange-500 active:bg-orange-600"
+          className="h-14 items-center justify-center rounded-full bg-orange-500 active:opacity-80 transition-opacity"
           style={{ opacity: loading ? 0.7 : 1 }}
         >
-          <Text className="text-xs font-bold text-white uppercase tracking-wider">
+          <Text className="text-xs font-black uppercase tracking-widest text-white">
             {loading ? "Vérification en cours…" : "Autoriser les accès"}
           </Text>
         </Pressable>
 
         <Pressable 
           onPress={handleSkip} 
-          className="h-11 items-center justify-center rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 active:bg-zinc-50 dark:active:bg-zinc-800"
+          className="h-14 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-opacity"
         >
-          <Text className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+          <Text className="text-xs font-black uppercase tracking-widest text-zinc-950 dark:text-white">
             Configurer plus tard
           </Text>
         </Pressable>

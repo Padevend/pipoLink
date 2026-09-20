@@ -5,7 +5,6 @@ import SettingItem from "@/shared/ui/settings-cards";
 import { router } from "expo-router";
 import {
   Bell,
-  CalendarPlus,
   CreditCard,
   Globe,
   HelpCircle,
@@ -16,8 +15,6 @@ import {
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { RefreshControl } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
-import * as WebBrowser from 'expo-web-browser';
-import { APP_CONFIG } from "@/shared/config/app";
 
 export default function SettingsScreen() {
   const { user, refreshUser } = useAuth();
@@ -25,11 +22,12 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView
-      className="flex-1 bg-white dark:bg-zinc-950"
+      className="flex-1 bg-white dark:bg-[#0A0A0A]"
       edges={["top"]}
     >
       <ScrollView
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 40 }}
         refreshControl={(
           <RefreshControl
             refreshing={false}
@@ -37,62 +35,73 @@ export default function SettingsScreen() {
               await refreshUser();
               await refetchIsPrimary();
             }}
+            tintColor="#F97316"
           />
         )}
       >
-        <View className="px-4 py-5">
+        <View className="px-6 py-6">
 
-          {/* TITRE PRINCIPAL MAT */}
-          <Text className="mb-5 text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Profil
+          {/* TITRE PRINCIPAL */}
+          <Text className="text-3xl font-black tracking-tighter text-zinc-950 dark:text-white mb-8">
+            Paramètres
           </Text>
 
-          {/* EN-TÊTE DE PROFIL : Panneau Mat Solide */}
+          {/* EN-TÊTE DE PROFIL : Panneau Néo-Banque */}
           <Pressable
             onPress={() => router.push("/settings/Account/profile")}
-            className="mb-6 items-center rounded-xl border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-900 dark:bg-zinc-900/40 active:bg-zinc-100 dark:active:bg-zinc-900"
+            className="mb-8 items-center p-8 rounded-[40px] bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-opacity"
           >
-            <View className="rounded-full p-0.5 bg-zinc-200 dark:bg-zinc-800">
+            <View className="p-1 rounded-full bg-white dark:bg-[#0A0A0A]">
               <Avatar
                 name={user?.profile?.firstname || user?.username || "User"}
                 uri={user?.profile?.avatarUrl ?? undefined}
                 size="xl"
-                className="border border-white dark:border-zinc-950"
                 role={user?.role}
               />
             </View>
 
-            <Text className="mt-2.5 text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+            <Text className="mt-4 text-xl font-black tracking-tight text-zinc-950 dark:text-white">
               {user?.username}
             </Text>
 
-            <View className="mt-1.5 rounded bg-orange-50 dark:bg-orange-950/20 px-1.5 py-0.5">
-              <Text className="text-[9px] font-bold uppercase tracking-wider text-orange-700 dark:text-orange-400">
-                {user?.role}
-              </Text>
+            <Text className="mt-1 text-sm font-semibold tracking-tight text-zinc-400">
+              {user?.email}
+            </Text>
+
+            <View className="flex items-center flex-row">
+              <View className="mt-3 px-4 py-1.5 rounded-full bg-orange-500">
+                <Text className="text-[10px] font-black uppercase tracking-widest text-white">
+                  {user?.role || "Étudiant"}
+                </Text>
+              </View>
+
+              <View className="mt-3 px-4 py-1.5 rounded-full bg-zinc-200 dark:bg-zinc-800 ms-3">
+                <Text className="text-[10px] font-black uppercase tracking-widest dark:text-white">
+                  {user?.subscription?.plan || "Free"}
+                </Text>
+              </View>
             </View>
           </Pressable>
 
           {/* SECTION : COMPTE */}
-          <Text className="mb-2 ml-3 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+          <Text className="text-[11px] font-black uppercase tracking-widest text-zinc-500 mb-3 ml-4">
             Compte
           </Text>
-          <View className="mb-5 overflow-hidden rounded-xl border border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/20">
+          <View className="mb-8 rounded-[32px] bg-zinc-100 dark:bg-[#1A1A1A] p-2 gap-y-1">
             <SettingItem
               icon={User}
               label="Mon compte"
               value="Voir et modifier les détails de votre compte"
               onPress={() => router.push("/settings/Accounts")}
             />
-            <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-900" />
+            <View className="h-[1px] bg-zinc-200 dark:bg-[#2A2A2A] mx-4" />
             <SettingItem
               icon={Shield}
               label="Appareils liés"
               value="Voir et gérer les appareils connectés à votre compte"
               onPress={() => router.push("/devices")}
             />
-
-            <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-900" />
+            <View className="h-[1px] bg-zinc-200 dark:bg-[#2A2A2A] mx-4" />
             <SettingItem
               icon={CreditCard}
               label="Abonnement"
@@ -102,24 +111,24 @@ export default function SettingsScreen() {
           </View>
 
           {/* SECTION : PRÉFÉRENCES */}
-          <Text className="mb-2 ml-3 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+          <Text className="text-[11px] font-black uppercase tracking-widest text-zinc-500 mb-3 ml-4">
             Préférences
           </Text>
-          <View className="mb-5 overflow-hidden rounded-xl border border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/20">
+          <View className="mb-8 rounded-[32px] bg-zinc-100 dark:bg-[#1A1A1A] p-2 gap-y-1">
             <SettingItem
               icon={Palette}
               label="Apparence"
               value="Thème clair, sombre, système"
               onPress={() => router.push("/settings/appearance")}
             />
-            <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-900" />
+            <View className="h-[1px] bg-zinc-200 dark:bg-[#2A2A2A] mx-4" />
             <SettingItem
               icon={Globe}
               label="Langue"
               value="Voir et modifier la langue de l'application"
               onPress={() => router.push("/settings/language")}
             />
-            <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-900" />
+            <View className="h-[1px] bg-zinc-200 dark:bg-[#2A2A2A] mx-4" />
             <SettingItem
               icon={Bell}
               label="Notifications"
@@ -129,10 +138,10 @@ export default function SettingsScreen() {
           </View>
 
           {/* SECTION : AIDE */}
-          <Text className="mb-2 ml-3 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+          <Text className="text-[11px] font-black uppercase tracking-widest text-zinc-500 mb-3 ml-4">
             Aide & support
           </Text>
-          <View className="mb-6 overflow-hidden rounded-xl border border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/20">
+          <View className="mb-8 rounded-[32px] bg-zinc-100 dark:bg-[#1A1A1A] p-2">
             <SettingItem
               icon={HelpCircle}
               label="Centre d'aide"
@@ -140,22 +149,6 @@ export default function SettingsScreen() {
               onPress={() => router.push("/settings/Help")}
             />
           </View>
-
-          {/* SECTION OTHER FOR ZYRA STUDIO */}
-          <Text className="mb-2 mt-10 text-center text-[9px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-            Créer avec par Zyra Studio
-          </Text>
-          <View className="w-[90%] mx-auto h-[1px] bg-zinc-200 dark:bg-zinc-800 mb-2"/>
-          
-          <SettingItem
-              icon={CalendarPlus}
-              label="Créer un événement"
-              value="Organisez et publiez vos événements avec Ticky"
-              onPress={() => {
-                WebBrowser.openBrowserAsync(APP_CONFIG.links.ticky_brand).catch(() => { });
-              }}
-              showChevron={false}
-            />
 
         </View>
       </ScrollView>

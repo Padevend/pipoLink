@@ -1,5 +1,4 @@
 import { Pressable, Text, View } from 'react-native';
-
 import { NIVEAUX } from '@/features/auth/lib/onboarding-schema';
 import { cn } from '@/shared/utils/cn';
 
@@ -12,14 +11,15 @@ interface LevelPickerProps {
 
 export function LevelPicker({ label = 'Niveau', value, onChange, error }: LevelPickerProps): JSX.Element {
   return (
-    <View className="gap-1.5">
+    <View className="gap-2">
       {label && (
-        <Text className="ml-1 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+        <Text className="text-[11px] font-black uppercase tracking-widest text-zinc-950 dark:text-zinc-300 ml-4">
           {label}
         </Text>
       )}
       
-      <View className="flex-row flex-wrap gap-2">
+      {/* Grille moderne de sélecteurs de niveaux massifs */}
+      <View className="flex-row flex-wrap gap-3">
         {NIVEAUX.map((n) => {
           const selected = value === n;
           return (
@@ -27,16 +27,16 @@ export function LevelPicker({ label = 'Niveau', value, onChange, error }: LevelP
               key={n}
               onPress={() => onChange(n)}
               className={cn(
-                'min-w-[48px] items-center justify-center rounded-lg px-3 h-8 border transition-colors',
+                'min-w-[72px] h-14 flex-1 items-center justify-center rounded-full border-2 transition-all',
                 selected 
-                  ? 'bg-orange-500 border-orange-500 active:bg-orange-600' 
-                  : 'bg-white border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800',
+                  ? 'bg-orange-500 border-orange-500' 
+                  : 'bg-zinc-100 dark:bg-[#1A1A1A] border-transparent',
               )}
             >
               <Text 
                 className={cn(
-                  'text-xs font-bold', 
-                  selected ? 'text-white' : 'text-zinc-900 dark:text-zinc-50'
+                  'text-sm font-black tracking-wider', 
+                  selected ? 'text-white' : 'text-zinc-950 dark:text-white'
                 )}
               >
                 {n}
@@ -47,7 +47,7 @@ export function LevelPicker({ label = 'Niveau', value, onChange, error }: LevelP
       </View>
       
       {error ? (
-        <Text className="ml-1 text-[11px] font-semibold text-red-600 dark:text-red-400">
+        <Text className="text-[10px] font-black uppercase tracking-wider text-red-500 ml-4">
           {error}
         </Text>
       ) : null}

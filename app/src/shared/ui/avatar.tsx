@@ -1,6 +1,6 @@
 import { cn } from '@/shared/utils/cn';
 import { Image } from 'expo-image';
-import { BadgeCheck, CheckCheck } from 'lucide-react-native'; // Import du double check
+import { ShieldCheck, Verified } from 'lucide-react-native';
 import { Text, View } from 'react-native';
 import { getStaticUri } from '../lib/static';
 
@@ -38,16 +38,14 @@ export function Avatar({
   };
 
   const dimension = typeof size === 'number' ? size : sizes[size];
-
-  // Ratio de base pour les badges
-  const badgeSize = dimension * 0.38;
+  const badgeSize = Math.max(dimension * 0.38, 20);
 
   return (
     <View className="relative" style={{ width: dimension, height: dimension }}>
-      {/* --- Conteneur de l'Avatar --- */}
+      {/* Conteneur principal de l'avatar */}
       <View
         style={{ width: dimension, height: dimension }}
-        className={cn('relative items-center justify-center rounded-full overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800', className)}
+        className={cn('relative items-center justify-center rounded-full overflow-hidden bg-zinc-100 dark:bg-zinc-900', className)}
       >
         {uri ? (
           <Image
@@ -59,8 +57,8 @@ export function Avatar({
         ) : (
           <View className={cn('items-center justify-center w-full h-full', fallbackClassName)}>
             <Text
-              style={{ fontSize: dimension * 0.4 }}
-              className="font-medium text-gray-500 dark:text-gray-400"
+              style={{ fontSize: dimension * 0.38 }}
+              className="font-black text-zinc-500 dark:text-zinc-400"
             >
               {initials}
             </Text>
@@ -68,63 +66,40 @@ export function Avatar({
         )}
       </View>
 
-      {/* --- SECTION BADGES --- */}
-
-      {/* 1. Badge Staff (Vérifié Standard) */}
+      {/* Badge Staff : Certifié Moderne (Noir / Blanc inversé) */}
       {role === 'staff' && (
         <View
           style={{
-            width: badgeSize * 1.0,
-            height: badgeSize * 1.0,
-            bottom: -dimension * 0.03,
-            right: -dimension * 0.03,
+            width: badgeSize,
+            height: badgeSize,
+            bottom: -2,
+            right: -2,
           }}
-          className="absolute items-center justify-center rounded-full bg-white dark:bg-black"
+          className="absolute items-center justify-center rounded-full bg-blue-500 border-2 border-white dark:border-[#0A0A0A]"
         >
-          <BadgeCheck size={badgeSize * 0.85} color="#0084ff" strokeWidth={2.5} />
+          <Verified 
+            size={badgeSize * 0.58}
+            color="#FFFFFF" 
+            strokeWidth={2.5} 
+          />
         </View>
       )}
 
-      {/* 2. Badge Admin (Médaille d'Honneur Supérieure) */}
       {role === 'admin' && (
         <View
           style={{
-            width: badgeSize * 1.4,
-            height: badgeSize * 1.8,
-            bottom: -dimension * 0.3,
-            right: -dimension * 0.2,
+            width: badgeSize * 1.15,
+            height: badgeSize * 1.15,
+            bottom: -3,
+            right: -3,
           }}
-          className="absolute items-center"
+          className="absolute items-center justify-center rounded-full bg-orange-500 border-2 border-white dark:border-[#0A0A0A]"
         >
-          <View
-            style={{
-              width: badgeSize * 0.85,
-              height: badgeSize * 0.85,
-              marginBottom: -6,
-              zIndex: 3,
-            }}
-            className="rounded-full bg-yellow-400 items-center justify-center border-[1px] border-white dark:border-black z-3"
-          >
-            <View
-              style={{ width: '80%', height: '80%' }}
-              className="rounded-full bg-yellow-500 items-center justify-center border border-yellow-600/60"
-            >
-              <CheckCheck
-                size={badgeSize * 0.5}
-                color="#FFFFFF"
-                strokeWidth={3}
-              />
-            </View>
-          </View>
-
-          <View
-            style={{ width: '30%', height: '30%', zIndex: 2 }}
-            className="flex-row rounded-b-sm overflow-hidden border border-black/10 dark:border-white/10"
-          >
-            <View className="flex-1 bg-green-400" />
-            <View className="flex-1 bg-red-400" />
-            <View className="flex-1 bg-yellow-300" />
-          </View>
+          <ShieldCheck 
+            size={badgeSize * 0.62} 
+            color="#FFFFFF" 
+            strokeWidth={3} 
+          />
         </View>
       )}
     </View>

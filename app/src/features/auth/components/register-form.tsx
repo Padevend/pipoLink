@@ -1,3 +1,5 @@
+import { signInWithGoogle } from '@/features/auth/lib/google-auth';
+import { authApi } from '@/shared/api/auth';
 import { prepareDeviceForNewAccount } from '@/features/auth/lib/prepare-new-account-device';
 import { useAuth, useToast } from '@/providers';
 import { SecureStorageService } from '@/shared/lib/storage';
@@ -16,7 +18,7 @@ interface PasswordCriterion {
 }
 
 export function RegisterForm() {
-  const { register } = useAuth();
+  const { register, signInWithTokens } = useAuth();
   const { showToast } = useToast();
   
   const [email, setEmail] = useState('');
@@ -93,10 +95,25 @@ export function RegisterForm() {
     }
   };
 
+  const handleGoogleRegister = async () => {
+    setIsLoading(true);
+    try {
+      const google = await signInWithGoogle();
+      await prepareDeviceForNewAccount();
+      const result = await authApi.google(google);
+      await signInWithTokens({ accessToken: result.accessToken, refreshToken: result.refreshToken, expiresAt: typeof result.expiresAt === "string" ? new Date(result.expiresAt).getTime() : result.expiresAt, deviceId: result.deviceId }, result.user);
+      showToast({ type: "success", message: "Compte Google créé avec succès." });
+      router.replace(result.requiresOnboarding ? "/auth/onboarding" : "/(tabs)");
+    } catch (e: any) {
+      showToast({ type: "error", message: e.message || "Échec de la connexion Google" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <View className="w-full">
-      {/* Grille de saisie épurée */}
-      <View className="gap-y-4">
+      <View className="gap-y-5">
         <Input
           label="Adresse Email Académique"
           placeholder="nom@universite.edu"
@@ -106,7 +123,6 @@ export function RegisterForm() {
           leftIcon={Mail}
           keyboardType="email-address"
           autoCapitalize="none"
-          containerClassName="bg-transparent"
         />
         
         <Input
@@ -119,27 +135,25 @@ export function RegisterForm() {
           secureTextEntry={!showPassword}
           rightIcon={showPassword ? EyeOff : Eye}
           onRightIconPress={() => setShowPassword(!showPassword)}
-          containerClassName="bg-transparent"
         />
 
-        {/* Bloc d'indicateur des critères de sécurité mat */}
-        <View className="p-4 rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/30 gap-y-2.5">
-          <Text className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-0.5">
-            Critères requis de sécurité
+        <View className="p-6 rounded-[32px] bg-zinc-100 dark:bg-[#1A1A1A] gap-y-3 my-2">
+          <Text className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">
+            Critères de sécurité
           </Text>
 
           {passwordCriteria.map((criterion) => (
-            <View key={criterion.id} className="flex-row items-center gap-x-2.5">
-              <View className="h-4 w-4 items-center justify-center">
+            <View key={criterion.id} className="flex-row items-center gap-x-3">
+              <View className="h-5 w-5 items-center justify-center">
                 {criterion.isValid ? (
-                  <Check size={12} color="#10B981" strokeWidth={3} />
+                  <Check size={16} color="#10B981" strokeWidth={3} />
                 ) : (
-                  <Square size={10} color="#D4D4D8" strokeWidth={2.5} />
+                  <Square size={14} color="#A1A1AA" strokeWidth={2.5} />
                 )}
               </View>
               <Text
-                className={`text-xs font-semibold ${criterion.isValid
-                    ? 'text-emerald-600 dark:text-emerald-400 line-through'
+                className={`text-xs font-bold ${criterion.isValid
+                    ? 'text-emerald-500 line-through'
                     : 'text-zinc-500 dark:text-zinc-400'
                   }`}
               >
@@ -148,13 +162,12 @@ export function RegisterForm() {
             </View>
           ))}
 
-          {/* Indicateur d'entropie zxcvbn — distinct des règles de composition */}
           {password.length >= 8 && allCompositionValid && !strengthResult.isStrong && (
-            <View className="flex-row items-center gap-x-2.5 mt-1 pt-2 border-t border-zinc-200 dark:border-zinc-800">
-              <View className="h-4 w-4 items-center justify-center">
-                <ShieldAlert size={12} color="#F59E0B" strokeWidth={2.5} />
+            <View className="flex-row items-center gap-x-3 mt-2 pt-4 border-t-2 border-zinc-200 dark:border-[#2A2A2A]">
+              <View className="h-5 w-5 items-center justify-center">
+                <ShieldAlert size={16} color="#F97316" strokeWidth={3} />
               </View>
-              <Text className="text-xs font-semibold text-amber-600 dark:text-amber-400 flex-1">
+              <Text className="text-xs font-black text-orange-500 flex-1 uppercase tracking-wider">
                 {strengthResult.feedback}
               </Text>
             </View>
@@ -162,35 +175,42 @@ export function RegisterForm() {
         </View>
 
         <Input
-          label="Confirmation du mot de passe"
+          label="Confirmation"
           placeholder="Répétez votre mot de passe"
           value={confirmPassword}
           onChangeText={setConfirmPassword}
           error={errors.confirmPassword}
           leftIcon={Lock}
           secureTextEntry={!showPassword}
-          containerClassName="bg-transparent"
         />
       </View>
 
-      {/* Action de soumission principale */}
-      <View className="mt-6 mb-4">
+      <View className="mt-8 gap-y-4">
         <Button
           label="Créer mon compte"
           onPress={() => void handleRegister()}
           loading={isLoading}
-          className="bg-orange-500 rounded-xl h-11"
-          rightIcon={!isLoading ? <ArrowRight size={14} color="#FFFFFF" /> : undefined}
+          size="lg"
+          rightIcon={!isLoading ? <ArrowRight size={16} color="#FFFFFF" strokeWidth={3} /> : undefined}
         />
+
+        {/* <Pressable 
+          onPress={() => void handleGoogleRegister()} 
+          disabled={isLoading} 
+          className="h-16 flex-row items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80"
+        >
+          <Text className="text-sm font-black text-zinc-950 dark:text-white uppercase tracking-wider">
+            S'inscrire avec Google
+          </Text>
+        </Pressable> */}
       </View>
       
-      {/* Lien de redirection vers la connexion */}
-      <View className="flex-row justify-center items-center gap-1.5 pt-1">
-        <Text className="text-xs font-semibold text-zinc-400 dark:text-zinc-500">
-          Vous avez déjà un compte ?
+      <View className="flex-row justify-center items-center gap-2 mt-8">
+        <Text className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
+          Déjà un compte ?
         </Text>
         <Pressable onPress={() => router.push('/auth/login')}>
-          <Text className="text-xs font-bold text-orange-500 dark:text-orange-400">
+          <Text className="text-xs font-black text-orange-500 uppercase tracking-widest">
             Se connecter
           </Text>
         </Pressable>

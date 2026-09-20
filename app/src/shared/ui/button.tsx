@@ -14,6 +14,7 @@ export interface ButtonProps {
   rightIcon?: ReactNode;
   onPress?: () => void;
   className?: string;
+  textClassName?: string; // Ajouté pour faciliter les overrides de texte
 }
 
 export function Button({
@@ -26,30 +27,47 @@ export function Button({
   rightIcon,
   onPress,
   className,
+  textClassName,
 }: ButtonProps): JSX.Element {
   const isDisabled = disabled || loading;
 
+  // Palette ultra-plate : Monochrome + Accent Orange
   const variants = {
-    primary:   'bg-primary',
-    secondary: 'bg-accent-muted-light dark:bg-accent-muted-dark',
-    outline:   'border border-border-light dark:border-border-dark bg-transparent',
+    primary:   'bg-orange-500',
+    secondary: 'bg-zinc-100 dark:bg-[#1A1A1A]',
+    outline:   'border-2 border-zinc-200 dark:border-zinc-800 bg-transparent',
     ghost:     'bg-transparent',
-    danger:    'bg-error',
+    danger:    'bg-red-500',
   };
 
   const textVariants = {
     primary:   'text-white',
-    secondary: 'text-primary',
-    outline:   'text-text-primary-light dark:text-text-primary-dark',
-    ghost:     'text-text-primary-light dark:text-text-primary-dark',
+    secondary: 'text-zinc-950 dark:text-white',
+    outline:   'text-zinc-950 dark:text-white',
+    ghost:     'text-zinc-950 dark:text-white',
     danger:    'text-white',
   };
 
+  // Tailles massives (chunky) avec des bords totalement arrondis
   const sizes = {
-    sm: 'h-10 px-3 rounded-xl',
-    md: 'h-12 px-5 rounded-2xl',
-    lg: 'h-14 px-6 rounded-2xl',
-    xl: 'h-16 px-8 rounded-3xl',
+    sm: 'h-12 px-6 rounded-full',
+    md: 'h-14 px-8 rounded-full',
+    lg: 'h-16 px-8 rounded-full',
+    xl: 'h-20 px-10 rounded-full',
+  };
+
+  // Ajustement de la taille du texte en fonction du bouton
+  const textSizes = {
+    sm: 'text-xs',
+    md: 'text-sm',
+    lg: 'text-sm',
+    xl: 'text-base',
+  };
+
+  // Gestion dynamique de la couleur du spinner
+  const getSpinnerColor = () => {
+    if (variant === 'primary' || variant === 'danger') return '#FFFFFF';
+    return '#F97316'; // Orange pour les boutons secondaires/fantômes
   };
 
   return (
@@ -57,17 +75,17 @@ export function Button({
       onPress={onPress}
       disabled={isDisabled}
       className={cn(
-        'flex-row items-center justify-center overflow-hidden',
+        'flex-row items-center justify-center overflow-hidden transition-all',
         pressFeedback,
         variants[variant],
         sizes[size],
-        isDisabled && 'opacity-60',
+        isDisabled && 'opacity-50', // Opacité réduite de façon nette
         className,
       )}
     >
-      <View className="flex-row items-center justify-center gap-2">
+      <View className="flex-row items-center justify-center gap-3">
         {loading ? (
-          <ActivityIndicator color={variant === 'primary' || variant === 'danger' ? '#FFFFFF' : '#FF7A00'} />
+          <ActivityIndicator color={getSpinnerColor()} size="small" />
         ) : (
           leftIcon
         )}
@@ -75,9 +93,10 @@ export function Button({
         {!loading && (
           <Text
             className={cn(
-              'text-base font-bold tracking-tight',
+              'font-black uppercase tracking-widest', // Typo forte et espacée
               textVariants[variant],
-              size === 'sm' && 'text-sm',
+              textSizes[size],
+              textClassName
             )}
           >
             {label}

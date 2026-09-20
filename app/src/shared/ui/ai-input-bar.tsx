@@ -7,10 +7,10 @@ import {
 import {
   Pressable,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { cn } from '../utils/cn';
-import { TextInput } from 'react-native';
 
 interface AiInputBarProps {
   text: string;

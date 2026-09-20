@@ -8,49 +8,41 @@ import { AppLogo } from '@/shared/ui/app-logo';
 
 export default function LinkDeviceScreen(): JSX.Element {
   const insets = useSafeAreaInsets();
+  
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
-      
-      {/* HEADER : Panneau Mat Solide */}
-      <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
-        <View className="flex-row items-center flex-1">
-          {/* Bouton Retour Géométrique Mat */}
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top', 'left', 'right']}>
+      <View className="flex-row items-center px-6 py-4">
+        <View className="flex-row items-center flex-1 gap-4">
           <Pressable 
             onPress={() => router.back()} 
-            className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
+            className="h-12 w-12 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-opacity"
           >
-            <ArrowLeft size={14} color="#71717A" />
+            <ArrowLeft size={20} color="#F97316" strokeWidth={2.5} />
           </Pressable>
           
-          {/* Bloc Titre & Sous-titre Contextuel */}
-          <View className="ml-3 flex-1">
-            <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-              Associer cet appareil
+          <View className="flex-1">
+            <Text className="text-lg font-black tracking-tight text-zinc-950 dark:text-white">
+              Associer l'appareil
             </Text>
-            <Text className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mt-0.5">
-              Équipement secondaire sécurisé
+            <Text className="text-[10px] font-black uppercase tracking-widest text-orange-500 mt-1">
+              Équipement secondaire
             </Text>
           </View>
         </View>
 
-        {/* Logo d'application net sur la droite */}
         <View>
           <AppLogo size="sm" />
         </View>
       </View>
 
-      {/* Contenu principal / Panneau d'association */}
       <View
-        className="flex-1 pt-4"
+        className="flex-1 pt-6 px-6"
         style={{
-          paddingBottom: insets.bottom + 16,
-          paddingLeft: insets.left + 16,
-          paddingRight: insets.right + 16
+          paddingBottom: Math.max(insets.bottom + 24, 32),
         }}
       >
         <AssociateDevicePanel autoStart />
       </View>
-
     </SafeAreaView>
   );
 }

@@ -1,4 +1,3 @@
-import { Dispatch, SetStateAction } from 'react';
 import {
     Pressable,
     Text,
@@ -25,18 +24,18 @@ export default function AddLinkModal({
     handleCreateInvite
 }: modalsProps) {
     return (
-        <View className="flex-1 justify-center items-center bg-black/50 px-4">
-            {/* Conteneur principal mat et épuré */}
-            <View className="w-full max-w-sm rounded-2xl border border-zinc-100 bg-white p-6 dark:border-zinc-900 dark:bg-zinc-900">
+        <View className="flex-1 justify-center items-center bg-black/60 p-6">
+            {/* Conteneur principal (Arrondis 2xl, fond plein) */}
+            <View className="w-full max-w-sm rounded-2xl bg-white p-6 dark:bg-[#1A1A1A] border-2 border-zinc-100 dark:border-zinc-800">
                 
-                <Text className="text-base font-bold text-zinc-900 dark:text-zinc-50 mb-4 text-center">
+                <Text className="text-base font-black uppercase tracking-widest text-zinc-950 dark:text-white mb-6 text-center">
                     Nouveau lien d'invitation
                 </Text>
 
-                <View className="gap-4 mb-6">
+                <View className="gap-y-5 mb-6">
                     {/* Champ 1 : Nombre d'utilisations */}
-                    <View>
-                        <Text className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5">
+                    <View className="gap-y-2">
+                        <Text className="text-[11px] font-black uppercase tracking-widest text-zinc-500">
                             Nombre maximal de personnes (optionnel)
                         </Text>
                         <TextInput
@@ -45,13 +44,13 @@ export default function AddLinkModal({
                             placeholder="Exemple : 5"
                             placeholderTextColor="#A1A1AA"
                             keyboardType="number-pad"
-                            className="h-11 rounded-xl border border-zinc-200 bg-zinc-50 px-4 text-sm text-zinc-900 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50"
+                            className="h-14 rounded-full bg-zinc-100 dark:bg-[#222222] px-6 text-sm font-bold text-zinc-950 dark:text-white border-2 border-transparent"
                         />
                     </View>
 
                     {/* Champ 2 : Durée de validité */}
-                    <View>
-                        <Text className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5">
+                    <View className="gap-y-2">
+                        <Text className="text-[11px] font-black uppercase tracking-widest text-zinc-500">
                             Durée de validité en heures (optionnel)
                         </Text>
                         <TextInput
@@ -60,27 +59,27 @@ export default function AddLinkModal({
                             placeholder="Exemple : 24 (pour 1 jour)"
                             placeholderTextColor="#A1A1AA"
                             keyboardType="number-pad"
-                            className="h-11 rounded-xl border border-zinc-200 bg-zinc-50 px-4 text-sm text-zinc-900 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50"
+                            className="h-14 rounded-full bg-zinc-100 dark:bg-[#222222] px-6 text-sm font-bold text-zinc-950 dark:text-white border-2 border-transparent"
                         />
                     </View>
                 </View>
 
-                {/* Actions de validation */}
+                {/* Actions de validation (Boutons rounded-full) */}
                 <View className="flex-row gap-3">
                     <Pressable
                         onPress={() => setInviteModalVisible(false)}
-                        className="flex-1 h-11 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800 active:bg-zinc-200 dark:active:bg-zinc-700"
+                        className="flex-1 h-14 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#222222] active:opacity-80"
                     >
-                        <Text className="text-sm font-bold text-zinc-600 dark:text-zinc-300">
+                        <Text className="text-xs font-black uppercase tracking-widest text-zinc-950 dark:text-white">
                             Annuler
                         </Text>
                     </Pressable>
                     
                     <Pressable
                         onPress={handleCreateInvite}
-                        className="flex-1 h-11 items-center justify-center rounded-xl bg-orange-500 active:bg-orange-600"
+                        className="flex-1 h-14 items-center justify-center rounded-full bg-orange-500 active:bg-orange-600"
                     >
-                        <Text className="text-sm font-bold text-white">
+                        <Text className="text-xs font-black uppercase tracking-widest text-white">
                             Créer le lien
                         </Text>
                     </Pressable>

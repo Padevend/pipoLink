@@ -31,44 +31,52 @@ export default function HelpsAndCommentScreen() {
 
     return (
         <SafeAreaView
-            className="flex-1 bg-white dark:bg-zinc-950"
+            className="flex-1 bg-white dark:bg-[#0A0A0A]"
             edges={["top", "left", "right"]}
         >
-            {/* HEADER : Panneau Mat Solide */}
-            <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
+            {/* HEADER : Néo-banque, Plat et Solide */}
+            <View className="flex-row items-center border-b-2 border-zinc-100 bg-white px-6 py-4 dark:border-[#1A1A1A] dark:bg-[#0A0A0A]">
                 <Pressable
                     onPress={() => router.back()}
-                    className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
+                    className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-opacity"
                 >
-                    <ArrowLeft size={14} color="#71717A" />
+                    <ArrowLeft size={18} color="#F97316" strokeWidth={2.5} />
                 </Pressable>
 
-                <Text className="flex-1 ml-3 text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-                    Aide & Support
-                </Text>
+                <View className="flex-1 ml-4 justify-center">
+                    <Text className="text-lg font-black tracking-tight text-zinc-950 dark:text-white" numberOfLines={1}>
+                        Aide & Support
+                    </Text>
+                    <Text className="text-[10px] font-black uppercase tracking-widest text-orange-500 mt-0.5">
+                        Assistance & Infos
+                    </Text>
+                </View>
             </View>
 
-            {/* CONTENU : Liste de paramètres opaque mate */}
+            {/* CONTENU : Liste de paramètres (Arrondis 2xl, fond plein) */}
             <ScrollView
                 className="flex-1"
-                contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: insets.bottom + 24 }}
+                contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 32, paddingBottom: insets.bottom + 32 }}
                 showsVerticalScrollIndicator={false}
             >
-                <View className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-900 dark:bg-zinc-950">
+                <Text className="mb-3 text-[11px] font-black uppercase tracking-widest text-zinc-500">
+                    Support & À propos
+                </Text>
+                <View className="overflow-hidden rounded-2xl bg-zinc-100 dark:bg-[#1A1A1A]">
                     <SettingItem
                         icon={MessageCircle}
                         label="Feedback & Suggestions"
                         value="Votre avis compte ! Envoyez-nous vos commentaires."
                         onPress={() => router.push("/settings/abouts/comment")}
                     />
-                    <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-900" />
+                    <View className="h-[1px] w-full bg-zinc-200 dark:bg-[#222222]" />
                     <SettingItem
                         icon={Info}
                         label="À propos"
                         value="Informations sur l'application"
                         onPress={() => router.push("/settings/abouts/about")}
                     />
-                    <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-900" />
+                    <View className="h-[1px] w-full bg-zinc-200 dark:bg-[#222222]" />
                     <SettingItem
                         icon={RefreshCw}
                         label="Vérifier la mise à jour"
@@ -78,12 +86,12 @@ export default function HelpsAndCommentScreen() {
                 </View>
             </ScrollView>
 
-            {/* LOADER OVERLAY : Mat et sans ombre portée */}
+            {/* LOADER OVERLAY (Arrondis 2xl, fond plein) */}
             <Modal statusBarTranslucent transparent visible={isChecking} animationType="fade">
-                <View className="flex-1 items-center justify-center bg-black/50">
-                    <View className="p-5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl flex-row items-center gap-x-3.5 max-w-[80%]">
+                <View className="flex-1 items-center justify-center bg-black/60 p-6">
+                    <View className="p-6 bg-white dark:bg-[#1A1A1A] rounded-2xl flex-row items-center gap-x-4 max-w-xs border-2 border-zinc-100 dark:border-zinc-800">
                         <ActivityIndicator size="small" color="#F97316" />
-                        <Text className="text-xs font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+                        <Text className="text-xs font-black uppercase tracking-widest text-zinc-950 dark:text-white">
                             Recherche en cours...
                         </Text>
                     </View>

@@ -26,28 +26,26 @@ export function AvatarPicker({ label = 'Photo de profil', uri, onChange, error }
     });
 
     if (!result.canceled && result.assets[0]?.uri) {
-      onChange(result.assets[0].uri);
+      onChange(result.assets[0]?.uri);
     }
   };
 
   return (
     <View className="flex flex-col items-center">
-      {/* Label aligné sur la charte des Inputs */}
       {label && (
-        <Text className="self-center ml-1 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2">
+        <Text className="self-center ml-1 text-[11px] font-black uppercase tracking-widest text-zinc-950 dark:text-zinc-300 mb-3">
           {label}
         </Text>
       )}
 
-      {/* Enveloppe de l'avatar avec badge d'action superposé */}
-      <View className="relative h-20 w-20 items-center justify-center mb-2.5">
+      <View className="relative h-28 w-28 items-center justify-center mb-3">
         <Pressable
           onPress={() => void pickImage()}
           className={cn(
-            'h-20 w-20 items-center justify-center overflow-hidden rounded-full border bg-zinc-50 dark:bg-zinc-900/40 active:bg-zinc-100 dark:active:bg-zinc-900',
+            'h-28 w-28 items-center justify-center overflow-hidden rounded-full border-2 bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-all',
             error 
-              ? 'border-red-500 dark:border-red-500' 
-              : 'border-zinc-200 dark:border-zinc-800',
+              ? 'border-red-500' 
+              : 'border-transparent',
           )}
         >
           {uri ? (
@@ -58,35 +56,33 @@ export function AvatarPicker({ label = 'Photo de profil', uri, onChange, error }
             />
           ) : (
             <View className="items-center justify-center h-full w-full">
-              <Camera size={20} color="#F97316" />
+              <Camera size={28} color="#F97316" strokeWidth={2.5} />
             </View>
           )}
         </Pressable>
 
-        {/* Badge d'action flottant contextuel (Rectangle adouci mat) */}
         {uri ? (
           <Pressable
             onPress={() => onChange(null)}
-            className="absolute -bottom-1 -right-1 h-6 w-6 items-center justify-center rounded-lg border border-red-200 bg-red-500 dark:border-red-600 active:bg-red-600"
+            className="absolute bottom-0 right-0 h-9 w-9 items-center justify-center rounded-full bg-red-500 active:opacity-80 border-2 border-white dark:border-[#0A0A0A]"
           >
-            <Trash2 size={11} color="#fff" />
+            <Trash2 size={16} color="#FFFFFF" strokeWidth={2.5} />
           </Pressable>
         ) : (
           <Pressable
             onPress={() => void pickImage()}
-            className="absolute -bottom-1 -right-1 h-6 w-6 items-center justify-center rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 active:bg-zinc-100 dark:active:bg-zinc-800"
+            className="absolute bottom-0 right-0 h-9 w-9 items-center justify-center rounded-full bg-orange-500 active:opacity-80 border-2 border-white dark:border-[#0A0A0A]"
           >
-            <Plus size={11} color="#F97316" />
+            <Plus size={16} color="#FFFFFF" strokeWidth={3} />
           </Pressable>
         )}
       </View>
 
-      {/* Message indicatif contextuel de bas de champ */}
       {error ? (
-        <Text className="text-[11px] font-semibold text-red-600 dark:text-red-400">{error}</Text>
+        <Text className="text-[10px] font-black uppercase tracking-wider text-red-500">{error}</Text>
       ) : (
-        <Text className="text-center text-[11px] font-semibold text-zinc-400 dark:text-zinc-500">
-          {uri ? 'Photo configurée avec succès' : 'Format carré recommandé'}
+        <Text className="text-center text-xs font-bold text-zinc-500 dark:text-zinc-400">
+          {uri ? 'Photo configurée avec succès' : 'Appuyez pour importer une image'}
         </Text>
       )}
     </View>

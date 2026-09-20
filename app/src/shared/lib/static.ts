@@ -18,11 +18,9 @@ export function getStaticUri(pathOrId: string): string {
         EXPO_URL = EXPO_URL.slice(0, -1);
     }
 
-    // Chemin relatif (commence par /) → rétrocompatibilité (avatars, announcements, etc.)
     if (pathOrId.startsWith("/")) {
         return `${EXPO_URL}${pathOrId}`;
     }
 
-    // Sinon → c'est un ID, construire l'URL de téléchargement
     return `${EXPO_URL}/download/${pathOrId}`;
 }

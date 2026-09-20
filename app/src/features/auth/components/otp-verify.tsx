@@ -1,8 +1,8 @@
 import { useAuth, useToast } from '@/providers';
-import { Button } from '@/shared/ui/button';
 import { authApi } from '@/shared/api/auth';
+import { Button } from '@/shared/ui/button';
 import { router, useLocalSearchParams } from 'expo-router';
-import { CheckCircle2, RotateCcw, Smartphone } from 'lucide-react-native';
+import { CheckCircle2, RotateCcw } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 
@@ -91,30 +91,24 @@ export function OTPVerify() {
 
   return (
     <View className="w-full">
-      
-      {/* Section Identité & En-tête Mat */}
-      <View className="items-center mb-6">
-        <View className="w-12 h-12 rounded-xl items-center justify-center border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 mb-4">
-          <Smartphone size={20} color="#F97316" />
-        </View>
-        
-        <Text className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">
-          Vérification de l'email
+      <View className="mb-10">
+
+        <Text className="text-4xl font-black text-zinc-950 dark:text-white tracking-tighter leading-[42px]">
+          Vérification{"\n"}de l'email
         </Text>
         
-        <Text className="text-center text-xs font-semibold leading-5 text-zinc-400 dark:text-zinc-500 mt-2 px-2">
-          Un code de validation à 6 chiffres a été envoyé à l'adresse{'\n'}
-          <Text className="font-bold text-zinc-900 dark:text-zinc-50">{email}</Text>
+        <Text className="text-sm font-bold leading-6 text-zinc-500 dark:text-zinc-400 mt-4">
+          Un code à 6 chiffres a été envoyé à{'\n'}
+          <Text className="font-black text-zinc-950 dark:text-white">{email}</Text>
         </Text>
       </View>
 
-      {/* Rangée des 6 Cases de Saisie Géométriques */}
-      <View className="flex-row justify-between gap-x-2 mb-6">
+      <View className="flex-row justify-between gap-x-2 mb-8">
         {codeDigits.map((digit, index) => (
           <View 
             key={index}
-            className={`flex-1 h-12 rounded-xl border items-center justify-center bg-white dark:bg-zinc-950
-              ${digit ? 'border-orange-500 dark:border-orange-400' : 'border-zinc-200 dark:border-zinc-800'}`}
+            className={`flex-1 aspect-square rounded-[20px] border-2 items-center justify-center transition-colors
+              ${digit ? 'border-orange-500 bg-white dark:bg-[#0A0A0A]' : 'border-transparent bg-zinc-100 dark:bg-[#1A1A1A]'}`}
           >
             <TextInput
               ref={(el) => (inputRefs.current[index] = el) as any}
@@ -123,9 +117,9 @@ export function OTPVerify() {
               onKeyPress={(e) => handleKeyPress(e, index)}
               keyboardType="number-pad"
               maxLength={index === 0 ? 6 : 1}
-              className="w-full h-full text-center text-sm font-bold text-zinc-900 dark:text-zinc-50"
+              className="w-full h-full text-center text-2xl font-black text-zinc-950 dark:text-white"
               style={{ padding: 0 }}
-              placeholder="0"
+              placeholder=""
               placeholderTextColor="#A1A1AA"
               autoFocus={index === 0}
             />
@@ -133,23 +127,21 @@ export function OTPVerify() {
         ))}
       </View>
 
-      {/* Action finale de validation */}
-      <View className="mb-5">
+      <View className="mb-8">
         <Button
           label="Vérifier le code"
           onPress={() => void handleVerify()}
           loading={isLoading}
-          className="bg-orange-500 rounded-xl h-11"
+          size="lg"
           disabled={fullCode.length !== 6}
-          rightIcon={!isLoading ? <CheckCircle2 size={14} color="#FFFFFF" /> : undefined}
+          rightIcon={!isLoading ? <CheckCircle2 size={16} color="#FFFFFF" strokeWidth={3} /> : undefined}
         />
       </View>
 
-      {/* Zone de renvoi du code de sécurité */}
-      <View className="items-center justify-center py-1">
+      <View className="items-center justify-center">
         {timer > 0 ? (
-          <Text className="text-xs font-semibold text-zinc-400 dark:text-zinc-500">
-            Renvoyer un nouveau code dans <Text className="font-bold text-orange-500 dark:text-orange-400">{timer}s</Text>
+          <Text className="text-[11px] font-black uppercase tracking-widest text-zinc-500">
+            Renvoyer le code dans <Text className="text-orange-500">{timer}s</Text>
           </Text>
         ) : (
           <Pressable 
@@ -162,16 +154,15 @@ export function OTPVerify() {
                 showToast({ type: 'error', message: e.message || 'Échec de l\'envoi' });
               }
             }} 
-            className="flex-row items-center gap-x-1.5 py-1"
+            className="flex-row items-center gap-x-3 py-4 px-8 rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80"
           >
-            <RotateCcw size={12} color="#F97316" />
-            <Text className="text-xs font-bold text-orange-500 dark:text-orange-400">
-              Renvoyer le code de vérification
+            <RotateCcw size={16} color="#F97316" strokeWidth={2.5} />
+            <Text className="text-[11px] font-black text-zinc-950 dark:text-white uppercase tracking-widest">
+              Renvoyer un code
             </Text>
           </Pressable>
         )}
       </View>
-
     </View>
   );
 }

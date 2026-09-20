@@ -1,15 +1,14 @@
-import { useChangePassword } from '@/features/account/model/use-change-password';
 import {
   changePasswordSchema,
   type ChangePasswordFormValues,
 } from '@/features/account/lib/change-password.schema';
+import { useChangePassword } from '@/features/account/model/use-change-password';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { ArrowLeft, KeyRound, Lock, ShieldCheck } from 'lucide-react-native';
-import React from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import {
   ActivityIndicator,
   Alert,
@@ -59,35 +58,35 @@ export default function ChangePasswordScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
-      {/* LOADER OVERLAY : Mat et sans ombre portée */}
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top', 'left', 'right']}>
+      {/* LOADER OVERLAY (rounded-2xl) */}
       <Modal transparent visible={isPending} animationType="fade">
         <Animated.View
           entering={FadeIn.duration(150)}
           exiting={FadeOut.duration(100)}
-          className="flex-1 bg-black/50 items-center justify-center"
+          className="flex-1 bg-black/60 items-center justify-center p-6"
         >
-          <View className="p-5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl items-center max-w-[80%]">
+          <View className="p-6 bg-white dark:bg-[#1A1A1A] rounded-2xl items-center w-full max-w-xs">
             <ActivityIndicator size="small" color="#F97316" />
-            <Text className="text-[11px] font-bold text-zinc-900 dark:text-zinc-50 tracking-wider uppercase mt-3.5 text-center">
+            <Text className="text-xs font-black uppercase tracking-widest text-zinc-950 dark:text-white mt-4 text-center">
               Mise à jour…
             </Text>
-            <Text className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 mt-1 text-center">
+            <Text className="text-xs font-bold text-zinc-500 dark:text-zinc-400 mt-1 text-center">
               Modification de vos accès en cours.
             </Text>
           </View>
         </Animated.View>
       </Modal>
 
-      {/* HEADER : Panneau Mat Solide */}
-      <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
+      {/* HEADER : Plat et Solide */}
+      <View className="flex-row items-center border-b-2 border-zinc-100 bg-white px-6 py-4 dark:border-[#1A1A1A] dark:bg-[#0A0A0A]">
         <Pressable
           onPress={() => router.back()}
-          className="h-8 w-8 mr-3 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
+          className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-opacity"
         >
-          <ArrowLeft size={14} color="#71717A" />
+          <ArrowLeft size={18} color="#F97316" strokeWidth={2.5} />
         </Pressable>
-        <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+        <Text className="text-lg font-black tracking-tight text-zinc-950 dark:text-white ml-4" numberOfLines={1}>
           Changer le mot de passe
         </Text>
       </View>
@@ -95,16 +94,16 @@ export default function ChangePasswordScreen() {
       {/* FORMULAIRE */}
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: insets.bottom + 24 }}
+        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 32, paddingBottom: insets.bottom + 32 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* En-tête Descriptive Maté */}
-        <Animated.View entering={FadeInDown.springify()} className="items-center mb-6">
-          <View className="h-12 w-12 items-center justify-center rounded-xl bg-orange-50 dark:bg-orange-950/20 mb-3.5">
-            <ShieldCheck size={22} color="#F97316" />
+        {/* En-tête Descriptive */}
+        <Animated.View entering={FadeInDown.springify()} className="items-center mb-8">
+          <View className="h-16 w-16 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] mb-4">
+            <ShieldCheck size={28} color="#F97316" strokeWidth={2.5} />
           </View>
-          <Text className="text-xs leading-5 font-semibold text-zinc-400 dark:text-zinc-500 text-center px-4">
+          <Text className="text-xs font-bold text-zinc-500 dark:text-zinc-400 text-center px-4 leading-relaxed">
             Modifiez votre mot de passe pour sécuriser l'accès à votre compte PipoLink.
           </Text>
         </Animated.View>
@@ -159,13 +158,16 @@ export default function ChangePasswordScreen() {
             )}
           />
 
-          <Button
-            label="Mettre à jour le mot de passe"
-            onPress={handleSubmit(onSubmit)}
-            disabled={isPending}
-            className="mt-4 rounded-xl h-11 bg-orange-500 active:bg-orange-600"
-            rightIcon={<KeyRound size={14} color="#FFF" />}
-          />
+          <View className="mt-4">
+            <Button
+              label="Mettre à jour le mot de passe"
+              onPress={handleSubmit(onSubmit)}
+              disabled={isPending}
+              size="lg"
+              className="rounded-full h-14 bg-orange-500 active:bg-orange-600"
+              rightIcon={<KeyRound size={18} color="#FFF" strokeWidth={2.5} />}
+            />
+          </View>
         </Animated.View>
       </ScrollView>
     </SafeAreaView>

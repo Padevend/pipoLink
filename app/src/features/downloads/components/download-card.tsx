@@ -12,109 +12,109 @@ export function DownloadCard({ task, onDelete }: { task: downloadTask, onDelete?
   const isPaused = task.status === "paused";
 
   return (
-    <View className="overflow-hidden rounded-xl border border-zinc-100 bg-zinc-50 p-3.5 dark:border-zinc-900 dark:bg-zinc-900/40">
+    <View className="w-full rounded-2xl bg-zinc-100 p-5 dark:bg-[#1A1A1A]">
       
       {/* INFOS PRINCIPALES : TITRE & ACTION RAPIDE */}
-      <View className="flex-row items-start justify-between gap-x-3 mb-2.5">
-        <View className="flex-1">
+      <View className="flex-row items-start justify-between gap-4 mb-4">
+        <View className="flex-1 justify-center">
           <Text 
-            className="text-xs font-bold tracking-tight text-zinc-900 dark:text-zinc-50"
+            className="text-sm font-bold tracking-tight text-zinc-950 dark:text-white"
             numberOfLines={1}
             ellipsizeMode="middle"
           >
             {task.filename}
           </Text>
           
-          {/* Métadonnées de poids / Statut de progression */}
-          <Text className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 mt-0.5">
-            {formatBytes(task.writtenBytes)} / {task.totalBytes > 0 ? formatBytes(task.totalBytes) : "Taille inconnue"}
+          <Text className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mt-1.5">
+            {formatBytes(task.writtenBytes)} / {task.totalBytes > 0 ? formatBytes(task.totalBytes) : "Inconnu"}
           </Text>
         </View>
 
-        {/* Indicateur ou Pourcentage à droite */}
-        <View className="items-end">
+        {/* Badge d'état (Arrondi complet) */}
+        <View className="items-end pt-1">
           {isCompleted ? (
-            <View className="flex-row items-center gap-x-1 px-1.5 py-0.5 rounded">
-              <CheckCircle2 size={10} color="#22C55E" />
-              <Text className="text-[9px] font-bold text-green-700 dark:text-green-400 uppercase tracking-wider">Prêt</Text>
+            <View className="flex-row items-center gap-1.5 rounded-full bg-green-500 px-3 py-1">
+              <CheckCircle2 size={12} color="#FFFFFF" strokeWidth={3} />
+              <Text className="text-[10px] font-black uppercase tracking-widest text-white">
+                Prêt
+              </Text>
             </View>
           ) : (
-            <Text className="text-xs font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-              {progressPercent}%
-            </Text>
+            <View className="rounded-full bg-white dark:bg-[#222222] px-3 py-1">
+              <Text className="text-[10px] font-black uppercase tracking-widest text-zinc-950 dark:text-white">
+                {progressPercent}%
+              </Text>
+            </View>
           )}
         </View>
       </View>
 
-      {/* BARRE DE PROGRESSION (MASQUÉE SI TERMINÉ) */}
+      {/* BARRE DE PROGRESSION */}
       {!isCompleted && (
-        <View className="h-1 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden mb-3">
+        <View className="h-1.5 w-full bg-zinc-200 dark:bg-[#222222] rounded-full overflow-hidden mb-4">
           <View 
             className="h-full rounded-full" 
             style={{ 
               width: `${progressPercent}%`,
-              backgroundColor: isPaused ? '#71717A' : '#F97316' 
+              backgroundColor: isPaused ? '#A1A1AA' : '#F97316' 
             }} 
           />
         </View>
       )}
 
-      {/* COMMANDES D'ACTION ACTIONNABLES */}
-      <View className="flex-row items-center justify-between mt-0.5">
+      {/* COMMANDES D'ACTION ACTIONNABLES (Boutons pleins, rounded-full) */}
+      <View className="flex-row items-center justify-between mt-1">
         
-        {/* Label de statut stylisé */}
-        <Text className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+        <Text className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
           {task.status}
         </Text>
 
-        <View className="flex-row items-center gap-x-2">
-          {/* Bouton Pause */}
+        <View className="flex-row items-center gap-2">
           {isDownloading && (
             <Pressable
               onPress={() => downloadManager.pause(task.id)}
-              hitSlop={6}
-              className="h-8 px-2.5 flex-row items-center justify-center rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 active:bg-zinc-100 dark:active:bg-zinc-800"
+              hitSlop={10}
+              className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-[#222222] active:opacity-80"
             >
-              <Pause size={13} color="#71717A" />
+              <Pause size={16} color="#71717A" strokeWidth={2.5} />
             </Pressable>
           )}
 
-          {/* Bouton Reprise */}
           {isPaused && (
             <Pressable
               onPress={() => downloadManager.resume(task.id)}
-              hitSlop={6}
-              className="h-8 px-2.5 flex-row items-center justify-center rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 active:bg-zinc-100 dark:active:bg-zinc-800"
+              hitSlop={10}
+              className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-[#222222] active:opacity-80"
             >
-              <Play size={13} color="#F97316" />
+              <Play size={16} color="#F97316" strokeWidth={2.5} />
             </Pressable>
           )}
 
-          {/* Bouton Ouvrir le fichier */}
           {isCompleted && (
             <Pressable
               onPress={() => openLocalFile(task.local_uri, task.mimeType)}
-              hitSlop={6}
-              className="h-8 px-3 flex-row items-center gap-x-1.5 rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 active:bg-zinc-100 dark:active:bg-zinc-800"
+              hitSlop={10}
+              className="h-10 px-4 flex-row items-center gap-2 rounded-full bg-white dark:bg-[#222222] active:opacity-80"
             >
-              <ExternalLink size={12} color="#71717A" />
-              <Text className="text-xs font-bold text-zinc-600 dark:text-zinc-400">Ouvrir</Text>
+              <ExternalLink size={16} color="#71717A" strokeWidth={2.5} />
+              <Text className="text-[11px] font-black uppercase tracking-widest text-zinc-950 dark:text-white">
+                Ouvrir
+              </Text>
             </Pressable>
           )}
 
-          {/* Bouton Supprimer / Annuler */}
           <Pressable
             onPress={() => {
               onDelete ? onDelete(task.id) : downloadManager.cancel(task.id)
             }}
-            hitSlop={6}
-            className="h-8 px-2.5 flex-row items-center justify-center rounded-lg bg-red-50 border border-red-200 dark:bg-red-950/20 dark:border-red-900/40 active:bg-red-100 dark:active:bg-red-950/40"
+            hitSlop={10}
+            className="h-10 w-10 items-center justify-center rounded-full bg-red-50 dark:bg-red-950/30 active:opacity-80"
           >
-            <Trash2 size={13} color="#EF4444" />
+            <Trash2 size={16} color="#EF4444" strokeWidth={2.5} />
           </Pressable>
         </View>
-
       </View>
+      
     </View>
   );
 }

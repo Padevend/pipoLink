@@ -67,7 +67,6 @@ export default function UploadDocumentModal() {
   const handleUpload = async () => {
     if (!file || !title.trim() || !path) return;
 
-    // Pré-check côté client : taille max 50 Mo
     if (file.size && file.size > MAX_FILE_BYTES) {
       showToast({ type: 'error', message: 'Fichier trop volumineux (max 50 Mo).' });
       return;
@@ -96,36 +95,36 @@ export default function UploadDocumentModal() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top', 'left', 'right']}>
       
-      {/* HEADER : Panneau Mat Solide */}
-      <View className="flex-row items-center justify-between border-b border-zinc-100 bg-white px-5 py-3 dark:border-zinc-900 dark:bg-zinc-950">
-        <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+      {/* HEADER : Style Plat et Franc */}
+      <View className="flex-row items-center justify-between border-b-2 border-zinc-100 bg-white px-6 py-4 dark:border-[#1A1A1A] dark:bg-[#0A0A0A]">
+        <Text className="text-lg font-black tracking-tight text-zinc-950 dark:text-white">
           Publier un document
         </Text>
         
         <Pressable
           onPress={() => router.back()}
-          className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
+          className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80"
         >
-          <X size={14} color="#71717A" />
+          <X size={18} color="#F97316" strokeWidth={2.5} />
         </Pressable>
       </View>
 
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          paddingTop: 16,
-          paddingBottom: insets.bottom + 24,
-          paddingLeft: insets.left + 16,
-          paddingRight: insets.right + 16
+          paddingTop: 24,
+          paddingBottom: Math.max(insets.bottom + 24, 40),
+          paddingLeft: 24,
+          paddingRight: 24
         }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View className="gap-4">
+        <View className="gap-y-6">
           
-          {/* ZONE DE DÉPÔT : Aplat Mat Unifié */}
+          {/* ZONE DE DÉPÔT : Format Carte (rounded-2xl) */}
           <Pressable 
             onPress={() => void handlePickDocument()} 
             disabled={uploadMutation.isPending}
@@ -133,54 +132,55 @@ export default function UploadDocumentModal() {
           >
             <View
               className={cn(
-                'h-32 items-center justify-center gap-2 rounded-xl border transition-colors',
+                'h-36 items-center justify-center gap-3 rounded-2xl border-2 transition-colors',
                 file 
-                  ? 'border-green-200 bg-green-50/50 dark:border-green-950/30 dark:bg-green-950/10' 
-                  : 'border-zinc-200 bg-zinc-50 border-dashed dark:border-zinc-800 dark:bg-zinc-900/40',
+                  ? 'border-green-500 bg-green-50 dark:border-green-500 dark:bg-green-950/20' 
+                  : 'border-dashed border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-[#1A1A1A]',
               )}
             >
               {file ? (
                 <>
-                  <View className="h-9 w-9 items-center justify-center rounded-lg bg-green-100 dark:bg-green-950/50">
-                    <CheckCircle2 size={16} color="#22C55E" />
+                  <View className="h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/40">
+                    <CheckCircle2 size={20} color="#22C55E" strokeWidth={2.5} />
                   </View>
-                  <Text className="font-bold text-xs text-green-700 dark:text-green-400 text-center px-6" numberOfLines={1}>
+                  <Text className="font-bold text-sm text-green-700 dark:text-green-400 text-center px-6" numberOfLines={1}>
                     {file.name}
                   </Text>
                 </>
               ) : (
                 <>
-                  <View className="h-9 w-9 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-950/30">
-                    <Upload size={15} color="#F97316" />
+                  <View className="h-12 w-12 items-center justify-center rounded-full bg-zinc-200 dark:bg-[#222222]">
+                    <Upload size={20} color="#F97316" strokeWidth={2.5} />
                   </View>
-                  <Text className="font-bold text-xs text-zinc-700 dark:text-zinc-300">
-                    Sélectionner un document
+                  <Text className="font-bold text-sm text-zinc-950 dark:text-white">
+                    Appuyez pour sélectionner un fichier
+                  </Text>
+                  <Text className="font-bold text-[10px] text-zinc-400 uppercase tracking-widest">
+                    Max 50 Mo
                   </Text>
                 </>
               )}
             </View>
           </Pressable>
 
-          {/* INPUT DU TITRE : Intégration Mate Complète */}
-          <View className="my-5">
+          {/* INPUT DU TITRE */}
+          <View>
             <Input
               label="Titre du document"
               placeholder="ex. Polycopié de cours - Chapitre 3"
               value={title}
               onChangeText={setTitle}
               leftIcon={FileText}
-              containerClassName="bg-transparent border-0 px-2 h-12"
-              className="text-xs p-4 text-zinc-900 dark:text-zinc-50"
             />
           </View>
 
-          {/* SECTION : Types de Document (Capsules Rectangulaires Mates) */}
-          <View className="gap-1.5">
-            <Text className="ml-1 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-              Type de document
+          {/* SÉLECTEUR DE TYPE (Pilules Boutons : rounded-full) */}
+          <View className="gap-3">
+            <Text className="ml-1 text-[11px] font-black uppercase tracking-widest text-zinc-500">
+              Catégorie
             </Text>
             
-            <View className="flex-row flex-wrap gap-1.5">
+            <View className="flex-row flex-wrap gap-2">
               {DOC_TYPES.map((t) => {
                 const isSelected = docType === t.value;
                 return (
@@ -188,16 +188,16 @@ export default function UploadDocumentModal() {
                     key={t.value}
                     onPress={() => setDocType(t.value)}
                     className={cn(
-                      'rounded-lg px-3 py-1.5 border',
+                      'rounded-full px-4 py-2 border-2 active:opacity-80 transition-all',
                       isSelected 
-                        ? 'bg-orange-500 border-orange-500 active:bg-orange-600' 
-                        : 'bg-zinc-50 border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800',
+                        ? 'bg-orange-500 border-orange-500' 
+                        : 'bg-zinc-100 border-transparent dark:bg-[#1A1A1A]',
                     )}
                   >
                     <Text
                       className={cn(
-                        'text-[11px] font-bold tracking-wide uppercase',
-                        isSelected ? 'text-white' : 'text-zinc-500 dark:text-zinc-400',
+                        'text-xs font-black tracking-widest uppercase',
+                        isSelected ? 'text-white' : 'text-zinc-950 dark:text-white',
                       )}
                     >
                       {t.label}
@@ -208,20 +208,21 @@ export default function UploadDocumentModal() {
             </View>
           </View>
 
-          {/* SÉLECTEUR DE PARCOURS ACADÉMIQUE */}
-          <View className="p-0.5">
+          {/* SÉLECTEUR DE PARCOURS ACADÉMIQUE (Gère ses propres inputs) */}
+          <View className="mt-2">
             <AcademicPathPicker value={path ?? {}} onChange={handlePathChange} />
           </View>
 
-          {/* BOUTON PRINCIPAL : Orange Mat Solide */}
-          <Button
-            label="Publier sur la bibliothèque"
-            size="lg"
-            onPress={() => void handleUpload()}
-            loading={uploadMutation.isPending}
-            disabled={!canSubmit}
-            className="rounded-xl h-11 bg-orange-500 active:bg-orange-600 mt-2"
-          />
+          {/* BOUTON PRINCIPAL */}
+          <View className="mt-6">
+            <Button
+              label="Publier le document"
+              size="lg"
+              onPress={() => void handleUpload()}
+              loading={uploadMutation.isPending}
+              disabled={!canSubmit}
+            />
+          </View>
           
         </View>
       </ScrollView>

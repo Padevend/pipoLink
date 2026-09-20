@@ -1,3 +1,4 @@
+import { signInWithGoogle } from '@/features/auth/lib/google-auth';
 import { useAuth, useToast } from '@/providers';
 import { authApi } from '@/shared/api/auth';
 import { ApiError } from '@/shared/api/client';
@@ -84,7 +85,7 @@ export function LoginForm() {
       showToast({ type: 'success', message: 'Connexion réussie' });
 
       if (result.requiresOnboarding || result.requiresKeySetup) {
-        router.replace('/auth/onboarding' as any);
+        router.replace('/auth/onboarding');
       } else {
         router.replace('/(tabs)');
       }
@@ -95,7 +96,24 @@ export function LoginForm() {
           : e instanceof Error
             ? e.message
             : 'Échec de la connexion';
+      if(e instanceof ApiError && e.code == "ACCOUNT_NOT_VERIFIED"){
+        router.push('/auth/verify-otp');
+      }
       showToast({ type: 'error', message: msg });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    try {
+      const google = await signInWithGoogle();
+      const result = await authApi.google(google);
+      await signInWithTokens({ accessToken: result.accessToken, refreshToken: result.refreshToken, expiresAt: typeof result.expiresAt === "string" ? new Date(result.expiresAt).getTime() : result.expiresAt, deviceId: result.deviceId }, result.user);
+      router.replace(result.requiresOnboarding ? "/auth/onboarding" : "/(tabs)");
+    } catch (e: any) {
+      showToast({ type: "error", message: e.message || "Échec de la connexion Google" });
     } finally {
       setIsLoading(false);
     }
@@ -105,68 +123,70 @@ export function LoginForm() {
   if (mode === 'choose') {
     return (
       <View className="w-full">
-        <Text className="mb-4 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <Text className="mb-6 text-sm font-medium text-zinc-500 dark:text-zinc-400">
           Sélectionnez la méthode d'authentification adaptée à votre équipement :
         </Text>
 
-        <View className="gap-y-3">
-          {/* Option A : Appareil Principal */}
+        <View className="gap-y-4">
+          {/* Option A : Appareil Principal (Flat UI, gros arrondis) */}
           <Pressable
             onPress={() => setMode('primary')}
-            className="flex-row items-center justify-between p-4 rounded-2xl border border-zinc-200/80 bg-zinc-50/80 dark:bg-zinc-800/40 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800/80 transition-all"
+            className="flex-row items-center justify-between p-4 rounded-[32px] bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-opacity"
           >
-            <View className="flex-row items-center gap-3.5 flex-1">
-              <View className="h-11 w-11 items-center justify-center rounded-xl bg-orange-500/10 border border-orange-500/20">
-                <Laptop size={20} color="#F97316" />
+            <View className="flex-row items-center gap-4 flex-1">
+              <View className="h-14 w-14 items-center justify-center rounded-full bg-white dark:bg-[#0A0A0A]">
+                <Laptop size={24} color="#F97316" />
               </View>
               <View className="flex-1">
-                <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                <Text className="text-base font-black tracking-tight text-zinc-950 dark:text-white">
                   Appareil principal
                 </Text>
-                <Text className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                <Text className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mt-1">
                   Email et mot de passe de votre compte étudiant
                 </Text>
               </View>
             </View>
-            <ChevronRight size={18} color="#A1A1AA" />
+            <ChevronRight size={24} color="#A1A1AA" className="mr-2" />
           </Pressable>
 
           {/* Option B : Associer un Appareil */}
           <Pressable
             onPress={() => router.push('/auth/link-device' as any)}
-            className="flex-row items-center justify-between p-4 rounded-2xl border border-zinc-200/80 bg-zinc-50/80 dark:bg-zinc-800/40 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800/80 transition-all"
+            className="flex-row items-center justify-between p-4 rounded-[32px] bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-opacity"
           >
-            <View className="flex-row items-center gap-3.5 flex-1">
-              <View className="h-11 w-11 items-center justify-center rounded-xl bg-teal-500/10 border border-teal-500/20">
-                <Link2 size={20} color="#14B8A6" />
+            <View className="flex-row items-center gap-4 flex-1">
+              <View className="h-14 w-14 items-center justify-center rounded-full bg-white dark:bg-[#0A0A0A]">
+                <Link2 size={24} color="#14B8A6" />
               </View>
               <View className="flex-1">
-                <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                <Text className="text-base font-black tracking-tight text-zinc-950 dark:text-white">
                   Associer cet appareil
                 </Text>
-                <Text className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                <Text className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mt-1">
                   Équipement secondaire (Validation QR / code)
                 </Text>
               </View>
             </View>
-            <ChevronRight size={18} color="#A1A1AA" />
+            <ChevronRight size={24} color="#A1A1AA" className="mr-2" />
           </Pressable>
         </View>
 
-        {/* Séparateur fluide */}
-        <View className="flex-row items-center my-5">
-          <View className="flex-1 h-[1px] bg-zinc-200/80 dark:bg-zinc-800" />
-          <Text className="px-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Nouveau venu ?</Text>
-          <View className="flex-1 h-[1px] bg-zinc-200/80 dark:bg-zinc-800" />
+        {/* Séparateur minimaliste */}
+        <View className="flex-row items-center my-8">
+          <View className="flex-1 h-[2px] bg-zinc-100 dark:bg-[#1A1A1A]" />
+          <Text className="px-4 text-[10px] font-black text-zinc-400 uppercase tracking-widest">Nouveau venu ?</Text>
+          <View className="flex-1 h-[2px] bg-zinc-100 dark:bg-[#1A1A1A]" />
         </View>
 
-        {/* Bouton d'Inscription */}
+        {/* Bouton d'Inscription - Style accentué plein */}
         <Pressable
           onPress={() => router.push('/auth/register')}
-          className="flex-row items-center justify-center gap-2.5 py-5 px-6 rounded-2xl bg-orange-500 active:opacity-90"
+          className="flex-row items-center justify-center gap-3 h-16 rounded-full bg-zinc-950 dark:bg-white active:opacity-80"
         >
-          <UserPlus size={16} className="text-white" color={Platform.OS === 'ios' ? undefined : '#FFF'} strokeWidth={2.5} />
-          <Text className="text-xs font-bold text-white dark:text-zinc-900 uppercase tracking-wider">Créer un nouveau compte</Text>
+          <UserPlus size={18} color={Platform.OS === 'ios' ? undefined : '#FFF'} className="text-white dark:text-black" strokeWidth={2.5} />
+          <Text className="text-sm font-black text-white dark:text-black uppercase tracking-wider">
+            Créer un nouveau compte
+          </Text>
         </Pressable>
       </View>
     );
@@ -175,18 +195,17 @@ export function LoginForm() {
   // VUE 2 : FORMULAIRE COMPTE LOCAL
   return (
     <View className="w-full">
-      {/* Bouton de retour épuré */}
       <Pressable
         onPress={() => setMode('choose')}
-        className="flex-row items-center gap-2 mb-4 self-start px-3 py-1.5 rounded-full bg-orange-500/10 dark:bg-orange-500/20 active:opacity-80"
+        className="flex-row items-center gap-2 mb-6 self-start px-5 py-3 rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80"
       >
-        <ArrowLeft size={14} color="#F97316" />
-        <Text className="text-xs font-bold text-orange-600 dark:text-orange-400">
-          Changer de méthode
+        <ArrowLeft size={16} color="#F97316" strokeWidth={3} />
+        <Text className="text-xs font-black text-zinc-950 dark:text-white uppercase tracking-wider">
+          Retour
         </Text>
       </Pressable>
 
-      <View className="gap-y-4">
+      <View className="gap-y-5">
         <Input
           label="Adresse Email"
           placeholder="nom@universite.edu"
@@ -196,10 +215,9 @@ export function LoginForm() {
           leftIcon={Mail}
           keyboardType="email-address"
           autoCapitalize="none"
-          containerClassName="bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200/80 dark:border-zinc-800"
         />
 
-        <View className="w-full gap-y-1.5">
+        <View className="w-full gap-y-2">
           <Input
             label="Mot de passe"
             placeholder="••••••••"
@@ -210,28 +228,37 @@ export function LoginForm() {
             secureTextEntry={!showPassword}
             rightIcon={showPassword ? EyeOff : Eye}
             onRightIconPress={() => setShowPassword(!showPassword)}
-            containerClassName="bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200/80 dark:border-zinc-800"
           />
           <Pressable
             onPress={() => router.push('/auth/forgot-password')}
-            className="self-end mt-1 px-1"
+            className="self-end mt-2 px-2"
           >
-            <Text className="text-xs font-semibold text-orange-500 dark:text-orange-400">
+            <Text className="text-xs font-black text-orange-500">
               Mot de passe oublié ?
             </Text>
           </Pressable>
         </View>
       </View>
 
-      {/* Validation d'Action (Largeur Totale) */}
-      <View className="mt-6">
+      <View className="mt-8">
         <Button
           label="Se connecter"
           onPress={() => void handlePrimaryLogin()}
           loading={isLoading}
-          className="bg-orange-500 hover:bg-orange-600 active:bg-orange-700 rounded-2xl h-14"
+          className="bg-orange-500 rounded-full h-16 shadow-none"
+          textClassName="text-white font-black uppercase tracking-wider text-sm"
         />
       </View>
+      
+      {/* <Pressable 
+        onPress={() => void handleGoogleLogin()} 
+        disabled={isLoading} 
+        className="mt-4 h-16 flex-row items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80"
+      >
+        <Text className="text-sm font-black text-zinc-950 dark:text-white uppercase tracking-wider">
+          Continuer avec Google
+        </Text>
+      </Pressable> */}
     </View>
   );
 }

@@ -1,16 +1,16 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { Activity, Eye, EyeOff, Lock, QrCode, ShieldAlert, ShieldCheck } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Platform, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useKeyRecovery } from '@/features/auth/hooks/use-key-recovery';
 import { AssociateDevicePanel } from '@/features/devices/components/associate-device-panel';
+import { refreshExistingConversationKeys } from '@/features/messaging/lib/refresh-conversation-keys';
 import { useAuth, useToast } from '@/providers';
 import { authApi } from '@/shared/api/auth';
 import { createKeyBackup, generateIdentityKeys, restoreKeyBackup } from '@/shared/crypto';
 import { clearCachedChatKeys } from '@/shared/crypto/reset-device';
-import { refreshExistingConversationKeys } from '@/features/messaging/lib/refresh-conversation-keys';
 import { SECURE_STORAGE_KEYS, SecureStorageService } from '@/shared/lib/storage';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
@@ -236,17 +236,15 @@ export default function KeyRecoveryScreen(): JSX.Element {
   };
 
   // ─── SILENT LOADER (Spec §5.4) ─────────────────────────────────────
-  // When auto-recovering from saved password, show only a neutral loader.
-  // No tabs, no password field, no technical detail visible.
   if (silentRecovery || isRecovering) {
     return (
-      <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right', 'bottom']}>
+      <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top', 'left', 'right', 'bottom']}>
         <View className="flex-1 items-center justify-center px-6">
           <ActivityIndicator size="large" color="#F97316" />
-          <Text className="mt-6 text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50 text-center">
+          <Text className="mt-6 text-base font-black uppercase tracking-widest text-zinc-950 dark:text-white text-center">
             Configuration en cours…
           </Text>
-          <Text className="mt-2 text-xs font-semibold text-zinc-400 dark:text-zinc-500 text-center px-8">
+          <Text className="mt-3 text-xs font-bold text-zinc-500 dark:text-zinc-400 text-center px-8 leading-relaxed">
             Récupération sécurisée de vos données de chiffrement. Veuillez patienter.
           </Text>
         </View>
@@ -256,50 +254,52 @@ export default function KeyRecoveryScreen(): JSX.Element {
 
   // ─── STANDARD UI (QR or manual password) ────────────────────────────
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right', 'bottom']}>
-      {/* HEADER */}
-      <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
-
-        <View className="flex-1 ml-3">
-          <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top', 'left', 'right', 'bottom']}>
+      
+      {/* HEADER : Plat et Solide */}
+      <View className="flex-row items-center border-b-2 border-zinc-100 bg-white px-6 py-4 dark:border-[#1A1A1A] dark:bg-[#0A0A0A]">
+        <View className="flex-1 justify-center">
+          <Text className="text-lg font-black tracking-tight text-zinc-950 dark:text-white" numberOfLines={1}>
             Récupération des clés
           </Text>
-          <Text className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mt-0.5">
+          <Text className="text-[10px] font-black uppercase tracking-widest text-orange-500 mt-0.5">
             Sécurité du protocole
           </Text>
         </View>
       </View>
 
-      <View
-        className="flex-1 justify-between p-4"
-        style={{
-          paddingBottom: insets.bottom + 16,
-          paddingLeft: insets.left + 16,
-          paddingRight: insets.right + 16
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingTop: 32,
+          paddingBottom: insets.bottom + 32,
         }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        <View className="flex-1 justify-start max-w-md w-full mx-auto">
+        <View className="max-w-md w-full mx-auto">
           {/* Status Badge */}
-          <View className="items-center mb-6 mt-2">
+          <View className="items-center mb-8">
             <View
-              className={`h-12 w-12 items-center justify-center rounded-xl border ${
+              className={`h-20 w-20 items-center justify-center rounded-full border-2 ${
                 keyMissing === true
-                  ? 'bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-900'
+                  ? 'bg-red-500/10 border-red-500/30'
                   : keyMissing === false
-                  ? 'bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-900'
-                  : 'bg-orange-50 border-orange-200 dark:bg-orange-950/30 dark:border-orange-900'
+                  ? 'bg-emerald-500/10 border-emerald-500/30'
+                  : 'bg-orange-500/10 border-orange-500/30'
               }`}
             >
               {keyMissing === true ? (
-                <ShieldAlert size={18} color="#EF4444" />
+                <ShieldAlert size={28} color="#EF4444" strokeWidth={2.5} />
               ) : keyMissing === false ? (
-                <ShieldCheck size={18} color="#22C55E" />
+                <ShieldCheck size={28} color="#10B981" strokeWidth={2.5} />
               ) : (
-                <Activity size={18} color="#F97316" />
+                <Activity size={28} color="#F97316" strokeWidth={2.5} />
               )}
             </View>
 
-            <Text className="mt-3 text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+            <Text className="mt-4 text-lg font-black tracking-tight text-zinc-950 dark:text-white text-center">
               {keyMissing === true
                 ? 'Clés introuvables'
                 : keyMissing === false
@@ -308,18 +308,18 @@ export default function KeyRecoveryScreen(): JSX.Element {
             </Text>
           </View>
 
-          {/* Toggle Tabs */}
-          <View className="flex-row rounded-lg bg-zinc-100 p-1 dark:bg-zinc-900 mb-6">
+          {/* Toggle Tabs (rounded-full) */}
+          <View className="flex-row rounded-full bg-zinc-100 p-1.5 dark:bg-[#1A1A1A] mb-8">
             <Pressable
               onPress={() => setMode('qr')}
-              className={`flex-1 flex-row items-center justify-center py-2 rounded-md ${
-                mode === 'qr' ? 'bg-white dark:bg-zinc-800' : ''
+              className={`flex-1 flex-row items-center justify-center py-3 rounded-full transition-all ${
+                mode === 'qr' ? 'bg-white dark:bg-[#222222]' : ''
               }`}
             >
-              <QrCode size={14} color={mode === 'qr' ? '#F97316' : '#71717A'} />
+              <QrCode size={16} color={mode === 'qr' ? '#F97316' : '#A1A1AA'} strokeWidth={2.5} />
               <Text
-                className={`ml-2 text-xs font-bold ${
-                  mode === 'qr' ? 'text-zinc-900 dark:text-zinc-50' : 'text-zinc-500'
+                className={`ml-2 text-xs font-black uppercase tracking-widest ${
+                  mode === 'qr' ? 'text-zinc-950 dark:text-white' : 'text-zinc-500'
                 }`}
               >
                 Association QR
@@ -328,14 +328,14 @@ export default function KeyRecoveryScreen(): JSX.Element {
 
             <Pressable
               onPress={() => setMode('password')}
-              className={`flex-1 flex-row items-center justify-center py-2 rounded-md ${
-                mode === 'password' ? 'bg-white dark:bg-zinc-800' : ''
+              className={`flex-1 flex-row items-center justify-center py-3 rounded-full transition-all ${
+                mode === 'password' ? 'bg-white dark:bg-[#222222]' : ''
               }`}
             >
-              <Lock size={14} color={mode === 'password' ? '#F97316' : '#71717A'} />
+              <Lock size={16} color={mode === 'password' ? '#F97316' : '#A1A1AA'} strokeWidth={2.5} />
               <Text
-                className={`ml-2 text-xs font-bold ${
-                  mode === 'password' ? 'text-zinc-900 dark:text-zinc-50' : 'text-zinc-500'
+                className={`ml-2 text-xs font-black uppercase tracking-widest ${
+                  mode === 'password' ? 'text-zinc-950 dark:text-white' : 'text-zinc-500'
                 }`}
               >
                 Par Mot de passe
@@ -345,36 +345,40 @@ export default function KeyRecoveryScreen(): JSX.Element {
 
           {/* Mode Contents */}
           {mode === 'qr' ? (
-            <View className="flex-1">
+            <View className="w-full">
               <AssociateDevicePanel autoStart />
             </View>
           ) : (
-            <View className="gap-y-4">
-              <View className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-900/20">
-                <Text className="text-xs font-semibold leading-5 text-zinc-500 dark:text-zinc-400 text-center">
+            <View className="gap-y-6">
+              <View className="rounded-2xl bg-zinc-100 p-5 dark:bg-[#1A1A1A]">
+                <Text className="text-xs font-bold leading-relaxed text-zinc-500 dark:text-zinc-400 text-center">
                   Saisissez le mot de passe de votre compte pour déchiffrer la sauvegarde de clé privée stockée sur le serveur.
                 </Text>
               </View>
 
-              <View className="relative mt-2">
+              <View className="gap-y-2">
+                <Text className="text-[11px] font-black uppercase tracking-widest text-zinc-500">
+                  Mot de passe du compte
+                </Text>
                 <Input
-                  label="Mot de passe du compte"
                   placeholder="••••••••"
+                  placeholderTextColor="#A1A1AA"
                   value={password}
                   onChangeText={setPassword}
                   leftIcon={Lock}
                   secureTextEntry={!showPassword}
                   rightIcon={showPassword ? EyeOff : Eye}
                   onRightIconPress={() => setShowPassword(!showPassword)}
-                  containerClassName="bg-transparent"
+                  containerClassName="bg-zinc-100 border-0 dark:bg-[#1A1A1A] rounded-full h-14 px-5"
+                  className="text-sm font-bold text-zinc-950 dark:text-white"
                 />
               </View>
 
               {attemptsRemaining !== null && (
-                <Text className="text-center text-xs font-semibold text-red-500">
+                <Text className="text-center text-xs font-black uppercase tracking-widest text-red-500">
                   {attemptsRemaining === 0
                     ? 'Compte verrouillé pendant 15 minutes.'
-                    : `Nombre de tentatives restantes : ${attemptsRemaining}`}
+                    : `Tentatives restantes : ${attemptsRemaining}`}
                 </Text>
               )}
 
@@ -383,20 +387,21 @@ export default function KeyRecoveryScreen(): JSX.Element {
                 onPress={() => handleRecovery()}
                 loading={isRecovering}
                 disabled={isRecovering}
-                className="bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-950 rounded-xl h-11 mt-2"
+                size="lg"
+                className="bg-orange-500 text-white rounded-full h-14 active:bg-orange-600 mt-2"
               />
             </View>
           )}
 
-          <View className="mt-8 items-center pb-4">
-            <Pressable onPress={handleBypassRecovery} disabled={isRecovering} className="p-2">
-              <Text className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 underline text-center">
+          <View className="mt-10 items-center pb-6">
+            <Pressable onPress={handleBypassRecovery} disabled={isRecovering} className="p-2 active:opacity-80">
+              <Text className="text-xs font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 text-center underline">
                 Ignorer la récupération (générer de nouvelles clés)
               </Text>
             </Pressable>
           </View>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }

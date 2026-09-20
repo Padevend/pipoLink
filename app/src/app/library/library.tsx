@@ -1,8 +1,8 @@
 import LibraryExplorerComponnent from '@/features/library/components/explorer';
+import type { Document } from '@/shared/api/types';
 import { router } from 'expo-router';
 import { ArrowDownToLine, ArrowLeft, Upload, User } from 'lucide-react-native';
 import { useCallback } from 'react';
-import type { Document } from '@/shared/api/types';
 import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -15,49 +15,51 @@ export default function LibraryExplorerScreen() {
     );
 
     return (
-        <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
+        <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>
 
-            {/* En-tête Mat Épuré */}
-            <View className="border-b border-zinc-100 bg-white px-5 pt-4 pb-3 dark:border-zinc-900 dark:bg-zinc-950">
-
-                <View className="mb-4 flex-row items-center justify-between">
-
+            {/* HEADER : Style Néo-banque Plat et Franc */}
+            <View className="flex-row items-center justify-between border-b-2 border-zinc-100 bg-white px-6 py-4 dark:border-[#1A1A1A] dark:bg-[#0A0A0A]">
+                
+                <View className="flex-row items-center gap-4 flex-1">
                     <Pressable
                         onPress={() => router.back()}
-                        className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 dark:bg-zinc-900 active:bg-zinc-100 dark:active:bg-zinc-800"
+                        className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-opacity"
                     >
-                        <ArrowLeft size={16} color="#71717A" />
+                        <ArrowLeft size={18} color="#F97316" strokeWidth={2.5} />
                     </Pressable>
 
-                    <View className="flex-1 pl-3">
-                        <Text className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                    <View className="flex-1">
+                        <Text 
+                            className="text-lg font-black tracking-tight text-zinc-950 dark:text-white"
+                            numberOfLines={1}
+                        >
                             Bibliothèque
                         </Text>
                     </View>
+                </View>
 
-                    {/* Actions secondaires rectangulaires + Action principale orange */}
-                    <View className="flex-row items-center gap-2">
-                        <Pressable
-                            onPress={() => router.push("/library/history")}
-                            className="h-10 w-10 items-center justify-center rounded-xl border border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/40 active:opacity-70"
-                        >
-                            <ArrowDownToLine size={18} color="#A1A1AA" />
-                        </Pressable>
+                {/* Actions : Boutons strictement arrondis (rounded-full) sans transparence */}
+                <View className="flex-row items-center gap-2.5">
+                    <Pressable
+                        onPress={() => router.push("/library/history")}
+                        className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80"
+                    >
+                        <ArrowDownToLine size={18} color="#A1A1AA" strokeWidth={2.5} />
+                    </Pressable>
 
-                        <Pressable
-                            onPress={() => router.push("/library/my-documents")}
-                            className="h-10 w-10 items-center justify-center rounded-xl border border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/40 active:opacity-70"
-                        >
-                            <User size={18} color="#A1A1AA" />
-                        </Pressable>
+                    <Pressable
+                        onPress={() => router.push("/library/my-documents")}
+                        className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80"
+                    >
+                        <User size={18} color="#A1A1AA" strokeWidth={2.5} />
+                    </Pressable>
 
-                        <Pressable
-                            onPress={() => router.push("/modal/upload-document")}
-                            className="h-10 w-10 items-center justify-center rounded-xl bg-orange-500 dark:bg-orange-600 active:opacity-90"
-                        >
-                            <Upload size={18} color="#FFFFFF" strokeWidth={2.5} />
-                        </Pressable>
-                    </View>
+                    <Pressable
+                        onPress={() => router.push("/modal/upload-document")}
+                        className="h-10 w-10 items-center justify-center rounded-full bg-orange-500 active:opacity-80"
+                    >
+                        <Upload size={18} color="#FFFFFF" strokeWidth={2.5} />
+                    </Pressable>
                 </View>
             </View>
 

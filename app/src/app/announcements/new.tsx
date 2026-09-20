@@ -22,7 +22,6 @@ export default function NewAnnouncementScreen() {
 
   const isStaff = user?.role === 'admin' || user?.role === 'staff';
 
-  // Ajustement automatique du format de l'image sélectionnée
   useEffect(() => {
     if (poster?.uri) {
       Image.getSize(
@@ -37,7 +36,6 @@ export default function NewAnnouncementScreen() {
     }
   }, [poster?.uri]);
 
-  // Sécurité : Seul le personnel peut créer une annonce
   if (!isStaff) {
     router.replace('/announcements');
     return null;
@@ -88,24 +86,24 @@ export default function NewAnnouncementScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-zinc-50 dark:bg-zinc-950" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>
 
-      {/* BARRE SUPÉRIEURE (Claire et sans reflets) */}
-      <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-4 dark:border-zinc-900 dark:bg-zinc-900">
+      {/* HEADER : Néo-banque, Plat, Solide */}
+      <View className="flex-row items-center border-b-2 border-zinc-100 bg-white px-6 py-4 dark:border-[#1A1A1A] dark:bg-[#0A0A0A]">
         <Pressable
           onPress={() => router.back()}
-          hitSlop={12}
-          className="h-9 w-9 items-center justify-center rounded-full bg-zinc-50 dark:bg-zinc-800 active:opacity-70"
+          hitSlop={10}
+          className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-opacity"
         >
-          <ArrowLeft size={18} color="#71717A" />
+          <ArrowLeft size={18} color="#F97316" strokeWidth={2.5} />
         </Pressable>
 
-        <View className="flex-1 ml-3">
-          <Text className="text-base font-bold text-zinc-900 dark:text-zinc-50">
+        <View className="flex-1 ml-4 justify-center">
+          <Text className="text-lg font-black tracking-tight text-zinc-950 dark:text-white" numberOfLines={1}>
             Nouvelle annonce
           </Text>
-          <Text className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-            Rédiger un message pour l'établissement
+          <Text className="text-[10px] font-black uppercase tracking-widest text-orange-500 mt-0.5">
+            Établissement
           </Text>
         </View>
       </View>
@@ -115,23 +113,22 @@ export default function NewAnnouncementScreen() {
         className="flex-1"
       >
         <ScrollView
-          className="flex-1 px-4"
-          contentContainerStyle={{ paddingTop: 20, paddingBottom: 40 }}
+          className="flex-1"
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 48 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Formulaire de saisie du Titre */}
-          <View className="mb-4">
+          {/* Titre */}
+          <View className="mb-6">
             <Input
               label="Titre de l'annonce"
               placeholder="Exemple : Dates des examens du second semestre"
               value={title}
               onChangeText={setTitle}
-              containerClassName="bg-white dark:bg-zinc-900"
             />
           </View>
 
-          {/* Formulaire de saisie du Contenu */}
+          {/* Contenu */}
           <View className="mb-6">
             <Input
               label="Texte de l'annonce"
@@ -139,33 +136,30 @@ export default function NewAnnouncementScreen() {
               value={content}
               onChangeText={setContent}
               multiline
-              className="min-h-[140px] text-start align-top bg-white dark:bg-zinc-900 p-2"
             />
           </View>
 
-          {/* ESPACE POUR L'IMAGE ILLUSTRATIVE */}
+          {/* IMAGE ILLUSTRATIVE */}
           <View className="mb-8">
-            <Text className="mb-2 ml-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+            <Text className="mb-3 text-[11px] font-black uppercase tracking-widest text-zinc-500">
               Image d'illustration (optionnel)
             </Text>
 
             {!poster?.uri ? (
-              // Case vide pour ajouter une photo
               <Pressable
                 onPress={pickPoster}
-                className="w-full h-32 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 items-center justify-center gap-y-2 active:opacity-80"
+                className="w-full h-40 rounded-2xl border-2 border-dashed border-zinc-200 dark:border-[#1A1A1A] bg-zinc-50 dark:bg-[#0A0A0A] items-center justify-center gap-y-3 active:opacity-80"
               >
-                <View className="h-10 w-10 items-center justify-center rounded-full bg-zinc-50 dark:bg-zinc-800">
-                  <ImagePlus size={18} color="#71717A" />
+                <View className="h-12 w-12 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A]">
+                  <ImagePlus size={20} color="#F97316" strokeWidth={2.5} />
                 </View>
-                <Text className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Choisir une image dans votre téléphone
+                <Text className="text-xs font-bold text-zinc-950 dark:text-white uppercase tracking-wider">
+                  Choisir une image
                 </Text>
               </Pressable>
             ) : (
-              // Aperçu de la photo sélectionnée avec bouton de suppression net
               <View
-                className="w-full rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 relative"
+                className="w-full rounded-2xl overflow-hidden border-2 border-zinc-200 dark:border-[#1A1A1A] bg-zinc-100 dark:bg-[#1A1A1A] relative"
                 style={{ aspectRatio: imageRatio }}
               >
                 <Image
@@ -174,29 +168,28 @@ export default function NewAnnouncementScreen() {
                   resizeMode="contain"
                 />
 
-                {/* Bouton pour retirer l'image */}
-                <View className="absolute top-3 right-3">
+                <View className="absolute top-4 right-4">
                   <Pressable
                     onPress={() => setPoster(null)}
-                    hitSlop={8}
-                    className="h-8 px-3 rounded-lg bg-red-500 flex-row items-center justify-center gap-x-1.5 active:bg-red-600"
+                    hitSlop={10}
+                    className="h-10 px-4 rounded-full bg-red-500 flex-row items-center justify-center gap-2 active:opacity-80"
                   >
-                    <Trash2 size={12} color="#FFFFFF" strokeWidth={2.5} />
-                    <Text className="text-xs font-bold text-white">Supprimer</Text>
+                    <Trash2 size={16} color="#FFFFFF" strokeWidth={2.5} />
+                    <Text className="text-xs font-black uppercase tracking-widest text-white">Supprimer</Text>
                   </Pressable>
                 </View>
               </View>
             )}
           </View>
 
-          {/* GRAND BOUTON DE VALIDATION ET ENVOI */}
+          {/* BOUTON DE VALIDATION (rounded-full) */}
           <Button
             label={createMutation.isPending ? "Publication en cours..." : "Publier l'annonce maintenant"}
-            size="xl"
+            size="lg"
             disabled={title.trim() === '' || content.trim().length < 10 || createMutation.isPending}
             loading={createMutation.isPending}
             onPress={() => void handlePublish()}
-            className="rounded-xl h-12 bg-orange-500 active:bg-orange-600"
+            className="rounded-full h-14 bg-orange-500 active:bg-orange-600"
           />
 
         </ScrollView>

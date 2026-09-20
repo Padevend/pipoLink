@@ -14,7 +14,6 @@ export interface ConversationItemProps {
   onPress: () => void;
 }
 
-// Cache module-level des aperçus déchiffrés pour éviter fetch clé + déchiffrement à chaque rendu
 const previewCache = new Map<string, string>();
 const PREVIEW_CACHE_MAX = 200;
 
@@ -34,7 +33,6 @@ export const ConversationItem = React.memo(function ConversationItem({ conversat
   const safeUnreadCount = Math.max(0, conversation.unreadCount);
   const isUnread = safeUnreadCount > 0;
 
-  // Récupération du nom du chat (Logique métier préservée)
   const chatName = useMemo(() => {
     if (conversation.type === 'group') {
       return conversation.name || 'Groupe';
@@ -43,7 +41,6 @@ export const ConversationItem = React.memo(function ConversationItem({ conversat
     return otherMember?.username || 'Privé';
   }, [conversation.name, conversation.members, user?.id]);
 
-  // Récupération de l'avatar du chat (Logique métier préservée)
   const chatAvatar = useMemo(() => {
     if (conversation.type === 'group') {
       return conversation.avatarUrl;
@@ -52,7 +49,6 @@ export const ConversationItem = React.memo(function ConversationItem({ conversat
     return otherMember?.avatarUrl;
   }, [conversation.avatarUrl, conversation.members, user?.id]);
 
-  // Recuperation du user account role si echange prive
   const userAccountRole = useMemo(() => {
     if (conversation.type === 'group') {
       return null;
@@ -85,7 +81,6 @@ export const ConversationItem = React.memo(function ConversationItem({ conversat
     getKey();
   }, [conversation.id, lastMessage, directPlain, cachedPreview]);
 
-  // Déchiffrement du dernier message (async → state, avec cache module-level)
   const [decryptedLastMessage, setDecryptedLastMessage] = useState<string>(() => {
     if (!lastMessage) return 'Aucun message';
     if (directPlain !== null) return directPlain;
@@ -133,85 +128,63 @@ export const ConversationItem = React.memo(function ConversationItem({ conversat
 
   const renderStatusIcon = () => {
     if (!lastMessage || !isMine) return null;
-
-    if (lastMessage.status === 'fail') {
-      return <AlertCircle size={12} color="#EF4444" strokeWidth={2.5} />;
-    }
-    if (lastMessage.id?.startsWith('temp-')) {
-      return <Clock size={12} color="#A1A1AA" strokeWidth={2.5} />;
-    }
-    if (lastMessage.status === 'read') {
-      return <CheckCheck size={12} color="#FF6B00" strokeWidth={2.5} />;
-    }
-    if (lastMessage.status === 'delivered') {
-      return <CheckCheck size={12} color="#A1A1AA" strokeWidth={2.5} />;
-    }
-    if (lastMessage.status === 'send') {
-      return <Check size={12} color="#A1A1AA" strokeWidth={2.5} />;
-    }
-
+    if (lastMessage.status === 'fail') return <AlertCircle size={14} color="#EF4444" strokeWidth={2.5} />;
+    if (lastMessage.id?.startsWith('temp-')) return <Clock size={14} color="#A1A1AA" strokeWidth={2.5} />;
+    if (lastMessage.status === 'read') return <CheckCheck size={14} color="#F97316" strokeWidth={2.5} />;
+    if (lastMessage.status === 'delivered') return <CheckCheck size={14} color="#A1A1AA" strokeWidth={2.5} />;
+    if (lastMessage.status === 'send') return <Check size={14} color="#A1A1AA" strokeWidth={2.5} />;
     return null;
   };
 
   return (
     <Pressable
       onPress={onPress}
-      className="flex-row items-center px-6 py-4 bg-white dark:bg-zinc-950 active:bg-zinc-50 dark:active:bg-zinc-900/40"
+      className="flex-row items-center py-2 px-4 my-1.5"
     >
-      {/* Conteneur de la photo de profil : Forme carrée moderne aux angles nets, sans ombre */}
       <View>
         <Avatar name={chatName} uri={chatAvatar} size="lg" role={userAccountRole as any} />
       </View>
 
-      {/* Zone de contenu textuel */}
       <View className="flex-1 ml-4 justify-center">
         <View className="flex-row justify-between items-baseline mb-1">
-          
-          {/* Nom de l'interlocuteur ou du groupe */}
           <Text 
             className={cn(
-              'text-sm tracking-tighter text-zinc-900 dark:text-zinc-50',
-              isUnread ? 'font-black' : 'font-medium'
+              'text-sm tracking-tight text-zinc-950 dark:text-white',
+              isUnread ? 'font-black' : 'font-bold'
             )}
             numberOfLines={1}
           >
             {chatName}
           </Text>
           
-          {/* Indicateur temporel : Orange électrique si non lu, gris sobre si lu */}
           <Text className={cn(
-            'text-[10px] uppercase font-bold tracking-wider ml-2',
-            isUnread 
-              ? 'text-orange-500' 
-              : 'text-zinc-400 dark:text-zinc-500'
+            'text-[10px] font-black uppercase tracking-widest ml-2',
+            isUnread ? 'text-orange-500' : 'text-zinc-400'
           )}>
             {formatDistanceToNow(new Date(conversation.updatedAt), { addSuffix: false })}
           </Text>
         </View>
 
         <View className="flex-row items-center justify-between gap-4">
-          
-          {/* Aperçu du dernier message échangé + icône de statut */}
-          <View className="flex-1 flex-row items-center gap-1.5 overflow-hidden">
+          <View className="flex-1 flex-row items-center gap-2 overflow-hidden">
             {renderStatusIcon()}
             <Text
               numberOfLines={1}
               className={cn(
-                'flex-1 text-xs leading-relaxed',
+                'flex-1 text-xs',
                 isFailed
-                  ? 'text-red-500 font-medium'
+                  ? 'text-red-500 font-bold'
                   : isUnread
-                    ? 'text-zinc-900 dark:text-zinc-200 font-bold'
-                    : 'text-zinc-400 dark:text-zinc-500'
+                    ? 'text-zinc-950 dark:text-white font-black'
+                    : 'text-zinc-500 dark:text-zinc-400 font-medium'
               )}
             >
               {decryptedLastMessage}
             </Text>
           </View>
 
-          {/* Pastille de notification : Format technique, carré adouci et orange vif sans ombre */}
           {isUnread && (
-            <View className="bg-orange-500 rounded-lg px-2 h-5 min-w-[20px] items-center justify-center">
+            <View className="bg-orange-500 rounded-full px-2.5 h-6 min-w-[24px] items-center justify-center">
               <Text className="text-white text-[10px] font-black tracking-tighter">
                 {safeUnreadCount}
               </Text>

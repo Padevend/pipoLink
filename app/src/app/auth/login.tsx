@@ -1,5 +1,5 @@
-import { ImageBackground, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { ImageBackground, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LoginForm } from '@/features/auth/components/login-form';
@@ -9,7 +9,7 @@ export default function LoginScreen() {
   const insets = useSafeAreaInsets();
 
   return (
-    <View className="flex-1 bg-zinc-950">
+    <View className="flex-1 bg-black">
       <StatusBar style="light" />
 
       <KeyboardAvoidingView
@@ -22,62 +22,63 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           bounces={false}
         >
-          {/* Image de fond avec overlay sombre pour un rendu ultra propre */}
+          {/* IMAGE DE FOND & OVERLAYS (Ultra flat, sans blur) */}
+          <View className="absolute top-0 left-0 right-0 h-[50vh]">
             <ImageBackground
               source={require("@/assets/images/bg_002.jpg")}
-              className="absolute inset-0 w-full h-full min-h-[280px] h-[40vh] "
+              className="w-full h-full"
               resizeMode="cover"
             />
-          {/* 1. SECTION HAUTE (HERO IMMERSIF ~ 35-40% DE L'ÉCRAN) */}
-          <View className="relative w-full min-h-[280px] h-[40vh] justify-between px-6 pb-10" style={{ paddingTop: insets.top + 16 }}>
-            
-            {/* Superposition de dégradé sombre et flou artistique */}
-            <View className="absolute inset-0 bg-zinc-950/70 backdrop-blur-md" />
-            <View className="absolute inset-0 bg-gradient-to-b from-zinc-950/40 via-zinc-950/80 to-zinc-950" />
+            <View className="absolute inset-0 bg-black/60" />
+            <View className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+          </View>
 
-            {/* En-tête Héro */}
+          {/* 1. SECTION HAUTE (HERO IMMERSIF ~ 45% DE L'ÉCRAN) */}
+          <View 
+            className="w-full min-h-[40vh] justify-between px-8 pb-10" 
+            style={{ paddingTop: insets.top + 24 }}
+          >
             <View className="flex-row items-center justify-between z-10">
               <AppLogo size="md" showWordmark={false} />
-              <View className="px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20">
-                <Text className="text-[10px] font-bold uppercase tracking-widest text-orange-400">
-                   Académique
+              
+              <View className="px-4 py-1.5 rounded-full bg-orange-500">
+                <Text className="text-[10px] font-black uppercase tracking-widest text-black">
+                  Académique
                 </Text>
               </View>
             </View>
 
             {/* Accroche Éditoriale */}
             <View className="z-10 mt-auto">
-              <Text className="text-xs font-bold uppercase tracking-widest text-orange-500 mb-1.5">
+              {/* Couleur d'accentuation Orange */}
+              <Text className="text-[11px] font-black uppercase tracking-widest text-orange-500 mb-3">
                 Portail d'Apprentissage
               </Text>
-              <Text className="text-3xl font-black tracking-tight text-white leading-none">
-                Connexion à{"\n"}l'espace
+              <Text className="text-5xl font-black tracking-tighter text-white">
+                Connexion{"\n"}à l'espace
               </Text>
-              <Text className="text-xs font-medium text-zinc-400 mt-2 max-w-[320px] leading-relaxed">
+              <Text className="text-sm font-medium text-zinc-400 mt-4 max-w-[280px] leading-relaxed">
                 Accédez à vos sessions de travail, vos notes actualisées et vos outils d'assistance IA.
               </Text>
             </View>
           </View>
 
-          {/* 2. SECTION BASSE (PANNEAU DU FORMULAIRE PLEINE LARGEUR ~ 60-65% DE L'ÉCRAN) */}
+          {/* 2. SECTION BASSE (PANNEAU DU FORMULAIRE) */}
           <View 
-            className="flex-1 w-full bg-white dark:bg-zinc-900 rounded-t-[36px] px-6 pt-7 border-t border-zinc-200/50 dark:border-zinc-800/80 shadow-2xl"
+            className="flex-1 w-full bg-white dark:bg-[#0A0A0A] rounded-t-[48px] px-8 pt-8"
             style={{ paddingBottom: Math.max(insets.bottom + 24, 32) }}
           >
-            {/* Barre de drag visuelle subtile */}
-            <View className="w-12 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700 self-center mb-6 opacity-60" />
+            <View className="w-16 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-800 self-center mb-10" />
 
-            {/* Header du Formulaire */}
-            <View className="mb-6 flex-row items-center justify-between border-b border-zinc-100 dark:border-zinc-800/80 pb-3">
-              <View className="flex-row items-center gap-2">
-                <View className="h-2 w-2 rounded-full bg-emerald-500" />
-                <Text className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+            <View className="mb-8 flex-row items-center justify-between">
+              <View className="flex-row items-center gap-3">
+                <View className="h-2.5 w-2.5 rounded-full bg-orange-500" />
+                <Text className="text-[11px] font-black uppercase tracking-widest text-zinc-900 dark:text-white">
                   Identification Sécurisée
                 </Text>
               </View>
             </View>
 
-            {/* Formulaire Intégré */}
             <LoginForm />
           </View>
         </ScrollView>

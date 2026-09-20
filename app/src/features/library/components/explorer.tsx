@@ -12,7 +12,7 @@ import { Skeleton } from '@/shared/ui/skeleton';
 import { router } from 'expo-router';
 import { FolderOpen, Sparkles } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, FlatList, Pressable, Text, View } from 'react-native';
+import { FlatList, Pressable, Text, View } from 'react-native';
 
 const ROOT_CRUMB: BreadcrumbItem = { id: null, name: 'Bibliothèque' };
 
@@ -97,8 +97,7 @@ export default function LibraryExplorerComponnent({
 
     return (
         <>
-            <View className="bg-white px-5 pb-3 dark:bg-zinc-950">
-                {/* Barre de Recherche Mate */}
+            <View className="bg-white px-4 py-4 dark:bg-[#0A0A0A]">
                 <View>
                     <SearchBar
                         placeholder='Rechercher un document, une UE…'
@@ -107,41 +106,39 @@ export default function LibraryExplorerComponnent({
                     />
                 </View>
 
-                {/* Recherche sémantique (Premium) */}
+                {/* Recherche sémantique (Bouton = rounded-full) */}
                 {showAISearch && (
                     <Pressable
                         onPress={handleSemanticSearchPress}
-                        className="mt-2.5 flex-row items-center justify-between rounded-xl border border-orange-200 bg-orange-50/60 px-3.5 py-2.5 dark:border-orange-900/40 dark:bg-orange-950/20 active:bg-orange-100 dark:active:bg-orange-950/40"
+                        className="mt-3 flex-row items-center justify-between rounded-full bg-zinc-100 px-5 py-3.5 dark:bg-[#1A1A1A] active:opacity-80 transition-all"
                     >
-                        <View className="flex-row items-center gap-2 flex-1">
-                            <Sparkles size={14} color="#F97316" />
-                            <Text className="text-xs font-bold tracking-tight text-zinc-800 dark:text-zinc-200">
+                        <View className="flex-row items-center gap-3 flex-1">
+                            <Sparkles size={16} color="#F97316" strokeWidth={2.5} />
+                            <Text className="text-xs font-black uppercase tracking-widest text-zinc-950 dark:text-white">
                                 Recherche IA
-                            </Text>
-                            <Text numberOfLines={1} className="flex-1 text-[10px] font-medium text-zinc-400 dark:text-zinc-500">
-                                « les lois de Maxwell en thermo… »
                             </Text>
                         </View>
                         {!isPremium && (
-                            <View className="rounded-md bg-orange-500 px-1.5 py-0.5 ml-2">
-                                <Text className="text-[8px] font-black uppercase tracking-wider text-white">
+                            <View className="rounded-full bg-orange-500 px-2.5 py-1 ml-2">
+                                <Text className="text-[9px] font-black uppercase tracking-widest text-white">
                                     Premium
                                 </Text>
                             </View>
                         )}
                     </Pressable>
                 )}
+                
                 {/* Fil d'Ariane */}
-                <View className="mt-3.5">
+                <View className="mt-4">
                     <ExplorerBreadcrumb items={trail} onNavigate={navigateBreadcrumb} />
                 </View>
             </View>
 
-            <View className="flex-1 px-4 pt-3">
+            <View className="flex-1 px-6 pt-2">
                 {isLoading ? (
-                    <View className="gap-2.5">
+                    <View className="gap-y-3">
                         {[1, 2, 3, 4, 5].map((i) => (
-                            <Skeleton key={i} className="h-14 w-full rounded-xl" />
+                            <Skeleton key={i} className="h-16 w-full rounded-2xl bg-zinc-100 dark:bg-[#1A1A1A]" />
                         ))}
                     </View>
                 ) : (
@@ -151,7 +148,7 @@ export default function LibraryExplorerComponnent({
                         renderItem={renderItem}
                         showsVerticalScrollIndicator={false}
                         contentContainerStyle={{ paddingBottom: 40 }}
-                        ItemSeparatorComponent={() => <View className="h-2" />}
+                        ItemSeparatorComponent={() => <View className="h-3" />}
                         refreshing={isFetching}
                         onRefresh={() => {
                             if (isSearching) {
@@ -161,15 +158,15 @@ export default function LibraryExplorerComponnent({
                             }
                         }}
                         ListEmptyComponent={
-                            <View className="items-center justify-center py-16 px-6">
-                                {/* Conteneur d'icône Mat */}
-                                <View className="h-12 w-12 items-center justify-center rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 mb-3">
-                                    <FolderOpen size={20} color="#F97316" />
+                            // Empty State (Carte = rounded-2xl)
+                            <View className="items-center justify-center py-12 px-6 rounded-2xl border-2 border-dashed border-zinc-200 dark:border-[#1A1A1A] bg-zinc-50 dark:bg-[#0A0A0A] mt-6">
+                                <View className="h-14 w-14 items-center justify-center rounded-xl bg-zinc-100 dark:bg-[#1A1A1A] mb-4">
+                                    <FolderOpen size={24} color="#F97316" strokeWidth={2.5} />
                                 </View>
-                                <Text className="text-sm font-bold tracking-tight text-zinc-800 dark:text-zinc-200 text-center">
+                                <Text className="text-sm font-black uppercase tracking-widest text-zinc-950 dark:text-white text-center">
                                     {isSearching ? 'Aucun résultat' : 'Dossier vide'}
                                 </Text>
-                                <Text className="mt-1 text-center text-xs leading-4 text-zinc-400 dark:text-zinc-500 px-6">
+                                <Text className="mt-2 text-center text-xs font-bold leading-relaxed text-zinc-400 dark:text-zinc-500">
                                     {isSearching
                                         ? "Nous n'avons trouvé aucun document correspondant à votre recherche."
                                         : parentId

@@ -32,28 +32,27 @@ export default function BubbleMenu({
   const itemsCount = isFailed
     ? (onRetry ? 1 : 0) + (onDelete ? 1 : 0)
     : (onReply ? 1 : 0) + (onResend ? 1 : 0) + (onEdit ? 1 : 0) + (onCopy ? 1 : 0) + (onDelete ? 1 : 0);
-  const topOffset = -(itemsCount * 36 + 14);
+  const topOffset = -(itemsCount * 44 + 16);
 
   return (
     <>
       {/* Zone d'interception globale pour fermer le menu au clic extérieur */}
       <Pressable
         onPress={onClose}
-        className="absolute z-100 bg-transparent"
+        className="absolute z-50 bg-transparent"
         style={{ width: 4000, height: 4000, left: -2000, top: -2000 }}
       />
 
-      {/* Conteneur Dropdown Vertical Sophistiqué */}
+      {/* Conteneur Dropdown Vertical (rounded-2xl, fond plein, sans ombre) */}
       <Animated.View
         entering={FadeInDown.duration(180).springify().mass(0.6)}
         exiting={FadeOutDown.duration(100)}
         style={{ top: topOffset }}
         className={cn(
-          'absolute z-50 min-w-[145px] flex-col p-1.5 rounded-xl backdrop-blur-xl',
-          'bg-surface-light/95 dark:bg-surface-dark/95',
-          'border border-border-light/30 dark:border-border-dark/10',
-          'shadow-2xl shadow-black/10 dark:shadow-black/30',
-          isMine ? 'right-1' : 'left-1'
+          'absolute z-50 min-w-[170px] flex-col p-2 rounded-2xl',
+          'bg-white dark:bg-[#1A1A1A]',
+          'border-2 border-zinc-100 dark:border-[#222222]',
+          isMine ? 'right-0' : 'left-0'
         )}
       >
         {isFailed ? (
@@ -62,29 +61,29 @@ export default function BubbleMenu({
             {onRetry && (
               <Pressable
                 onPress={() => { onRetry(); onClose(); }}
-                className="flex-row items-center justify-between px-3 py-2 rounded-lg active:bg-orange-500/10 transition-colors"
+                className="flex-row items-center justify-between px-4 py-3 rounded-xl active:opacity-80"
               >
-                <Text className="text-[12px] font-bold tracking-tight text-orange-500">
+                <Text className="text-xs font-black uppercase tracking-widest text-orange-500">
                   Réessayer
                 </Text>
-                <RefreshCw size={14} color="#FF6B00" strokeWidth={2.5} />
+                <RefreshCw size={16} color="#F97316" strokeWidth={2.5} />
               </Pressable>
             )}
 
             {onRetry && onDelete && (
-              <View className="h-[0.5px] my-1 mx-1 bg-border-light/40 dark:bg-border-dark/10" />
+              <View className="h-[2px] w-full my-1 bg-zinc-100 dark:bg-[#222222]" />
             )}
 
             {/* ACTION : SUPPRIMER */}
             {onDelete && (
               <Pressable
                 onPress={() => { onDelete(); onClose(); }}
-                className="flex-row items-center justify-between px-3 py-2 rounded-lg active:bg-red-500/10 transition-colors"
+                className="flex-row items-center justify-between px-4 py-3 rounded-xl active:opacity-80"
               >
-                <Text className="text-[12px] font-bold tracking-tight text-red-500 dark:text-red-400">
+                <Text className="text-xs font-black uppercase tracking-widest text-red-500">
                   Supprimer
                 </Text>
-                <Trash2 size={14} color="red" strokeWidth={2.5} />
+                <Trash2 size={16} color="#EF4444" strokeWidth={2.5} />
               </Pressable>
             )}
           </>
@@ -94,12 +93,12 @@ export default function BubbleMenu({
             {onResend && (
               <Pressable
                 onPress={() => { onResend(); onClose(); }}
-                className="flex-row items-center justify-between px-3 py-2 rounded-lg active:bg-neutral-100 dark:active:bg-neutral-800/60 transition-colors"
+                className="flex-row items-center justify-between px-4 py-3 rounded-xl active:opacity-80"
               >
-                <Text className="text-[12px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+                <Text className="text-xs font-bold text-zinc-950 dark:text-white">
                   Renvoyer
                 </Text>
-                <RotateCw size={14} color="#FF6B00" strokeWidth={2.5} />
+                <RotateCw size={16} color="#F97316" strokeWidth={2.5} />
               </Pressable>
             )}
 
@@ -107,12 +106,12 @@ export default function BubbleMenu({
             {onEdit && (
               <Pressable
                 onPress={() => { onEdit(); onClose(); }}
-                className="flex-row items-center justify-between px-3 py-2 rounded-lg active:bg-neutral-100 dark:active:bg-neutral-800/60 transition-colors"
+                className="flex-row items-center justify-between px-4 py-3 rounded-xl active:opacity-80"
               >
-                <Text className="text-[12px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+                <Text className="text-xs font-bold text-zinc-950 dark:text-white">
                   Modifier
                 </Text>
-                <Pencil size={14} color="#64748B" strokeWidth={2.5} />
+                <Pencil size={16} color="#A1A1AA" strokeWidth={2.5} />
               </Pressable>
             )}
 
@@ -120,12 +119,12 @@ export default function BubbleMenu({
             {onReply && (
               <Pressable
                 onPress={() => { onReply(); onClose(); }}
-                className="flex-row items-center justify-between px-3 py-2 rounded-lg active:bg-neutral-100 dark:active:bg-neutral-800/60 transition-colors"
+                className="flex-row items-center justify-between px-4 py-3 rounded-xl active:opacity-80"
               >
-                <Text className="text-[12px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+                <Text className="text-xs font-bold text-zinc-950 dark:text-white">
                   Répondre
                 </Text>
-                <Reply size={14} color="#64748B" strokeWidth={2.5} />
+                <Reply size={16} color="#A1A1AA" strokeWidth={2.5} />
               </Pressable>
             )}
 
@@ -133,12 +132,12 @@ export default function BubbleMenu({
             {onCopy && (
               <Pressable
                 onPress={() => { onCopy(); onClose(); }}
-                className="flex-row items-center justify-between px-3 py-2 rounded-lg active:bg-neutral-100 dark:active:bg-neutral-800/60 transition-colors"
+                className="flex-row items-center justify-between px-4 py-3 rounded-xl active:opacity-80"
               >
-                <Text className="text-[12px] font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">
+                <Text className="text-xs font-bold text-zinc-950 dark:text-white">
                   Copier
                 </Text>
-                <Copy size={14} color="#64748B" strokeWidth={2.5} />
+                <Copy size={16} color="#A1A1AA" strokeWidth={2.5} />
               </Pressable>
             )}
 
@@ -146,16 +145,16 @@ export default function BubbleMenu({
             {onDelete && (
               <>
                 {(onReply || onResend || onEdit || onCopy) && (
-                  <View className="h-[0.5px] my-1 mx-1 bg-border-light/40 dark:bg-border-dark/10" />
+                  <View className="h-[2px] w-full my-1 bg-zinc-100 dark:bg-[#222222]" />
                 )}
                 <Pressable
                   onPress={() => { onDelete(); onClose(); }}
-                  className="flex-row items-center justify-between px-3 py-2 rounded-lg active:bg-red-500/10 transition-colors"
+                  className="flex-row items-center justify-between px-4 py-3 rounded-xl active:opacity-80"
                 >
-                  <Text className="text-[12px] font-bold tracking-tight text-red-500 dark:text-red-400">
+                  <Text className="text-xs font-black uppercase tracking-widest text-red-500">
                     Supprimer
                   </Text>
-                  <Trash2 size={14} color="red" strokeWidth={2.5} />
+                  <Trash2 size={16} color="#EF4444" strokeWidth={2.5} />
                 </Pressable>
               </>
             )}

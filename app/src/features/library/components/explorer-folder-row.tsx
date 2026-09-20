@@ -22,44 +22,44 @@ export function ExplorerFolderRow({ folder, onPress }: ExplorerFolderRowProps): 
   return (
     <Pressable
       onPress={onPress}
-      className="w-full flex-row items-center justify-between rounded-xl border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-900 dark:bg-zinc-900/40 active:bg-zinc-100 dark:active:bg-zinc-900"
+      // Conteneur Liste/Carte = rounded-2xl, fond plein
+      className="w-full flex-row items-center justify-between rounded-2xl bg-zinc-100 p-4 dark:bg-[#1A1A1A] active:opacity-80 transition-all"
     >
       
-      {/* GAUCHE: Bloc de Contenu (Icône + Titre & Badge) */}
       <View className="flex-1 flex-row items-center pr-3">
         
-        {/* Wrapper Icône Dossier Mat Opaque */}
+        {/* Conteneur Icône = rounded-xl (pas full), fond plein */}
         <View 
           className={cn(
-            "h-9 w-9 items-center justify-center rounded-lg border mr-3",
+            "h-10 w-10 items-center justify-center rounded-xl mr-4",
             isVoid 
-              ? "bg-zinc-200/50 border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700" 
-              : "bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900/40"
+              ? "bg-white dark:bg-[#222222]" 
+              : "bg-orange-100 dark:bg-orange-950/40"
           )}
         >
-          <Folder size={15} color={isVoid ? "#71717A" : "#D97706"} />
+          <Folder size={18} color={isVoid ? "#A1A1AA" : "#F97316"} strokeWidth={2.5} />
         </View>
         
         {/* Corps Textuel */}
         <View className="flex-1 justify-center">
           <Text
             numberOfLines={1}
-            className="text-xs font-bold tracking-tight text-zinc-900 dark:text-zinc-50"
+            className="text-sm font-bold tracking-tight text-zinc-950 dark:text-white"
           >
             {folder.name}
           </Text>
           
-          {/* Badge de contenu Mat Opaque */}
-          <View className="flex-row mt-1">
+          {/* Badge de contenu = rounded-full */}
+          <View className="flex-row mt-1.5">
             <View className={cn(
-              "rounded bg-zinc-200/60 dark:bg-zinc-800 px-1.5 py-0.5",
-              !isVoid && "bg-amber-100/70 dark:bg-amber-950/40"
+              "rounded-full px-2.5 py-0.5",
+              isVoid ? "bg-zinc-200 dark:bg-[#2A2A2A]" : "bg-orange-500"
             )}>
               <Text className={cn(
-                "text-[9px] font-bold tracking-wider uppercase",
+                "text-[10px] font-black tracking-widest uppercase",
                 isVoid
                   ? "text-zinc-500 dark:text-zinc-400"
-                  : "text-amber-700 dark:text-amber-400"
+                  : "text-white"
               )}>
                 {subtitle}
               </Text>
@@ -69,9 +69,9 @@ export function ExplorerFolderRow({ folder, onPress }: ExplorerFolderRowProps): 
 
       </View>
 
-      {/* DROITE: Flèche d'Action Épurée */}
+      {/* Flèche droite bien dessinée */}
       <View className="pl-1 items-center justify-center">
-        <ChevronRight size={14} color="#71717A" />
+        <ChevronRight size={18} color="#A1A1AA" strokeWidth={2.5} />
       </View>
 
     </Pressable>

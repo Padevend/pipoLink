@@ -77,52 +77,62 @@ export default function AboutScreen(): JSX.Element {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top', 'left', 'right']}>
       
-      {/* HEADER : Panneau Mat Solide */}
-      <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
+      {/* HEADER : Néo-banque, Plat et Solide */}
+      <View className="flex-row items-center border-b-2 border-zinc-100 bg-white px-6 py-4 dark:border-[#1A1A1A] dark:bg-[#0A0A0A]">
         <Pressable 
           onPress={() => router.back()} 
-          className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
+          className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-opacity"
         >
-          <ArrowLeft size={14} color="#71717A" />
+          <ArrowLeft size={18} color="#F97316" strokeWidth={2.5} />
         </Pressable>
-        <Text className="flex-1 ml-3 text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-          À propos
-        </Text>
+        
+        <View className="flex-1 ml-4 justify-center">
+          <Text className="text-lg font-black tracking-tight text-zinc-950 dark:text-white" numberOfLines={1}>
+            À propos
+          </Text>
+          <Text className="text-[10px] font-black uppercase tracking-widest text-orange-500 mt-0.5">
+            Informations & Application
+          </Text>
+        </View>
       </View>
 
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: insets.bottom + 24 }} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        className="flex-1" 
+        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 32, paddingBottom: insets.bottom + 32 }} 
+        showsVerticalScrollIndicator={false}
+      >
         
-        {/* SECTION 1 : LOGO & IDENTITY */}
-        <View className="items-center mb-6">
+        {/* SECTION 1 : LOGO & IDENTITY (Arrondis 2xl, fond plein) */}
+        <View className="items-center mb-8 rounded-2xl bg-zinc-100 p-8 dark:bg-[#1A1A1A]">
           <AppLogo size="lg" showWordmark />
           
-          <View className="mt-3 rounded-md bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-900/50 px-2.5 py-0.5">
-            <Text className="text-[9px] font-bold tracking-wider text-orange-600 dark:text-orange-400 uppercase">
+          <View className="mt-4 rounded-full bg-orange-500 px-4 py-1.5">
+            <Text className="text-[10px] font-black tracking-widest text-white uppercase">
               Version {version}
             </Text>
           </View>
           
-          <Text className="mt-3.5 text-center text-xs leading-5 font-semibold text-zinc-400 dark:text-zinc-500 px-4">
+          <Text className="mt-4 text-center text-xs font-bold leading-relaxed text-zinc-600 dark:text-zinc-300">
             PipoLink is a secure, offline-first academic messaging platform with end-to-end encryption and multi-device support.
           </Text>
         </View>
 
-        {/* SECTION 2 : SITE OFFICIEL */}
+        {/* SECTION 2 : SITE OFFICIEL (Arrondis 2xl, fond plein) */}
         <Pressable 
           onPress={() => void openUrl('https://pipolink.lyrastudio.org')}
-          className="mb-5 flex-row items-center justify-between rounded-xl border border-zinc-200 bg-white p-3.5 dark:border-zinc-900 dark:bg-zinc-950 active:bg-zinc-50 dark:active:bg-zinc-900/50"
+          className="mb-8 flex-row items-center justify-between rounded-2xl bg-zinc-100 p-5 dark:bg-[#1A1A1A] active:opacity-80 transition-opacity"
         >
-          <View className="flex-row items-center gap-3">
-            <View className="h-8 w-8 items-center justify-center rounded-lg bg-orange-50 border border-orange-200 dark:bg-orange-950/30 dark:border-orange-900/50">
-              <Globe size={14} color="#F97316" />
+          <View className="flex-row items-center gap-4 flex-1 pr-3">
+            <View className="h-12 w-12 items-center justify-center rounded-full bg-white dark:bg-[#222222]">
+              <Globe size={20} color="#F97316" strokeWidth={2.5} />
             </View>
-            <View>
-              <Text className="text-xs font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+            <View className="flex-1 justify-center">
+              <Text className="text-sm font-bold tracking-tight text-zinc-950 dark:text-white">
                 Site officiel
               </Text>
-              <Text className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 mt-0.5">
+              <Text className="text-[10px] font-black uppercase tracking-widest text-orange-500 mt-1">
                 pipolink.lyrastudio.org
               </Text>
             </View>
@@ -130,26 +140,26 @@ export default function AboutScreen(): JSX.Element {
         </Pressable>
 
         {/* SECTION 3 : FONCTIONNALITÉS CLÉS */}
-        <Text className="mb-2 ml-1 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+        <Text className="mb-3 text-[11px] font-black uppercase tracking-widest text-zinc-500">
           Fonctionnalités clés
         </Text>
         
-        <View className="gap-y-3 mb-5">
+        <View className="gap-y-4 mb-8">
           {FEATURES.map((feat) => {
             const IconComponent = ICON_MAP[feat.id as keyof typeof ICON_MAP] || Shield;
             return (
               <View 
                 key={feat.id}
-                className="rounded-xl border border-zinc-200 bg-white p-3.5 dark:border-zinc-900 dark:bg-zinc-950 flex-row gap-x-3.5"
+                className="rounded-2xl bg-zinc-100 p-5 dark:bg-[#1A1A1A] flex-row gap-x-4 items-center"
               >
-                <View className="h-8 w-8 items-center justify-center rounded-lg bg-orange-50 border border-orange-200 dark:bg-orange-950/30 dark:border-orange-900/50 shrink-0">
-                  <IconComponent size={14} color="#F97316" />
+                <View className="h-12 w-12 items-center justify-center rounded-full bg-white dark:bg-[#222222] shrink-0">
+                  <IconComponent size={20} color="#F97316" strokeWidth={2.5} />
                 </View>
                 <View className="flex-1 justify-center">
-                  <Text className="text-xs font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                  <Text className="text-sm font-bold tracking-tight text-zinc-950 dark:text-white">
                     {feat.title}
                   </Text>
-                  <Text className="mt-1 text-[11px] leading-4 font-semibold text-zinc-400 dark:text-zinc-500">
+                  <Text className="mt-1 text-xs font-bold leading-relaxed text-zinc-500 dark:text-zinc-400">
                     {feat.description}
                   </Text>
                 </View>
@@ -159,31 +169,33 @@ export default function AboutScreen(): JSX.Element {
         </View>
 
         {/* SECTION 4 : RÉSEAUX SOCIAUX */}
-        <Text className="mb-2 ml-1 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+        <Text className="mb-3 text-[11px] font-black uppercase tracking-widest text-zinc-500">
           Communauté & Réseaux
         </Text>
 
-        <View className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-900 dark:bg-zinc-950">
+        <View className="overflow-hidden rounded-2xl bg-zinc-100 dark:bg-[#1A1A1A]">
           {SOCIALS.map((social, index) => {
             const SocialIcon = social.icon;
             return (
               <View key={social.label}>
-                {index > 0 && <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-900" />}
+                {index > 0 && <View className="h-[2px] w-full bg-zinc-200 dark:bg-[#222222]" />}
                 <Pressable
                   onPress={() => void openUrl(social.href)}
-                  className="flex-row items-center justify-between px-4 py-3.5 active:bg-zinc-50 dark:active:bg-zinc-900/50"
+                  className="flex-row items-center justify-between p-4 active:opacity-80 transition-opacity"
                 >
-                  <View className="flex-row items-center gap-3">
-                    <View className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-100 dark:bg-zinc-900 dark:border-zinc-800">
-                      <SocialIcon size={14} color="#71717A" />
+                  <View className="flex-row items-center gap-4">
+                    <View className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-[#222222]">
+                      <SocialIcon size={18} color="#F97316" strokeWidth={2.5} />
                     </View>
-                    <Text className="text-xs font-semibold text-zinc-900 dark:text-zinc-50">
+                    <Text className="text-sm font-bold tracking-tight text-zinc-950 dark:text-white">
                       {social.label}
                     </Text>
                   </View>
-                  <Text className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500">
-                    Rejoindre
-                  </Text>
+                  <View className="rounded-full bg-white dark:bg-[#222222] px-3 py-1">
+                    <Text className="text-[10px] font-black uppercase tracking-widest text-orange-500">
+                      Rejoindre
+                    </Text>
+                  </View>
                 </Pressable>
               </View>
             );

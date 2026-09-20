@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { conversationKeys, useConversations } from '@/entities/conversation/hooks';
@@ -14,7 +14,7 @@ import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { ArrowLeft, EllipsisVertical, Info, LogOut, MessageSquareOff, Phone, Trash2 } from 'lucide-react-native';
 
-const ORANGE_PRINCIPAL = '#FF6B00';
+const ORANGE_PRINCIPAL = '#F97316';
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -93,41 +93,36 @@ export default function ChatScreen() {
     return otherMember?.accountRole;
   }, [activeConversation, user?.id]);
 
-  // ÉCRAN 1 : Attente du chargement
   if (!activeConversation && (isConversationsLoading || isUserLoading)) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-zinc-950">
-        <ActivityIndicator size="small" color={ORANGE_PRINCIPAL} />
+      <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-[#0A0A0A]">
+        <ActivityIndicator size="large" color={ORANGE_PRINCIPAL} />
       </SafeAreaView>
     );
   }
 
-  // ÉCRAN 2 : Erreur / Discussion introuvable
   if (!activeConversation) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-white px-8 dark:bg-zinc-950">
+      <SafeAreaView className="flex-1 items-center justify-center bg-white px-8 dark:bg-[#0A0A0A]">
         <View className="w-full max-w-sm items-center justify-center">
-
-          {/* Illustration centrale géométrique */}
-          <View className="mb-6 h-14 w-14 items-center justify-center rounded-xl border border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/40">
-            <MessageSquareOff size={22} color={ORANGE_PRINCIPAL} />
+          <View className="mb-4 h-16 w-16 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-[#1A1A1A]">
+            <MessageSquareOff size={24} color={ORANGE_PRINCIPAL} strokeWidth={2.5} />
           </View>
 
-          <Text className="text-sm font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-50 text-center">
+          <Text className="text-sm font-black uppercase tracking-wider text-zinc-950 dark:text-white text-center">
             Discussion Introuvable
           </Text>
 
-          <Text className="mt-2 text-center text-xs font-medium leading-relaxed text-zinc-400 dark:text-zinc-500 px-4">
+          <Text className="mt-2 text-center text-xs font-semibold leading-relaxed text-zinc-500 dark:text-zinc-400 px-4">
             Cet échange n'existe pas ou vous n'avez plus les droits d'accès pour consulter ces messages.
           </Text>
 
-          {/* Bouton de retour strict */}
           <Pressable
             onPress={() => router.back()}
-            className="mt-8 flex-row items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 py-3 dark:border-zinc-800 dark:bg-zinc-950 active:bg-zinc-50 dark:active:bg-zinc-900"
+            className="mt-6 flex-row items-center justify-center gap-2 rounded-xl bg-zinc-100 px-6 py-3.5 dark:bg-[#1A1A1A] active:opacity-80"
           >
-            <ArrowLeft size={14} color="#A1A1AA" />
-            <Text className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+            <ArrowLeft size={16} color="#F97316" strokeWidth={2.5} />
+            <Text className="text-xs font-bold uppercase tracking-wider text-zinc-950 dark:text-white">
               Retour aux messages
             </Text>
           </Pressable>
@@ -136,24 +131,20 @@ export default function ChatScreen() {
     );
   }
 
-  // ÉCRAN INTERFACE PRINCIPALE
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
-
-      {/* Barre supérieure d'en-tête (Header) de discussion */}
-      <View className="z-10 flex-row items-center justify-between border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>
+      {/* Header Néo-banque plat : text moins gros, bordures discrètes, boutons arrondis full */}
+      <View className="z-10 flex-row items-center justify-between border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-[#0A0A0A]">
         <View className="flex-row flex-1 items-center gap-3">
-
-          {/* Retour flèche */}
           <Pressable
             onPress={() => router.back()}
-            className="h-9 w-9 items-center justify-center rounded-lg border border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/40 active:opacity-70"
+            className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-opacity"
           >
-            <ArrowLeft size={16} color="#A1A1AA" />
+            <ArrowLeft size={18} color="#F97316" strokeWidth={2.5} />
           </Pressable>
 
           <Pressable
-            className='w-full flex-row items-center gap-2'
+            className="flex-1 flex-row items-center gap-2.5"
             onPress={() => {
               setMenuOpen(false);
               if (activeConversation.type === 'group') {
@@ -163,60 +154,56 @@ export default function ChatScreen() {
               }
             }}
           >
-            <View className="">
-              <Avatar name={chatName} uri={chatAvatar} size="sm" role={userAccountRole} />
-            </View>
+            <Avatar name={chatName} uri={chatAvatar} size="sm" role={userAccountRole} />
 
             <View className="flex-1 justify-center">
               <Text
-                className="text-sm font-black tracking-tight text-zinc-900 dark:text-zinc-50"
+                className="text-sm font-bold tracking-tight text-zinc-950 dark:text-white"
                 numberOfLines={1}
               >
                 {chatName}
               </Text>
 
-              {/* Catégorie technique du chat */}
-              <View className="flex-row items-center gap-1 mt-0.5">
+              <View className="flex-row items-center gap-1.5 mt-0.5">
                 <View className={cn(
                   "h-1.5 w-1.5 rounded-full",
-                  activeConversation?.type === 'group' ? "bg-orange-500" : "bg-zinc-400 dark:bg-zinc-500"
+                  activeConversation?.type === 'group' ? "bg-orange-500" : "bg-zinc-400"
                 )} />
-                <Text className="font-mono text-[9px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
-                  {activeConversation?.type === 'group' ? 'Canal // Groupe' : 'Canal // Privé'}
+                <Text className="text-[9px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                  {activeConversation?.type === 'group' ? 'Canal de groupe' : 'Discussion privée'}
                 </Text>
               </View>
             </View>
           </Pressable>
         </View>
 
-        {/* Boutons d'outils du haut */}
         <View className="flex-row items-center gap-2">
           {userPhone && (
             <Pressable
               onPress={() => Linking.openURL(`tel:${userPhone}`)}
-              className="h-9 w-9 items-center justify-center rounded-xl border border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/40 active:opacity-70"
+              className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80"
             >
-              <Phone size={16} color="#A1A1AA" />
+              <Phone size={18} color="#F97316" strokeWidth={2.5} />
             </Pressable>
           )}
 
           <View className="relative">
             <Pressable
               onPress={() => setMenuOpen(!menuOpen)}
-              className="h-9 w-9 items-center justify-center rounded-xl border border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/40 active:opacity-70"
+              className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80"
             >
-              <EllipsisVertical size={16} color="#A1A1AA" />
+              <EllipsisVertical size={18} color="#F97316" strokeWidth={2.5} />
             </Pressable>
 
-            {/* Menu dépliant (sans aucune ombre ni transparence) */}
             {menuOpen && (
               <>
                 <Pressable
                   onPress={() => setMenuOpen(false)}
-                  className="absolute right-0 inset-0 z-40 bg-transparent"
+                  className="absolute inset-0 z-40 bg-transparent"
                   style={{ width: 4000, height: 4000, left: -2000, top: -2000 }}
                 />
-                <View className="absolute right-0 top-11 z-50 w-48 rounded-xl border border-zinc-200 bg-white p-1 dark:border-zinc-800 dark:bg-zinc-950">
+                {/* Dropdown : Coins standards (pas rounded-full), style plat néo-banque */}
+                <View className="absolute right-0 top-12 z-50 w-56 rounded-2xl bg-white p-2 dark:bg-[#1A1A1A] border border-zinc-200 dark:border-zinc-800 gap-y-1">
                   <Pressable
                     onPress={() => {
                       setMenuOpen(false);
@@ -226,10 +213,10 @@ export default function ChatScreen() {
                         router.push(`/user/${otherMembers[0]?.id}`);
                       }
                     }}
-                    className="flex-row items-center gap-2 rounded-lg px-3 py-2.5 active:bg-zinc-50 dark:active:bg-zinc-900"
+                    className="flex-row items-center gap-2.5 rounded-xl px-3 py-2.5 bg-zinc-50 dark:bg-[#222222] active:opacity-80"
                   >
-                    <Info size={14} color="#A1A1AA" />
-                    <Text className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Voir les informations</Text>
+                    <Info size={16} color="#F97316" strokeWidth={2.5} />
+                    <Text className="text-xs font-bold text-zinc-950 dark:text-white">Voir les informations</Text>
                   </Pressable>
 
                   {activeConversation?.type === 'group' ? (
@@ -244,9 +231,9 @@ export default function ChatScreen() {
                           console.error(e);
                         }
                       }}
-                      className="flex-row items-center gap-2 rounded-lg px-3 py-2.5 border-t border-zinc-100 dark:border-zinc-900 active:bg-red-500/5"
+                      className="flex-row items-center gap-2.5 rounded-xl px-3 py-2.5 bg-red-50 dark:bg-red-950/30 active:opacity-80"
                     >
-                      <LogOut size={14} color="#EF4444" />
+                      <LogOut size={16} color="#EF4444" strokeWidth={2.5} />
                       <Text className="text-xs font-bold text-red-500">Quitter le groupe</Text>
                     </Pressable>
                   ) : !activeConversation?.isPending ? (
@@ -261,9 +248,9 @@ export default function ChatScreen() {
                           console.error(e);
                         }
                       }}
-                      className="flex-row items-center gap-2 rounded-lg px-3 py-2.5 border-t border-zinc-100 dark:border-zinc-900 active:bg-red-500/5"
+                      className="flex-row items-center gap-2.5 rounded-xl px-3 py-2.5 bg-red-50 dark:bg-red-950/30 active:opacity-80"
                     >
-                      <Trash2 size={14} color="#EF4444" />
+                      <Trash2 size={16} color="#EF4444" strokeWidth={2.5} />
                       <Text className="text-xs font-bold text-red-500">Supprimer l'échange</Text>
                     </Pressable>
                   ) : null}
@@ -274,8 +261,7 @@ export default function ChatScreen() {
         </View>
       </View>
 
-      {/* Zone principale des messages de discussion */}
       <ChatView conversation={activeConversation} />
-    </SafeAreaView >
+    </SafeAreaView>
   );
 }

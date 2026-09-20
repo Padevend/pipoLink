@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Book, BookOpen, FileText, Search, Sparkles, Wrench, X } from 'lucide-react-native';
+import { BookOpen, FileText, Search, Wrench, X } from 'lucide-react-native';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -36,59 +36,70 @@ export default function SemanticSearchModal() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
-      {/* HEADER */}
-      <View className="flex-row items-center justify-between border-b border-zinc-100 bg-white px-5 py-3 dark:border-zinc-900 dark:bg-zinc-950">
-        <View className="flex-row items-center gap-2">
-          <BookOpen size={15} color="#F97316" />
-          <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Recherche IA
-          </Text>
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top', 'left', 'right']}>
+      
+      {/* HEADER : Plat et Solide */}
+      <View className="flex-row items-center justify-between border-b-2 border-zinc-100 bg-white px-6 py-4 dark:border-[#1A1A1A] dark:bg-[#0A0A0A]">
+        <View className="flex-row items-center gap-3">
+          <View className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A]">
+            <BookOpen size={18} color="#F97316" strokeWidth={2.5} />
+          </View>
+          <View className="justify-center">
+            <Text className="text-lg font-black tracking-tight text-zinc-950 dark:text-white" numberOfLines={1}>
+              Recherche IA
+            </Text>
+            <Text className="text-[10px] font-black uppercase tracking-widest text-orange-500 mt-0.5">
+              Recherche sémantique
+            </Text>
+          </View>
         </View>
 
         <Pressable
           onPress={() => router.back()}
-          className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
+          className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-opacity"
         >
-          <X size={14} color="#71717A" />
+          <X size={18} color="#F97316" strokeWidth={2.5} />
         </Pressable>
       </View>
 
-      <View className="px-4 pt-4">
+      <View className="px-6 pt-6">
         <Input
-          placeholder="ex. document sur les lois de Maxwell en thermodynamique"
+          placeholder="ex. document sur les lois de Maxwell..."
+          placeholderTextColor="#A1A1AA"
           value={query}
           onChangeText={setQuery}
           leftIcon={Search}
           returnKeyType="search"
           onSubmitEditing={handleSearch}
-          containerClassName="bg-transparent border-0 px-2 h-12"
-          className="text-xs p-4 text-zinc-900 dark:text-zinc-50"
+          containerClassName="bg-zinc-100 border-0 dark:bg-[#1A1A1A] rounded-full h-14 px-5"
+          className="text-sm font-bold text-zinc-950 dark:text-white"
         />
 
         <Pressable
           onPress={handleSearch}
           disabled={!canSubmit}
-          className="mt-3 h-11 items-center justify-center rounded-xl bg-orange-500 active:bg-orange-600 disabled:opacity-50"
+          className="mt-4 h-14 items-center justify-center rounded-full bg-orange-500 active:opacity-80 disabled:opacity-40"
         >
           {semanticSearch.isPending ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
-            <Text className="text-xs font-bold uppercase tracking-wider text-white">
+            <Text className="text-xs font-black uppercase tracking-widest text-white">
               Rechercher
             </Text>
           )}
         </Pressable>
       </View>
 
-      <View className="flex-1 px-4 pt-4">
-        {/* Message serveur (l'app ne connaît pas l'état du service : elle affiche ce qu'il envoie) */}
+      <View className="flex-1 px-6 pt-6">
         {result?.message ? (
-          <View className="items-center justify-center py-20 px-6">
-            <View className="h-12 w-12 items-center justify-center rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 mb-3">
-              <Wrench size={20} color="#F97316" />
+          <View className="items-center justify-center py-20 px-6 rounded-2xl bg-zinc-100 dark:bg-[#1A1A1A]">
+            <View className="h-16 w-16 items-center justify-center rounded-full bg-white dark:bg-[#222222] mb-4">
+              <Wrench size={24} color="#F97316" strokeWidth={2.5} />
             </View>
-            <Text className="mt-1 text-center text-xs leading-5 text-zinc-500 dark:text-zinc-400 px-6">
+            <Text className="text-sm font-black uppercase tracking-widest text-zinc-950 dark:text-white text-center">
+              Information
+            </Text>
+            <Text className="mt-2 text-center text-xs font-bold leading-relaxed text-zinc-500 dark:text-zinc-400">
               {result.message}
             </Text>
           </View>
@@ -97,18 +108,18 @@ export default function SemanticSearchModal() {
             data={uniqueResults}
             keyExtractor={(item) => item.document_id}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
-            ItemSeparatorComponent={() => <View className="h-2" />}
+            contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
+            ItemSeparatorComponent={() => <View className="h-3" />}
             ListEmptyComponent={
               result && !semanticSearch.isPending ? (
-                <View className="items-center justify-center py-20 px-6">
-                  <View className="h-12 w-12 items-center justify-center rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 mb-3">
-                    <FileText size={20} color="#F97316" />
+                <View className="items-center justify-center py-20 px-6 rounded-2xl border-2 border-dashed border-zinc-200 dark:border-[#1A1A1A] bg-zinc-50 dark:bg-[#0A0A0A]">
+                  <View className="h-16 w-16 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] mb-4">
+                    <FileText size={24} color="#F97316" strokeWidth={2.5} />
                   </View>
-                  <Text className="text-sm font-bold tracking-tight text-zinc-800 dark:text-zinc-200 text-center">
+                  <Text className="text-sm font-black uppercase tracking-widest text-zinc-950 dark:text-white text-center">
                     Aucun résultat
                   </Text>
-                  <Text className="mt-1 text-center text-xs leading-4 text-zinc-400 dark:text-zinc-500 px-6">
+                  <Text className="mt-2 text-center text-xs font-bold leading-relaxed text-zinc-500 dark:text-zinc-400">
                     Aucun document ne correspond à votre question. Reformulez ou essayez d'autres termes.
                   </Text>
                 </View>
@@ -122,17 +133,17 @@ export default function SemanticSearchModal() {
                     params: { id: item.document_id },
                   } as never)
                 }
-                className="rounded-xl border border-zinc-100 bg-zinc-50 p-3.5 dark:border-zinc-900 dark:bg-zinc-900/40 active:bg-zinc-100 dark:active:bg-zinc-900"
+                className="rounded-2xl bg-zinc-100 dark:bg-[#1A1A1A] p-5 active:opacity-80 transition-opacity"
               >
-                <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center justify-between gap-3">
                   <Text
                     numberOfLines={1}
-                    className="flex-1 pr-3 text-xs font-bold tracking-tight text-zinc-900 dark:text-zinc-50"
+                    className="flex-1 text-sm font-bold tracking-tight text-zinc-950 dark:text-white"
                   >
                     {item.title}
                   </Text>
-                  <View className="rounded bg-orange-50 dark:bg-orange-950/20 px-1.5 py-0.5">
-                    <Text className="text-[9px] font-bold tracking-wider text-orange-700 dark:text-orange-400">
+                  <View className="rounded-full bg-white dark:bg-[#222222] px-3 py-1">
+                    <Text className="text-[10px] font-black tracking-widest text-orange-500">
                       {Math.round((item.score ?? 0) * 100)}%
                     </Text>
                   </View>
@@ -140,7 +151,7 @@ export default function SemanticSearchModal() {
                 {item.excerpt ? (
                   <Text
                     numberOfLines={2}
-                    className="mt-1.5 text-[11px] leading-4 text-zinc-500 dark:text-zinc-400"
+                    className="mt-2 text-xs font-bold leading-relaxed text-zinc-500 dark:text-zinc-400"
                   >
                     {item.excerpt}
                   </Text>

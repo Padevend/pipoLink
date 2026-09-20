@@ -22,6 +22,10 @@ export const authApi = {
       requiresOnboarding?: boolean;
     }>('/auth/verify-otp', payload),
 
+  google: (payload: { idToken: string; nonce: string; deviceFingerprint?: string; deviceName?: string; devicePlatform?: string }) =>
+    api.post<{ accessToken: string; refreshToken: string; expiresAt: number; user: User; deviceId?: string | null; requiresOnboarding?: boolean }>("/auth/google", payload),
+
+
   login: (payload: {
     email: string;
     password: string;

@@ -3,9 +3,9 @@ import { ArrowLeft, GraduationCap, Search } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useConversations, useAddMember } from '@/entities/conversation/hooks';
+import { useAddMember, useConversations } from '@/entities/conversation/hooks';
 import { useSearchUsers, type SearchUserResult } from '@/features/messaging/hooks/use-search-users';
 import { useAuth } from '@/providers';
 import { Avatar } from '@/shared/ui/avatar';
@@ -23,8 +23,9 @@ export default function NewChatScreen(): JSX.Element {
   const { t } = useTranslation('chat');
   const { user } = useAuth();
   const [query, setQuery] = useState('');
-  const { data, isLoading } = useSearchUsers(query);
+  const { data, isLoading, refetch } = useSearchUsers(query);
   const { data: conversations } = useConversations();
+  const insets = useSafeAreaInsets();
 
   const { chatId, existingMemberIds } = useLocalSearchParams<{ chatId?: string; existingMemberIds?: string }>();
   const addMemberMutation = useAddMember();
@@ -64,30 +65,29 @@ export default function NewChatScreen(): JSX.Element {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-zinc-50 dark:bg-zinc-950" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top', 'left', 'right']}>
       
-      {/* Barre supérieure simple et claire */}
-      <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-4 dark:border-zinc-900 dark:bg-zinc-900">
+      {/* HEADER : Plat et Solide */}
+      <View className="flex-row items-center border-b-2 border-zinc-100 bg-white px-6 py-4 dark:border-[#1A1A1A] dark:bg-[#0A0A0A]">
         <Pressable 
           onPress={() => router.back()} 
-          hitSlop={12}
-          className="h-9 w-9 items-center justify-center rounded-full bg-zinc-50 dark:bg-zinc-800 active:opacity-70"
+          className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-opacity"
         >
-          <ArrowLeft size={18} color="#71717A" />
+          <ArrowLeft size={18} color="#F97316" strokeWidth={2.5} />
         </Pressable>
         
-        <View className="flex-1 ml-3">
-          <Text className="text-base font-bold text-zinc-900 dark:text-zinc-50">
+        <View className="flex-1 ml-4 justify-center">
+          <Text className="text-lg font-black tracking-tight text-zinc-950 dark:text-white" numberOfLines={1}>
             {chatId ? 'Ajouter un membre' : 'Nouvelle discussion'}
           </Text>
-          <Text className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-            {chatId ? 'Trouver un contact à inviter dans ce groupe' : 'Lancer un échange privé avec un étudiant'}
+          <Text className="text-[10px] font-black uppercase tracking-widest text-orange-500 mt-0.5">
+            {chatId ? 'Invitation groupe' : 'Échange privé'}
           </Text>
         </View>
       </View>
 
-      {/* Barre de Recherche Épurée */}
-      <View className="px-4 pt-4 pb-2">
+      {/* Barre de Recherche */}
+      <View className="px-6 pt-6 pb-4">
         <SearchBar 
           value={query} 
           onChangeText={setQuery} 
@@ -96,20 +96,19 @@ export default function NewChatScreen(): JSX.Element {
       </View>
 
       {/* Résultats de la recherche */}
-      <View className="flex-1 px-4 pt-2">
+      <View className="flex-1 px-6 pb-6">
         {isLoading ? (
-          <View className="flex-1 items-center justify-center pb-24">
-            <ActivityIndicator size="small" color="#FF7A00" />
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator size="small" color="#F97316" />
           </View>
         ) : results.length > 0 ? (
-          <View className="overflow-hidden rounded-xl border border-zinc-100 bg-white dark:border-zinc-900 dark:bg-zinc-900">
+          <View className="overflow-hidden rounded-2xl">
             <FlatList
               data={results}
               keyExtractor={(item) => item.id}
               showsVerticalScrollIndicator={false}
-              ItemSeparatorComponent={() => (
-                <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-800" />
-              )}
+              contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+              ItemSeparatorComponent={() => <View className="h-[1px] w-full bg-zinc-200 dark:bg-[#222222]" />}
               renderItem={({ item }) => {
                 const isAdding = addingUserIds.includes(item.id);
                 const isAlreadyMember = existingMemberIdsSet.has(item.id);
@@ -118,37 +117,37 @@ export default function NewChatScreen(): JSX.Element {
                     disabled={isAdding || isAlreadyMember}
                     onPress={() => handleSelectUser(item)}
                     className={cn(
-                      "flex-row items-center justify-between px-4 py-4 active:bg-zinc-50 dark:active:bg-zinc-800/50",
-                      isAlreadyMember && "opacity-40"
+                      "flex-row items-center justify-between p-4 active:opacity-80 transition-opacity",
+                      isAlreadyMember && "opacity-50"
                     )}
                   >
-                    <View className="flex-row items-center gap-3 flex-1">
-                      <Avatar name={displayName(item)} uri={item.profile?.avatarUrl} size="md" />
+                    <View className="flex-row items-center gap-4 flex-1 pr-3">
+                      <Avatar name={displayName(item)} uri={item.profile?.avatarUrl} size="md" role={item.role as any} />
                       
                       <View className="flex-1 justify-center">
-                        <Text className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
+                        <Text className="text-sm font-bold tracking-tight text-zinc-950 dark:text-white" numberOfLines={1}>
                           {displayName(item)}
                         </Text>
                         
-                        <View className="flex-row items-center gap-1.5 mt-1">
-                          <GraduationCap size={13} color="#A1A1AA" />
-                          <Text className="text-xs text-zinc-500 dark:text-zinc-400">
-                            {[item.username, item.matricule].filter(Boolean).join('  •  ')}
+                        <View className="flex-row items-center gap-2 mt-1">
+                          <GraduationCap size={14} color="#A1A1AA" strokeWidth={2.5} />
+                          <Text className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                            {[item.username, item.matricule].filter(Boolean).join(' • ')}
                           </Text>
                         </View>
                       </View>
                     </View>
 
                     {isAlreadyMember && (
-                      <View className="rounded-md bg-zinc-100 px-2 py-1 dark:bg-zinc-800">
-                        <Text className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400">
+                      <View className="rounded-full bg-white dark:bg-[#222222] px-3 py-1">
+                        <Text className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
                           Déjà présent
                         </Text>
                       </View>
                     )}
 
                     {isAdding && (
-                      <ActivityIndicator size="small" color="#FF7A00" />
+                      <ActivityIndicator size="small" color="#F97316" />
                     )}
                   </Pressable>
                 );
@@ -156,12 +155,14 @@ export default function NewChatScreen(): JSX.Element {
             />
           </View>
         ) : (
-          /* Zone vide si aucun résultat */
-          <View className="flex-1 items-center justify-center pb-24">
-            <View className="h-14 w-14 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-900 mb-4">
-              <Search size={22} color="#A1A1AA" />
+          <View className="flex-1 items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 dark:border-[#1A1A1A] bg-zinc-50 dark:bg-[#0A0A0A] p-6">
+            <View className="h-16 w-16 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] mb-4">
+              <Search size={24} color="#F97316" strokeWidth={2.5} />
             </View>
-            <Text className="text-center text-sm font-medium text-zinc-500 dark:text-zinc-400">
+            <Text className="text-sm font-black uppercase tracking-widest text-zinc-950 dark:text-white text-center">
+              Aucun résultat
+            </Text>
+            <Text className="text-xs font-bold text-zinc-500 dark:text-zinc-400 text-center mt-2 leading-relaxed">
               Aucun utilisateur ne correspond à votre recherche.
             </Text>
           </View>

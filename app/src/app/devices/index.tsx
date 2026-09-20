@@ -22,7 +22,7 @@ export default function DevicesScreen(): JSX.Element {
   if (checkingPrimary) {
     return (
       <SafeAreaView
-        className="flex-1 bg-white dark:bg-zinc-950"
+        className="flex-1 bg-white dark:bg-[#0A0A0A]"
         edges={["top", "left", "right"]}
       >
         <View className="flex-1 items-center justify-center">
@@ -36,30 +36,30 @@ export default function DevicesScreen(): JSX.Element {
   if (!isPrimary) {
     return (
       <SafeAreaView
-        className="flex-1 bg-white dark:bg-zinc-950"
+        className="flex-1 bg-white dark:bg-[#0A0A0A]"
         edges={["top", "left", "right"]}
       >
-        {/* HEADER RESTREINT : Panneau Mat Solide */}
-        <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
+        {/* HEADER RESTREINT : Plat et Solide */}
+        <View className="flex-row items-center border-b-2 border-zinc-100 bg-white px-6 py-4 dark:border-[#1A1A1A] dark:bg-[#0A0A0A]">
           <Pressable
             onPress={() => router.back()}
-            className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
+            className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-opacity"
           >
-            <ArrowLeft size={14} color="#71717A" />
+            <ArrowLeft size={18} color="#F97316" strokeWidth={2.5} />
           </Pressable>
-          <Text className="flex-1 ml-3 text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+          <Text className="flex-1 ml-4 text-lg font-black tracking-tight text-zinc-950 dark:text-white" numberOfLines={1}>
             Appareils liés
           </Text>
         </View>
 
-        <View className="flex-1 items-center justify-center px-4 pb-12">
-          <View className="h-12 w-12 items-center justify-center rounded-xl bg-red-50 border border-red-200 dark:bg-red-950/30 dark:border-red-900 mb-4">
-            <ShieldAlert size={20} color="#EF4444" />
+        <View className="flex-1 items-center justify-center px-8 pb-12">
+          <View className="h-16 w-16 items-center justify-center rounded-full bg-red-50 dark:bg-red-950/30 mb-6">
+            <ShieldAlert size={28} color="#EF4444" strokeWidth={2.5} />
           </View>
-          <Text className="text-center text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50 mb-1">
+          <Text className="text-center text-base font-black uppercase tracking-widest text-zinc-950 dark:text-white mb-2">
             Accès restreint
           </Text>
-          <Text className="text-center text-xs font-semibold leading-5 text-zinc-400 dark:text-zinc-500">
+          <Text className="text-center text-xs font-bold leading-relaxed text-zinc-500 dark:text-zinc-400">
             Disponible uniquement sur l'appareil principal
           </Text>
         </View>
@@ -69,63 +69,66 @@ export default function DevicesScreen(): JSX.Element {
 
   return (
     <SafeAreaView
-      className="flex-1 bg-white dark:bg-zinc-950"
+      className="flex-1 bg-white dark:bg-[#0A0A0A]"
       edges={["top", "left", "right"]}
     >
-      {/* HEADER PRINCIPAL : Panneau Mat Solide */}
-      <View className="flex-row items-center justify-between border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
-        <View className="flex-row items-center flex-1">
+      {/* HEADER PRINCIPAL : Plat et Solide */}
+      <View className="flex-row items-center justify-between border-b-2 border-zinc-100 bg-white px-6 py-4 dark:border-[#1A1A1A] dark:bg-[#0A0A0A]">
+        <View className="flex-row items-center flex-1 gap-4">
           <Pressable
             onPress={() => router.back()}
-            className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
+            className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-opacity"
           >
-            <ArrowLeft size={14} color="#71717A" />
+            <ArrowLeft size={18} color="#F97316" strokeWidth={2.5} />
           </Pressable>
-          <Text className="ml-3 text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Appareils liés
-          </Text>
+          
+          <View className="flex-1">
+            <Text className="text-lg font-black tracking-tight text-zinc-950 dark:text-white" numberOfLines={1}>
+              Appareils liés
+            </Text>
+          </View>
         </View>
 
-        {/* Bouton d'action Géométrique Mat */}
+        {/* Bouton Scanner (rounded-full) */}
         <Pressable
           onPress={() => router.push("/devices/scan")}
-          className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
+          className="h-10 w-10 items-center justify-center rounded-full bg-orange-500 active:opacity-80"
         >
-          <Plus size={14} color="#F97316" />
+          <Plus size={18} color="#FFFFFF" strokeWidth={3} />
         </Pressable>
       </View>
 
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: 20,
-          paddingBottom: insets.bottom + 24,
+          paddingHorizontal: 24,
+          paddingTop: 24,
+          paddingBottom: insets.bottom + 32,
         }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Description contextuelle discrète en entête */}
-        <Text className="mb-5 text-xs font-semibold leading-5 text-zinc-400 dark:text-zinc-500">
-          Appareils secondaires (principal uniquement)
+        {/* Description contextuelle */}
+        <Text className="mb-6 text-xs font-bold leading-relaxed text-zinc-500 dark:text-zinc-400">
+          Appareils secondaires (gestion depuis l'appareil principal uniquement).
         </Text>
 
         {isLoading ? (
-          <View className="py-8">
+          <View className="py-12 items-center">
             <Loader />
           </View>
         ) : (
           <>
-            <Text className="mb-2 ml-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+            <Text className="mb-3 text-[11px] font-black uppercase tracking-widest text-zinc-500">
               Appareils autorisés
             </Text>
 
             {secondaryDevices.length > 0 ? (
-              /* Enveloppe de liste mate unifiée */
-              <View className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+              /* Enveloppe de liste (rounded-2xl, fond plein) */
+              <View className="overflow-hidden rounded-2xl bg-zinc-100 dark:bg-[#1A1A1A]">
                 {secondaryDevices.map((device, index) => (
                   <View key={device.id}>
                     {index > 0 && (
-                      <View className="mx-4 h-[1px] bg-zinc-150 dark:bg-zinc-900" />
+                      <View className="h-[2px] w-full bg-zinc-200 dark:bg-[#222222]" />
                     )}
                     <DeviceItem
                       device={device}
@@ -137,13 +140,16 @@ export default function DevicesScreen(): JSX.Element {
                 ))}
               </View>
             ) : (
-              /* État vide soigné et géométrique */
-              <View className="items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50/50 py-8 dark:border-zinc-800 dark:bg-zinc-900/20">
-                <View className="h-10 w-10 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 mb-3">
-                  <Laptop size={16} color="#A1A1AA" />
+              /* État vide (rounded-2xl) */
+              <View className="items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 dark:border-[#1A1A1A] bg-zinc-50 dark:bg-[#0A0A0A] py-12 px-6">
+                <View className="h-16 w-16 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] mb-4">
+                  <Laptop size={24} color="#F97316" strokeWidth={2.5} />
                 </View>
-                <Text className="text-center text-xs font-semibold text-zinc-400 dark:text-zinc-500">
-                  Aucun appareil secondaire lié.
+                <Text className="text-center text-sm font-black uppercase tracking-widest text-zinc-950 dark:text-white">
+                  Aucun appareil secondaire
+                </Text>
+                <Text className="text-center text-xs font-bold text-zinc-400 mt-2">
+                  Scannez un QR code pour associer un nouvel appareil.
                 </Text>
               </View>
             )}

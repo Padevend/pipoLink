@@ -21,39 +21,43 @@ export default function SettingItem({
     <Pressable
       onPress={onPress}
       className={cn(
-        "flex-row items-center py-3 px-4",
+        "flex-row items-center py-3.5 px-4 active:opacity-80 transition-all rounded-2xl",
         destructive 
           ? "active:bg-red-50 dark:active:bg-red-950/20" 
-          : "active:bg-zinc-100 dark:active:bg-zinc-900"
+          : "active:bg-zinc-100/50 dark:active:bg-[#1A1A1A]/50"
       )}
     >
-      {/* Conteneur Icône Mat Opaque */}
+      {/* Conteneur Icône : Plat, sans bordure, angles modérés */}
       <View
         className={cn(
-          "mr-3.5 h-8 w-8 items-center justify-center rounded-lg border",
+          "mr-4 h-10 w-10 items-center justify-center rounded-xl",
           destructive
-            ? "bg-red-50 border-red-100 dark:bg-red-950/20 dark:border-red-900/30"
-            : "bg-zinc-100 border-zinc-200 dark:bg-zinc-800 dark:border-zinc-800/60",
+            ? "bg-red-50 dark:bg-red-900/20"
+            : "bg-zinc-100 dark:bg-[#222222]",
         )}
       >
-        <Icon size={14} color={destructive ? "#EF4444" : "#71717A"} />
+        <Icon 
+          size={18} 
+          strokeWidth={2.5} 
+          color={destructive ? "#EF4444" : "#71717A"} 
+        />
       </View>
 
-      {/* Textes alignés */}
-      <View className="flex-1 justify-center pr-2">
+      {/* Textes : Tailles standards mais graisses affirmées pour la lisibilité */}
+      <View className="flex-1 justify-center pr-3">
         <Text
           className={cn(
-            "text-xs font-bold tracking-tight",
+            "text-sm font-bold tracking-tight",
             destructive
-              ? "text-red-600 dark:text-red-400"
-              : "text-zinc-900 dark:text-zinc-50",
+              ? "text-red-500"
+              : "text-zinc-950 dark:text-white",
           )}
         >
           {label}
         </Text>
         {value ? (
           <Text
-            className="mt-0.5 text-[11px] font-semibold text-zinc-400 dark:text-zinc-500"
+            className="mt-0.5 text-xs font-semibold text-zinc-500 dark:text-zinc-400"
             numberOfLines={1}
           >
             {value}
@@ -61,9 +65,9 @@ export default function SettingItem({
         ) : null}
       </View>
 
-      {/* Icône Chevron de navigation */}
+      {/* Chevron : Plus épais pour coller au design industriel/flat */}
       {showChevron && !destructive ? (
-        <ChevronRight size={14} color="#A1A1AA" />
+        <ChevronRight size={18} strokeWidth={2.5} color="#A1A1AA" />
       ) : null}
     </Pressable>
   );

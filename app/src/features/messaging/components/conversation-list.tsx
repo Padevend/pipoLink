@@ -1,29 +1,26 @@
+import { useSafeArea } from '@/shared/hooks/use-safe-area';
 import { router } from 'expo-router';
-import { BrushCleaning, MessageSquare } from 'lucide-react-native';
+import { Brush, MessageSquare } from 'lucide-react-native';
 import { useMemo } from 'react';
 import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
-import { useSafeArea } from '@/shared/hooks/use-safe-area';
 
 import { useAnnouncements } from '@/entities/announcement/hooks';
 import { conversationKeys, useConversations } from '@/entities/conversation/hooks';
 import { ConversationItem } from '@/entities/conversation/ui/conversation-item';
 import { AnnouncementListItem } from '@/features/announcements/components/announcement-list-item';
-import { EventPromoCard } from '@/features/events/components/event-promo-card';
 import { queryClient } from '@/providers';
 import type { Conversation } from '@/shared/api/messaging';
 import { messagingApi } from '@/shared/api/messaging';
 import { ANNOUNCEMENTS_ENTRY_ID } from '@/shared/constants/announcements';
 import { Skeleton } from '@/shared/ui/skeleton';
 
-// Couleur orange vif électrique partagée
-const ORANGE_PRINCIPAL = '#FF6B00';
+const ORANGE_PRINCIPAL = '#F97316';
 
 type ListRow =
   | { kind: 'announcements'; id: typeof ANNOUNCEMENTS_ENTRY_ID }
   | { kind: 'conversation'; id: string; conversation: Conversation };
 
-// Ligne de séparation fine et élégante entre chaque élément
-const ItemSeparator = () => <View className="h-[1px] mx-6 bg-zinc-100 dark:bg-zinc-900" />;
+const ItemSeparator = () => <View className="h-[1px] mx-4 bg-zinc-100 dark:bg-[#1A1A1A]" />;
 
 export function ConversationList() {
   const insets = useSafeArea();
@@ -56,16 +53,15 @@ export function ConversationList() {
 
   const announcementPreview = announcements?.[0]?.title;
 
-  // Écran d'attente épuré (pendant le chargement des messages)
   if (isLoading) {
     return (
-      <View className="flex-1 px-6 pt-4 bg-white dark:bg-zinc-950">
+      <View className="flex-1 px-6 pt-4 bg-white dark:bg-[#0A0A0A]">
         {[1, 2, 3, 4, 5].map((i) => (
-          <View key={i} className="flex-row items-center gap-4 py-4 border-b border-zinc-100 dark:border-zinc-900">
-            <Skeleton className="h-12 w-12 rounded-xl bg-zinc-100 dark:bg-zinc-900" />
+          <View key={i} className="flex-row items-center gap-4 py-4">
+            <Skeleton className="h-14 w-14 rounded-full bg-zinc-100 dark:bg-[#1A1A1A]" />
             <View className="flex-1 gap-2">
-              <Skeleton className="h-4 w-1/4 rounded bg-zinc-100 dark:bg-zinc-900" />
-              <Skeleton className="h-3 w-3/4 rounded bg-zinc-100/60 dark:bg-zinc-900/60" />
+              <Skeleton className="h-4 w-1/4 rounded bg-zinc-100 dark:bg-[#1A1A1A]" />
+              <Skeleton className="h-3 w-3/4 rounded bg-zinc-100 dark:bg-[#1A1A1A]" />
             </View>
           </View>
         ))}
@@ -74,9 +70,7 @@ export function ConversationList() {
   }
 
   return (
-    <View className="flex-1 bg-white dark:bg-zinc-950">
-      
-      {/* Bouton "Tout marquer comme lu" - Rond, épuré, orange vif, sans ombre */}
+    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
       {hasUnread && (
         <View 
           className="absolute right-6 z-20 rounded-full bg-orange-500 overflow-hidden"
@@ -84,9 +78,9 @@ export function ConversationList() {
         >
           <Pressable 
             onPress={markAllAsRead}
-            className="h-12 w-12 items-center justify-center active:opacity-90"
+            className="h-14 w-14 items-center justify-center active:opacity-80"
           >
-            <BrushCleaning size={20} color="#FFFFFF" />
+            <Brush size={22} color="#FFFFFF" strokeWidth={2.5} />
           </Pressable>
         </View>
       )}
@@ -97,7 +91,6 @@ export function ConversationList() {
         contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 24) + 40 }}
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={ItemSeparator}
-        ListHeaderComponent={<EventPromoCard />}
         windowSize={7}
         maxToRenderPerBatch={8}
         initialNumToRender={12}
@@ -128,20 +121,16 @@ export function ConversationList() {
         ListEmptyComponent={
           rows.length <= 1 ? (
             <View className="items-center justify-center px-8 py-24 mt-10">
-              
-              {/* Illustration centrale : Icône dans un carré aux angles nets */}
-              <View className="mb-6 h-14 w-14 items-center justify-center rounded-xl border border-zinc-100 bg-zinc-50 dark:border-zinc-900 dark:bg-zinc-900/50">
-                <MessageSquare size={22} color={ORANGE_PRINCIPAL} />
+              <View className="mb-6 h-20 w-20 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A]">
+                <MessageSquare size={32} color={ORANGE_PRINCIPAL} strokeWidth={2.5} />
               </View>
 
-              {/* Message principal pour l'utilisateur */}
-              <Text className="text-sm font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-50 text-center">
+              <Text className="text-base font-black uppercase tracking-widest text-zinc-950 dark:text-white text-center">
                 Aucune discussion
               </Text>
               
-              {/* Message d'aide explicatif */}
-              <Text className="mt-2 px-6 text-center text-xs font-medium leading-relaxed text-zinc-400 dark:text-zinc-500">
-                Votre messagerie est vide. Initiez une nouvelle conversation en utilisant le bouton d'action situé en haut de l'écran.
+              <Text className="mt-3 px-6 text-center text-xs font-bold leading-relaxed text-zinc-400">
+                Votre messagerie est vide. Initiez une nouvelle conversation.
               </Text>
             </View>
           ) : null

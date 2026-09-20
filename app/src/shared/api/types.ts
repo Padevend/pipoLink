@@ -26,13 +26,8 @@ export interface PaginatedResponse<T> {
  * API error response
  */
 export interface ErrorResponse {
-  success: boolean;
-  error: string;
+  code: string;
   message: string;
-  details?: any;
-  meta?: {
-    timestamp: string;
-  };
 }
 
 /**

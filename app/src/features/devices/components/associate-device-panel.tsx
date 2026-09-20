@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useRef } from 'react';
-import { ActivityIndicator, Share, Text, View } from 'react-native';
+import { ActivityIndicator, Share, Text, View, Pressable } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { Share2, RefreshCw, AlertCircle } from 'lucide-react-native';
 
@@ -55,36 +55,38 @@ export function AssociateDevicePanel({ autoStart = true, onLinked }: AssociateDe
   const shareCode = async () => {
     if (!payload) return;
     await Share.share({
-      message: `Code PipoLink : ${(payload as DeviceQrPayloadV2).shortCode}\n\nOu scannez le QR dans l'app sur votre appareil principal.`,
+      message: `Code d'accès : ${(payload as DeviceQrPayloadV2).shortCode}\n\nOu scannez le QR dans l'app sur votre appareil principal.`,
       title: 'Association appareil',
     });
   };
 
   return (
-    <View className="w-full items-center gap-y-5 py-2">
+    <View className="w-full items-center gap-y-6">
       {prepare.isPending ? (
-        <View className="h-60 items-center justify-center gap-y-2">
-          <ActivityIndicator size="small" color="#F97316" />
-          <Text className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500">
-            Génération des clés sécurisées…
+        <View className="h-64 w-full items-center justify-center gap-y-4 bg-zinc-100 dark:bg-[#1A1A1A] rounded-[40px]">
+          <ActivityIndicator size="large" color="#F97316" />
+          <Text className="text-[11px] font-black uppercase tracking-widest text-zinc-500">
+            Génération des clés...
           </Text>
         </View>
       ) : prepare.isError ? (
-        <View className="w-full items-center gap-y-4 rounded-xl border border-red-200 bg-white p-5 dark:border-red-900/50 dark:bg-zinc-950">
-          <AlertCircle size={20} color="#EF4444" />
-          <Text className="text-center text-xs font-semibold leading-5 text-red-600 dark:text-red-400 px-2">
-            {prepare.error?.message || "Une erreur est survenue lors de la synchronisation."}
+        <View className="w-full items-center gap-y-5 rounded-[40px] bg-red-50 dark:bg-red-950 p-8">
+          <View className="h-16 w-16 rounded-full bg-red-100 dark:bg-red-900 items-center justify-center">
+            <AlertCircle size={32} color="#EF4444" strokeWidth={2.5} />
+          </View>
+          <Text className="text-center text-sm font-black leading-6 text-red-600 dark:text-red-400">
+            {prepare.error?.message || "Échec de la synchronisation."}
           </Text>
           <Button 
-            label="Réessayer la génération" 
+            label="Réessayer" 
             onPress={() => prepare.mutate()} 
-            className="h-11 rounded-xl bg-red-500 w-full"
+            variant="danger"
+            className="w-full mt-2"
           />
         </View>
       ) : payload ? (
         <>
-          {/* Conteneur QR Code Opaque Mat */}
-          <View className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-900">
+          <View className="items-center justify-center p-8 rounded-[48px] bg-white border-8 border-zinc-100 dark:border-[#1A1A1A]">
             <QRCode 
               value={json} 
               size={180} 
@@ -93,72 +95,67 @@ export function AssociateDevicePanel({ autoStart = true, onLinked }: AssociateDe
             />
           </View>
 
-          {/* Panneau du code court alphanumérique */}
-          <View className="w-full items-center rounded-xl border border-zinc-200 bg-white px-4 py-4 dark:border-zinc-900 dark:bg-zinc-950">
-            <Text className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+          <View className="w-full items-center rounded-[32px] bg-zinc-100 dark:bg-[#1A1A1A] px-6 py-6">
+            <Text className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
               Code de connexion alternatif
             </Text>
-            <Text className="mt-1 text-2xl font-black tracking-[4px] text-orange-500 dark:text-orange-400">
+            <Text className="mt-2 text-4xl font-black tracking-[8px] text-orange-500">
               {(payload as DeviceQrPayloadV2).shortCode}
-            </Text>
-            <Text className="mt-2 text-center text-[11px] leading-4 font-semibold text-zinc-400 dark:text-zinc-500 px-2">
-              Saisissez manuellement ce code à l'écran si le scan de l'appareil photo échoue.
             </Text>
           </View>
         </>
       ) : null}
 
-      {/* Guide des étapes utilisateur géométrique */}
-      <View className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-4 gap-y-3 dark:border-zinc-900 dark:bg-zinc-900/40">
-        <View className="flex-row items-start gap-x-3">
-          <View className="h-5 w-5 items-center justify-center rounded bg-zinc-200 dark:bg-zinc-800 mt-0.5">
-            <Text className="text-[10px] font-bold text-zinc-700 dark:text-zinc-300">1</Text>
+      <View className="w-full rounded-[32px] bg-zinc-100 dark:bg-[#1A1A1A] p-6 gap-y-5">
+        <View className="flex-row items-center gap-x-4">
+          <View className="h-10 w-10 items-center justify-center rounded-full bg-zinc-950 dark:bg-white">
+            <Text className="text-sm font-black text-white dark:text-zinc-950">1</Text>
           </View>
-          <Text className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 flex-1 leading-5">
-            Ouvrez l'application sur votre <Text className="font-bold text-zinc-900 dark:text-zinc-50">appareil principal</Text>.
+          <Text className="text-sm font-bold text-zinc-500 dark:text-zinc-400 flex-1 leading-5">
+            Ouvrez l'application sur votre <Text className="font-black text-zinc-950 dark:text-white">appareil principal</Text>.
           </Text>
         </View>
 
-        <View className="flex-row items-start gap-x-3">
-          <View className="h-5 w-5 items-center justify-center rounded bg-zinc-200 dark:bg-zinc-800 mt-0.5">
-            <Text className="text-[10px] font-bold text-zinc-700 dark:text-zinc-300">2</Text>
+        <View className="flex-row items-center gap-x-4">
+          <View className="h-10 w-10 items-center justify-center rounded-full bg-zinc-950 dark:bg-white">
+            <Text className="text-sm font-black text-white dark:text-zinc-950">2</Text>
           </View>
-          <Text className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 flex-1 leading-5">
-            Allez dans <Text className="font-bold text-zinc-700 dark:text-zinc-300">Paramètres</Text> → <Text className="font-bold text-zinc-700 dark:text-zinc-300">Appareils</Text> → <Text className="font-bold text-zinc-700 dark:text-zinc-300">Associer</Text>.
+          <Text className="text-sm font-bold text-zinc-500 dark:text-zinc-400 flex-1 leading-5">
+            Allez dans <Text className="font-black text-zinc-950 dark:text-white">Paramètres</Text> → <Text className="font-black text-zinc-950 dark:text-white">Appareils</Text> → <Text className="font-black text-zinc-950 dark:text-white">Associer</Text>.
           </Text>
         </View>
 
-        <View className="flex-row items-start gap-x-3">
-          <View className="h-5 w-5 items-center justify-center rounded bg-zinc-200 dark:bg-zinc-800 mt-0.5">
-            <Text className="text-[10px] font-bold text-zinc-700 dark:text-zinc-300">3</Text>
+        <View className="flex-row items-center gap-x-4">
+          <View className="h-10 w-10 items-center justify-center rounded-full bg-orange-500">
+            <Text className="text-sm font-black text-white">3</Text>
           </View>
-          <Text className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 flex-1 leading-5">
-            Scannez le QR Code ci-dessus ou renseignez le code textuel.
+          <Text className="text-sm font-bold text-zinc-500 dark:text-zinc-400 flex-1 leading-5">
+            Scannez le QR Code ou saisissez le code textuel ci-dessus.
           </Text>
         </View>
       </View>
 
-      {/* Actions de bas de page */}
-      <View className="w-full gap-y-2 mt-1">
+      <View className="w-full gap-y-2 mt-2">
         <Button 
           label="Partager les accès" 
-          variant="outline" 
+          variant="secondary" 
           disabled={!payload} 
-          leftIcon={<Share2 size={14} color="#3F3F46" />}
+          leftIcon={<Share2 size={20} color="#F97316" strokeWidth={2.5} />}
           onPress={() => void shareCode()} 
-          className="rounded-xl h-11 border-zinc-200 bg-white text-zinc-800 dark:border-zinc-800 dark:bg-zinc-950"
+          className="w-full"
         />
         
-        <Button 
-          label="Régénérer un nouveau code" 
-          variant="ghost" 
+        <Pressable 
           disabled={prepare.isPending}
-          leftIcon={<RefreshCw size={12} color="#71717A" />}
           onPress={() => prepare.mutate()} 
-          className="h-10 text-zinc-500 dark:text-zinc-400"
-        />
+          className="h-16 w-full flex-row items-center justify-center gap-3 active:opacity-50"
+        >
+          <RefreshCw size={16} color="#A1A1AA" strokeWidth={2.5} />
+          <Text className="text-[11px] font-black uppercase tracking-widest text-zinc-500">
+            Régénérer un code
+          </Text>
+        </Pressable>
       </View>
-
     </View>
   );
 }

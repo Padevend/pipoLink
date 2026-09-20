@@ -7,6 +7,7 @@ export interface SearchUserResult {
   username: string | null;
   matricule: string | null;
   email: string | null;
+  role: string;
   profile: {
     firstname: string;
     lastname: string;

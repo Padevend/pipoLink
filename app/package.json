@@ -31,6 +31,7 @@
     "@zxcvbn-ts/language-fr": "^4.1.1",
     "date-fns": "^4.1.0",
     "expo": "~54.0.34",
+    "expo-auth-session": "~7.0.11",
     "expo-av": "^16.0.8",
     "expo-camera": "^17.0.10",
     "expo-clipboard": "~8.0.8",

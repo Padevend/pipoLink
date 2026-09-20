@@ -67,49 +67,53 @@ export default function MyDocumentsScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>
       
-      {/* HEADER : Panneau Fixe Mat Opaque */}
-      <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
-        <Pressable 
-          onPress={() => router.back()} 
-          className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 dark:bg-zinc-900 active:bg-zinc-100 dark:active:bg-zinc-800"
-        >
-          <ArrowLeft size={16} color="#71717A" />
-        </Pressable>
-        
-        <Text className="flex-1 ml-3 text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-          Mes documents
-        </Text>
+      {/* HEADER : Néo-banque, Plat, Solide */}
+      <View className="flex-row items-center justify-between border-b-2 border-zinc-100 bg-white px-6 py-4 dark:border-[#1A1A1A] dark:bg-[#0A0A0A]">
+        <View className="flex-row items-center gap-4 flex-1">
+          <Pressable 
+            onPress={() => router.back()} 
+            className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-opacity"
+          >
+            <ArrowLeft size={18} color="#F97316" strokeWidth={2.5} />
+          </Pressable>
+          
+          <View className="flex-1">
+            <Text className="text-lg font-black tracking-tight text-zinc-950 dark:text-white" numberOfLines={1}>
+              Mes documents
+            </Text>
+          </View>
+        </View>
 
-        {/* Quota FREE : X/5 documents */}
+        {/* Quota FREE : Pilule pleine (rounded-full) */}
         {!isPremium && !isLoading && (
           <Pressable
             onPress={quotaFull ? () => router.push('/settings/subscription' as never) : undefined}
             className={cn(
-              'rounded-md px-2 py-1 border',
+              'rounded-full px-3 py-1.5 ml-2 active:opacity-80',
               quotaFull
-                ? 'bg-orange-50 border-orange-200 dark:bg-orange-950/30 dark:border-orange-900/50 active:bg-orange-100'
-                : 'bg-zinc-50 border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800',
+                ? 'bg-orange-500'
+                : 'bg-zinc-100 dark:bg-[#1A1A1A]',
             )}
           >
             <Text
               className={cn(
-                'text-[10px] font-bold tracking-wider uppercase',
-                quotaFull ? 'text-orange-600 dark:text-orange-400' : 'text-zinc-500 dark:text-zinc-400',
+                'text-[10px] font-black tracking-widest uppercase',
+                quotaFull ? 'text-white' : 'text-zinc-500 dark:text-zinc-400',
               )}
             >
-              {Math.min(totalDocs, FREE_DOC_LIMIT)}/{FREE_DOC_LIMIT} documents
+              {Math.min(totalDocs, FREE_DOC_LIMIT)}/{FREE_DOC_LIMIT} Docs
             </Text>
           </Pressable>
         )}
       </View>
 
-      {/* Skeletons Solides Opaque */}
+      {/* Skeletons (rounded-2xl) */}
       {isLoading ? (
-        <View className="gap-2.5 p-4">
+        <View className="gap-y-3 px-6 pt-6">
           {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-20 w-full rounded-xl bg-zinc-100 dark:bg-zinc-900" />
+            <Skeleton key={i} className="h-24 w-full rounded-2xl bg-zinc-100 dark:bg-[#1A1A1A]" />
           ))}
         </View>
       ) : (
@@ -119,8 +123,8 @@ export default function MyDocumentsScreen() {
           refreshing={isRefetching}
           onRefresh={() => void refetch()}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 40 }}
-          ItemSeparatorComponent={() => <View className="h-2.5" />}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 40 }}
+          ItemSeparatorComponent={() => <View className="h-3" />}
           onEndReached={() => {
             if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
           }}
@@ -130,20 +134,21 @@ export default function MyDocumentsScreen() {
             ) : null
           }
           ListEmptyComponent={
-            <View className="items-center justify-center py-32 px-6">
-              {/* Conteneur d'icône Mat Opaque */}
-              <View className="h-12 w-12 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 mb-4">
-                <FileText size={18} color="#F97316" />
+            /* Empty State (Carte rounded-2xl) */
+            <View className="items-center justify-center py-16 px-6 mt-6 rounded-2xl border-2 border-dashed border-zinc-200 dark:border-[#1A1A1A] bg-zinc-50 dark:bg-[#0A0A0A]">
+              <View className="h-16 w-16 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] mb-5">
+                <FileText size={24} color="#F97316" strokeWidth={2.5} />
               </View>
-              <Text className="text-xs font-bold tracking-tight text-zinc-900 dark:text-zinc-50 text-center">
+              <Text className="text-sm font-black uppercase tracking-widest text-zinc-950 dark:text-white text-center">
                 Aucun document publié
               </Text>
-              <Text className="mt-1 text-center text-[11px] leading-4 text-zinc-500 dark:text-zinc-400 px-4">
+              <Text className="mt-2 text-center text-xs font-bold leading-relaxed text-zinc-500 dark:text-zinc-400 px-2">
                 Vous n'avez pas encore téléversé ou partagé de documents avec l'établissement.
               </Text>
             </View>
           }
           renderItem={({ item }) => (
+            /* Carte Document (rounded-2xl, fond plein) */
             <Pressable
               onPress={() =>
                 router.push({
@@ -151,46 +156,44 @@ export default function MyDocumentsScreen() {
                   params:     { id: item.id },
                 } as never)
               }
-              className="flex-row items-center rounded-xl border border-zinc-100 bg-zinc-50 p-3.5 dark:border-zinc-900 dark:bg-zinc-900/40 active:bg-zinc-100 dark:active:bg-zinc-900"
+              className="flex-row items-center rounded-2xl bg-zinc-100 p-4 dark:bg-[#1A1A1A] active:opacity-80 transition-all"
             >
-              {/* Conteneur Icône Document Opaque */}
-              <View className="mr-3.5 h-9 w-9 items-center justify-center rounded-lg bg-zinc-200 dark:bg-zinc-800">
-                <FileText size={15} color="#71717A" />
+              {/* Conteneur Icône Document (rounded-full) */}
+              <View className="mr-4 h-12 w-12 items-center justify-center rounded-full bg-white dark:bg-[#222222]">
+                <FileText size={20} color="#F97316" strokeWidth={2.5} />
               </View>
               
               {/* Corps Textuel */}
               <View className="flex-1 pr-3 justify-center">
                 <Text
                   numberOfLines={1}
-                  className="text-xs font-bold tracking-tight text-zinc-900 dark:text-zinc-50"
+                  className="text-sm font-bold tracking-tight text-zinc-950 dark:text-white"
                 >
                   {item.title}
                 </Text>
                 
-                <Text className="mt-0.5 text-[11px] font-semibold text-zinc-400 dark:text-zinc-500">
-                  {formatBytes(item.fileSize)} · {format(new Date(item.createdAt), 'd MMM yyyy', { locale: fr })}
+                <Text className="mt-1 text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                  {formatBytes(item.fileSize)} • {format(new Date(item.createdAt), 'd MMM yyyy', { locale: fr })}
                 </Text>
                 
-                {/* Badge Compteur Opaque Mat */}
-                <View className="flex-row mt-1.5">
-                  <View className="rounded bg-orange-50 dark:bg-orange-950/20 px-1.5 py-0.5">
-                    <Text className="text-[9px] font-bold tracking-wider text-orange-700 dark:text-orange-400 uppercase">
-                      {item.downloadCount} téléchargement{item.downloadCount !== 1 ? 's' : ''}
+                {/* Badge Compteur (rounded-full) */}
+                <View className="flex-row mt-2">
+                  <View className="rounded-full bg-white dark:bg-[#222222] px-3 py-1">
+                    <Text className="text-[9px] font-black tracking-widest text-zinc-500 uppercase">
+                      {item.downloadCount} Téléchargement{item.downloadCount !== 1 ? 's' : ''}
                     </Text>
                   </View>
                 </View>
               </View>
 
-              {/* Bouton Action Supprimer Rouge Mat */}
+              {/* Bouton Action Supprimer (rounded-full) */}
               <Pressable
                 onPress={() => confirmDelete(item)}
                 disabled={deleteMutation.isPending}
-                className={cn(
-                  "h-8 w-8 items-center justify-center rounded-lg border active:bg-red-100 dark:active:bg-red-950/40",
-                  "bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-900/40"
-                )}
+                hitSlop={10}
+                className="h-10 w-10 items-center justify-center rounded-full bg-red-50 dark:bg-red-950/30 active:opacity-80"
               >
-                <Trash2 size={13} color="#EF4444" />
+                <Trash2 size={16} color="#EF4444" strokeWidth={2.5} />
               </Pressable>
             </Pressable>
           )}

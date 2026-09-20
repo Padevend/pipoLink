@@ -19,40 +19,45 @@ export default function LanguageScreen(): JSX.Element {
   const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top', 'left', 'right']}>
 
-      {/* HEADER : Panneau Mat Solide */}
-      <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
+      {/* HEADER : Néo-banque, Plat et Solide */}
+      <View className="flex-row items-center border-b-2 border-zinc-100 bg-white px-6 py-4 dark:border-[#1A1A1A] dark:bg-[#0A0A0A]">
         <Pressable
           onPress={() => router.back()}
-          className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
+          className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-opacity"
         >
-          <ArrowLeft size={14} color="#71717A" />
+          <ArrowLeft size={18} color="#F97316" strokeWidth={2.5} />
         </Pressable>
 
-        <Text className="flex-1 ml-3 text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-          Langue
-        </Text>
+        <View className="flex-1 ml-4 justify-center">
+          <Text className="text-lg font-black tracking-tight text-zinc-950 dark:text-white" numberOfLines={1}>
+            Langue
+          </Text>
+          <Text className="text-[10px] font-black uppercase tracking-widest text-orange-500 mt-0.5">
+            Préférences régionales
+          </Text>
+        </View>
       </View>
 
       {/* Liste des Langues disponibles */}
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: insets.bottom + 24 }}
+        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 32, paddingBottom: insets.bottom + 32 }}
         showsVerticalScrollIndicator={false}
       >
-        <Text className="mb-2 ml-1 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+        <Text className="mb-3 text-[11px] font-black uppercase tracking-widest text-zinc-500">
           Langue de l'application
         </Text>
 
-        {/* Conteneur de liste opaque mat */}
-        <View className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-900 dark:bg-zinc-950">
+        {/* Conteneur de liste (Arrondis 2xl, fond plein) */}
+        <View className="overflow-hidden rounded-2xl bg-zinc-100 dark:bg-[#1A1A1A]">
           {LANGUAGES.map((lang, index) => {
             const isSelected = language === lang.id;
 
             return (
               <View key={lang.id}>
-                {index > 0 && <View className="mx-4 h-[1px] bg-zinc-100 dark:bg-zinc-900" />}
+                {index > 0 && <View className="h-[1px] w-full bg-zinc-200 dark:bg-[#222222]" />}
 
                 <Pressable
                   onPress={() => {
@@ -60,48 +65,38 @@ export default function LanguageScreen(): JSX.Element {
                       void setLanguage(lang.id);
                     }
                   }}
+                  disabled={!lang.isAvailable}
                   className={cn(
-                    'flex-row items-center justify-between px-4 py-3.5 transition-colors',
-                    isSelected
-                      ? 'bg-orange-50/20 dark:bg-orange-950/5'
-                      : 'active:bg-zinc-50 dark:active:bg-zinc-900/50',
+                    'flex-row items-center justify-between p-4 transition-opacity',
                     !lang.isAvailable && 'opacity-50'
                   )}
                 >
                   {/* Bloc de Gauche : Icône + Libellés */}
-                  <View className="flex-row items-center gap-3">
-                    <View className={cn(
-                      "h-8 w-8 items-center justify-center rounded-lg border",
-                      isSelected
-                        ? "bg-orange-50 border-orange-200 dark:bg-orange-950/30 dark:border-orange-900/50"
-                        : "bg-zinc-50 border-zinc-100 dark:bg-zinc-900 dark:border-zinc-800"
-                    )}>
-                      <Languages size={14} color={isSelected ? '#F97316' : '#71717A'} />
+                  <View className="flex-row items-center gap-4 flex-1 pr-3">
+                    <View className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-[#222222]">
+                      <Languages size={18} color={isSelected ? '#F97316' : '#A1A1AA'} strokeWidth={2.5} />
                     </View>
 
-                    <View className="justify-center">
-                      <Text className={cn(
-                        'text-xs font-semibold tracking-tight',
-                        isSelected ? 'text-orange-500 dark:text-orange-400' : 'text-zinc-900 dark:text-zinc-50'
-                      )}>
+                    <View className="flex-1 justify-center">
+                      <Text className="text-sm font-bold tracking-tight text-zinc-950 dark:text-white">
                         {lang.label}
                       </Text>
-                      <Text className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 mt-0.5">
-                        {lang.subLabel} {lang.isAvailable ? '' : ' (bientôt disponible)'}
+                      <Text className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mt-1">
+                        {lang.subLabel} {lang.isAvailable ? '' : '• Bientôt disponible'}
                       </Text>
                     </View>
                   </View>
 
-                  {/* Bloc de Droite : Bouton Radio Géométrique Customisé */}
+                  {/* Bloc de Droite : Bouton Radio Géométrique (rounded-full) */}
                   {lang.isAvailable && (
                     <View className={cn(
-                      'h-4 w-4 items-center justify-center rounded-full border',
+                      'h-6 w-6 items-center justify-center rounded-full border-2',
                       isSelected
                         ? 'border-orange-500 bg-orange-500'
                         : 'border-zinc-300 dark:border-zinc-700 bg-transparent'
                     )}>
                       {isSelected && (
-                        <View className="h-1.5 w-1.5 rounded-full bg-white" />
+                        <View className="h-2 w-2 rounded-full bg-white" />
                       )}
                     </View>
                   )}

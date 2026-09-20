@@ -125,9 +125,8 @@ export async function request<T>(endpoint: string, options: RequestOptions = {})
     const errorData = data as ErrorResponse;
     throw new ApiError(
       response.status,
-      errorData.error || 'UNKNOWN_ERROR',
-      errorData.message || 'An unexpected error occurred',
-      errorData.details
+      errorData.code || 'UNKNOWN_ERROR',
+      errorData.message || 'An unexpected error occurred'
     );
   }
 
@@ -179,9 +178,8 @@ export async function requestPaginated<T>(
   if (!response.ok) {
     throw new ApiError(
       response.status,
-      body.error || 'UNKNOWN_ERROR',
+      body.code || 'UNKNOWN_ERROR',
       body.message || 'An unexpected error occurred',
-      body.details,
     );
   }
 
@@ -236,9 +234,8 @@ export const api = {
       const errorData = data as ErrorResponse;
       throw new ApiError(
         response.status,
-        errorData.error || 'UPLOAD_ERROR',
+        errorData.code || 'UPLOAD_ERROR',
         errorData.message || 'Failed to upload file',
-        errorData.details
       );
     }
 

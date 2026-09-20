@@ -1,11 +1,12 @@
-import { useDeleteAccount } from '@/features/account/model/use-delete-account';
 import {
   deleteAccountSchema,
   type DeleteAccountFormValues,
 } from '@/features/account/lib/delete-account.schema';
+import { useDeleteAccount } from '@/features/account/model/use-delete-account';
+import { useAuth } from '@/providers/auth-provider';
+import { localDb } from '@/shared/storage/local-db';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
-import { useAuth } from '@/providers/auth-provider';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -18,7 +19,7 @@ import {
   Trash2,
   UserX,
 } from 'lucide-react-native';
-import { useForm, Controller } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import {
   ActivityIndicator,
   Alert,
@@ -30,7 +31,6 @@ import {
 } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeOut } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { localDb } from '@/shared/storage/local-db';
 
 const CONSEQUENCES = [
   {
@@ -108,35 +108,35 @@ export default function DeleteAccountScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
-      {/* LOADER OVERLAY : Mat et sans ombre portée */}
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top', 'left', 'right']}>
+      {/* LOADER OVERLAY (rounded-2xl) */}
       <Modal transparent visible={isPending} animationType="fade">
         <Animated.View
           entering={FadeIn.duration(150)}
           exiting={FadeOut.duration(100)}
-          className="flex-1 bg-black/50 items-center justify-center"
+          className="flex-1 bg-black/60 items-center justify-center p-6"
         >
-          <View className="p-5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl items-center max-w-[80%]">
+          <View className="p-6 bg-white dark:bg-[#1A1A1A] rounded-2xl items-center w-full max-w-xs">
             <ActivityIndicator size="small" color="#EF4444" />
-            <Text className="text-[11px] font-bold text-zinc-900 dark:text-zinc-50 tracking-wider uppercase mt-3.5 text-center">
+            <Text className="text-xs font-black uppercase tracking-widest text-zinc-950 dark:text-white mt-4 text-center">
               Suppression en cours…
             </Text>
-            <Text className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 mt-1 text-center">
+            <Text className="text-xs font-bold text-zinc-500 dark:text-zinc-400 mt-1 text-center">
               Veuillez patienter, cette opération est irréversible.
             </Text>
           </View>
         </Animated.View>
       </Modal>
 
-      {/* HEADER : Panneau Mat Solide */}
-      <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
+      {/* HEADER : Plat et Solide */}
+      <View className="flex-row items-center border-b-2 border-zinc-100 bg-white px-6 py-4 dark:border-[#1A1A1A] dark:bg-[#0A0A0A]">
         <Pressable
           onPress={() => router.back()}
-          className="h-8 w-8 mr-3 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
+          className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-opacity"
         >
-          <ArrowLeft size={14} color="#71717A" />
+          <ArrowLeft size={18} color="#F97316" strokeWidth={2.5} />
         </Pressable>
-        <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+        <Text className="text-lg font-black tracking-tight text-zinc-950 dark:text-white ml-4" numberOfLines={1}>
           Supprimer le compte
         </Text>
       </View>
@@ -144,48 +144,50 @@ export default function DeleteAccountScreen() {
       {/* CONTENU */}
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: insets.bottom + 24 }}
+        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 32, paddingBottom: insets.bottom + 32 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
         {/* En-tête Statut Critique */}
-        <Animated.View entering={FadeInDown.springify()} className="items-center mb-6">
-          <View className="h-12 w-12 items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/20 mb-3.5">
-            <Trash2 size={22} color="#EF4444" />
+        <Animated.View entering={FadeInDown.springify()} className="items-center mb-8">
+          <View className="h-16 w-16 items-center justify-center rounded-full bg-red-50 dark:bg-red-950/30 mb-4">
+            <Trash2 size={28} color="#EF4444" strokeWidth={2.5} />
           </View>
-          <Text className="text-sm font-bold text-red-500 text-center">
+          <Text className="text-base font-black uppercase tracking-widest text-red-500 text-center">
             Suppression définitive
           </Text>
-          <Text className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 text-center mt-1">
+          <Text className="text-xs font-bold text-zinc-500 dark:text-zinc-400 text-center mt-1">
             Cette action ne peut pas être annulée.
           </Text>
         </Animated.View>
 
-        {/* Panneau Mat des Conséquences */}
+        {/* Panneau des Conséquences (rounded-2xl, fond plein) */}
         <Animated.View
           entering={FadeInDown.delay(80).springify()}
-          className="rounded-xl border border-red-200 bg-red-50/50 dark:border-red-900/30 dark:bg-red-950/10 p-4 mb-5"
+          className="rounded-2xl bg-red-50 dark:bg-red-950/20 p-5 mb-6 "
         >
-          <Text className="text-[9px] font-bold uppercase tracking-wider text-red-500 mb-3">
+          <Text className="text-[11px] font-black uppercase tracking-widest text-red-500 mb-4">
             Conséquences
           </Text>
-          {CONSEQUENCES.map((item, idx) => {
-            const Icon = item.icon;
-            return (
-              <View key={idx} className="flex-row items-start pb-2">
-                <Icon size={13} color="#EF4444" className="shrink-0" />
-                <Text className="flex-1 text-xs ps-2 font-medium text-zinc-800 dark:text-zinc-200 leading-4">
-                  {item.text}
-                </Text>
-              </View>
-            );
-          })}
+          <View className="gap-y-3">
+            {CONSEQUENCES.map((item, idx) => {
+              const Icon = item.icon;
+              return (
+                <View key={idx} className="flex-row items-start">
+                  <Icon size={16} color="#EF4444" strokeWidth={2.5} />
+                  <Text className="flex-1 text-xs font-bold text-zinc-800 dark:text-zinc-200 ml-3 leading-relaxed">
+                    {item.text}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
         </Animated.View>
 
         {/* Formulaire de validation */}
-        <Animated.View entering={FadeInDown.delay(160).springify()} className="gap-y-3.5">
-          <Text className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 px-1">
-            Pour confirmer, saisissez votre email :
+        <Animated.View entering={FadeInDown.delay(160).springify()} className="gap-y-6">
+          <Text className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+            Pour confirmer, veuillez saisir votre adresse email :
           </Text>
 
           <Controller
@@ -193,7 +195,7 @@ export default function DeleteAccountScreen() {
             name="email"
             render={({ field: { onChange, value } }) => (
               <Input
-                placeholder="Email"
+                placeholder="Votre email"
                 value={value}
                 onChangeText={onChange}
                 autoCapitalize="none"
@@ -203,14 +205,17 @@ export default function DeleteAccountScreen() {
             )}
           />
 
-          <Button
-            label="Supprimer définitivement"
-            variant="danger"
-            onPress={handleSubmit(onSubmit)}
-            disabled={isPending}
-            className="mt-2 rounded-xl h-11 bg-red-500 active:bg-red-600"
-            rightIcon={<Trash2 size={14} color="#FFF" />}
-          />
+          <View className="mt-2">
+            <Button
+              label="Supprimer définitivement"
+              variant="danger"
+              onPress={handleSubmit(onSubmit)}
+              disabled={isPending}
+              size="lg"
+              className="rounded-full h-14 bg-red-500 active:bg-red-600"
+              rightIcon={<Trash2 size={18} color="#FFF" strokeWidth={2.5} />}
+            />
+          </View>
         </Animated.View>
       </ScrollView>
     </SafeAreaView>

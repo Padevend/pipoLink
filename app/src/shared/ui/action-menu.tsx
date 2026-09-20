@@ -36,7 +36,7 @@ export function ActionMenu({ visible, onClose, title, items }: ActionMenuProps):
       Animated.spring(translateY, {
         toValue: 0,
         useNativeDriver: true,
-        tension: 80, // Légèrement plus sec/nerveux pour le côté technique
+        tension: 80,
         friction: 12,
       }).start();
     } else {
@@ -94,31 +94,30 @@ export function ActionMenu({ visible, onClose, title, items }: ActionMenuProps):
           paddingLeft: insets.left,
           paddingRight: insets.right,
         }}
-        className="min-h-full flex-1 justify-end bg-black/50 dark:bg-black/70">
-
-        {/* Backdrop sombre et net */}
+        className="flex-1 justify-end bg-black/60"
+      >
         <Pressable className="absolute inset-0" onPress={animateClose} />
 
-        {/* Panneau principal : Coins moins arrondis, structure monochrome solide */}
+        {/* Panneau bas massif avec coins très arrondis */}
         <Animated.View
           style={{ transform: [{ translateY }] }}
-          className="rounded-t-2xl border-t border-zinc-200 bg-white pb-10 pt-2 dark:border-zinc-900 dark:bg-zinc-950"
+          className="rounded-t-[40px] bg-white dark:bg-[#0A0A0A] pb-12 pt-4 px-6"
         >
-          {/* Poignée de drag géométrique et fine */}
-          <View {...panResponder.panHandlers} className="w-full items-center py-3 mb-2">
-            <View className="h-1 w-10 bg-zinc-200 dark:bg-zinc-800" />
+          {/* Poignée de drag */}
+          <View {...panResponder.panHandlers} className="w-full items-center py-2 mb-4">
+            <View className="h-1.5 w-12 rounded-full bg-zinc-200 dark:bg-zinc-800" />
           </View>
 
-          {/* En-tête / Titre typé console de commande */}
-          <View className="px-6 mb-4 flex-row items-center gap-2">
-            <View className="h-1.5 w-1.5 rounded-full bg-orange-500" />
-            <Text className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
-              {title || 'Actions'}
+          {/* Titre */}
+          <View className="mb-6 flex-row items-center gap-3">
+            <View className="h-2.5 w-2.5 rounded-full bg-orange-500" />
+            <Text className="text-[11px] font-black uppercase tracking-widest text-zinc-950 dark:text-white">
+              {title || 'Actions disponibles'}
             </Text>
           </View>
 
-          {/* Liste des items sous forme de grille de commande empilée */}
-          <View className="px-5 gap-y-2">
+          {/* Liste des items en blocs arrondis */}
+          <View className="gap-y-3">
             {items.map((item) => (
               <Pressable
                 key={item.id}
@@ -132,44 +131,39 @@ export function ActionMenu({ visible, onClose, title, items }: ActionMenuProps):
                     item.onPress();
                   });
                 }}
-                className="w-full flex-row items-center justify-between rounded-xl border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-900 dark:bg-zinc-900/40 active:border-orange-500/30 dark:active:border-orange-500/40 active:scale-[0.99] transition-all"
+                className="w-full flex-row items-center justify-between rounded-[24px] bg-zinc-100 dark:bg-[#1A1A1A] p-5 active:opacity-80 transition-all"
               >
                 <View className="flex-1 pr-4">
                   <Text
-                    className={`text-sm font-bold tracking-tight ${item.destructive
-                        ? 'text-red-500'
-                        : 'text-zinc-900 dark:text-zinc-50'
-                      }`}
+                    className={`text-sm font-black tracking-tight ${
+                      item.destructive ? 'text-red-500' : 'text-zinc-950 dark:text-white'
+                    }`}
                   >
                     {item.label}
                   </Text>
                   {item.subtitle ? (
-                    <Text className="mt-0.5 font-mono text-[10px] text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">
+                    <Text className="mt-1 text-[11px] font-bold uppercase tracking-wider text-zinc-400">
                       {item.subtitle}
                     </Text>
                   ) : null}
                 </View>
 
-                {/* Petit chevron ou indicateur technique discret à droite */}
-                {!item.destructive && (
-                  <View className="h-1.5 w-1.5 bg-zinc-300 dark:bg-zinc-700 rounded-full" />
-                )}
+                <View className="h-2 w-2 bg-orange-500 rounded-full" />
               </Pressable>
             ))}
           </View>
 
-          {/* Bouton Fermer / Annuler - Format strict */}
-          <View className="px-5 mt-3">
+          {/* Bouton Annuler massif */}
+          <View className="mt-6">
             <Pressable
               onPress={animateClose}
-              className="w-full items-center justify-center py-3.5 rounded-xl border border-zinc-200 bg-white dark:border-zinc-900 dark:bg-zinc-950 active:opacity-80"
+              className="w-full items-center justify-center py-5 rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80"
             >
-              <Text className="text-[11px] font-mono font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">
+              <Text className="text-xs font-black text-zinc-950 dark:text-white uppercase tracking-widest">
                 Annuler
               </Text>
             </Pressable>
           </View>
-
         </Animated.View>
       </View>
     </Modal>

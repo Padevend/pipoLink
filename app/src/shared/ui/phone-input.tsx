@@ -59,78 +59,79 @@ export function PhoneInput({
   );
 
   return (
-    <View className="w-full gap-y-1">
+    <View className="w-full gap-2">
       {label ? (
-        <Text className="ml-1 text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+        <Text className="text-[11px] font-black uppercase tracking-widest text-zinc-950 dark:text-zinc-300 ml-4">
           {label}
         </Text>
       ) : null}
 
-      {/* BOÎTIER PRINCIPAL : Cadre Mat Opaque */}
+      {/* BOÎTIER PRINCIPAL : Format chunky et arrondi complet */}
       <View
         className={cn(
-          'h-10 flex-row items-center rounded-xl border bg-zinc-50 dark:bg-zinc-900/20',
-          focused ? 'border-orange-500' : 'border-zinc-200 dark:border-zinc-800',
-          error && 'border-red-500 bg-red-50/10 dark:bg-red-950/5',
+          'h-16 flex-row items-center rounded-full border-2 px-3 transition-all',
+          focused ? 'border-orange-500 bg-white dark:bg-[#0A0A0A]' : 'border-transparent bg-zinc-100 dark:bg-[#1A1A1A]',
+          error && 'border-red-500 bg-red-50 dark:bg-red-950',
         )}
       >
-        {/* Déclencheur du Sélecteur d'Indicatif */}
+        {/* Sélecteur d'indicatif ultra propre */}
         <Pressable
           onPress={() => setModalVisible(true)}
-          className="h-full flex-row items-center justify-center gap-1 border-r border-zinc-200 px-3 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-900 rounded-l-xl"
+          className="h-full flex-row items-center justify-center gap-2 border-r-2 border-zinc-200 dark:border-zinc-800 px-4 active:opacity-50"
         >
-          <Text className="text-xs font-bold text-zinc-900 dark:text-zinc-50">
+          <Text className="text-sm font-black text-zinc-950 dark:text-white">
             {selectedCountry.code}
           </Text>
-          <ChevronDown size={12} color="#71717A" />
+          <ChevronDown size={16} color="#F97316" strokeWidth={3} />
         </Pressable>
 
-        {/* Champ de saisie numérique formaté */}
+        {/* Champ de saisie numérique */}
         <TextInput
-          value={national.replace(/(\d{2})(?=\d)/g, '$1 ').trim()}
+          value={national.replace(/(\d{2})(?=)/g, '$1 ').trim()}
           onChangeText={handleNationalChange}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           placeholder="6 00 00 00 00"
           placeholderTextColor="#A1A1AA"
           keyboardType="phone-pad"
-          className="flex-1 h-full px-3 text-xs font-semibold text-zinc-900 dark:text-zinc-50"
+          className="flex-1 h-full px-4 text-base font-bold text-zinc-950 dark:text-white"
         />
       </View>
+      
 
       {error ? (
-        <Text className="ml-1 text-[11px] font-semibold text-red-600 dark:text-red-400">{error}</Text>
+        <Text className="text-[10px] font-black uppercase tracking-wider text-red-500 ml-4">{error}</Text>
       ) : null}
 
       {/* ================= MODAL DE SÉLECTION DU PAYS ================= */}
       <Modal
-        animationType="fade"
+        animationType="slide"
         transparent={true}
         visible={modalVisible}
         statusBarTranslucent
         onRequestClose={() => setModalVisible(false)}
       >
-        <View className="flex-1 justify-end bg-black/50 dark:bg-black/70">
-          <SafeAreaView className="max-h-[80%] rounded-t-xl border-t border-zinc-200 bg-white dark:border-zinc-900 dark:bg-zinc-950">
+        <View className="flex-1 justify-end bg-black/60">
+          <SafeAreaView className="max-h-[85%] rounded-t-[40px] bg-white dark:bg-[#0A0A0A] p-6">
 
-            {/* Header de la Modal : Panneau Mat */}
-            <View className="flex-row items-center justify-between border-b border-zinc-100 px-4 py-3 dark:border-zinc-900">
-              <View className="flex-row items-center gap-2">
-                <Phone size={14} color="#F97316" />
-                <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+            <View className="flex-row items-center justify-between border-b-2 border-zinc-100 dark:border-[#1A1A1A] pb-6 mb-4">
+              <View className="flex-row items-center gap-3">
+                <View className="h-10 w-10 items-center justify-center rounded-full bg-orange-500/10">
+                  <Phone size={20} color="#F97316" strokeWidth={2.5} />
+                </View>
+                <Text className="text-xl font-black text-zinc-950 dark:text-white tracking-tight">
                   Choisir un pays
                 </Text>
               </View>
               <Pressable
                 onPress={() => setModalVisible(false)}
-                className="h-7 w-7 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 active:bg-zinc-100 dark:active:bg-zinc-800"
+                className="h-12 w-12 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80"
               >
-                <X size={13} color="#71717A" />
+                <X size={20} color="#F97316" strokeWidth={2.5} />
               </Pressable>
             </View>
 
-            {/* Barre de Recherche Interne */}
-            <View className="flex pb-3 pt-1">
+            <View className="mb-4">
               <SearchBar
                 value={searchQuery}
                 onChangeText={setSearchQuery}
@@ -138,42 +139,41 @@ export function PhoneInput({
               />
             </View>
 
-            {/* Liste des Pays Déroulante */}
             <FlatList
               data={filteredCountries}
               keyExtractor={(item) => item.code + item.name}
-              contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
+              contentContainerStyle={{ paddingBottom: 32 }}
+              showsVerticalScrollIndicator={false}
               renderItem={({ item }) => {
                 const isSelected = item.code === selectedCountry.code;
                 return (
                   <Pressable
                     onPress={() => handleCountrySelect(item)}
                     className={cn(
-                      'flex-row items-center justify-between py-3 border-b border-zinc-100 dark:border-zinc-900/60',
+                      'flex-row items-center justify-between py-4 px-4 my-1 rounded-2xl transition-all',
                       isSelected 
-                        ? 'bg-orange-50/60 dark:bg-orange-950/10 rounded-lg px-2 -mx-2' 
-                        : 'active:bg-zinc-50 dark:active:bg-zinc-900/40'
+                        ? 'bg-orange-500' 
+                        : 'bg-zinc-50 dark:bg-[#1A1A1A] active:opacity-80'
                     )}
                   >
-                    <View className="flex-row items-center gap-3">
-                      {/* Structure demandée : "{code} {country}" */}
-                      <Text className="text-xs font-bold text-orange-500 w-12">
+                    <View className="flex-row items-center gap-4">
+                      <Text className={cn('text-sm font-black w-12', isSelected ? 'text-white' : 'text-orange-500')}>
                         {item.code}
                       </Text>
-                      <Text className="text-xs font-semibold text-zinc-900 dark:text-zinc-50">
+                      <Text className={cn('text-sm font-bold', isSelected ? 'text-white' : 'text-zinc-950 dark:text-white')}>
                         {item.name}
                       </Text>
                     </View>
 
                     {isSelected && (
-                      <View className="h-1.5 w-1.5 rounded-full bg-orange-500" />
+                      <View className="h-2.5 w-2.5 rounded-full bg-white" />
                     )}
                   </Pressable>
                 );
               }}
               ListEmptyComponent={
-                <Text className="text-center text-[11px] text-zinc-400 dark:text-zinc-500 py-8 font-semibold">
-                  Aucun pays trouvé pour "{searchQuery}"
+                <Text className="text-center text-xs font-bold text-zinc-400 py-12 uppercase tracking-widest">
+                  Aucun pays trouvé
                 </Text>
               }
             />

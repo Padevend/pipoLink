@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { ArrowLeft, Toolbox } from "lucide-react-native";
+import { ArrowLeft, Wrench } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -7,30 +7,33 @@ export default function ChangeEmailScreen() {
     const insets = useSafeAreaInsets();
     return (
         <SafeAreaView
-            className="flex-1 bg-white dark:bg-zinc-950"
+            className="flex-1 bg-white dark:bg-[#0A0A0A]"
             edges={["top", "left", "right"]}
         >
-            {/* HEADER : Panneau Mat Solide */}
-            <View className="flex-row items-center gap-2 border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
+            {/* HEADER : Plat et Solide */}
+            <View className="flex-row items-center border-b-2 border-zinc-100 bg-white px-6 py-4 dark:border-[#1A1A1A] dark:bg-[#0A0A0A]">
                 <Pressable
                     onPress={() => router.back()}
-                    className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
+                    className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-opacity"
                 >
-                    <ArrowLeft size={14} color="#71717A" />
+                    <ArrowLeft size={18} color="#F97316" strokeWidth={2.5} />
                 </Pressable>
 
-                <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                <Text className="text-lg font-black tracking-tight text-zinc-950 dark:text-white ml-4" numberOfLines={1}>
                     Changer d'email
                 </Text>
             </View>
 
-            {/* Contenu de la page à intégrer ici */}
-            <View className="flex-1 flex items-center justify-center gap-5" style={{ paddingBottom: insets.bottom + 16 }}>
-                <View className="flex items-center justify-center bg-zinc-50 dark:bg-zinc-900 p-4 rounded-full">
-                    <Toolbox size={30} color="#71717A" />
+            {/* Contenu */}
+            <View className="flex-1 items-center justify-center px-8" style={{ paddingBottom: insets.bottom + 24 }}>
+                <View className="h-20 w-20 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] mb-6">
+                    <Wrench size={32} color="#F97316" strokeWidth={2.5} />
                 </View>
-                <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-                    Fonctionnalites en cours de conception
+                <Text className="text-base font-black uppercase tracking-widest text-zinc-950 dark:text-white text-center">
+                    Fonctionnalité en développement
+                </Text>
+                <Text className="text-xs font-bold text-zinc-500 dark:text-zinc-400 text-center mt-2 leading-relaxed">
+                    Cette option sera bientôt disponible pour mettre à jour votre adresse email en toute sécurité.
                 </Text>
             </View>
         </SafeAreaView>

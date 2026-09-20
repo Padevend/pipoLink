@@ -3,21 +3,21 @@ import { fr } from 'date-fns/locale';
 import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import {
-    Calendar,
-    Download,
-    Share2,
-    User
+  Calendar,
+  Download,
+  Share2,
+  User
 } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Animated,
-    Image,
-    Pressable,
-    Share,
-    Text,
-    View
+  ActivityIndicator,
+  Alert,
+  Animated,
+  Image,
+  Pressable,
+  Share,
+  Text,
+  View
 } from 'react-native';
 
 import { useToast } from '@/providers';
@@ -42,7 +42,6 @@ export default function AnnouncementCard({ item }: { item: Announcement }) {
   const displayedImage = posterUri ?? previewUrl;
   const hasImage = !!displayedImage;
 
-  // Calcul automatique des dimensions de l'image pour un affichage parfait
   useEffect(() => {
     if (displayedImage) {
       Image.getSize(
@@ -134,11 +133,12 @@ export default function AnnouncementCard({ item }: { item: Announcement }) {
 
   return (
     <Animated.View style={{ transform: [{ scale: scaleAnim }], marginBottom: 16 }}>
-      <View className="overflow-hidden rounded-xl border border-zinc-100 bg-white dark:border-zinc-900 dark:bg-zinc-900">
+      {/* Conteneur principal de la carte : rounded-2xl, fond plein */}
+      <View className="overflow-hidden rounded-2xl bg-zinc-50 dark:bg-[#1A1A1A]">
 
-        {/* IMAGE D'ILLUSTRATION DE L'ANNONCE */}
+        {/* IMAGE D'ILLUSTRATION */}
         {hasImage && (
-          <View className="relative w-full bg-zinc-50 dark:bg-zinc-950">
+          <View className="relative w-full bg-zinc-200 dark:bg-[#222222]">
             <Pressable
               onPressIn={onPressIn}
               onPressOut={onPressOut}
@@ -152,20 +152,20 @@ export default function AnnouncementCard({ item }: { item: Announcement }) {
               />
             </Pressable>
 
-            {/* Bouton pour activer la haute définition */}
+            {/* Bouton HD (rounded-full) */}
             {posterUrl && hdState !== 'done' && (
               <Pressable
                 onPress={downloadPoster}
-                hitSlop={8}
-                className="absolute top-3 right-3 flex-row items-center gap-x-1.5 rounded-lg bg-zinc-950 px-3 py-1.5 active:opacity-80"
+                hitSlop={10}
+                className="absolute top-4 right-4 flex-row items-center gap-2 rounded-full bg-zinc-950 px-4 py-2 active:opacity-80"
               >
                 {hdState === 'loading' ? (
                   <ActivityIndicator size="small" color="#FFFFFF" className="scale-75" />
                 ) : (
-                  <Download size={12} color="#FFFFFF" strokeWidth={2.5} />
+                  <Download size={14} color="#FFFFFF" strokeWidth={2.5} />
                 )}
-                <Text className="text-xs font-semibold text-white">
-                  {hdState === 'loading' ? 'Amélioration...' : 'Voir en haute qualité'}
+                <Text className="text-[10px] font-black uppercase tracking-widest text-white">
+                  {hdState === 'loading' ? 'Chargement...' : 'Haute qualité'}
                 </Text>
               </Pressable>
             )}
@@ -173,49 +173,49 @@ export default function AnnouncementCard({ item }: { item: Announcement }) {
         )}
 
         {/* CONTENU DE LA CARTE */}
-        <Pressable onPressIn={onPressIn} onPressOut={onPressOut} className="p-4">
+        <Pressable onPressIn={onPressIn} onPressOut={onPressOut} className="p-5">
           
-          {/* Nom de l'auteur de l'annonce */}
+          {/* Auteur */}
           {item.author?.username && (
-            <View className="flex-row items-center gap-1.5 mb-2">
-              <View className="h-5 w-5 rounded-md items-center justify-center bg-zinc-100 dark:bg-zinc-800">
-                <User size={12} color="#71717A" strokeWidth={2.5} />
+            <View className="flex-row items-center gap-2 mb-3">
+              <View className="h-7 w-7 rounded-xl items-center justify-center bg-white dark:bg-[#222222]">
+                <User size={14} color="#F97316" strokeWidth={2.5} />
               </View>
-              <Text className="text-xs font-bold text-zinc-600 dark:text-zinc-400">
-                {item.author.username}
+              <Text className="text-xs font-black uppercase tracking-widest text-zinc-500">
+                @{item.author.username}
               </Text>
             </View>
           )}
 
-          {/* Titre principal */}
-          <Text className="text-base font-bold leading-5 text-zinc-900 dark:text-zinc-50 mb-2">
+          {/* Titre */}
+          <Text className="text-base font-black tracking-tight text-zinc-950 dark:text-white mb-2">
             {item.title}
           </Text>
 
           {/* Corps de texte */}
-          <Text className="text-sm leading-5 text-zinc-600 dark:text-zinc-300 font-medium">
+          <Text className="text-xs font-semibold leading-relaxed text-zinc-600 dark:text-zinc-300">
             {item.content}
           </Text>
 
-          {/* Ligne discrète de séparation */}
-          <View className="my-4 h-[1px] bg-zinc-100 dark:bg-zinc-800" />
+          {/* Ligne de séparation franche */}
+          <View className="my-4 h-[2px] w-full bg-zinc-200 dark:bg-[#222222]" />
 
-          {/* PIED DE LA CARTE (Date et Partage) */}
+          {/* PIED DE LA CARTE */}
           <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center gap-1.5">
-              <Calendar size={12} color="#A1A1AA" />
-              <Text className="text-xs text-zinc-500 dark:text-zinc-400">
+            <View className="flex-row items-center gap-2">
+              <Calendar size={14} color="#A1A1AA" strokeWidth={2.5} />
+              <Text className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
                 {format(new Date(item.createdAt), "d MMMM yyyy 'à' HH:mm", { locale: fr })}
               </Text>
             </View>
 
-            {/* Bouton Partager */}
+            {/* Bouton Partager (rounded-full) */}
             <Pressable
               onPress={handleShare}
-              className="flex-row items-center gap-x-1.5 px-3 py-1.5 rounded-lg bg-zinc-50 border border-zinc-100 dark:bg-zinc-800 dark:border-zinc-800 active:opacity-80"
+              className="flex-row items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-[#222222] active:opacity-80"
             >
-              <Share2 size={12} color="#71717A" strokeWidth={2} />
-              <Text className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+              <Share2 size={14} color="#F97316" strokeWidth={2.5} />
+              <Text className="text-[10px] font-black uppercase tracking-widest text-zinc-950 dark:text-white">
                 Partager
               </Text>
             </Pressable>
@@ -224,7 +224,7 @@ export default function AnnouncementCard({ item }: { item: Announcement }) {
         </Pressable>
       </View>
 
-      {/* OUVERTURE DE L'IMAGE EN PLEIN ÉCRAN */}
+      {/* VISIONNEUSE D'IMAGE */}
       {hasImage && (
         <ImageViewer
           visible={isPreviewOpen}

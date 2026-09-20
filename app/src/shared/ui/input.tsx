@@ -18,8 +18,10 @@ export interface InputProps extends TextInputProps {
   containerClassName?: string;
 }
 
-const ORANGE_PRINCIPAL = '#FF6B00';
-const GRIS_NEUTRE = '#71717A';
+const ORANGE_PRINCIPAL = '#F97316';
+const GRIS_NEUTRE = '#A1A1AA';
+const NOIR_TEXTE = '#09090B';
+const BLANC_TEXTE = '#FAFAFA';
 
 export function Input({
   label,
@@ -46,34 +48,35 @@ export function Input({
   };
 
   return (
-    <View className={cn('w-full gap-1', containerClassName)}>
-      {/* Label technique style terminal */}
+    <View className={cn('w-full gap-2', containerClassName)}>
+      {/* Label technique minimaliste, très lisible */}
       {label && (
-        <Text className="font-mono text-[9px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 ml-1">
+        <Text className="text-[11px] font-black uppercase tracking-widest text-zinc-950 dark:text-zinc-300 ml-4">
           {label}
         </Text>
       )}
       
-      {/* Conteneur brut à géométrie stricte */}
+      {/* Conteneur brut à géométrie arrondie maximale */}
       <View 
         className={cn(
-          'w-full flex-row rounded-lg bg-zinc-100 dark:bg-zinc-900/40 border px-3 transition-all',
+          'w-full flex-row border-2 px-6 transition-all',
           props.multiline 
-            ? 'items-start py-2 min-h-[40px] max-h-[160px]' 
-            : 'items-center min-h-15',
+            ? 'items-start py-5 rounded-[32px] min-h-[64px] max-h-[160px]' 
+            : 'items-center h-16 rounded-full',
           error 
-            ? 'border-red-500 bg-red-500/5 dark:border-red-500/30' 
+            ? 'border-red-500 bg-red-50 dark:bg-red-950' 
             : isFocused 
-              ? 'border-orange-500 bg-white dark:border-orange-600 dark:bg-zinc-900' 
-              : 'border-zinc-100 dark:border-zinc-900'
+              ? 'border-orange-500 bg-white dark:bg-[#0A0A0A]' 
+              : 'border-transparent bg-zinc-100 dark:bg-[#1A1A1A]'
         )}
       >
         {/* Icône Gauche */}
         {LeftIcon && (
           <LeftIcon 
-            size={14} 
+            size={20} 
             color={isFocused ? ORANGE_PRINCIPAL : GRIS_NEUTRE} 
-            className={cn(props.multiline ? 'mr-2.5 mt-1' : 'mr-5')}
+            className={cn(props.multiline ? 'mr-3 mt-1' : 'mr-3')}
+            strokeWidth={isFocused ? 2.5 : 2}
           />
         )}
         
@@ -85,7 +88,8 @@ export function Input({
           textAlignVertical={props.multiline ? 'top' : 'center'}
           style={props.multiline ? { paddingTop: 2, paddingBottom: 2 } : undefined}
           className={cn(
-            'flex-1 text-sm font-medium text-zinc-900 dark:text-zinc-50 py-0 min-h-[40px] max-h-[160px]',
+            'flex-1 text-base font-bold text-zinc-950 dark:text-white py-0',
+            props.multiline ? 'min-h-[40px] max-h-[140px]' : 'h-full',
             className
           )}
           placeholder={props.placeholder}
@@ -102,12 +106,13 @@ export function Input({
         {RightIcon && (
           <Pressable 
             onPress={onRightIconPress} 
-            hitSlop={12}
-            className={cn(props.multiline ? 'ml-2.5 mt-1' : 'ml-2.5')}
+            hitSlop={16}
+            className={cn(props.multiline ? 'ml-3 mt-1' : 'ml-3')}
           >
             <RightIcon 
-              size={14} 
+              size={20} 
               color={GRIS_NEUTRE} 
+              strokeWidth={2}
             />
           </Pressable>
         )}
@@ -115,7 +120,7 @@ export function Input({
       
       {/* Alerte système d'erreur */}
       {error && (
-        <Text className="font-mono text-[9px] font-bold uppercase tracking-wider text-red-500 dark:text-red-400 ml-1 mt-0.5">
+        <Text className="text-[10px] font-black uppercase tracking-wider text-red-500 ml-4">
           {error}
         </Text>
       )}

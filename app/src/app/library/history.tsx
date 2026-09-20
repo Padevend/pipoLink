@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { ArrowLeft, BrushCleaning, HardDriveDownload, RefreshCw } from "lucide-react-native";
+import { ArrowLeft, Brush, HardDriveDownload, RefreshCw } from "lucide-react-native";
 import { Alert, FlatList, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -27,50 +27,51 @@ export default function DownloadHistoryScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>
 
-      {/* HEADER : Panneau Mat Fixe */}
-      <View className="flex-row items-center justify-between border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
-        <View className="flex-row items-center flex-1 gap-3">
+      {/* HEADER : Néo-banque, plat, sans bordures sur les boutons */}
+      <View className="flex-row items-center justify-between border-b-2 border-zinc-100 bg-white px-6 py-4 dark:border-[#1A1A1A] dark:bg-[#0A0A0A]">
+        <View className="flex-row items-center flex-1 gap-4">
           <Pressable
             onPress={() => router.back()}
-            hitSlop={8}
-            className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 dark:bg-zinc-900 active:bg-zinc-100 dark:active:bg-zinc-800"
+            hitSlop={10}
+            className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-opacity"
           >
-            <ArrowLeft size={16} color="#71717A" />
+            <ArrowLeft size={18} color="#F97316" strokeWidth={2.5} />
           </Pressable>
 
-          <View className="flex-1">
-            <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+          <View className="flex-1 justify-center">
+            <Text className="text-lg font-black tracking-tight text-zinc-950 dark:text-white">
               Téléchargements
             </Text>
-            <Text className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mt-0.5">
-              Historique des fichiers
+            <Text className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mt-0.5">
+              Historique local
             </Text>
           </View>
         </View>
 
-        {/* Bouton Rafraîchir */}
-        <Pressable
-          onPress={refresh}
-          hitSlop={8}
-          disabled={isRefreshing}
-          className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800 me-2"
-        >
-          <RefreshCw size={14} color="#71717A" />
-        </Pressable>
-
-        {/* Bouton de nettoyage contextuel rouge mat */}
-        {history && history.length > 0 && (
+        <View className="flex-row items-center gap-2">
+          {/* Bouton Rafraîchir */}
           <Pressable
-            onPress={handleClearHistory}
-            hitSlop={8}
-            className="h-8 w-8 items-center justify-center rounded-lg bg-red-50 border border-red-200 dark:bg-red-950/20 dark:border-red-900/40 active:bg-red-100 dark:active:bg-red-950/40"
+            onPress={refresh}
+            hitSlop={10}
+            disabled={isRefreshing}
+            className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80"
           >
-            <BrushCleaning size={14} color="#EF4444" />
+            <RefreshCw size={16} color="#A1A1AA" strokeWidth={2.5} />
           </Pressable>
-        )}
-        
+
+          {/* Bouton de nettoyage contextuel */}
+          {history && history.length > 0 && (
+            <Pressable
+              onPress={handleClearHistory}
+              hitSlop={10}
+              className="h-10 w-10 items-center justify-center rounded-full bg-red-50 dark:bg-red-950/30 active:opacity-80"
+            >
+              <Brush size={16} color="#EF4444" strokeWidth={2.5} />
+            </Pressable>
+          )}
+        </View>
       </View>
 
       {/* LISTE DES TÉLÉCHARGEMENTS */}
@@ -78,21 +79,21 @@ export default function DownloadHistoryScreen() {
         data={history}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
+        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 48 }}
         renderItem={({ item }) => (
-          <View className="mb-2.5">
+          <View className="mb-3">
             <DownloadCard task={item} onDelete={deleteItem} />
           </View>
         )}
         ListEmptyComponent={() => (
-          <View className="items-center justify-center py-32 px-6">
-            <View className="h-12 w-12 items-center justify-center rounded-xl bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 mb-3">
-              <HardDriveDownload size={18} color="#A1A1AA" />
+          <View className="items-center justify-center py-24 px-6 mt-10 rounded-2xl border-2 border-dashed border-zinc-200 dark:border-[#1A1A1A] bg-zinc-50 dark:bg-[#0A0A0A]">
+            <View className="h-16 w-16 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] mb-5">
+              <HardDriveDownload size={24} color="#A1A1AA" strokeWidth={2.5} />
             </View>
-            <Text className="text-xs font-bold text-zinc-900 dark:text-zinc-50 text-center">
+            <Text className="text-sm font-black uppercase tracking-widest text-zinc-950 dark:text-white text-center">
               Aucun téléchargement
             </Text>
-            <Text className="text-[11px] font-medium text-center text-zinc-500 dark:text-zinc-400 mt-1 leading-4">
+            <Text className="text-xs font-bold text-center text-zinc-500 dark:text-zinc-400 mt-2 leading-relaxed px-4">
               Les documents ou fichiers HD d'annonces téléchargés s'afficheront ici.
             </Text>
           </View>

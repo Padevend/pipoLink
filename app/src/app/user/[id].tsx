@@ -20,7 +20,6 @@ import { useMemo } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// ─── INTERFACES ET TYPAGE STRICT ─────────────────────────────────────────────
 interface Conversation {
     id: string;
     type: 'private' | 'group';
@@ -84,25 +83,25 @@ export default function UserInfoScreen() {
 
     if (isLoading) {
         return (
-            <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950 px-6 justify-center items-center" edges={['top']}>
-                <Skeleton className="rounded-full mb-4" width={96} height={96} />
-                <Skeleton className="rounded-xl mb-2" width={160} height={20} />
-                <Skeleton className="rounded-xl" width={100} height={14} />
+            <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A] px-6 justify-center items-center" edges={['top']}>
+                <Skeleton className="rounded-full mb-4" width={112} height={112} />
+                <Skeleton className="rounded-2xl mb-2" width={180} height={24} />
+                <Skeleton className="rounded-xl" width={120} height={16} />
             </SafeAreaView>
         );
     }
 
     if (error || (!user && !isLoading)) {
         return (
-            <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-zinc-950 px-6" edges={['top']}>
-                <Text className="text-sm font-medium text-zinc-500 dark:text-zinc-400 text-center">
+            <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-[#0A0A0A] px-8" edges={['top']}>
+                <Text className="text-xs font-bold uppercase tracking-wider text-zinc-400 text-center">
                     Impossible de charger le profil de ce contact.
                 </Text>
                 <Pressable 
                     onPress={() => refetch()} 
-                    className="mt-4 px-5 h-11 rounded-xl bg-orange-500 items-center justify-center active:bg-orange-600"
+                    className="mt-6 px-8 h-14 rounded-full bg-orange-500 items-center justify-center active:opacity-80"
                 >
-                    <Text className="text-white text-xs font-bold uppercase tracking-wider">Réessayer</Text>
+                    <Text className="text-white text-xs font-black uppercase tracking-widest">Réessayer</Text>
                 </Pressable>
             </SafeAreaView>
         );
@@ -113,79 +112,75 @@ export default function UserInfoScreen() {
         : user?.username;
 
     return (
-        <SafeAreaView className="flex-1 bg-zinc-50 dark:bg-zinc-950" edges={['top']}>
+        <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>
 
-            {/* HEADER MAT ET ÉPURÉ */}
-            <View className="flex-row items-center justify-between px-4 py-3 border-b border-zinc-100 dark:border-zinc-900 bg-white dark:bg-zinc-950">
+            {/* Header Néo-banque plat */}
+            <View className="flex-row items-center justify-between px-4 py-3 border-b border-zinc-100 dark:border-zinc-900 bg-white dark:bg-[#0A0A0A]">
                 <Pressable
                     onPress={() => router.back()}
-                    className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 dark:bg-zinc-900 active:bg-zinc-100 dark:active:bg-zinc-800"
+                    className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80"
                 >
-                    <ArrowLeft size={18} color="#71717A" />
+                    <ArrowLeft size={18} color="#F97316" strokeWidth={2.5} />
                 </Pressable>
-                <Text className="font-bold text-zinc-900 dark:text-zinc-50 text-sm">
+                <Text className="font-bold text-zinc-950 dark:text-white text-sm">
                     Détails du contact
                 </Text>
-                <View className="w-8" />
+                <View className="w-10" />
             </View>
 
             <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
 
-                {/* EN-TÊTE IMMERSIF MATE */}
-                <View className="items-center pt-6 pb-6 bg-white dark:bg-zinc-900 border-b border-zinc-100 dark:border-zinc-900/60">
+                {/* EN-TÊTE PROFIL */}
+                <View className="items-center pt-8 pb-6 px-6 bg-white dark:bg-[#0A0A0A] border-b border-zinc-100 dark:border-zinc-900">
                     <View className="mb-4">
-                        <Avatar name={user?.username as string} uri={user?.profile?.avatarUrl ?? undefined} size={120} role={user?.role as any} />
+                        <Avatar name={user?.username as string} uri={user?.profile?.avatarUrl ?? undefined} size={112} role={user?.role as any} />
                     </View>
 
-                    <Text className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-50 text-center">
+                    <Text className="text-xl font-black tracking-tight text-zinc-950 dark:text-white text-center">
                         {displayName}
                     </Text>
 
-                    <Text className="text-xs text-zinc-400 dark:text-zinc-500 text-center mt-0.5 font-medium">
+                    <Text className="text-xs text-zinc-400 dark:text-zinc-500 text-center mt-1 font-bold uppercase tracking-wider">
                         @{user?.username}
                     </Text>
 
-                    {/* ACTIONS RAPIDES MATES */}
-                    <View className="flex-row justify-center items-center gap-x-6 mt-6 w-full">
+                    {/* ACTIONS RAPIDES : Boutons en rounded-full */}
+                    <View className="flex-row justify-center items-center gap-x-4 mt-6 w-full">
                         <Pressable
                             onPress={handleStartDiscussion}
-                            className="items-center justify-center active:opacity-90"
+                            className="flex-1 h-12 rounded-full bg-orange-500 flex-row items-center justify-center gap-x-2 active:opacity-80"
                         >
-                            <View className="h-11 w-28 rounded-xl bg-orange-500 flex-row items-center justify-center gap-x-2 px-2">
-                                <MessageCircle size={16} color="#FFFFFF" strokeWidth={2.2} />
-                                <Text className="text-xs font-bold text-white uppercase tracking-wide">Discuter</Text>
-                            </View>
+                            <MessageCircle size={18} color="#FFFFFF" strokeWidth={2.5} />
+                            <Text className="text-xs font-black text-white uppercase tracking-wider">Discuter</Text>
                         </Pressable>
 
                         {user?.profile?.phone && (
                             <Pressable
-                                className="items-center justify-center active:opacity-90"
+                                className="flex-1 h-12 rounded-full bg-zinc-100 dark:bg-[#1A1A1A] flex-row items-center justify-center gap-x-2 active:opacity-80"
                                 onPress={handlePhonePress}
                             >
-                                <View className="h-11 w-28 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex-row items-center justify-center gap-x-2 px-2">
-                                    <Phone size={16} color="#71717A" strokeWidth={2.2} />
-                                    <Text className="text-xs font-bold text-zinc-600 dark:text-zinc-300 uppercase tracking-wide">Appeler</Text>
-                                </View>
+                                <Phone size={18} color="#F97316" strokeWidth={2.5} />
+                                <Text className="text-xs font-black text-zinc-950 dark:text-white uppercase tracking-wider">Appeler</Text>
                             </Pressable>
                         )}
                     </View>
                 </View>
 
-                {/* BLOCS D'INFORMATIONS MATES EN CARDS */}
-                <View className="mt-4 gap-y-4 px-4">
+                {/* CONTENU EN BLOCS PLATS (Pas rounded-full pour les cards) */}
+                <View className="mt-6 gap-y-4 px-6">
 
                     {/* CARD ACTU / BIO */}
                     {user?.profile?.bio && (
-                        <View className="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-zinc-100 dark:border-zinc-900">
-                            <Text className="text-[10px] font-bold text-orange-500 uppercase tracking-widest mb-1.5">Actu / Bio</Text>
-                            <Text className="text-xs leading-5 font-medium text-zinc-700 dark:text-zinc-300">
+                        <View className="bg-zinc-100 dark:bg-[#1A1A1A] rounded-2xl p-5 ">
+                            <Text className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-2">Actu / Bio</Text>
+                            <Text className="text-xs leading-relaxed font-semibold text-zinc-700 dark:text-zinc-300">
                                 {user.profile.bio}
                             </Text>
                         </View>
                     )}
 
                     {/* CARD COORDONNÉES ET RÔLE */}
-                    <View className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-900 overflow-hidden divide-y divide-zinc-50 dark:divide-zinc-800/60">
+                    <View className="bg-zinc-100 dark:bg-[#1A1A1A] rounded-2xl overflow-hidden divide-y divide-zinc-200 dark:divide-zinc-800/60">
                         <InfoRow
                             Icon={Mail}
                             title="Adresse e-mail"
@@ -201,12 +196,12 @@ export default function UserInfoScreen() {
                         )}
 
                         {user?.role === 'admin' && (
-                            <View className="p-4 flex-row items-center gap-x-3 bg-red-50/20 dark:bg-red-950/10">
-                                <View className="h-8 w-8 rounded-lg bg-red-100/60 dark:bg-red-950/40 items-center justify-center">
-                                    <ShieldCheck size={16} color="#EF4444" />
+                            <View className="p-4 flex-row items-center gap-x-3 ">
+                                <View className="h-9 w-9 rounded-xl bg-red-500/20 items-center justify-center">
+                                    <ShieldCheck size={18} color="#EF4444" strokeWidth={2.5} />
                                 </View>
                                 <View className="flex-1">
-                                    <Text className="text-[11px] font-bold text-red-500 dark:text-red-400 uppercase tracking-wide">Administrateur Officiel</Text>
+                                    <Text className="text-[11px] font-black text-red-500 uppercase tracking-wider">Administrateur Officiel</Text>
                                 </View>
                             </View>
                         )}
@@ -214,7 +209,7 @@ export default function UserInfoScreen() {
 
                     {/* CARD UNIVERSITAIRE */}
                     {(user?.profile?.filiere || user?.profile?.niveau) && (
-                        <View className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-900 overflow-hidden divide-y divide-zinc-50 dark:divide-zinc-800/60">
+                        <View className="bg-zinc-100 dark:bg-[#1A1A1A] rounded-2xl overflow-hidden divide-y divide-zinc-200 dark:divide-zinc-800/60">
                             {user.profile.filiere && (
                                 <InfoRow
                                     Icon={BookOpen}
@@ -233,41 +228,41 @@ export default function UserInfoScreen() {
                     )}
 
                     {/* CARD GROUPES EN COMMUN */}
-                    <View className="mt-1 gap-y-2">
-                        <Text className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider pl-1">
+                    <View className="mt-2 gap-y-3">
+                        <Text className="text-[11px] font-black text-zinc-400 uppercase tracking-widest ml-1">
                             Groupes en commun ({groupConversations.length})
                         </Text>
 
                         {groupConversations.length > 0 ? (
-                            <View className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-900 overflow-hidden divide-y divide-zinc-50 dark:divide-zinc-800/60">
+                            <View className="bg-zinc-100 dark:bg-[#1A1A1A] rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden divide-y divide-zinc-200 dark:divide-zinc-800/60">
                                 {groupConversations.map((group) => (
                                     <Pressable
                                         key={group.id}
                                         onPress={() => router.push(`/chat/${group.id}`)}
-                                        className="flex-row items-center justify-between p-4 active:bg-zinc-50 dark:active:bg-zinc-800/40"
+                                        className="flex-row items-center justify-between p-4 active:opacity-80"
                                     >
                                         <View className="flex-row items-center gap-x-3 flex-1">
-                                            <View className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 dark:bg-zinc-800">
-                                                <Users size={16} color="#71717A" />
+                                            <View className="h-10 w-10 items-center justify-center rounded-xl bg-white dark:bg-[#0A0A0A]">
+                                                <Users size={18} color="#F97316" strokeWidth={2.5} />
                                             </View>
                                             <View className="flex-1">
-                                                <Text className="text-xs font-bold text-zinc-800 dark:text-zinc-100" numberOfLines={1}>
+                                                <Text className="text-xs font-bold text-zinc-950 dark:text-white" numberOfLines={1}>
                                                     {group.name || "Groupe PipoLink"}
                                                 </Text>
-                                                <Text className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5" numberOfLines={1}>
-                                                    Appuyez pour ouvrir la discussion
+                                                <Text className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mt-0.5" numberOfLines={1}>
+                                                    Ouvrir la discussion
                                                 </Text>
                                             </View>
                                         </View>
-                                        <ChevronRight size={14} color="#A1A1AA" />
+                                        <ChevronRight size={16} color="#F97316" strokeWidth={2.5} />
                                     </Pressable>
                                 ))}
                             </View>
                         ) : (
-                            <View className="rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800 p-6 items-center justify-center bg-white dark:bg-zinc-900">
-                                <Info size={16} color="#A1A1AA" className="mb-1.5" />
-                                <Text className="text-[11px] text-zinc-400 dark:text-zinc-500 text-center font-medium">
-                                    Aucun espace de discussion de groupe partagé.
+                            <View className="rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-800 p-8 items-center justify-center bg-zinc-100 dark:bg-[#1A1A1A]">
+                                <Info size={20} color="#F97316" strokeWidth={2.5} className="mb-2" />
+                                <Text className="text-xs font-bold text-zinc-400 text-center uppercase tracking-wider">
+                                    Aucun groupe partagé.
                                 </Text>
                             </View>
                         )}

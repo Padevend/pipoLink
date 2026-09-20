@@ -23,47 +23,43 @@ export default function AnnouncementsScreen() {
   const isStaff = user?.role === 'admin' || user?.role === 'staff';
 
   return (
-    <SafeAreaView className="flex-1 bg-zinc-50 dark:bg-zinc-950" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>
 
-      {/* EN-TÊTE DE LA PAGE (Simple, clair et accueillant) */}
-      <View className="flex-row items-center justify-between border-b border-zinc-100 bg-white px-4 py-4 dark:border-zinc-900 dark:bg-zinc-900">
-        <View className="flex-row items-center flex-1 gap-3">
-          {/* Bouton retour plus accessible et doux au toucher */}
+      {/* HEADER : Néo-banque Plat et Solide */}
+      <View className="flex-row items-center justify-between border-b-2 border-zinc-100 bg-white px-6 py-4 dark:border-[#1A1A1A] dark:bg-[#0A0A0A]">
+        <View className="flex-row items-center flex-1 gap-4">
           <Pressable
             onPress={() => router.back()}
-            hitSlop={12}
-            className="h-9 w-9 items-center justify-center rounded-full bg-zinc-50 dark:bg-zinc-800 active:opacity-70"
+            hitSlop={10}
+            className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-opacity"
           >
-            <ArrowLeft size={18} color="#71717A" />
+            <ArrowLeft size={18} color="#F97316" strokeWidth={2.5} />
           </Pressable>
 
-          <View className="flex-1">
-            <Text className="text-base font-bold text-zinc-900 dark:text-zinc-50">
+          <View className="flex-1 justify-center">
+            <Text className="text-lg font-black tracking-tight text-zinc-950 dark:text-white" numberOfLines={1}>
               Annonces
             </Text>
-            <Text className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-              Les dernières actualités de votre établissement
+            <Text className="text-[10px] font-black uppercase tracking-widest text-orange-500 mt-0.5">
+              Établissement
             </Text>
           </View>
         </View>
 
-        {/* Bouton pour ajouter une annonce (visible uniquement pour le personnel) */}
+        {/* Bouton Créer (rounded-full) visible uniquement pour le personnel */}
         {isStaff && (
           <Pressable
             onPress={() => router.push('/announcements/new')}
-            hitSlop={8}
-            className="flex-row items-center justify-center h-9 px-3 rounded-xl bg-orange-500 active:bg-orange-600"
+            className="h-12 w-12 items-center justify-center rounded-full bg-orange-500 active:opacity-80 transition-opacity"
           >
-            <Plus size={16} color="#FFFFFF" strokeWidth={2.5} className="mr-1" />
-            <Text className="text-white text-xs font-semibold">Créer</Text>
+            <Plus size={22} color="#FFFFFF" strokeWidth={3} />
           </Pressable>
         )}
       </View>
 
       {/* LISTE DES ANNONCES */}
       {isLoading ? (
-        // Écran d'attente pendant le chargement
-        <View className="px-4 pt-4 gap-y-3">
+        <View className="px-6 pt-6 gap-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
@@ -75,15 +71,17 @@ export default function AnnouncementsScreen() {
           refreshing={isRefetching}
           onRefresh={() => void refetch()}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
-          // Message affiché si la liste est vide
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 48 }}
           ListEmptyComponent={
-            <View className="items-center justify-center py-32 px-6">
-              <View className="h-14 w-14 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-900 mb-4">
-                <Megaphone size={24} color="#A1A1AA" strokeWidth={1.5} />
+            <View className="items-center justify-center py-24 px-6 mt-6">
+              <View className="h-16 w-16 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] mb-5">
+                <Megaphone size={24} color="#F97316" strokeWidth={2.5} />
               </View>
-              <Text className="text-sm font-medium text-center text-zinc-500 dark:text-zinc-400">
-                Il n'y a aucune annonce à afficher pour le moment.
+              <Text className="text-sm font-black uppercase tracking-widest text-zinc-950 dark:text-white text-center">
+                Aucune annonce
+              </Text>
+              <Text className="text-xs font-bold text-center text-zinc-500 dark:text-zinc-400 mt-2 leading-relaxed">
+                Il n'y a aucune actualité à afficher pour le moment.
               </Text>
             </View>
           }

@@ -1,3 +1,4 @@
+import { AiRequestManager } from '@/entities/ai/ai-request-manager';
 import {
   useAddDocumentToSession,
   useAiHistory,
@@ -8,7 +9,6 @@ import {
   useTruncateAiMessages,
 } from '@/entities/ai/hooks';
 import { useAiRequest } from '@/entities/ai/use-ai-request';
-import { AiRequestManager } from '@/entities/ai/ai-request-manager';
 import { useMyDocuments } from '@/entities/document/hooks';
 import LibraryModal from '@/features/chat-ai/components/biblio-modal';
 import SourceModal from '@/features/chat-ai/components/modal-source';
@@ -20,6 +20,7 @@ import type { Document } from '@/shared/api/types';
 import { useCopyToClipboard } from '@/shared/hooks/use-copy-to-clipboard';
 import { useDraft } from '@/shared/hooks/use-draft';
 import { useSafeArea } from '@/shared/hooks/use-safe-area';
+import { AiInputBar } from '@/shared/ui/ai-input-bar';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   ArrowLeft,
@@ -29,8 +30,6 @@ import {
   FolderOpen,
   HelpCircle,
   Layers,
-  Plus,
-  Send,
   Sparkles,
   Zap,
 } from 'lucide-react-native';
@@ -46,7 +45,6 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AiInputBar } from '@/shared/ui/ai-input-bar';
 
 export const STUDY_AIDS = [
   { id: 'summary', label: 'Résumé', icon: BookOpen },
@@ -162,40 +160,45 @@ export default function AiChatScreen() {
   const isTokensLow = tokensData && tokensData.tokens < 20;
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>
 
-      {/* Header Mat */}
-      <View className="flex-row items-center justify-between border-b border-zinc-100/80 bg-white px-4 py-2.5 dark:border-zinc-900 dark:bg-zinc-950">
+      {/* HEADER : Néo-banque, Plat et Solide */}
+      <View className="flex-row items-center justify-between border-b-2 border-zinc-100 bg-white px-6 py-4 dark:border-[#1A1A1A] dark:bg-[#0A0A0A]">
         <Pressable
           onPress={() => router.back()}
-          className="h-8 w-8 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-900 active:bg-zinc-200 dark:active:bg-zinc-800"
+          className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-opacity"
         >
-          <ArrowLeft size={15} color="#71717A" />
+          <ArrowLeft size={18} color="#F97316" strokeWidth={2.5} />
         </Pressable>
 
-        <View className="flex-row items-center gap-1.5">
-          <Text className="font-semibold text-xs text-zinc-900 dark:text-zinc-100 tracking-tight">Hiro Notebook</Text>
+        <View className="flex-1 ml-4 justify-center">
+          <Text className="text-lg font-black tracking-tight text-zinc-950 dark:text-white" numberOfLines={1}>
+            Hiro Notebook
+          </Text>
+          <Text className="text-[8px] font-black uppercase tracking-widest text-orange-500 mt-0.5">
+            Assistant IA & Analyse
+          </Text>
         </View>
 
-        <View className="flex-row items-center gap-2">
-          {/* Badge de Jetons IA */}
+        <View className="flex-row items-center gap-2.5">
+          {/* Badge de Jetons IA (rounded-full) */}
           <Pressable
             onPress={() => router.push('/settings/subscription')}
-            className="flex-row items-center gap-1 rounded-full bg-orange-500/10 border border-orange-500/20 px-2.5 py-1 active:opacity-80"
+            className="flex-row items-center gap-1.5 rounded-full bg-orange-500 px-3.5 py-2 active:opacity-80"
           >
-            <Zap size={11} color="#F97316" />
-            <Text className="text-[10px] font-bold text-orange-600 dark:text-orange-400">
+            <Zap size={14} color="#FFFFFF" strokeWidth={2.5} />
+            <Text className="text-xs font-black tracking-widest text-white">
               {tokensData ? tokensData.tokens.toLocaleString() : '...'}
             </Text>
           </Pressable>
 
           <Pressable
             onPress={() => setSourcesModalVisible(true)}
-            className="flex-row items-center gap-1.5 h-7 rounded-full bg-zinc-100 border border-zinc-200/60 dark:bg-zinc-900 dark:border-zinc-800 px-2.5 active:bg-zinc-200 dark:active:bg-zinc-800"
+            className="flex-row items-center gap-2 h-10 px-4 rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80"
           >
-            <FolderOpen size={12} color="#71717A" />
-            <Text className="text-[10px] font-semibold text-zinc-700 dark:text-zinc-300">
-              Sources ({activeDocs?.length ?? 0})
+            <FolderOpen size={16} color="#F97316" strokeWidth={2.5} />
+            <Text className="text-xs font-black uppercase tracking-widest text-zinc-950 dark:text-white">
+              ({activeDocs?.length ?? 0})
             </Text>
           </Pressable>
         </View>
@@ -210,24 +213,24 @@ export default function AiChatScreen() {
         {/* Historique des Messages */}
         {historyLoading ? (
           <View className="flex-1 justify-center items-center">
-            <ActivityIndicator size="small" color="#F97316" />
+            <ActivityIndicator size="large" color="#F97316" />
           </View>
         ) : isPageError ? (
-          <View className="flex-1 justify-center items-center px-6">
-            <View className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/20 mb-3">
-              <Sparkles size={24} color="#EF4444" />
+          <View className="flex-1 justify-center items-center px-8">
+            <View className="h-16 w-16 items-center justify-center rounded-full bg-red-50 dark:bg-red-950/30 mb-5">
+              <Sparkles size={28} color="#EF4444" strokeWidth={2.5} />
             </View>
-            <Text className="text-sm font-bold tracking-tight text-zinc-800 dark:text-zinc-200 text-center">
+            <Text className="text-base font-black uppercase tracking-widest text-zinc-950 dark:text-white text-center">
               Impossible de charger cette session
             </Text>
-            <Text className="mt-1.5 text-xs text-zinc-400 dark:text-zinc-500 text-center max-w-[260px] leading-4">
+            <Text className="mt-2 text-xs font-bold text-zinc-500 dark:text-zinc-400 text-center max-w-[280px] leading-relaxed">
               Le serveur n'a pas pu répondre. Vérifiez votre connexion et réessayez.
             </Text>
             <Pressable
               onPress={retryAll}
-              className="mt-4 rounded-lg bg-orange-500 px-5 py-2 active:bg-orange-600"
+              className="mt-6 rounded-full bg-orange-500 h-14 px-8 items-center justify-center active:opacity-80"
             >
-              <Text className="text-xs font-bold text-white">Réessayer</Text>
+              <Text className="text-xs font-black uppercase tracking-widest text-white">Réessayer</Text>
             </Pressable>
           </View>
         ) : (
@@ -237,9 +240,9 @@ export default function AiChatScreen() {
             keyExtractor={(item) => item.id}
             showsVerticalScrollIndicator={false}
             ItemSeparatorComponent={() => (
-              <View className="h-[1px] bg-zinc-100 dark:bg-zinc-900 my-5 max-w-[680px] w-full self-center" />
+              <View className="w-full bg-zinc-200 dark:bg-[#222222] my-6 max-w-[680px] self-center" />
             )}
-            contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 24 }}
+            contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 32 }}
             renderItem={({ item }) => {
               const isAi = item.role === 'assistant';
               const isFailed = item.status === 'fail';
@@ -291,34 +294,34 @@ export default function AiChatScreen() {
                   >
                     {isAi ? (
                       <View className="w-full mt-2">
-                        <Text className="text-[11px] font-bold tracking-widest text-zinc-400 dark:text-zinc-500 uppercase mb-2">
+                        <Text className="text-[10px] font-black uppercase tracking-widest text-orange-500 mb-3">
                           HIRO
                         </Text>
-                        <View className="py-0.5">
+                        <View className="py-1">
                           {renderMessageContent(item.content, isAi, item.studyAidType)}
                         </View>
                       </View>
                     ) : (
-                      <View className="w-full bg-orange-100/60 rounded-l-2xl rounded-tr-2xl dark:bg-orange-900/40 p-4 rounded-[4px]">
+                      <View className="w-full bg-zinc-100 dark:bg-[#1A1A1A] p-5 rounded-2xl">
                         {renderMessageContent(item.content, isAi, item.studyAidType)}
                       </View>
                     )}
                   </Pressable>
 
                   {isFailed && (
-                    <View className="flex-row items-center gap-2 mt-2 px-1">
-                      <Text className="text-[10px] text-red-500 font-bold">Échec de l'envoi</Text>
+                    <View className="flex-row items-center gap-3 mt-3 px-1">
+                      <Text className="text-xs font-black uppercase tracking-widest text-red-500">Échec de l'envoi</Text>
                       <Pressable
                         onPress={() => AiRequestManager.retryFailedMessage(sessionId, item)}
-                        className="bg-orange-500/10 px-2 py-0.5 rounded"
+                        className="bg-orange-500/10 px-3 py-1 rounded-full"
                       >
-                        <Text className="text-[10px] font-bold text-orange-500">Réessayer</Text>
+                        <Text className="text-[10px] font-black uppercase tracking-widest text-orange-500">Réessayer</Text>
                       </Pressable>
                       <Pressable
                         onPress={() => AiRequestManager.deleteFailedMessage(sessionId, item.id)}
-                        className="bg-red-500/10 px-2 py-0.5 rounded"
+                        className="bg-red-500/10 px-3 py-1 rounded-full"
                       >
-                        <Text className="text-[10px] font-bold text-red-500">Supprimer</Text>
+                        <Text className="text-[10px] font-black uppercase tracking-widest text-red-500">Supprimer</Text>
                       </Pressable>
                     </View>
                   )}
@@ -326,14 +329,14 @@ export default function AiChatScreen() {
               );
             }}
             ListEmptyComponent={
-              <View className="items-center py-16 px-6">
-                <View className="p-3.5 rounded-xl bg-orange-50 dark:bg-orange-950/20 mb-3">
-                  <Sparkles size={24} color="#F97316" />
+              <View className="items-center py-24 px-6 rounded-2xl border-2 border-dashed border-zinc-200 dark:border-[#1A1A1A] bg-zinc-50 dark:bg-[#0A0A0A] mt-6">
+                <View className="h-16 w-16 items-center justify-center rounded-full bg-orange-500/10 mb-5">
+                  <Sparkles size={28} color="#F97316" strokeWidth={2.5} />
                 </View>
-                <Text className="text-sm font-bold tracking-tight text-zinc-800 dark:text-zinc-200 text-center">
+                <Text className="text-sm font-black uppercase tracking-widest text-zinc-950 dark:text-white text-center">
                   Discutez avec Hiro pour analyser vos cours
                 </Text>
-                <Text className="mt-1.5 text-xs text-zinc-400 dark:text-zinc-500 text-center max-w-[260px] leading-4">
+                <Text className="mt-2 text-xs font-bold text-zinc-500 dark:text-zinc-400 text-center max-w-[280px] leading-relaxed">
                   Ajoutez vos documents de révision en cliquant sur le bouton "Sources" ci-dessus.
                 </Text>
               </View>
@@ -350,28 +353,28 @@ export default function AiChatScreen() {
 
         {/* Bannières d'avertissement de Jetons IA */}
         {isTokensLow && (
-          <View className="mx-3 mb-2 flex-row items-center justify-between rounded-xl bg-orange-500/10 border border-orange-500/30 p-2.5">
-            <View className="flex-1 pr-2">
-              <Text className="text-xs font-bold text-orange-600 dark:text-orange-400">
+          <View className="mx-6 mb-3 flex-row items-center justify-between rounded-2xl bg-orange-500/10 border-1 border-orange-500/30 p-4">
+            <View className="flex-1 pr-3">
+              <Text className="text-xs font-black uppercase tracking-widest text-orange-500">
                 Solde de jetons insuffisant ({tokensData?.tokens} / {tokensData?.maxTokens})
               </Text>
-              <Text className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5">
+              <Text className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mt-1">
                 Restauration automatique dans {remainingTimeText || 'quelques minutes'}.
               </Text>
             </View>
             {!isPremium && (
               <Pressable
                 onPress={() => router.push('/settings/subscription')}
-                className="rounded-lg bg-orange-500 px-3 py-1.5 active:bg-orange-600"
+                className="rounded-full bg-orange-500 px-4 py-2.5 active:opacity-80"
               >
-                <Text className="text-[11px] font-bold text-white">Passer Premium</Text>
+                <Text className="text-[10px] font-black uppercase tracking-widest text-white">Passer Premium</Text>
               </Pressable>
             )}
           </View>
         )}
 
         {/* FOOTER / COMPOSER ISOLÉ ET FLOTTANT */}
-        <View style={{ paddingBottom: Math.max(insets.bottom, 25) }} className="px-3 pt-1">
+        <View style={{ paddingBottom: Math.max(insets.bottom, 24) }} className="px-4 pt-2 bg-white dark:bg-[#0A0A0A] border-t-2 border-zinc-100 dark:border-[#1A1A1A]">
           <AiInputBar
             text={draftText}
             setText={setDraft}
@@ -383,7 +386,7 @@ export default function AiChatScreen() {
             handleGenerateStudyAid={handleGenerateStudyAid}
             isLocked={Boolean(isTokensLow)}
           />
-          <Text className="mt-2 text-center text-[10px] text-zinc-400">HIRO peut se tromper. Vérifiez les notions importantes.</Text>
+          <Text className="mt-3 text-center text-[11px] font-normal tracking-widest text-zinc-400">HIRO peut se tromper. Vérifiez les notions importantes.</Text>
         </View>
 
       </KeyboardAvoidingView>

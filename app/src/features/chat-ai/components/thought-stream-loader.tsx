@@ -1,6 +1,6 @@
+import { BookOpen, Clock, Columns, HelpCircle, Layers, Sparkles } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Animated, Easing } from 'react-native';
-import { Sparkles, BookOpen, Layers, HelpCircle, Clock, Columns } from 'lucide-react-native';
+import { Animated, Easing, View } from 'react-native';
 
 interface ThoughtStreamLoaderProps {
   type?: string;
@@ -77,23 +77,15 @@ export const ThoughtStreamLoader: React.FC<ThoughtStreamLoaderProps> = ({ type =
   const config = STEPS_MAP[type.toLowerCase()] || STEPS_MAP.chat;
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
-  // Text transition fade
   const fadeAnim = useRef(new Animated.Value(1)).current;
-
-  // Continuous Shimmer effect loop
   const shimmerAnim = useRef(new Animated.Value(0.5)).current;
-
-  // Smooth rotation for loader icon (ChatGPT / Gemini style)
   const rotateAnim = useRef(new Animated.Value(0)).current;
-
-  // Pulse animation for loader icon glow
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     setCurrentStepIndex(0);
     fadeAnim.setValue(1);
 
-    // Continuous shimmer loop
     const shimmerLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(shimmerAnim, {
@@ -112,7 +104,6 @@ export const ThoughtStreamLoader: React.FC<ThoughtStreamLoaderProps> = ({ type =
     );
     shimmerLoop.start();
 
-    // Continuous rotation loop
     const rotateLoop = Animated.loop(
       Animated.timing(rotateAnim, {
         toValue: 1,
@@ -123,7 +114,6 @@ export const ThoughtStreamLoader: React.FC<ThoughtStreamLoaderProps> = ({ type =
     );
     rotateLoop.start();
 
-    // Pulse loop for icon
     const pulseLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
@@ -142,7 +132,6 @@ export const ThoughtStreamLoader: React.FC<ThoughtStreamLoaderProps> = ({ type =
     );
     pulseLoop.start();
 
-    // Automatic step transition interval
     const interval = setInterval(() => {
       Animated.timing(fadeAnim, {
         toValue: 0,
@@ -169,27 +158,24 @@ export const ThoughtStreamLoader: React.FC<ThoughtStreamLoaderProps> = ({ type =
   const IconComponent = config.icon;
 
   return (
-    <View className="self-start my-1.5 flex-row items-center gap-2">
-      {/* Animated icon (rotates & pulses smoothly) */}
+    <View className="self-start my-3 flex-row items-center gap-3 p-4 rounded-2xl bg-zinc-100 dark:bg-[#1A1A1A]">
       <Animated.View
         style={{
           transform: [{ scale: pulseAnim }],
         }}
+        className="h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-[#222222]"
       >
-        <IconComponent size={14} color="#F97316" />
+        <IconComponent size={18} color="#F97316" strokeWidth={2.5} />
       </Animated.View>
 
-      {/* Text with shimmer effect & automatic step transition */}
       <Animated.Text
         style={{
           opacity: Animated.multiply(fadeAnim, shimmerAnim),
         }}
-        className="text-xs font-medium text-zinc-500 dark:text-zinc-400 tracking-tight"
+        className="text-xs font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-400"
       >
         {config.steps[currentStepIndex]}
       </Animated.Text>
     </View>
   );
 };
-
-

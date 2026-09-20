@@ -45,25 +45,22 @@ export default function ResetPasswordScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950" edges={['top', 'left', 'right']}>
-
-      {/* HEADER : Panneau Mat Solide */}
-      <View className="flex-row items-center border-b border-zinc-100 bg-white px-4 py-3 dark:border-zinc-900 dark:bg-zinc-950">
-        {/* Bouton Retour Géométrique Mat */}
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top', 'left', 'right']}>
+      
+      <View className="flex-row items-center px-6 py-4 gap-4">
         <Pressable
           onPress={() => router.back()}
-          className="h-8 w-8 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 active:bg-zinc-100 dark:active:bg-zinc-800"
+          className="h-12 w-12 items-center justify-center rounded-full bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-opacity"
         >
-          <ArrowLeft size={14} color="#71717A" />
+          <ArrowLeft size={20} color="#F97316" strokeWidth={2.5} />
         </Pressable>
-
-        {/* Bloc Titre & Sous-titre Contextuel */}
-        <View className="ml-3 flex-1">
-          <Text className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Nouveau mot de passe
+        
+        <View className="flex-1">
+          <Text className="text-lg font-black tracking-tight text-zinc-950 dark:text-white">
+            Réinitialisation
           </Text>
-          <Text className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mt-0.5">
-            Sécurisation du compte
+          <Text className="text-[10px] font-black uppercase tracking-widest text-orange-500 mt-1">
+            Sécurité du compte
           </Text>
         </View>
       </View>
@@ -72,27 +69,25 @@ export default function ResetPasswordScreen() {
         className="flex-1"
         contentContainerStyle={{
           flexGrow: 1,
-          paddingBottom: insets.bottom + 16,
+          paddingBottom: Math.max(insets.bottom + 24, 32),
           paddingLeft: insets.left,
           paddingRight: insets.right
         }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View className="flex-1 px-4 pt-6 pb-10">
+        <View className="flex-1 px-6 pt-6 pb-10">
 
-          {/* Section d'accueil textuelle épurée */}
-          <View className="mb-6">
-            <Text className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-              Créez vos nouveaux accès
+          <View className="mb-10">
+            <Text className="text-4xl font-black tracking-tighter text-zinc-950 dark:text-white leading-[42px]">
+              Nouveau{"\n"}mot de passe
             </Text>
-            <Text className="text-xs font-semibold leading-5 text-zinc-400 dark:text-zinc-500 mt-2">
-              Choisissez un mot de passe robuste et mémorable pour protéger l'accès à vos données universitaires chiffrées.
+            <Text className="text-sm font-bold leading-6 text-zinc-500 dark:text-zinc-400 mt-4">
+              Choisissez un mot de passe robuste pour protéger l'accès à vos données universitaires chiffrées.
             </Text>
           </View>
 
-          {/* Formulaire (Structure Mat Intégrée) */}
-          <View className="w-full gap-y-4">
+          <View className="w-full gap-y-6">
             <Input
               label="Nouveau mot de passe"
               placeholder="Minimum 8 caractères"
@@ -102,7 +97,6 @@ export default function ResetPasswordScreen() {
               secureTextEntry={!showPassword}
               rightIcon={showPassword ? EyeOff : Eye}
               onRightIconPress={() => setShowPassword(!showPassword)}
-              containerClassName="bg-transparent"
             />
 
             <Input
@@ -112,16 +106,17 @@ export default function ResetPasswordScreen() {
               onChangeText={setConfirmPassword}
               leftIcon={Lock}
               secureTextEntry={!showPassword}
-              containerClassName="bg-transparent"
             />
 
-            <Button
-              label="Mettre à jour le mot de passe"
-              onPress={() => void handleReset()}
-              loading={isLoading}
-              className="bg-orange-500 rounded-xl h-11 mt-2"
-              rightIcon={!isLoading ? <CheckCircle2 size={14} color="#FFFFFF" /> : undefined}
-            />
+            <View className="mt-2">
+              <Button
+                label="Mettre à jour"
+                onPress={() => void handleReset()}
+                loading={isLoading}
+                size="lg"
+                rightIcon={!isLoading ? <CheckCircle2 size={16} color="#FFFFFF" strokeWidth={3} /> : undefined}
+              />
+            </View>
           </View>
 
         </View>
