@@ -8,6 +8,19 @@ Use `Authorization: Bearer <token>` for protected routes.
 
 ## REST Routes
 
+### Fichiers protégés
+
+Les URLs de stockage ne sont jamais publiques. Ces routes nécessitent un token Bearer et appliquent les droits métier :
+
+- GET `/files/avatars/{userId}` — avatar d'un utilisateur
+- GET `/files/message-attachments/{attachmentId}` — pièce jointe d'une conversation dont l'appelant est membre
+- GET `/files/documents/{documentId}` — document de bibliothèque visible par l'appelant
+- GET `/files/ai-attachments/{documentId}` — pièce jointe IA du propriétaire ou du personnel
+- GET `/files/announcements/{announcementId}/poster`
+- GET `/files/announcements/{announcementId}/preview`
+
+Les réponses binaires doivent être téléchargées avec l'en-tête `Authorization`; elles ne sont pas des liens de bucket à ouvrir directement. `/download/{documentId}` reste une route historique compatible, mais `/files/documents/{documentId}` est la route recommandée.
+
 ### Auth
 - POST `/auth/register`
   - Body: `{ email, password }`

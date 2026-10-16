@@ -16,7 +16,6 @@ import { useAuth, useToast } from "@/providers";
 import { queryClient } from "@/providers/query-provider";
 import { userApi } from "@/shared/api/user";
 import { patchCurrentUserAvatar } from "@/shared/lib/query-cache";
-import { getStaticUri } from "@/shared/lib/static";
 import { AvatarPicker } from "@/shared/ui/avatar-picker";
 import { Button } from "@/shared/ui/button";
 import { GenderPicker, type GenderId } from "@/shared/ui/gender-picker";
@@ -131,7 +130,7 @@ export default function ProfileSettingsScreen(): JSX.Element {
           showsVerticalScrollIndicator={false}
         >
           <View className="items-center mb-10">
-            <AvatarPicker uri={getStaticUri(avatarUri as string)} onChange={setAvatarUri} />
+            <AvatarPicker uri="http://192.168.1.148:3000/files/avatars/26c02a8c-3d1e-48b3-a968-1e950e0b619b" onChange={setAvatarUri} />
           </View>
 
           <View className="mb-8">

@@ -9,6 +9,7 @@ import type { StorageDriver, UploadResult } from "../interface/storage-provider.
  * - GCS_BUCKET_NAME
  * - GCS_PROJECT_ID (optionnel si les credentials par défaut sont configurées)
  * - GCS_KEY_FILE_PATH (optionnel — chemin vers le fichier de clé de service)
+ * - GCS_SERVICE_ACCOUNT_JSON (optionnel — JSON de compte de service sur une ligne)
  */
 export class GCSStorageDriver implements StorageDriver {
   private storage: Storage;
@@ -19,6 +20,7 @@ export class GCSStorageDriver implements StorageDriver {
     this.bucket = (env.get("GCS_BUCKET_NAME") as string | undefined) || "";
     const projectId = env.get("GCS_PROJECT_ID") as string | undefined;
     const keyFilePath = env.get("GCS_KEY_FILE_PATH") as string | undefined;
+    const serviceAccountJson = env.get("GCS_SERVICE_ACCOUNT_JSON") as string | undefined;
 
     this.configured = !!this.bucket;
     if (!this.configured) {
@@ -28,6 +30,13 @@ export class GCSStorageDriver implements StorageDriver {
     const storageConfig: ConstructorParameters<typeof Storage>[0] = {};
     if (projectId) storageConfig.projectId = projectId;
     if (keyFilePath) storageConfig.keyFilename = keyFilePath;
+    if (serviceAccountJson) {
+      try {
+        storageConfig.credentials = JSON.parse(serviceAccountJson);
+      } catch {
+        throw new Error("[GCSDriver] GCS_SERVICE_ACCOUNT_JSON n'est pas un JSON valide.");
+      }
+    }
 
     this.storage = new Storage(storageConfig);
   }
@@ -45,12 +54,11 @@ export class GCSStorageDriver implements StorageDriver {
       resumable: false,
     });
 
-    const url = `https://storage.googleapis.com/${this.bucket}/${key}`;
-
-    return { url, size: buffer.length, key };
+    return { size: buffer.length, key };
   }
 
   async getFile(key: string): Promise<Buffer> {
+    if (!this.configured) throw new Error("[GCSDriver] Driver non configuré.");
     const bucketRef = this.storage.bucket(this.bucket);
     const file = bucketRef.file(key);
 
@@ -59,12 +67,9 @@ export class GCSStorageDriver implements StorageDriver {
   }
 
   async deleteFile(key: string): Promise<void> {
-    try {
-      const bucketRef = this.storage.bucket(this.bucket);
-      const file = bucketRef.file(key);
-      await file.delete();
-    } catch (err) {
-      console.error(`[GCSDriver] Échec de suppression du fichier ${key}:`, err);
-    }
+    if (!this.configured) throw new Error("[GCSDriver] Driver non configuré.");
+    const bucketRef = this.storage.bucket(this.bucket);
+    const file = bucketRef.file(key);
+    await file.delete();
   }
 }

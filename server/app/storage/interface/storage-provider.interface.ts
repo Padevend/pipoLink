@@ -9,14 +9,23 @@
 /** Drivers de stockage disponibles. */
 export type DriverType = "local" | "google-drive" | "r2" | "gcs";
 
-/** Résultat retourné après un upload réussi. */
+/** Résultat brut retourné par un provider après un upload réussi. */
 export interface UploadResult {
-  /** URL accessible du fichier (relative pour local, absolue pour cloud). */
-  url: string;
   /** Taille du fichier en octets. */
   size: number;
   /** Identifiant unique du fichier dans le driver (chemin relatif, fileId, object key…). */
   key: string;
+}
+
+/**
+ * Référence indépendante du provider, persistée en base de données.
+ *
+ * Elle ne constitue pas une URL publique. Les clients reçoivent toujours une
+ * route applicative autorisée (`/files/...`) et non l'adresse du bucket.
+ */
+export interface StoredFile extends UploadResult {
+  driver: DriverType;
+  reference: string;
 }
 
 /**

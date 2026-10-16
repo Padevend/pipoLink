@@ -3,6 +3,8 @@ import crypto from "node:crypto";
 import { prisma } from "../../config/database.js";
 import { ErrorCode } from "../helpers/error-codes.js";
 import { Message } from "../../generated/prisma/index.js";
+import { StorageService } from "../storage/services/storage.service.js";
+import { FileUrl } from "./file-url.service.js";
 
 export type CreateChatPayload = {
   name: string | null;
@@ -20,6 +22,7 @@ export type AddMemberPayload = {
  * Service de messagerie E2E : ciphertexts et clés de chat chiffrées par appareil.
  */
 export class MessagingService {
+  private readonly storage = new StorageService();
   async createChat(creatorId: string, payload: CreateChatPayload) {
     const uniqueMembers = Array.from(new Set([creatorId, ...payload.memberUserIds]));
 
@@ -379,7 +382,7 @@ export class MessagingService {
           members: chat.members.map((cm) => ({
             id: cm.user.id,
             username: cm.user.username,
-            avatarUrl: cm.user.profile?.avatarUrl ?? undefined,
+            avatarUrl: cm.user.profile?.avatarUrl ? FileUrl.avatar(cm.user.id) : undefined,
             phone: cm.user.profile?.phone ?? undefined,
             role: cm.role,
             accountRole: cm.user.role,
@@ -438,7 +441,7 @@ export class MessagingService {
       is_deleted: !!m.deletedAt,
       attachments: (m.attachments ?? []).map((a: any) => ({
         id: a.id,
-        fileUrl: a.file_url,
+        fileUrl: FileUrl.messageAttachment(a.id),
         iv: a.iv,
         fileName: a.file_name,
         fileSize: a.file_size,
@@ -448,7 +451,7 @@ export class MessagingService {
         id: m.sender?.id ?? "",
         username: m.sender?.username ?? "",
         profile: {
-          avatarUrl: m.sender?.profile?.avatarUrl ?? undefined,
+          avatarUrl: m.sender?.profile?.avatarUrl ? FileUrl.avatar(m.sender.id) : undefined,
         }
       },
       responseTo: m.responseTo ? {
@@ -481,6 +484,14 @@ export class MessagingService {
     },
   ) {
     await this._assertMember(userId, conversationId);
+
+    for (const attachment of payload.attachments ?? []) {
+      if (!attachment.fileUrl.startsWith("storage://")) {
+        throw { code: ErrorCode.VALIDATION_ERROR, status: 400, message: "Référence de pièce jointe invalide." };
+      }
+      // Valide le driver et la clé avant d'écrire la référence en base.
+      this.storage.resolveReference(attachment.fileUrl);
+    }
 
     const message = await prisma.message.create({
       data: {

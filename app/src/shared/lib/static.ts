@@ -7,6 +7,7 @@
  * - Identifiant (ex: UUID) → construit l'URL de téléchargement `/download/:id`
  */
 export function getStaticUri(pathOrId: string): string {
+    if(!pathOrId) return "";
     let EXPO_URL = process.env.EXPO_PUBLIC_API_URL || "";
 
     // URL absolue → retourner telle quelle
@@ -23,4 +24,5 @@ export function getStaticUri(pathOrId: string): string {
     }
 
     return `${EXPO_URL}/download/${pathOrId}`;
+    
 }

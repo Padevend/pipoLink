@@ -1,0 +1,130 @@
+name: Déployer la production sur EC2
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Tag ECR existant à déployer (vide = commit courant)
+        required: false
+        type: string
+      run_migrations:
+        description: Exécuter `prisma migrate deploy` avant le redémarrage
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build, migrate and deploy
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 30
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      AWS_DEPLOY_ROLE_ARN: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+      ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+      EC2_INSTANCE_ID: ${{ vars.EC2_INSTANCE_ID }}
+      AWS_APPLICATION_SECRET_ID: ${{ vars.AWS_APPLICATION_SECRET_ID }}
+      APP_PORT: ${{ vars.APP_PORT || '2654' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate GitHub configuration
+        run: |
+          test -n "$AWS_REGION"
+          test -n "$AWS_DEPLOY_ROLE_ARN"
+          test -n "$ECR_REPOSITORY"
+          test -n "$EC2_INSTANCE_ID"
+          test -n "$AWS_APPLICATION_SECRET_ID"
+
+      - name: Configure AWS credentials through OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_DEPLOY_ROLE_ARN }}
+          role-session-name: pipolink-production-deploy
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push immutable image
+        id: image
+        if: ${{ inputs.image_tag == '' }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ inputs.image_tag || github.sha }}
+            ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:main
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run migration and deployment through SSM
+        id: ssm
+        env:
+          IMAGE_URI: ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ inputs.image_tag || github.sha }}
+          RUN_MIGRATIONS: ${{ inputs.run_migrations != false }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > ssm-commands.json <<EOF
+          [
+            "set -euo pipefail",
+            "APP_DIR=/opt/pipolink",
+            "IMAGE_URI='${IMAGE_URI}'",
+            "AWS_REGION='${AWS_REGION}'",
+            "SECRET_ID='${AWS_APPLICATION_SECRET_ID}'",
+            "APP_PORT='${APP_PORT}'",
+            "mkdir -p \"\$APP_DIR\" && chmod 700 \"\$APP_DIR\"",
+            "aws secretsmanager get-secret-value --secret-id \"\$SECRET_ID\" --region \"\$AWS_REGION\" --query SecretString --output text | jq -e 'type == \"object\" and (keys | length > 0)' > \"\$APP_DIR/app.env.json\"",
+            "jq -r 'to_entries[] | select(.value != null) | \"\\(.key)=\\(.value | if type == \"string\" then . else tostring end)\"' \"\$APP_DIR/app.env.json\" > \"\$APP_DIR/app.env\"",
+            "rm -f \"\$APP_DIR/app.env.json\" && chmod 600 \"\$APP_DIR/app.env\"",
+            "aws ecr get-login-password --region \"\$AWS_REGION\" | docker login --username AWS --password-stdin \"${{ steps.ecr.outputs.registry }}\"",
+            "docker pull \"\$IMAGE_URI\"",
+            "if [ '${RUN_MIGRATIONS}' = 'true' ]; then docker run --rm --env-file \"\$APP_DIR/app.env\" \"\$IMAGE_URI\" pnpm db:migrate-deploy; fi",
+            "docker rm -f pipolink-backend >/dev/null 2>&1 || true",
+            "docker run --detach --name pipolink-backend --restart unless-stopped --env-file \"\$APP_DIR/app.env\" --publish \"\$APP_PORT:\$APP_PORT\" --volume pipolink-storage:/app/storage \"\$IMAGE_URI\"",
+            "for attempt in 1 2 3 4 5 6; do curl --fail --silent --show-error \"http://127.0.0.1:\$APP_PORT/health\" >/dev/null && exit 0; sleep 5; done; docker logs --tail 100 pipolink-backend; exit 1"
+          ]
+          EOF
+          command_id="$(aws ssm send-command \
+            --instance-ids "$EC2_INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "PipoLink $GITHUB_SHA" \
+            --timeout-seconds 900 \
+            --parameters commands=file://ssm-commands.json \
+            --query 'Command.CommandId' --output text)"
+          echo "command_id=$command_id" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for SSM command and display failure output
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in {1..60}; do
+            status="$(aws ssm get-command-invocation --command-id '${{ steps.ssm.outputs.command_id }}' --instance-id "$EC2_INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+            case "$status" in
+              Success) exit 0 ;;
+              Failed|Cancelled|TimedOut|Cancelling)
+                aws ssm get-command-invocation --command-id '${{ steps.ssm.outputs.command_id }}' --instance-id "$EC2_INSTANCE_ID" --query '{Status:Status,Stdout:StandardOutputContent,Stderr:StandardErrorContent}'
+                exit 1
+                ;;
+            esac
+            sleep 5
+          done
+          echo "Le déploiement SSM a dépassé le délai d'attente."
+          exit 1

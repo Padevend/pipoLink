@@ -7,7 +7,7 @@ import type { StorageDriver, UploadResult } from "../interface/storage-provider.
  * Driver de stockage local — écrit les fichiers dans `STORAGE_PATH`.
  *
  * Structure : STORAGE_PATH/<subDir>/<name>
- * URL retournée : /storage/<subDir>/<name>
+ * Le driver ne publie aucune URL : le service retourne une référence opaque.
  * Key retournée : <subDir>/<name>
  */
 export class LocalStorageDriver implements StorageDriver {
@@ -21,6 +21,8 @@ export class LocalStorageDriver implements StorageDriver {
 
 
   async uploadFile(buffer: Buffer, name: string, _mimeType: string, subDir?: string): Promise<UploadResult> {
+    this.assertSafeRelativePath(name);
+    if (subDir) this.assertSafeRelativePath(subDir);
     const dir = subDir
       ? path.join(this.storagePath, subDir)
       : this.storagePath;
@@ -34,14 +36,11 @@ export class LocalStorageDriver implements StorageDriver {
 
     const key = subDir ? `${subDir}/${name}` : name;
 
-    return {
-      url: `/storage/${key}`,
-      size: buffer.length,
-      key,
-    };
+    return { size: buffer.length, key };
   }
 
   async getFile(key: string): Promise<Buffer> {
+    this.assertSafeRelativePath(key);
     const filePath = path.join(this.storagePath, key);
     const resolvedStorage = path.resolve(this.storagePath);
     const resolvedFile = path.resolve(filePath);
@@ -59,6 +58,7 @@ export class LocalStorageDriver implements StorageDriver {
   }
 
   async deleteFile(key: string): Promise<void> {
+    this.assertSafeRelativePath(key);
     const filePath = path.join(this.storagePath, key);
     const resolvedStorage = path.resolve(this.storagePath);
     const resolvedFile = path.resolve(filePath);
@@ -71,6 +71,12 @@ export class LocalStorageDriver implements StorageDriver {
 
     if (fs.existsSync(resolvedFile)) {
       fs.unlinkSync(resolvedFile);
+    }
+  }
+
+  private assertSafeRelativePath(value: string): void {
+    if (!value || path.isAbsolute(value) || value.split(/[\\/]/).some((part) => part === ".." || !part)) {
+      throw new Error(`[LocalDriver] Clé de fichier invalide: ${value}`);
     }
   }
 }

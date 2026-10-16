@@ -1,6 +1,4 @@
 import crypto from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
 
 import { prisma } from "../../config/database.js";
 import { hash } from "../../config/hash.js";
@@ -12,7 +10,6 @@ import type {
   UserLeftGroupPayload,
   UserStatusChangedPayload,
 } from "../../src/modules/websocket/events/event-types.js";
-import { env } from "../../config/envManager.js";
 import { FileService } from "./file.service.js";
 
 /**
@@ -37,7 +34,7 @@ interface AccountDeletionResult {
  * Données collectées avant la transaction pour les opérations post-commit.
  */
 interface PreTransactionData {
-  avatarPath: string | null;
+  avatarReference: string | null;
   groupMemberships: { conversation_id: string; chatName: string | null; chatType: string }[];
   directConversationUserIds: string[];
   aiAttachmentUrls: string[];
@@ -215,24 +212,13 @@ export class AccountDeletionService {
 
     const directConversationUserIds = [...new Set(directMembers.map((m) => m.user_id))];
 
-    // Chemin de l'avatar pour suppression
-    let avatarPath: string | null = null;
-    if (avatarUrl && avatarUrl.startsWith("/storage/")) {
-      try {
-        const storagePath = env.get("STORAGE_PATH");
-        avatarPath = path.join(storagePath, avatarUrl.replace("/storage/", ""));
-      } catch {
-        avatarPath = null;
-      }
-    }
-
     const aiDocs = await prisma.document.findMany({
       where: { uploaded_by_id: userId, type: "AI_ATTACHMENT" },
       select: { fileUrl: true }
     });
     const aiAttachmentUrls = aiDocs.map(d => d.fileUrl);
 
-    return { avatarPath, groupMemberships, directConversationUserIds, aiAttachmentUrls };
+    return { avatarReference: avatarUrl, groupMemberships, directConversationUserIds, aiAttachmentUrls };
   }
 
   /**
@@ -449,22 +435,17 @@ export class AccountDeletionService {
       }
     }
 
-    // Supprimer l'avatar du système de fichiers (si fichier personnel)
-    if (preData.avatarPath) {
-      try {
-        if (fs.existsSync(preData.avatarPath)) {
-          fs.unlinkSync(preData.avatarPath);
-        }
-      } catch {
-        console.warn(`[AccountDeletion] Échec suppression avatar : ${preData.avatarPath}`);
-      }
+    const fileService = new FileService();
+    if (preData.avatarReference) {
+      fileService.deleteFileByReference(preData.avatarReference).catch(() => {
+        console.warn("[AccountDeletion] Échec suppression avatar.");
+      });
     }
 
     // Delete AI attachment physical files
     if (preData.aiAttachmentUrls.length > 0) {
-      const fileService = new FileService();
       for (const url of preData.aiAttachmentUrls) {
-        fileService.deleteFileByUrl(url).catch(() => {
+        fileService.deleteFileByReference(url).catch(() => {
           console.warn(`[AccountDeletion] Échec suppression AI_ATTACHMENT : ${url}`);
         });
       }

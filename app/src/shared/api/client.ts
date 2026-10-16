@@ -73,7 +73,7 @@ async function fetchWithTimeout(
   }
 }
 
-async function getAuthToken() {
+export async function getAuthToken() {
   try {
     const token = await SecureStorageService.get(SECURE_STORAGE_KEYS.AUTH_TOKEN);
     return token

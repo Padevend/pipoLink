@@ -4,10 +4,16 @@ import { localDb } from "@/shared/storage/local-db";
 import { generateUUID } from "@/shared/utils/uuid";
 import * as FileSystemLegacy from "expo-file-system/legacy";
 import { DownloadQueue } from "./download.queue";
+import { getAuthToken } from "@/shared/api/client";
 
 class DownloadManager {
     private queue = new DownloadQueue();
     private downlaods = new Map<string, FileSystemLegacy.DownloadResumable>();
+
+    private async authHeaders() {
+        const token = await getAuthToken();
+        return { Authorization: `Bearer ${token}` };
+    }
 
     private createProgressCallback(task: downloadTask) {
         return (progress: FileSystemLegacy.DownloadProgressData) => {
@@ -101,11 +107,12 @@ class DownloadManager {
         };
 
         localDb.saveDownloadRepository(task);
+        const headers = await this.authHeaders()
 
         const download = FileSystemLegacy.createDownloadResumable(
             url,
             localUri,
-            {},
+            { headers: headers as Record<string, any> },
             this.createProgressCallback(task)
         );
 
@@ -134,11 +141,12 @@ class DownloadManager {
     public async resume(id: string) {
         const task = localDb.getDownloadRepositoryById(id);
         if (!task) return;
+        const headers = await this.authHeaders()
 
         const resumable = new FileSystemLegacy.DownloadResumable(
             task.remote_uri,
             task.local_uri,
-            {},
+            { headers: headers as Record<string, any> },
             this.createProgressCallback(task),
             task.resume_data || undefined,
         );

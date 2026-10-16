@@ -6,7 +6,7 @@ storage/avatars
 storage/documents
 storage/message-attachments
 generated
-migrations
+prisma/migrations
 agents.md
 google-drive-credentials.json
 service-account.json
@@ -15,3 +15,8 @@ DRIVE_SETUP.md
 REDIS_SETUP.md
 agents.md
 *.md
+*.sql
+!docs/
+!docs/**/*.md
+!prisma/migrations/
+!prisma/migrations/**/*.sql

@@ -154,7 +154,9 @@ export class MessagingController {
       const buffer = Buffer.from(await file.arrayBuffer());
       const stored = await this.fileService.storeDocument(buffer, file.type);
       return ApiResponse.success(c, {
-        url: stored.url,
+        // Cette référence est temporaire : elle doit être envoyée dans
+        // `attachments[].fileUrl` lors de la création du message.
+        url: stored.reference,
         size: stored.size,
         fileName: file.name,
         mimeType: file.type,
@@ -172,7 +174,7 @@ export class MessagingController {
       const buffer = Buffer.from(await file.arrayBuffer());
       const stored = await this.fileService.storeMessageAttachment(buffer);
       return ApiResponse.success(c, {
-        url:      stored.url,
+        url:      stored.reference,
         size:     stored.size,
         fileName: file.name,
         mimeType: file.type || "application/octet-stream",

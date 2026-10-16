@@ -304,6 +304,7 @@ export default function AiChatScreen() {
                     ) : (
                       <View className="w-full bg-zinc-100 dark:bg-[#1A1A1A] p-5 rounded-2xl">
                         {renderMessageContent(item.content, isAi, item.studyAidType)}
+                        
                       </View>
                     )}
                   </Pressable>

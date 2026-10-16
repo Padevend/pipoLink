@@ -7,6 +7,7 @@ import { TokenPricingService } from "./token-pricing.service.js";
 import { RagService, type RagTokensUsed } from "./rag.service.js";
 import { documentIngestionQueue } from "./document-ingestion-queue.service.js";
 import crypto from "crypto";
+import { FileUrl } from "./file-url.service.js";
 
 function formatDocument(doc: any) {
   const profile = doc.uploadedBy?.profile;
@@ -23,7 +24,7 @@ function formatDocument(doc: any) {
     filiere: doc.filiere,
     ue: doc.ue,
     type: doc.type,
-    fileUrl: doc.fileUrl,
+    fileUrl: FileUrl.aiAttachment(doc.id),
     fileName: doc.fileName,
     fileSize: doc.fileSize,
     mimeType: doc.mimeType,
@@ -36,7 +37,7 @@ function formatDocument(doc: any) {
       id: doc.uploadedBy.id,
       username: doc.uploadedBy.username,
       displayName,
-      avatarUrl: profile?.avatarUrl ?? null,
+      avatarUrl: profile?.avatarUrl ? FileUrl.avatar(doc.uploadedBy.id) : null,
     } : null,
   };
 }
@@ -331,7 +332,7 @@ export class AiService {
       document = existingDoc;
     } else {
       const stored = await this.fileService.storeAiAttachment(file, meta.mimeType, meta.originalName);
-      url = stored.url;
+      url = stored.reference;
       size = stored.size;
 
       document = await prisma.document.create({
@@ -397,7 +398,8 @@ export class AiService {
     }
 
     // Delete from FileSystem/Drive
-    await this.fileService.deleteFileByUrl(document.fileUrl);
+    const references = await prisma.document.count({ where: { fileUrl: document.fileUrl } });
+    if (references <= 1) await this.fileService.deleteFileByReference(document.fileUrl);
 
     // Delete from DB
     await prisma.document.delete({ where: { id: documentId } });

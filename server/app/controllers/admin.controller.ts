@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { HttpContext } from "../../config/app.js";
+import { FileUrl } from "../services/file-url.service.js";
 import { prisma } from "../../config/database.js";
 import { documentIngestionQueue } from "../services/document-ingestion-queue.service.js";
 import { ApiResponse } from "../helpers/api-response.js";
@@ -131,7 +132,7 @@ export class AdminController {
           userEmail: event.user?.email || "Inconnu",
           username: event.user?.username || "Inconnu",
           displayName,
-          avatarUrl: profile?.avatarUrl || null,
+          avatarUrl: profile?.avatarUrl ? FileUrl.avatar(event.user_id) : null,
           action: event.action,
           targetId: event.targetId,
           ip: event.ip || "Inconnu",
@@ -208,7 +209,7 @@ export class AdminController {
           userEmail: event.user?.email || "Inconnu",
           username: event.user?.username || "Inconnu",
           displayName,
-          avatarUrl: profile?.avatarUrl || null,
+          avatarUrl: profile?.avatarUrl ? FileUrl.avatar(event.user_id) : null,
           action: event.action,
           targetId: event.targetId,
           ip: event.ip || "Inconnu",
@@ -500,7 +501,7 @@ export class AdminController {
           description: doc.description,
           fileName: doc.fileName,
           fileSize: doc.fileSize,
-          fileUrl: doc.fileUrl,
+          fileUrl: doc.type === "AI_ATTACHMENT" ? FileUrl.aiAttachment(doc.id) : FileUrl.document(doc.id),
           mimeType: doc.mimeType,
           downloadCount: doc.downloadCount,
           moderationStatus: doc.moderationStatus,
@@ -919,4 +920,3 @@ export class AdminController {
     }
   }
 }
-

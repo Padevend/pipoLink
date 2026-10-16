@@ -8,7 +8,7 @@ import { getMessaging } from "firebase-admin/messaging";
 import { createRequire } from "node:module";
 import path from "node:path";
 
-const account_path = process.env.FIREBASE_SERVICE_ACCOUNT_PATH
+const account_path = env.get("FIREBASE_SERVICE_ACCOUNT_PATH")
 
 // Initialise Firebase Admin une seule fois au démarrage du module
 if (getApps().length === 0) {
@@ -16,23 +16,24 @@ if (getApps().length === 0) {
     if (account_path) {
       // Chargement du fichier JSON du compte de service via require
       const _require = createRequire(import.meta.url);
-      const serviceAccount = _require(path.resolve(process.cwd(), account_path));
+      // const serviceAccount = _require(path.resolve(process.cwd(), account_path));
+      const serviceAccount = JSON.parse(account_path)
 
       initializeApp({ credential: cert(serviceAccount) });
       console.log("✅ Firebase Admin initialisé via le fichier de compte de service.");
     } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-      // Utilise la variable d'environnement standard Google
       initializeApp({ credential: applicationDefault() });
-      console.log("✅ Firebase Admin initialisé via applicationDefault.");
+      console.log("Firebase Admin initialisé via applicationDefault.");
     } else {
-      console.warn("⚠️ Firebase Admin non configuré : FIREBASE_SERVICE_ACCOUNT_PATH ou GOOGLE_APPLICATION_CREDENTIALS est requis.");
+      console.warn("Firebase Admin non configuré : FIREBASE_SERVICE_ACCOUNT_PATH ou GOOGLE_APPLICATION_CREDENTIALS est requis.");
     }
   } catch (error) {
-    console.error("⚠️ Erreur lors de l'initialisation de Firebase Admin :", error);
+    console.error("Erreur lors de l'initialisation de Firebase Admin :", error);
   }
 }
 
 import { prisma } from "../../../config/database.js";
+import { env } from "../../../config/envManager.js";
 
 export class FCMService {
   /**

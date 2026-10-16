@@ -15,12 +15,11 @@ import type { StorageDriver, UploadResult } from "../interface/storage-provider.
  * - R2_ACCESS_KEY_ID
  * - R2_SECRET_ACCESS_KEY
  * - R2_BUCKET_NAME
- * - R2_PUBLIC_URL (optionnel — URL publique pour accès direct)
+ * - R2_PUBLIC_URL (optionnel — uniquement pour reconnaître les anciennes URLs)
  */
 export class R2StorageDriver implements StorageDriver {
   private client: S3Client;
   private bucket: string;
-  private publicUrl: string;
   private configured = false;
 
   constructor() {
@@ -28,7 +27,6 @@ export class R2StorageDriver implements StorageDriver {
     const accessKeyId = env.get("R2_ACCESS_KEY_ID") as string | undefined;
     const secretAccessKey = env.get("R2_SECRET_ACCESS_KEY") as string | undefined;
     this.bucket = (env.get("R2_BUCKET_NAME") as string | undefined) || "";
-    this.publicUrl = (env.get("R2_PUBLIC_URL") as string | undefined) || "";
 
     this.configured = !!(accountId && accessKeyId && secretAccessKey && this.bucket);
     if (!this.configured) {
@@ -62,14 +60,11 @@ export class R2StorageDriver implements StorageDriver {
       }),
     );
 
-    const url = this.publicUrl
-      ? `${this.publicUrl.replace(/\/$/, "")}/${key}`
-      : `r2://${this.bucket}/${key}`;
-
-    return { url, size: buffer.length, key };
+    return { size: buffer.length, key };
   }
 
   async getFile(key: string): Promise<Buffer> {
+    if (!this.configured) throw new Error("[R2Driver] Driver non configuré.");
     const res = await this.client.send(
       new GetObjectCommand({
         Bucket: this.bucket,
@@ -90,15 +85,12 @@ export class R2StorageDriver implements StorageDriver {
   }
 
   async deleteFile(key: string): Promise<void> {
-    try {
-      await this.client.send(
-        new DeleteObjectCommand({
-          Bucket: this.bucket,
-          Key: key,
-        }),
-      );
-    } catch (err) {
-      console.error(`[R2Driver] Échec de suppression du fichier ${key}:`, err);
-    }
+    if (!this.configured) throw new Error("[R2Driver] Driver non configuré.");
+    await this.client.send(
+      new DeleteObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+      }),
+    );
   }
 }

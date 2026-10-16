@@ -13,7 +13,8 @@ const EnvSchema = {
 
   // ── Base de données ──────────────────────────────────
   DATABASE_URL: vine.string(),
-  DATABASE_CA_PATH: vine.string(),
+  DATABASE_CA_PATH: vine.string().optional(),
+  DATABASE_CA_CERT_BASE64: vine.string().optional(),
 
   // ── Sécurité ─────────────────────────────────────────
   JWT_SECRET:    vine.string(),
@@ -33,6 +34,12 @@ const EnvSchema = {
   GOOGLE_DRIVE_CREDENTIALS_PATH: vine.string().optional(),
   GOOGLE_DRIVE_FOLDER_ID: vine.string().optional(),
   GOOGLE_DRIVE_AI_FOLDER_ID: vine.string().optional(),
+  GOOGLE_DRIVE_AVATARS_FOLDER_ID: vine.string().optional(),
+  GOOGLE_DRIVE_DOCUMENTS_FOLDER_ID: vine.string().optional(),
+  GOOGLE_DRIVE_MESSAGE_ATTACHMENTS_FOLDER_ID: vine.string().optional(),
+  GOOGLE_DRIVE_ANNOUNCEMENTS_FOLDER_ID: vine.string().optional(),
+
+  FIREBASE_SERVICE_ACCOUNT_PATH: vine.string().optional(),
 
   // ── Storage SDK Driver ─────────────────────────────────
   STORAGE_SDK_DRIVER: vine.enum(["local", "google-drive", "r2", "gcs"]).optional(),
@@ -48,6 +55,7 @@ const EnvSchema = {
   GCS_BUCKET_NAME: vine.string().optional(),
   GCS_PROJECT_ID: vine.string().optional(),
   GCS_KEY_FILE_PATH: vine.string().optional(),
+  GCS_SERVICE_ACCOUNT_JSON: vine.string().optional(),
 
   // GOOGLE AUTH
   GOOGLE_CLIENT_ID: vine.string().optional(),

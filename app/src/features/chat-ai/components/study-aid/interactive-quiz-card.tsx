@@ -84,9 +84,7 @@ export function InteractiveQuizCard({ content }: { content: string }) {
 
   const totalQuestions = questions.length;
   const answeredCount = Object.keys(selectedAnswers).length;
-  const correctCount = questions.filter(
-    (q) => selectedAnswers[q.id] === q.correctAnswer
-  ).length;
+
 
   const handleSelectOption = (qId: number, optionKey: string) => {
     if (selectedAnswers[qId]) return;

@@ -4,6 +4,7 @@ import { ErrorCode } from "../helpers/error-codes.js";
 import { verifyDeviceKeyAttestation } from "../helpers/device-crypto.js";
 import { AuthService } from "./auth.service.js";
 import { DeviceService } from "./device.service.js";
+import { FileUrl } from "./file-url.service.js";
 
 export type OnboardingPayload = {
   firstname: string;
@@ -37,7 +38,7 @@ export class UserService {
       },
     });
 
-    return user;
+    return user ? this.withPublicAvatar(user) : null;
   }
 
   async getUser(userId: string, authUserId: string) {
@@ -73,7 +74,7 @@ export class UserService {
       }
     });
 
-    return { ...user, conversations };
+    return { ...this.withPublicAvatar(user), conversations };
   }
 
   async completeOnboarding(userId: string, payload: OnboardingPayload) {
@@ -187,7 +188,7 @@ export class UserService {
       });
 
       return {
-        user,
+        user: this.withPublicAvatar(user),
         device,
         tokens: {
           accessToken: tokens.accessToken,
@@ -221,7 +222,7 @@ export class UserService {
       ];
     }
 
-    return prisma.user.findMany({
+    const users = await prisma.user.findMany({
       where: whereClause,
       select: {
         id: true,
@@ -242,6 +243,7 @@ export class UserService {
       take: 40,
       orderBy: { username: "asc" },
     });
+    return users.map((user) => this.withPublicAvatar(user));
   }
 
   async listDevicePublicKeys(targetUserId: string) {
@@ -280,6 +282,14 @@ export class UserService {
       update: { avatarUrl: url },
       create: { user_id: userId, firstname: "", lastname: "", avatarUrl: url },
     });
-    return { avatarUrl: url };
+    return { avatarUrl: FileUrl.avatar(userId) };
+  }
+
+  private withPublicAvatar<T extends { id: string; profile?: { avatarUrl?: string | null } | null }>(user: T): T {
+    if (!user.profile?.avatarUrl) return user;
+    return {
+      ...user,
+      profile: { ...user.profile, avatarUrl: FileUrl.avatar(user.id) },
+    };
   }
 }

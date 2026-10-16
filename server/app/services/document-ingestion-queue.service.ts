@@ -1,9 +1,5 @@
-import { readFile } from "fs/promises";
-import path from "path";
-
 import { StorageService } from "../storage/services/storage.service.js";
 import { prisma } from "../../config/database.js";
-import { env } from "../../config/envManager.js";
 import { RagService } from "./rag.service.js";
 
 const POLL_INTERVAL_MS = 5_000;
@@ -104,22 +100,7 @@ export class DocumentIngestionQueueService {
   }
 
   private async readDocument(fileUrl: string): Promise<Buffer> {
-    if (fileUrl.startsWith("r2://")) {
-      const key = fileUrl.replace(/^r2:\/\/[^/]+\//, "");
-      return this.storage.getFile(key, "r2");
-    }
-    if (fileUrl.startsWith("/storage/")) {
-      const storageRoot = path.resolve(env.get("STORAGE_PATH"));
-      const filePath = path.resolve(storageRoot, fileUrl.slice("/storage/".length));
-      if (!filePath.startsWith(`${storageRoot}${path.sep}`)) {
-        throw new Error("Chemin de document invalide.");
-      }
-      return readFile(filePath);
-    }
-
-    const response = await fetch(fileUrl);
-    if (!response.ok) throw new Error(`Téléchargement du document impossible (${response.status}).`);
-    return Buffer.from(await response.arrayBuffer());
+    return this.storage.getFileByReference(fileUrl);
   }
 }
 

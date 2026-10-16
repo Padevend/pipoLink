@@ -1,14 +1,24 @@
 import { prisma } from "../../config/database.js";
 import { FileService } from "./file.service.js";
+import { FileUrl } from "./file-url.service.js";
+
+function formatAnnouncement(announcement: any) {
+  return {
+    ...announcement,
+    poster: announcement.poster ? FileUrl.announcementPoster(announcement.id, "poster") : null,
+    previewUrl: announcement.previewUrl ? FileUrl.announcementPoster(announcement.id, "preview") : null,
+  };
+}
 
 export class AnnouncementService {
   private fileService = new FileService();
 
   async listAnnouncements() {
-    return await prisma.announcement.findMany({
+    const announcements = await prisma.announcement.findMany({
       orderBy: { createdAt: "desc" },
       include: { author: { select: { username: true } } }
     });
+    return announcements.map(formatAnnouncement);
   }
 
   async createAnnouncement(authorId: string, payload: { title: string; content: string, poster: File | null |undefined }) {
@@ -25,7 +35,7 @@ export class AnnouncementService {
       previewUrl = storedPreview;
     }
     
-    return await prisma.announcement.create({
+    const announcement = await prisma.announcement.create({
       data: {
         title: payload.title,
         content: payload.content,
@@ -37,11 +47,20 @@ export class AnnouncementService {
         author: { select: { username: true } },
       },
     });
+    return formatAnnouncement(announcement);
   }
 
   async deleteAnnouncement(announcementId: string) {
+    const announcement = await prisma.announcement.findUnique({ where: { id: announcementId } });
     await prisma.announcement.delete({
       where: { id: announcementId },
     });
+    for (const reference of [announcement?.poster, announcement?.previewUrl]) {
+      if (reference) {
+        this.fileService.deleteFileByReference(reference).catch((error) => {
+          console.warn("[Announcement] Échec de suppression du fichier:", error);
+        });
+      }
+    }
   }
 }

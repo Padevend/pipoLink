@@ -7,13 +7,14 @@ import type { StorageDriver, UploadResult } from "../interface/storage-provider.
  * Driver Google Drive — upload/download/delete via l'API Drive v3.
  *
  * Réutilise la configuration OAuth2 existante (GOOGLE_CLIENT_ID, etc.).
- * Le `key` retourné est le `fileId` Google Drive.
- * Le `subDir` est interprété comme un `folderId` Drive cible (optionnel,
- * sinon le dossier par défaut GOOGLE_DRIVE_FOLDER_ID est utilisé).
+ * Le `key` retourné est le `fileId` Google Drive. Les catégories logiques de
+ * l'application (avatars, documents…) sont résolues vers des dossiers Drive
+ * configurés; elles ne sont jamais interprétées comme un ID fourni par le client.
  */
 export class GoogleDriveStorageDriver implements StorageDriver {
   private drive: drive_v3.Drive;
   private folderId: string;
+  private readonly folderByCategory: Record<string, string | undefined>;
   private configured: boolean;
 
   constructor() {
@@ -22,8 +23,16 @@ export class GoogleDriveStorageDriver implements StorageDriver {
     const redirectUri = env.get("GOOGLE_REDIRECT_URI") as string | undefined;
     const refreshToken = env.get("GOOGLE_REFRESH_TOKEN") as string | undefined;
     this.folderId = (env.get("GOOGLE_DRIVE_FOLDER_ID") as string | undefined) || "";
+    this.folderByCategory = {
+      avatars: env.get("GOOGLE_DRIVE_AVATARS_FOLDER_ID") as string | undefined,
+      documents: env.get("GOOGLE_DRIVE_DOCUMENTS_FOLDER_ID") as string | undefined,
+      "message-attachments": env.get("GOOGLE_DRIVE_MESSAGE_ATTACHMENTS_FOLDER_ID") as string | undefined,
+      announcements: env.get("GOOGLE_DRIVE_ANNOUNCEMENTS_FOLDER_ID") as string | undefined,
+      "ai-attachments": env.get("GOOGLE_DRIVE_AI_FOLDER_ID") as string | undefined,
+    };
 
-    this.configured = !!(clientId && clientSecret && refreshToken && this.folderId);
+    const hasCategoryFolder = Object.values(this.folderByCategory).some(Boolean);
+    this.configured = !!(clientId && clientSecret && refreshToken && (this.folderId || hasCategoryFolder));
 
     if (!this.configured) {
       console.warn("[GoogleDriveDriver] Configuration incomplète. Le driver ne sera pas opérationnel.");
@@ -48,8 +57,7 @@ export class GoogleDriveStorageDriver implements StorageDriver {
     const bufferStream = new stream.PassThrough();
     bufferStream.end(buffer);
 
-    // subDir est interprété comme folderId Drive cible
-    const targetFolderId = subDir || this.folderId;
+    const targetFolderId = (subDir && this.folderByCategory[subDir]) || this.folderId;
 
     const fileMetadata = {
       name,
@@ -65,7 +73,7 @@ export class GoogleDriveStorageDriver implements StorageDriver {
       {
         requestBody: fileMetadata,
         media,
-        fields: "id, name, webContentLink, webViewLink, size",
+        fields: "id, name, size",
         supportsAllDrives: true,
         supportsTeamDrives: true,
       },
@@ -79,17 +87,9 @@ export class GoogleDriveStorageDriver implements StorageDriver {
       throw new Error("[GoogleDriveDriver] Impossible de récupérer le fileId.");
     }
 
-    // Rendre le fichier accessible en lecture publique
-    await this.drive.permissions.create({
-      fileId,
-      requestBody: { role: "reader", type: "anyone" },
-      supportsAllDrives: true,
-    });
-
-    const url = res.data.webContentLink || res.data.webViewLink || "";
     const size = res.data.size ? parseInt(res.data.size, 10) : buffer.length;
 
-    return { url, size, key: fileId };
+    return { size, key: fileId };
   }
 
   async getFile(key: string): Promise<Buffer> {
@@ -107,16 +107,11 @@ export class GoogleDriveStorageDriver implements StorageDriver {
 
   async deleteFile(key: string): Promise<void> {
     if (!this.configured) {
-      return;
+      throw new Error("[GoogleDriveDriver] Driver non configuré.");
     }
-
-    try {
-      await this.drive.files.delete({
-        fileId: key,
-        supportsAllDrives: true,
-      });
-    } catch (err) {
-      console.error(`[GoogleDriveDriver] Échec de suppression du fichier ${key}:`, err);
-    }
+    await this.drive.files.delete({
+      fileId: key,
+      supportsAllDrives: true,
+    });
   }
 }

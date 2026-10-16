@@ -5,6 +5,7 @@ import { FileService } from "./file.service.js";
 import { FolderResolverService } from "./folder-resolver.service.js";
 import { RagService } from "./rag.service.js";
 import { documentIngestionQueue } from "./document-ingestion-queue.service.js";
+import { FileUrl } from "./file-url.service.js";
 
 const docInclude = {
   uploadedBy: {
@@ -57,7 +58,7 @@ function formatDocument(doc: {
     filiere: doc.filiere,
     ue: doc.ue,
     type: doc.type,
-    fileUrl: doc.fileUrl,
+    fileUrl: doc.type === "AI_ATTACHMENT" ? FileUrl.aiAttachment(doc.id) : FileUrl.document(doc.id),
     fileName: doc.fileName,
     fileSize: doc.fileSize,
     mimeType: doc.mimeType,
@@ -73,7 +74,7 @@ function formatDocument(doc: {
       id: doc.uploadedBy.id,
       username: doc.uploadedBy.username,
       displayName,
-      avatarUrl: profile?.avatarUrl ?? null,
+      avatarUrl: profile?.avatarUrl ? FileUrl.avatar(doc.uploadedBy.id) : null,
     },
   };
 }
@@ -244,7 +245,7 @@ export class LibraryService {
       size = existingDoc.fileSize;
     } else {
       const stored = await this.fileService.storeDocument(file, meta.mimeType, meta.originalName);
-      url = stored.url;
+      url = stored.reference;
       size = stored.size;
     }
 
@@ -301,7 +302,7 @@ export class LibraryService {
       if (doc.type === "AI_ATTACHMENT" && doc.uploaded_by_id !== userId) {
         throw { code: ErrorCode.FORBIDDEN, status: 403, message: "Téléchargement non autorisé." };
       }
-      if (doc.moderationStatus !== "APPROVED" && doc.uploaded_by_id !== userId) {
+      if ((!doc.isPublic || doc.moderationStatus !== "APPROVED") && doc.uploaded_by_id !== userId) {
         throw { code: ErrorCode.FORBIDDEN, status: 403, message: "Téléchargement non autorisé." };
       }
     }
@@ -311,7 +312,7 @@ export class LibraryService {
       prisma.download.create({ data: { document_id: documentId, user_id: userId } }),
     ]);
 
-    return { fileUrl: doc.fileUrl, downloadCount: doc.downloadCount + 1 };
+    return { fileUrl: doc.type === "AI_ATTACHMENT" ? FileUrl.aiAttachment(doc.id) : FileUrl.document(doc.id), downloadCount: doc.downloadCount + 1 };
   }
 
   async moderateDocument(documentId: string, decision: string, reason?: string) {
@@ -331,7 +332,8 @@ export class LibraryService {
     const canDelete = role === "admin" || role === "staff" || document.uploaded_by_id === userId;
     if (!canDelete) throw { code: ErrorCode.FORBIDDEN, status: 403, message: "Action non autorisee." };
 
-    await this.fileService.deleteFileByUrl(document.fileUrl);
+    const references = await prisma.document.count({ where: { fileUrl: document.fileUrl } });
+    if (references <= 1) await this.fileService.deleteFileByReference(document.fileUrl);
     await prisma.document.delete({ where: { id: documentId } });
 
     // Suppression de l'index RAG en tâche de fond non-bloquante

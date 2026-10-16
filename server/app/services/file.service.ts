@@ -1,16 +1,12 @@
 import sharp from "sharp";
 import mime from "mime-types";
+import crypto from "node:crypto";
 import { env } from "../../config/envManager.js";
 import { ErrorCode } from "../helpers/error-codes.js";
 import { StorageService } from "../storage/services/storage.service.js";
 import type { DriverType } from "../storage/interface/storage-provider.interface.js";
 
-/**
- * Service de gestion des fichiers uploadés.
- * Validation MIME, taille, extension.
- * Traitement des images via Sharp.
- * Délègue le stockage brut au StorageService (multi-driver).
- */
+
 export class FileService {
   private storage = new StorageService();
 
@@ -32,7 +28,7 @@ export class FileService {
    * @param userId - Identifiant de l'utilisateur (utilisé pour nommer le fichier)
    * @param buffer - Buffer de l'image uploadée
    * @param driver - Driver de stockage à utiliser (optionnel)
-   * @returns      - URL relative du fichier enregistré
+   * @returns      - Référence opaque du fichier enregistré
    */
   async processAvatar(userId: string, buffer: Buffer, driver?: DriverType): Promise<string> {
     const processed = await sharp(buffer)
@@ -40,9 +36,9 @@ export class FileService {
       .webp({ quality: 80 })
       .toBuffer();
 
-    const fileName = `${userId}.webp`;
+    const fileName = `${userId}-${crypto.randomUUID()}.webp`;
     const result = await this.upload(processed, fileName, "image/webp", "avatars", "static", driver);
-    return result.url;
+    return result.reference;
   }
 
   /**
@@ -57,28 +53,26 @@ export class FileService {
    * @returns            - { url, size }
    * @throws             - INVALID_FILE_TYPE, FILE_TOO_LARGE
    */
-  async storeDocument(buffer: Buffer, mimeType: string, originalName?: string, driver?: DriverType): Promise<{ url: string; size: number }> {
+  async storeDocument(buffer: Buffer, mimeType: string, originalName?: string, driver?: DriverType): Promise<{ reference: string; size: number }> {
     this._validateMime(mimeType, [...this.ALLOWED_DOCUMENTS, ...this.ALLOWED_IMAGES]);
     this._validateSize(buffer.length, env.get("MAX_FILE_SIZE_MB") * 1024 * 1024);
 
     const ext      = mime.extension(mimeType) || "bin";
-    const fileName = originalName
-      ? `${Date.now()}-${originalName}`
-      : `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const fileName = this.uniqueFileName(ext);
 
     const result = await this.upload(buffer, fileName, mimeType, "documents", "library", driver);
-    return { url: result.url, size: result.size };
+    return { reference: result.reference, size: result.size };
   }
 
   /**
    * Stocke une pièce jointe de message déjà chiffrée côté client (blob binaire).
    */
-  async storeMessageAttachment(buffer: Buffer, driver?: DriverType): Promise<{ url: string; size: number }> {
+  async storeMessageAttachment(buffer: Buffer, driver?: DriverType): Promise<{ reference: string; size: number }> {
     this._validateSize(buffer.length, env.get("MAX_FILE_SIZE_MB") * 1024 * 1024);
 
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.enc`;
+    const fileName = this.uniqueFileName("enc");
     const result = await this.upload(buffer, fileName, "application/octet-stream", "message-attachments", "static", driver);
-    return { url: result.url, size: result.size };
+    return { reference: result.reference, size: result.size };
   }
 
   /**
@@ -86,73 +80,23 @@ export class FileService {
    * Par défaut utilise le driver Google Drive (si configuré) via le paramètre driver,
    * sinon utilise le driver par défaut.
    */
-  async storeAiAttachment(buffer: Buffer, mimeType: string, originalName?: string, driver?: DriverType): Promise<{ url: string; size: number }> {
+  async storeAiAttachment(buffer: Buffer, mimeType: string, originalName?: string, driver?: DriverType): Promise<{ reference: string; size: number }> {
     this._validateMime(mimeType, [...this.ALLOWED_DOCUMENTS, ...this.ALLOWED_IMAGES]);
     this._validateSize(buffer.length, env.get("MAX_FILE_SIZE_MB") * 1024 * 1024);
 
     const ext      = mime.extension(mimeType) || "bin";
-    const fileName = originalName
-      ? `${Date.now()}-${originalName}`
-      : `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const fileName = this.uniqueFileName(ext);
 
     const result = await this.upload(buffer, fileName, mimeType, "ai-attachments", "ai", driver);
-    return { url: result.url, size: result.size };
+    return { reference: result.reference, size: result.size };
   }
 
   /**
-   * Supprime un fichier à partir de son URL ou key.
-   *
-   * Détecte le driver à utiliser en fonction du format de l'URL :
-   * - `/storage/...` → local
-   * - `drive.google.com` → google-drive
-   * - `r2://...` ou URL publique R2 → r2
-   * - `storage.googleapis.com` → gcs
+   * Supprime un fichier à partir de sa référence opaque. Les anciennes URLs
+   * restent supportées par `StorageService` durant la période de migration.
    */
-  async deleteFileByUrl(fileUrl: string): Promise<void> {
-    if (fileUrl.startsWith("/storage/")) {
-      // Local file — key = chemin relatif après /storage/
-      const key = fileUrl.replace("/storage/", "");
-      await this.storage.deleteFile(key, "local");
-    } else if (fileUrl.includes("drive.google.com")) {
-      // Google Drive — extraire le fileId
-      try {
-        const urlObj = new URL(fileUrl);
-        let fileId = urlObj.searchParams.get("id");
-        if (!fileId && urlObj.pathname.includes("/file/d/")) {
-          const parts = urlObj.pathname.split("/file/d/");
-          if (parts[1]) fileId = parts[1].split("/")[0];
-        }
-        if (fileId) {
-          await this.storage.deleteFile(fileId, "google-drive");
-        }
-      } catch (err) {
-        console.error("Failed to delete drive file by URL:", err);
-      }
-    } else if (fileUrl.startsWith("r2://") || fileUrl.includes(".r2.dev/")) {
-      // R2 — extraire le key
-      let key: string;
-      if (fileUrl.startsWith("r2://")) {
-        // r2://bucket/key → key
-        key = fileUrl.replace(/^r2:\/\/[^/]+\//, "");
-      } else {
-        // URL publique — extraire le path
-        const urlObj = new URL(fileUrl);
-        key = urlObj.pathname.replace(/^\//, "");
-      }
-      await this.storage.deleteFile(key, "r2");
-    } else if (fileUrl.includes("storage.googleapis.com")) {
-      // GCS — extraire le key depuis l'URL
-      try {
-        const urlObj = new URL(fileUrl);
-        // Format: https://storage.googleapis.com/BUCKET/KEY
-        const pathParts = urlObj.pathname.split("/").filter(Boolean);
-        // Retirer le nom du bucket (premier segment)
-        const key = pathParts.slice(1).join("/");
-        await this.storage.deleteFile(key, "gcs");
-      } catch (err) {
-        console.error("Failed to delete GCS file by URL:", err);
-      }
-    }
+  async deleteFileByReference(reference: string): Promise<void> {
+    await this.storage.deleteFileByReference(reference);
   }
 
   /**
@@ -166,19 +110,29 @@ export class FileService {
       .webp({ quality })
       .toBuffer();
 
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
+    const fileName = this.uniqueFileName("webp");
     const result = await this.upload(processed, fileName, "image/webp", "announcements", "static", driver);
-    return result.url;
+    return result.reference;
   }
 
   private chain(kind: "static" | "library" | "ai"): DriverType[] {
-    const development = (env.get("NODE_ENV") || "development") === "development";
-    if (kind === "library") return development ? ["local", "google-drive", "r2", "gcs"] : ["google-drive", "r2", "gcs", "local"];
-    return development ? ["local", "r2", "gcs"] : ["r2", "gcs", "local"];
+    // Politique de placement :
+    // - bibliothèque académique : Google Drive, puis volume local de secours ;
+    // - assets applicatifs (avatars, messages, annonces, IA) : R2, puis local.
+    // Le driver GCS reste disponible pour une sélection explicite, mais ne
+    // s'insère jamais dans la chaîne automatique afin d'éviter une dispersion
+    // des fichiers entre plusieurs providers.
+    if (kind === "library") return ["google-drive", "local"];
+    return ["r2", "local"];
   }
 
   private async upload(buffer: Buffer, name: string, mimeType: string, subDir: string, kind: "static" | "library" | "ai", driver?: DriverType) {
     return driver ? this.storage.uploadFile(buffer, name, mimeType, subDir, driver) : this.storage.uploadWithFallback(buffer, name, mimeType, subDir, this.chain(kind));
+  }
+
+  private uniqueFileName(extension: string): string {
+    const normalized = extension.replace(/^\./, "") || "bin";
+    return `${crypto.randomUUID()}.${normalized}`;
   }
 
   // ── Méthodes privées ──────────────────────────────────────────────────────
