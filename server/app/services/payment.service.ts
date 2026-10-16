@@ -119,9 +119,6 @@ export class PaymentService {
       });
 
       const transactionPk = response.transaction?.pk || null;
-      // isTransactionSuccess = paiement réellement confirmé (status SUCCESS).
-      // isOperationSuccess ne signifie que « requête API acceptée » : un paiement
-      // rejeté par l'utilisateur renvoie success=true + transaction.status=FAILED.
       const isSuccess = typeof (response as any).isTransactionSuccess === "function"
         ? (response as any).isTransactionSuccess()
         : response.transaction?.status === "SUCCESS";
@@ -130,7 +127,7 @@ export class PaymentService {
       const updatedPayment = await prisma.payment.update({
         where: { id: payment.id },
         data: {
-          status: response.transaction.status,
+          status: response.transaction?.status,
           providerRef: transactionPk,
         },
       });
