@@ -8,8 +8,8 @@ import vine from "@vinejs/vine";
 const EnvSchema = {
   // ── Application ─────────────────────────────────────
   NODE_ENV: vine.enum(["development", "production", "test"]).optional(),
-  HOST:     vine.string(),
-  PORT:     vine.string(),
+  HOST:     vine.string().optional(),
+  PORT:     vine.string().optional(),
 
   // ── Base de données ──────────────────────────────────
   DATABASE_URL: vine.string(),

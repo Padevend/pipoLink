@@ -7,6 +7,7 @@ import { startKeyRotationJob } from "./app/jobs/key-rotation.job.js";
 import { startSubscriptionExpirationJob } from "./app/jobs/subscription-expiration.job.js";
 import { startAiTokenRestorationJob } from "./app/jobs/ai-token-restoration.job.js";
 import { documentIngestionQueue } from "./app/services/document-ingestion-queue.service.js";
+import app from "./index.js";
 
 /**
  * Point d'entrée du serveur.
@@ -16,8 +17,6 @@ async function bootstrap() {
   // Vérification connexion base de données
   await prisma.$connect();
   console?.log("✅ Base de données connectée");
-
-  const app = createRouter();
 
   const server = serve({
     fetch: app.fetch,
