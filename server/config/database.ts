@@ -5,11 +5,18 @@ import fs from "fs";
 import { PrismaClient } from '../generated/prisma/client.js';
 
 function getDatabaseCa(): string | undefined {
-  const encoded = env.get("DATABASE_CA_CERT_BASE64");
-  if (encoded) return Buffer.from(encoded, "base64").toString("utf8");
+  const raw = (
+    env.get("DATABASE_CA_CERT_BASE64") ??
+    env.get("DATABASE_CA_PATH")
+  )?.trim();
+  if (!raw) return undefined;
 
-  const path = env.get("DATABASE_CA_PATH");
-  return path ? fs.readFileSync(path).toString() : undefined;
+  if (raw.includes("-----BEGIN")) return raw.replace(/\\n/g, "\n");
+
+  const decoded = Buffer.from(raw, "base64").toString("utf8");
+  if (decoded.includes("-----BEGIN")) return decoded;
+
+  return fs.readFileSync(raw, "utf8");
 }
 
 const databaseCa = getDatabaseCa();
