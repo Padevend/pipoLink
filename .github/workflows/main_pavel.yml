@@ -1,6 +1,9 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
 name: Build and deploy Node.js app to Azure Web App - pavel
 
 on:
@@ -13,34 +16,40 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read #This is required for actions/checkout
-    defaults:                      # <-- ajouté
-      run:                         # <-- ajouté
-        working-directory: server  # <-
+      contents: read # This is required for actions/checkout
+    defaults:
+      run:
+        working-directory: server
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Node.js version
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '22.x'
-          
+
       - uses: pnpm/action-setup@v4
         with:
-          version: 10 
+          version: 10
 
-      - name: pnpm install, build, prune
+      - name: pnpm install and build
         run: |
           pnpm install --frozen-lockfile --config.node-linker=hoisted
           pnpm build
-          pnpm prune --prod
+
+      # --ignore-scripts : sans cette option, pnpm relance le postinstall du projet
+      # (prisma generate) alors que prisma, une devDependency, vient d'être supprimé.
+      - name: Prune dev dependencies
+        run: pnpm prune --prod --ignore-scripts --config.node-linker=hoisted
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          # 'working-directory' ne s'applique pas à 'path' : sans "server",
+          # c'est toute la racine du dépôt qui serait déployée.
+          path: server
 
   deploy:
     runs-on: ubuntu-latest
@@ -54,7 +63,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -69,4 +78,3 @@ jobs:
           app-name: 'pavel'
           slot-name: 'Production'
           package: .
-          
