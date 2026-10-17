@@ -2,7 +2,6 @@ import crypto from "node:crypto";
 
 import { prisma } from "../../config/database.js";
 import { ErrorCode } from "../helpers/error-codes.js";
-import { Message } from "../../generated/prisma/index.js";
 import { StorageService } from "../storage/services/storage.service.js";
 import { FileUrl } from "./file-url.service.js";
 

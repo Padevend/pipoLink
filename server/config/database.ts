@@ -1,7 +1,8 @@
-import { PrismaClient } from "../generated/prisma/index.js";
+
 import { env } from "./envManager.js";
 import { PrismaPg } from "@prisma/adapter-pg";
 import fs from "fs";
+import { PrismaClient } from '../generated/prisma/client.js';
 
 function getDatabaseCa(): string | undefined {
   const encoded = env.get("DATABASE_CA_CERT_BASE64");
