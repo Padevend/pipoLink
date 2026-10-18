@@ -115,7 +115,6 @@ export function useAttachmentDownload({
   const isVideo = attachment.mimeType.startsWith('video/');
 
   // ─── ACTIONS ──────────────────────────────────────────────────────────────
-
   const download = useCallback(async () => {
     await attachmentDownloadManager.download({
       attachment,

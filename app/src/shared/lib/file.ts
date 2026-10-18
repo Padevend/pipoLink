@@ -96,7 +96,8 @@ export async function saveToPublicDocuments({
 const ALBUM_NAME = 'PipolinkImages';
 
 export async function saveToGallery(
-  uri: string
+  uri: string,
+  token: string | null
 ): Promise<{ success: boolean; message: string }> {
   const { status } = await MediaLibrary.requestPermissionsAsync();
   if (status !== 'granted') {
@@ -107,7 +108,11 @@ export async function saveToGallery(
   if (uri.startsWith('http://') || uri.startsWith('https://')) {
     const filename = uri.split('/').pop()?.split('?')[0] ?? `pipolink_${Date.now()}.jpg`;
     const dest = `${FileSystem.cacheDirectory}${filename}`;
-    const { uri: downloaded } = await FileSystem.downloadAsync(uri, dest);
+    const { uri: downloaded } = await FileSystem.downloadAsync(uri, dest, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     localUri = downloaded;
   }
 

@@ -18,6 +18,8 @@ import {
   upsertAttachmentDownload,
 } from './attachment.repository';
 import { decryptAttachmentFile } from './encrypted-storage.service';
+import { AuthorizationStatus } from '@react-native-firebase/messaging';
+import { getAuthToken } from '@/shared/api/client';
 
 // ─── EVENT EMITTER (lightweight, no external dependency) ─────────────────────
 
@@ -102,6 +104,12 @@ class AttachmentDownloadManager {
     }
   }
 
+  private async getHeaders(){
+    const token = await getAuthToken();
+
+    return { Authorization: `Bearer ${token}` }
+  }
+
   // ─── PUBLIC API ────────────────────────────────────────────────────────────
 
   /**
@@ -117,18 +125,14 @@ class AttachmentDownloadManager {
   async download({ attachment, messageId, chatId }: StartDownloadInput): Promise<void> {
     const existing = getAttachmentDownload(attachment.id);
 
-    // Cache hit: already completed and decrypted file still exists on disk
     if (existing?.status === 'completed' && existing.decrypted_local_uri) {
       const stillExists = await decryptedFileExists(attachment.id, attachment.fileName);
       if (stillExists) {
-        // Nothing to do — tell the UI to render from the cached path
         this._emitStateChange(existing);
         return;
       }
-      // Cache was evicted — fall through to re-download
     }
 
-    // Already in-flight or queued — do nothing
     if (
       existing &&
       (existing.status === 'downloading' ||
@@ -312,13 +316,16 @@ class AttachmentDownloadManager {
     this._emitStateChange({ ...state, status: 'downloading' });
 
     const encPath = encrypted_local_uri ?? getEncryptedPath(id);
+    const headers = await this.getHeaders();
 
     try {
       // ── STEP 1: Create DownloadResumable ────────────────────────────────────
       const resumable = FileSystem.createDownloadResumable(
         encrypted_url,
         encPath,
-        {}, // No custom headers needed — signed URL has auth built-in
+        {
+          headers: headers
+        },
         (downloadProgress) => {
           const { totalBytesWritten, totalBytesExpectedToWrite } = downloadProgress;
           const progress =

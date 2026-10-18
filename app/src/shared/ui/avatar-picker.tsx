@@ -1,10 +1,12 @@
-import * as ImagePicker from 'expo-image-picker';
-import { Image } from 'expo-image';
-import { Camera, Trash2, Plus } from 'lucide-react-native';
-import { Pressable, Text, View } from 'react-native';
+import * as ImagePicker from "expo-image-picker";
+import { Image } from "expo-image";
+import { Camera, Trash2, Plus } from "lucide-react-native";
+import { Pressable, Text, View } from "react-native";
 
-import { cn } from '@/shared/utils/cn';
-import { getStaticUri } from '../lib/static';
+import { cn } from "@/shared/utils/cn";
+import { getStaticUri } from "../lib/static";
+import { useEffect, useMemo, useState } from "react";
+import { getAuthToken } from "../api/client";
 
 interface AvatarPickerProps {
   label?: string;
@@ -13,13 +15,24 @@ interface AvatarPickerProps {
   error?: string;
 }
 
-export function AvatarPicker({ label = 'Photo de profil', uri, onChange, error }: AvatarPickerProps): JSX.Element {
+export function AvatarPicker({
+  label = "Photo de profil",
+  uri,
+  onChange,
+  error,
+}: AvatarPickerProps): JSX.Element {
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    getAuthToken().then((token) => setToken(token));
+  }, []);
+
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') return;
+    if (status !== "granted") return;
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
+      mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.85,
@@ -29,6 +42,14 @@ export function AvatarPicker({ label = 'Photo de profil', uri, onChange, error }
       onChange(result.assets[0]?.uri);
     }
   };
+
+  const source = useMemo(
+    () => ({
+      uri: getStaticUri(uri || ""),
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+    [uri, token],
+  );
 
   return (
     <View className="flex flex-col items-center">
@@ -42,17 +63,15 @@ export function AvatarPicker({ label = 'Photo de profil', uri, onChange, error }
         <Pressable
           onPress={() => void pickImage()}
           className={cn(
-            'h-28 w-28 items-center justify-center overflow-hidden rounded-full border-2 bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-all',
-            error 
-              ? 'border-red-500' 
-              : 'border-transparent',
+            "h-28 w-28 items-center justify-center overflow-hidden rounded-full border-2 bg-zinc-100 dark:bg-[#1A1A1A] active:opacity-80 transition-all",
+            error ? "border-red-500" : "border-transparent",
           )}
         >
-          {uri ? (
-            <Image 
-              source={{ uri: getStaticUri(uri) }} 
-              style={{ width: '100%', height: '100%' }} 
-              contentFit="cover" 
+          {source.uri && token ? (
+            <Image
+              source={source}
+              style={{ width: "100%", height: "100%" }}
+              contentFit="cover"
             />
           ) : (
             <View className="items-center justify-center h-full w-full">
@@ -79,10 +98,14 @@ export function AvatarPicker({ label = 'Photo de profil', uri, onChange, error }
       </View>
 
       {error ? (
-        <Text className="text-[10px] font-black uppercase tracking-wider text-red-500">{error}</Text>
+        <Text className="text-[10px] font-black uppercase tracking-wider text-red-500">
+          {error}
+        </Text>
       ) : (
         <Text className="text-center text-xs font-bold text-zinc-500 dark:text-zinc-400">
-          {uri ? 'Photo configurée avec succès' : 'Appuyez pour importer une image'}
+          {uri
+            ? "Photo configurée avec succès"
+            : "Appuyez pour importer une image"}
         </Text>
       )}
     </View>

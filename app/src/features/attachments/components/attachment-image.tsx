@@ -160,12 +160,12 @@ export function AttachmentImage({
                 )}
                 {(status === 'idle' || status === 'cancelled') && (
                   <Text className="text-zinc-600 dark:text-zinc-400 font-mono text-[9px] font-bold tracking-tight">
-                    RAW_DATA // {formatBytes(attachment.fileSize)}
+                    RAW_DATA / {formatBytes(attachment.fileSize)}
                   </Text>
                 )}
                 {status === 'failed' && (
                   <Text className="text-red-500 dark:text-red-400 font-mono text-[9px] font-black uppercase tracking-wider">
-                    ⚠️ ÉCHEC_RÉESSAYER
+                    ÉCHEC_RÉESSAYER
                   </Text>
                 )}
                 {status === 'queued' && (

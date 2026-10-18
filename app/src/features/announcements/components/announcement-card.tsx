@@ -1,14 +1,9 @@
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { Directory, File, Paths } from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
-import {
-  Calendar,
-  Download,
-  Share2,
-  User
-} from 'lucide-react-native';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { Directory, File, Paths } from "expo-file-system";
+import * as Sharing from "expo-sharing";
+import { Calendar, Download, Share2, User } from "lucide-react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -17,20 +12,31 @@ import {
   Pressable,
   Share,
   Text,
-  View
-} from 'react-native';
+  View,
+} from "react-native";
 
-import { useToast } from '@/providers';
-import { Announcement } from '@/shared/api/announcements';
-import { getStaticUri } from '@/shared/lib/static';
-import { ImageViewer } from '@/shared/ui/image-viewer';
-import { deleteAsync } from 'expo-file-system/legacy';
+import { useToast } from "@/providers";
+import { Announcement } from "@/shared/api/announcements";
+import { getStaticUri } from "@/shared/lib/static";
+import { ImageViewer } from "@/shared/ui/image-viewer";
+import { deleteAsync } from "expo-file-system/legacy";
+import { getAuthToken } from "@/shared/api/client";
 
-const MEMORY_POSTER_CACHE: Record<string, { uri: string; state: 'done' }> = {};
+const MEMORY_POSTER_CACHE: Record<string, { uri: string; state: "done" }> = {};
 
 export default function AnnouncementCard({ item }: { item: Announcement }) {
-  const [posterUri, setPosterUri] = useState<string | null>(MEMORY_POSTER_CACHE[item.id]?.uri || null);
-  const [hdState, setHdState] = useState<'idle' | 'loading' | 'done'>(MEMORY_POSTER_CACHE[item.id]?.state || 'idle');
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    getAuthToken().then((token) => setToken(token));
+  }, []);
+
+  const [posterUri, setPosterUri] = useState<string | null>(
+    MEMORY_POSTER_CACHE[item.id]?.uri || null,
+  );
+  const [hdState, setHdState] = useState<"idle" | "loading" | "done">(
+    MEMORY_POSTER_CACHE[item.id]?.state || "idle",
+  );
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [imageRatio, setImageRatio] = useState<number>(16 / 9);
 
@@ -51,16 +57,16 @@ export default function AnnouncementCard({ item }: { item: Announcement }) {
             setImageRatio(width / height);
           }
         },
-        () => { }
+        () => {},
       );
     }
   }, [displayedImage]);
 
   const downloadPoster = useCallback(async () => {
-    if (!posterUrl || hdState !== 'idle') return;
-    setHdState('loading');
+    if (!posterUrl || hdState !== "idle") return;
+    setHdState("loading");
     try {
-      const dir = new Directory(Paths.cache, 'posters');
+      const dir = new Directory(Paths.cache, "posters");
       if (!dir.exists) {
         dir.create();
       }
@@ -72,18 +78,20 @@ export default function AnnouncementCard({ item }: { item: Announcement }) {
 
       const output = await File.downloadFileAsync(posterUrl, fileTarget, {
         headers: {
-          'User-Agent': 'PipoLink/1.0 (Mobile; Expo)',
-        }
+          "User-Agent": "PipoLink/1.0 (Mobile; Expo)",
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       setPosterUri(output.uri);
-      setHdState('done');
-      MEMORY_POSTER_CACHE[item.id] = { uri: output.uri, state: 'done' };
+      setHdState("done");
+      MEMORY_POSTER_CACHE[item.id] = { uri: output.uri, state: "done" };
     } catch (e) {
-      setHdState('idle');
+      setHdState("idle");
       showToast({
         type: "warning",
-        message: "Impossible de charger la photo en haute qualité pour le moment."
+        message:
+          "Impossible de charger la photo en haute qualité pour le moment.",
       });
     }
   }, [posterUrl, hdState, item.id, showToast]);
@@ -92,7 +100,10 @@ export default function AnnouncementCard({ item }: { item: Announcement }) {
     try {
       const available = await Sharing.isAvailableAsync();
       if (!available) {
-        Alert.alert('Partage', "Le partage n'est pas disponible sur cet appareil.");
+        Alert.alert(
+          "Partage",
+          "Le partage n'est pas disponible sur cet appareil.",
+        );
         return;
       }
 
@@ -100,10 +111,10 @@ export default function AnnouncementCard({ item }: { item: Announcement }) {
       if (localFile) {
         await Sharing.shareAsync(localFile, {
           dialogTitle: item.title,
-          mimeType: 'image/webp',
+          mimeType: "image/webp",
         });
       } else if (previewUrl) {
-        const dir = new Directory(Paths.cache, 'share_tmp');
+        const dir = new Directory(Paths.cache, "share_tmp");
         if (!dir.exists) {
           dir.create();
         }
@@ -116,26 +127,43 @@ export default function AnnouncementCard({ item }: { item: Announcement }) {
         const out = await File.downloadFileAsync(previewUrl, tempShareFile);
         await Share.share({
           message: `${item.title}\n\n${item.content}`,
-          url: out.uri
+          url: out.uri,
         });
       } else {
         await Share.share({
-          message: `${item.title}\n\n${item.content}`
+          message: `${item.title}\n\n${item.content}`,
         });
       }
-    } catch { }
+    } catch {}
   }, [posterUri, previewUrl, item]);
 
   const onPressIn = () =>
-    Animated.spring(scaleAnim, { toValue: 0.99, useNativeDriver: true, speed: 40 }).start();
+    Animated.spring(scaleAnim, {
+      toValue: 0.99,
+      useNativeDriver: true,
+      speed: 40,
+    }).start();
   const onPressOut = () =>
-    Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, speed: 40 }).start();
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 40,
+    }).start();
+
+  const source = useMemo(
+    () => ({
+      uri: getStaticUri(displayedImage || ""),
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+    [displayedImage, token],
+  );
 
   return (
-    <Animated.View style={{ transform: [{ scale: scaleAnim }], marginBottom: 16 }}>
+    <Animated.View
+      style={{ transform: [{ scale: scaleAnim }], marginBottom: 16 }}
+    >
       {/* Conteneur principal de la carte : rounded-2xl, fond plein */}
       <View className="overflow-hidden rounded-2xl bg-zinc-50 dark:bg-[#1A1A1A]">
-
         {/* IMAGE D'ILLUSTRATION */}
         {hasImage && (
           <View className="relative w-full bg-zinc-200 dark:bg-[#222222]">
@@ -143,29 +171,33 @@ export default function AnnouncementCard({ item }: { item: Announcement }) {
               onPressIn={onPressIn}
               onPressOut={onPressOut}
               onPress={() => setIsPreviewOpen(true)}
-              style={{ width: '100%', aspectRatio: imageRatio }}
+              style={{ width: "100%", aspectRatio: imageRatio }}
             >
               <Image
-                source={{ uri: displayedImage }}
+                source={source}
                 className="w-full h-full"
                 resizeMode="cover"
               />
             </Pressable>
 
             {/* Bouton HD (rounded-full) */}
-            {posterUrl && hdState !== 'done' && (
+            {posterUrl && hdState !== "done" && (
               <Pressable
                 onPress={downloadPoster}
                 hitSlop={10}
                 className="absolute top-4 right-4 flex-row items-center gap-2 rounded-full bg-zinc-950 px-4 py-2 active:opacity-80"
               >
-                {hdState === 'loading' ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" className="scale-75" />
+                {hdState === "loading" ? (
+                  <ActivityIndicator
+                    size="small"
+                    color="#FFFFFF"
+                    className="scale-75"
+                  />
                 ) : (
                   <Download size={14} color="#FFFFFF" strokeWidth={2.5} />
                 )}
                 <Text className="text-[10px] font-black uppercase tracking-widest text-white">
-                  {hdState === 'loading' ? 'Chargement...' : 'Haute qualité'}
+                  {hdState === "loading" ? "Chargement..." : "Haute qualité"}
                 </Text>
               </Pressable>
             )}
@@ -173,8 +205,11 @@ export default function AnnouncementCard({ item }: { item: Announcement }) {
         )}
 
         {/* CONTENU DE LA CARTE */}
-        <Pressable onPressIn={onPressIn} onPressOut={onPressOut} className="p-5">
-          
+        <Pressable
+          onPressIn={onPressIn}
+          onPressOut={onPressOut}
+          className="p-5"
+        >
           {/* Auteur */}
           {item.author?.username && (
             <View className="flex-row items-center gap-2 mb-3">
@@ -205,7 +240,9 @@ export default function AnnouncementCard({ item }: { item: Announcement }) {
             <View className="flex-row items-center gap-2">
               <Calendar size={14} color="#A1A1AA" strokeWidth={2.5} />
               <Text className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
-                {format(new Date(item.createdAt), "d MMMM yyyy 'à' HH:mm", { locale: fr })}
+                {format(new Date(item.createdAt), "d MMMM yyyy 'à' HH:mm", {
+                  locale: fr,
+                })}
               </Text>
             </View>
 
@@ -220,7 +257,6 @@ export default function AnnouncementCard({ item }: { item: Announcement }) {
               </Text>
             </Pressable>
           </View>
-
         </Pressable>
       </View>
 
@@ -231,8 +267,18 @@ export default function AnnouncementCard({ item }: { item: Announcement }) {
           uri={displayedImage}
           aspectRatio={imageRatio}
           onClose={() => setIsPreviewOpen(false)}
-          onDownloadSuccess={() => showToast({ type: 'success', message: 'L’image a bien été enregistrée.' })}
-          onDownloadError={() => showToast({ type: 'error', message: "Impossible d'enregistrer l'image." })}
+          onDownloadSuccess={() =>
+            showToast({
+              type: "success",
+              message: "L’image a bien été enregistrée.",
+            })
+          }
+          onDownloadError={() =>
+            showToast({
+              type: "error",
+              message: "Impossible d'enregistrer l'image.",
+            })
+          }
         />
       )}
     </Animated.View>

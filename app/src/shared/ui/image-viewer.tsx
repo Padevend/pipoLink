@@ -1,5 +1,5 @@
-import { Download, X } from 'lucide-react-native';
-import { useCallback, useState } from 'react';
+import { Download, X } from "lucide-react-native";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -7,19 +7,24 @@ import {
   Modal,
   Pressable,
   Text,
-  View
-} from 'react-native';
-import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+  View,
+} from "react-native";
+import {
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView,
+} from "react-native-gesture-handler";
 import Animated, {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   withTiming,
-} from 'react-native-reanimated';
-import { saveToGallery } from '../lib/file';
+} from "react-native-reanimated";
+import { saveToGallery } from "../lib/file";
+import { getAuthToken } from "../api/client";
 
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 
 interface ImageViewerProps {
   visible: boolean;
@@ -38,6 +43,12 @@ export function ImageViewer({
   onDownloadSuccess,
   onDownloadError,
 }: ImageViewerProps) {
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    getAuthToken().then((token) => setToken(token));
+  }, []);
+  
   const [downloading, setDownloading] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
 
@@ -53,9 +64,9 @@ export function ImageViewer({
   const MAX_SCALE = 5;
 
   const clampTranslation = (tx: number, ty: number, s: number) => {
-    'worklet';
-    const maxX = ((SCREEN_W * s) - SCREEN_W) / 2;
-    const maxY = ((SCREEN_H * s) - SCREEN_H) / 2;
+    "worklet";
+    const maxX = (SCREEN_W * s - SCREEN_W) / 2;
+    const maxY = (SCREEN_H * s - SCREEN_H) / 2;
     return {
       x: Math.min(Math.max(tx, -maxX), maxX),
       y: Math.min(Math.max(ty, -maxY), maxY),
@@ -63,7 +74,7 @@ export function ImageViewer({
   };
 
   const resetTransform = () => {
-    'worklet';
+    "worklet";
     scale.value = withSpring(1, { damping: 25, stiffness: 180 });
     translateX.value = withSpring(0, { damping: 25, stiffness: 180 });
     translateY.value = withSpring(0, { damping: 25, stiffness: 180 });
@@ -74,11 +85,14 @@ export function ImageViewer({
   };
 
   // ─── GESTES TACTILES ────────────────────────────────────────────────────────
-  
+
   // Geste de Pincement (Zoom)
   const pinchGesture = Gesture.Pinch()
     .onUpdate((e) => {
-      const next = Math.min(Math.max(savedScale.value * e.scale, MIN_SCALE), MAX_SCALE);
+      const next = Math.min(
+        Math.max(savedScale.value * e.scale, MIN_SCALE),
+        MAX_SCALE,
+      );
       scale.value = next;
       runOnJS(setZoomLevel)(Math.round(next * 10) / 10);
     })
@@ -95,7 +109,7 @@ export function ImageViewer({
       const clamped = clampTranslation(
         savedX.value + e.translationX,
         savedY.value + e.translationY,
-        scale.value
+        scale.value,
       );
       translateX.value = clamped.x;
       translateY.value = clamped.y;
@@ -122,15 +136,14 @@ export function ImageViewer({
     });
 
   // Simple Tap (Fermeture si non zoomé)
-  const singleTap = Gesture.Tap()
-    .onEnd(() => {
-      if (scale.value <= 1.05) runOnJS(onClose)();
-    });
+  const singleTap = Gesture.Tap().onEnd(() => {
+    if (scale.value <= 1.05) runOnJS(onClose)();
+  });
 
   const composed = Gesture.Simultaneous(
     Gesture.Exclusive(doubleTap, singleTap),
     pinchGesture,
-    panGesture
+    panGesture,
   );
 
   // Styles animés de l'image
@@ -145,7 +158,9 @@ export function ImageViewer({
   // Style animé pour masquer discrètement l'indicateur x1.0
   const indicatorStyle = useAnimatedStyle(() => ({
     opacity: withTiming(scale.value > 1.05 ? 1 : 0, { duration: 150 }),
-    transform: [{ scale: withTiming(scale.value > 1.05 ? 1 : 0.8, { duration: 150 }) }]
+    transform: [
+      { scale: withTiming(scale.value > 1.05 ? 1 : 0.8, { duration: 150 }) },
+    ],
   }));
 
   // ─── ACTIONS ────────────────────────────────────────────────────────────────
@@ -163,7 +178,7 @@ export function ImageViewer({
   const handleDownload = useCallback(async () => {
     if (downloading) return;
     setDownloading(true);
-    const result = await saveToGallery(uri);
+    const result = await saveToGallery(uri, token);
     setDownloading(false);
     if (result.success) onDownloadSuccess?.();
     else onDownloadError?.(result.message);
@@ -179,16 +194,18 @@ export function ImageViewer({
     >
       <GestureHandlerRootView className="flex-1">
         <View className="flex-1 bg-black justify-center items-center">
-
           {/* BARRE SUPÉRIEURE : Plat et Solide */}
           <View className="absolute top-0 left-0 right-0 z-50 flex-row items-center justify-between px-6 pt-14 pb-4 bg-black">
             {/* Indicateur de grossissement intelligent (rounded-full) */}
-            <Animated.View style={indicatorStyle} className="px-3.5 py-1.5 rounded-full bg-[#1A1A1A] border-2 border-[#222222]">
+            <Animated.View
+              style={indicatorStyle}
+              className="px-3.5 py-1.5 rounded-full bg-[#1A1A1A] border-2 border-[#222222]"
+            >
               <Text className="text-white text-[10px] font-black uppercase tracking-widest">
                 {zoomLevel.toFixed(1)}×
               </Text>
             </Animated.View>
-            
+
             {/* Élément de remplissage pour conserver l'alignement si l'indicateur est masqué */}
             <View className="flex-1" />
 
@@ -206,7 +223,12 @@ export function ImageViewer({
             <View className="w-full h-full justify-center items-center">
               <Animated.View style={imageStyle}>
                 <Image
-                  source={{ uri }}
+                  source={{
+                    uri,
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                    },
+                  }}
                   style={{
                     width: SCREEN_W,
                     aspectRatio,
@@ -230,11 +252,10 @@ export function ImageViewer({
                 <Download size={18} color="#FFFFFF" strokeWidth={2.5} />
               )}
               <Text className="text-white text-xs font-black uppercase tracking-widest">
-                {downloading ? 'Enregistrement…' : 'Enregistrer'}
+                {downloading ? "Enregistrement…" : "Enregistrer"}
               </Text>
             </Pressable>
           </View>
-
         </View>
       </GestureHandlerRootView>
     </Modal>
