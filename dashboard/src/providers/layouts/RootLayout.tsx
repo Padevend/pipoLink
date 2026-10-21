@@ -1,43 +1,49 @@
-import Sidebar from "@/components/sidebar";
+import { useState } from "react";
 import { Outlet, Navigate } from "react-router-dom";
 import { useAuth } from "@/providers/auth/authContext";
-import { Loader2 } from "lucide-react";
+import { Menu } from "lucide-react";
+import Sidebar from "@/components/sidebar";
+import { AppLogo } from "@/share/ui/AppLogo";
 
 export default function RootLayout() {
-    const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-    if (loading) {
-        return (
-            <div className="h-screen w-screen flex flex-col items-center justify-center bg-zinc-50 space-y-2">
-                <Loader2 className="animate-spin text-orange-500" size={24} strokeWidth={2.5} />
-                <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 select-none">
-                    Vérification de la session...
-                </span>
-            </div>
-        );
-    }
-
-    if (!isAuthenticated()) {
-        return <Navigate to="/login" replace />;
-    }
-
+  if (loading) {
     return (
-        <main className="flex h-screen bg-zinc-100 text-zinc-900 font-sans overflow-hidden">
-            {/* Sidebar gauche avec effet de transparence floutée */}
-            <Sidebar />
-            
-            {/* Zone principale à droite */}
-            <div className="flex-1 flex flex-col h-screen overflow-hidden relative bg-zinc-50/40">
-                
-                {/* Formes lumineuses d'arrière-plan (Accent Orange + Base Zinc) */}
-                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-orange-500/5 rounded-full blur-[140px] pointer-events-none" />
-                <div className="absolute bottom-0 left-10 w-[400px] h-[400px] bg-zinc-300/40 rounded-full blur-[120px] pointer-events-none" />
-                
-                {/* Contenu applicatif dynamique injecté ici */}
-                <div className="flex-1 overflow-y-auto p-8 z-10">
-                    <Outlet />
-                </div>
-            </div>
-        </main>
+      <div className="h-screen w-screen animate-pulse flex flex-col items-center justify-center bg-white space-y-3">
+        <AppLogo size={40} withName={false} />
+      </div>
     );
+  }
+
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return (
+    <main className="flex h-screen bg-white text-zinc-900 font-sans overflow-hidden">
+      
+      <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
+      
+      <div className="flex-1 flex flex-col h-screen overflow-hidden bg-zinc-50 rounded-l-none md:rounded-l-[2rem] md:border-l md:border-zinc-200">
+        
+        <header className="md:hidden flex items-center justify-between px-6 py-4 bg-white border-b border-zinc-200">
+          <AppLogo size={20} />
+          <button 
+            onClick={() => setIsSidebarOpen(true)}
+            className="p-2 -mr-2 text-zinc-900 hover:bg-zinc-100 rounded-full transition-colors"
+          >
+            <Menu size={24} strokeWidth={2} />
+          </button>
+        </header>
+        
+        <div className="flex-1 overflow-y-auto p-4 md:p-8">
+          <div className="max-w-7xl mx-auto">
+            <Outlet />
+          </div>
+        </div>
+      </div>
+    </main>
+  );
 }

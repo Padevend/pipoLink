@@ -1,4 +1,5 @@
-const API_URL = "http://127.0.0.1:3000"//"https://api-plink.lyrastudio.org";
+const API_URL =
+  "https://pavel-fuhqefcmenhzg8gt.francecentral-01.azurewebsites.net";
 
 import type { User } from "@/entities/users";
 export type { User };
@@ -90,9 +91,18 @@ export interface BillingStats {
 }
 
 export interface PromoCode {
-  id: string; code: string; discountPercent: number; freePremiumDays: number; maxUses: number | null; usedCount: number; startsAt: string; expiresAt: string | null; isActive: boolean; allowedEmails: string[]; _count?: { redemptions: number };
+  id: string;
+  code: string;
+  discountPercent: number;
+  freePremiumDays: number;
+  maxUses: number | null;
+  usedCount: number;
+  startsAt: string;
+  expiresAt: string | null;
+  isActive: boolean;
+  allowedEmails: string[];
+  _count?: { redemptions: number };
 }
-
 
 export interface RevenueStats {
   totalRevenue: number;
@@ -109,15 +119,14 @@ export interface SystemStats {
   revenue: RevenueStats;
 }
 
-
-class APIServices{
+class APIServices {
   public url: string;
   public publicurl: string;
 
   constructor() {
     this.url = API_URL;
     this.publicurl = API_URL;
-    
+
     // Bind all methods to ensure context is preserved in callbacks
     this.sendRequest = this.sendRequest.bind(this);
     this.login = this.login.bind(this);
@@ -141,7 +150,7 @@ class APIServices{
 
   async sendRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
     const headers = new Headers(options.headers || {});
-    
+
     if (!(options.body instanceof FormData) && !headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");
     }
@@ -176,7 +185,9 @@ class APIServices{
 
     const user = data.user as User;
     if (user.role !== "admin") {
-      throw new Error("Accès refusé. Vous devez être administrateur pour vous connecter au Dashboard.");
+      throw new Error(
+        "Accès refusé. Vous devez être administrateur pour vous connecter au Dashboard.",
+      );
     }
 
     return { user };
@@ -190,26 +201,68 @@ class APIServices{
     return this.sendRequest("/users/me");
   }
 
-  async getBillingStats(months = 12): Promise<BillingStats> { return this.sendRequest(`/admin/billing-stats?months=${months}`); }
-
-  async getPromoCodes(): Promise<PromoCode[]> { return this.sendRequest("/admin/promo-codes"); }
-
-  async createPromoCode(data: Partial<PromoCode>): Promise<PromoCode> { return this.sendRequest("/admin/promo-codes", { method: "POST", body: JSON.stringify(data) }); }
-
-  async updatePromoCode(id: string, data: Partial<PromoCode>): Promise<PromoCode> { return this.sendRequest(`/admin/promo-codes/${id}`, { method: "PATCH", body: JSON.stringify(data) }); }
-
-  async getPromoRedemptions(id: string): Promise<any[]> { return this.sendRequest(`/admin/promo-codes/${id}/redemptions`); }
-
-  async getStats(): Promise<{ stats: SystemStats; events: AuditLog[] }> {
-    return this.sendRequest<{ stats: SystemStats; events: AuditLog[] }>("/admin/stats");
+  async getBillingStats(months = 12): Promise<BillingStats> {
+    return this.sendRequest(`/admin/billing-stats?months=${months}`);
   }
 
-  async getEvents(page = 1, limit = 20): Promise<{ events: AuditLog[]; total: number; page: number; limit: number; totalPages: number }> {
+  async getPromoCodes(): Promise<PromoCode[]> {
+    return this.sendRequest("/admin/promo-codes");
+  }
+
+  async createPromoCode(data: Partial<PromoCode>): Promise<PromoCode> {
+    return this.sendRequest("/admin/promo-codes", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updatePromoCode(
+    id: string,
+    data: Partial<PromoCode>,
+  ): Promise<PromoCode> {
+    return this.sendRequest(`/admin/promo-codes/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getPromoRedemptions(id: string): Promise<any[]> {
+    return this.sendRequest(`/admin/promo-codes/${id}/redemptions`);
+  }
+
+  async getStats(): Promise<{ stats: SystemStats; events: AuditLog[] }> {
+    return this.sendRequest<{ stats: SystemStats; events: AuditLog[] }>(
+      "/admin/stats",
+    );
+  }
+
+  async getEvents(
+    page = 1,
+    limit = 20,
+  ): Promise<{
+    events: AuditLog[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
     return this.sendRequest(`/admin/events?page=${page}&limit=${limit}`);
   }
 
-  async getUsers(page = 1, limit = 10, search = ""): Promise<{ users: User[]; total: number; page: number; limit: number; totalPages: number }> {
-    return this.sendRequest(`/admin/users?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`);
+  async getUsers(
+    page = 1,
+    limit = 10,
+    search = "",
+  ): Promise<{
+    users: User[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    return this.sendRequest(
+      `/admin/users?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`,
+    );
   }
 
   async banUser(id: string): Promise<void> {
@@ -227,24 +280,53 @@ class APIServices{
     });
   }
 
-  async getDocuments(page = 1, limit = 10, search = ""): Promise<{ documents: Document[]; total: number; page: number; limit: number; totalPages: number }> {
-    return this.sendRequest(`/admin/documents?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`);
+  async getDocuments(
+    page = 1,
+    limit = 10,
+    search = "",
+  ): Promise<{
+    documents: Document[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    return this.sendRequest(
+      `/admin/documents?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`,
+    );
   }
 
   async enqueueDocumentIngestion(): Promise<{ queued: number }> {
     return this.sendRequest("/admin/documents/ingest", { method: "POST" });
   }
 
-
   async deleteDocument(id: string): Promise<void> {
     return this.sendRequest(`/admin/documents/${id}`, { method: "DELETE" });
   }
 
-  async getSubscriptions(page = 1, limit = 10): Promise<{ subscriptions: Subscription[]; total: number; page: number; limit: number; totalPages: number }> {
+  async getSubscriptions(
+    page = 1,
+    limit = 10,
+  ): Promise<{
+    subscriptions: Subscription[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
     return this.sendRequest(`/admin/subscriptions?page=${page}&limit=${limit}`);
   }
 
-  async getPayments(page = 1, limit = 10): Promise<{ payments: Payment[]; total: number; page: number; limit: number; totalPages: number }> {
+  async getPayments(
+    page = 1,
+    limit = 10,
+  ): Promise<{
+    payments: Payment[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
     return this.sendRequest(`/admin/payments?page=${page}&limit=${limit}`);
   }
 
@@ -259,12 +341,15 @@ class APIServices{
     });
   }
 
-  async sendBroadcastNotification(data: { title: string; body: string }): Promise<{ recipients: number }> {
+  async sendBroadcastNotification(data: {
+    title: string;
+    body: string;
+  }): Promise<{ recipients: number }> {
     return this.sendRequest("/admin/notifications", {
       method: "POST",
       body: JSON.stringify(data),
     });
   }
-};
+}
 
 export const api = new APIServices();

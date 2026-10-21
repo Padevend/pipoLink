@@ -40,7 +40,7 @@ function parseEnv(content) {
     // Séparer sur le PREMIER "=" uniquement (la valeur peut contenir des "=")
     const idx = line.indexOf("=");
     if (idx === -1) {
-      console.warn(`⚠️  Ligne ignorée (pas de "=") : ${rawLine}`);
+      console.warn(`Ligne ignorée (pas de "=") : ${rawLine}`);
       continue;
     }
 

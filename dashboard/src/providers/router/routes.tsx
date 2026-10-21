@@ -6,6 +6,7 @@ import { createBrowserRouter } from "react-router-dom";
 const ErrorLoyout = lazy(() => import("../layouts/ErrorLoyout"));
 const RootLayout = lazy(() => import("../layouts/RootLayout"));
 
+
 // Pages
 const LoginPage = lazy(() => import("@/pages/login/ui/login_page"));
 const HomePage = lazy(() => import("@/pages/home/ui/home_page"));
@@ -13,8 +14,9 @@ const UsersPage = lazy(() => import("@/pages/users/ui/users_page"));
 const DocumentsPage = lazy(() => import("@/pages/documents/ui/documents_page"));
 const SubscriptionsPage = lazy(() => import("@/pages/subscriptions/ui/subscriptions_page"));
 const PaymentsPage = lazy(() => import("@/pages/payments/ui/payments_page"));
-const UpdatesPage = lazy(() => import("@/pages/updates/ui/updates_page"));
+// const UpdatesPage = lazy(() => import("@/pages/updates/ui/updates_page"));
 const NotificationsPage = lazy(() => import("@/pages/notifications/ui/notifications_page"));
+const PromoPage = lazy(() => import("@/pages/promo/ui/promo_page"));
 
 const router = createBrowserRouter([
     {
@@ -51,9 +53,13 @@ const router = createBrowserRouter([
                         element: <PaymentsPage />
                     },
                     {
-                        path: "updates",
-                        element: <UpdatesPage />
+                        path: "promo",
+                        element: <PromoPage />
                     },
+                    // {
+                    //     path: "updates",
+                    //     element: <UpdatesPage />
+                    // },
                     {
                         path: "notifications",
                         element: <NotificationsPage />

@@ -2,19 +2,15 @@ import { useState } from "react";
 import { useDocuments } from "../model/use_documents";
 import { useToast } from "@/providers/toast/toastContext";
 import type { Document } from "@/share/lib/api";
+
 import {
-  Search,
-  Trash2,
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-  Calendar,
-  User,
-  Download,
-  FileIcon,
-  AlertTriangle,
-  DatabaseZap
+  Search, Trash2, ChevronLeft, ChevronRight,
+  Loader2, Calendar, User, Download,
+  FileIcon, DatabaseZap, Activity, FileWarning
 } from "lucide-react";
+import { Input } from "@/share/ui/Input";
+import { Button } from "@/share/ui/Button";
+import { DocumentsSkeleton } from "./skeleton";
 
 export function DocumentsFeat() {
   const [page, setPage] = useState(1);
@@ -22,21 +18,14 @@ export function DocumentsFeat() {
   const [search, setSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Deletion Modal state
   const [docToDelete, setDocToDelete] = useState<Document | null>(null);
 
   const { showToast } = useToast();
   
   const {
-    documents,
-    total,
-    totalPages,
-    loading,
-    error,
-    deleteDocument,
-    actionLoading,
-    enqueueIngestion,
-    ingestionLoading,
+    documents, total, totalPages, loading, error,
+    deleteDocument, actionLoading,
+    enqueueIngestion, ingestionLoading,
   } = useDocuments({ page, limit, search: searchQuery });
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -48,25 +37,17 @@ export function DocumentsFeat() {
   const handleIngestion = async () => {
     try {
       await enqueueIngestion();
-    } catch {
-      // Error feedback is handled by the mutation.
-    }
+      showToast({ type: "success", message: "Ingestion lancée avec succès." });
+    } catch { /* Géré par le hook */ }
   };
-
 
   const executeDelete = async () => {
     if (!docToDelete) return;
     try {
       await deleteDocument(docToDelete.id);
-      showToast({
-        type: "success",
-        message: `Le document "${docToDelete.title}" a été supprimé et l'auteur notifié.`,
-        duration: 4000,
-      });
+      showToast({ type: "success", message: `Document supprimé.`, duration: 4000 });
       setDocToDelete(null);
-    } catch {
-      // Error handled by hook
-    }
+    } catch { /* Géré par le hook */ }
   };
 
   const formatFileSize = (bytes: number) => {
@@ -78,151 +59,169 @@ export function DocumentsFeat() {
   };
 
   const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    return new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(dateStr));
   };
 
-  return (
-    <div className="space-y-8 select-none">
-      {/* HEADER */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-800">
-          Modération de la Bibliothèque
-        </h1>
-        <p className="text-xs text-zinc-500 font-medium mt-1">
-          Surveillez, recherchez et supprimez les documents partagés non conformes
-        </p>
-      </div>
+  // Affichage du Skeleton au chargement initial
+  if (loading && documents.length === 0 && !searchQuery) {
+    return <DocumentsSkeleton />;
+  }
 
+  return (
+    <div className="space-y-10 text-zinc-900 pb-10">
+      
+      {/* HEADER */}
+      <header>
+        <h1 className="text-3xl font-bold tracking-tight">Bibliothèque</h1>
+        <p className="text-sm font-medium text-zinc-500 mt-2">
+          Surveillez, analysez par IA et modérez les documents partagés.
+        </p>
+      </header>
+
+      {/* ERROR BANNER */}
       {error && (
-        <div className="bg-red-50 border border-red-100 text-red-700 text-xs font-semibold p-4 rounded-xl">
-          Erreur lors du chargement des documents: {(error as any).message || "Problème réseau."}
+        <div className="bg-zinc-900 text-white px-6 py-4 rounded-[2rem] font-medium flex items-center gap-3">
+          <Activity size={20} />
+          <span>Impossible de charger les documents : {(error as any).message || "Erreur réseau."}</span>
         </div>
       )}
 
-      {/* SEARCH BAR */}
-      <div className="bg-white/60 border border-white/80 rounded-2xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between shadow-sm shadow-zinc-200/40 backdrop-blur-xl">
-        <form onSubmit={handleSearchSubmit} className="w-full md:max-w-md relative group">
-          <input
+      {/* TOOLBAR (Search & Actions) */}
+      <div className="bg-zinc-50 rounded-[2rem] p-6 flex flex-col xl:flex-row gap-6 items-center justify-between">
+        <form onSubmit={handleSearchSubmit} className="w-full xl:max-w-md">
+          <Input
             type="text"
-            placeholder="Rechercher par titre, cours, filière..."
+            placeholder="Rechercher (titre, filière)..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-zinc-200 bg-white/50 py-2 pl-10 pr-4 text-sm text-zinc-800 placeholder-zinc-400 focus:border-orange-500/50 focus:bg-white focus:ring-1 focus:ring-orange-500/20 focus:outline-none transition-all duration-200"
+            leftIcon={<Search size={20} />}
           />
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-zinc-400 group-focus-within:text-orange-500 transition-colors">
-            <Search size={16} strokeWidth={1.5} />
-          </div>
           <button type="submit" className="hidden" />
         </form>
         
-        <button
-          onClick={handleIngestion}
-          disabled={ingestionLoading}
-          className="inline-flex items-center gap-2 rounded-xl border border-orange-500/20 bg-orange-500 px-3.5 py-2 text-xs font-bold text-white shadow-sm shadow-orange-500/20 transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {ingestionLoading ? <Loader2 size={14} className="animate-spin" /> : <DatabaseZap size={14} />}
-          <span>Ingérer les documents en attente</span>
-        </button>
-        <div className="text-xs text-zinc-400 font-bold uppercase tracking-wider">
-          {total} document(s) trouvé(s)
+        <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
+          <Button
+            variant="primary"
+            onClick={handleIngestion}
+            isLoading={ingestionLoading}
+            leftIcon={<DatabaseZap size={18} />}
+            className="w-full sm:w-auto"
+          >
+            Lancer l'Ingestion IA
+          </Button>
+          <div className="flex items-center justify-center px-6 h-14 bg-white rounded-full text-sm font-semibold text-zinc-500 shrink-0">
+            {total} résultat(s)
+          </div>
         </div>
       </div>
 
-      {/* DOCUMENTS TABLE CARD */}
-      <div className="bg-white/60 border border-white/80 rounded-2xl overflow-hidden shadow-sm shadow-zinc-200/40 backdrop-blur-xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+      {/* DOCUMENTS TABLE */}
+      <div className="bg-zinc-50 rounded-[2rem] overflow-hidden">
+        <div className="overflow-x-auto px-8 pb-8 pt-4">
+          <table className="w-full text-left border-collapse mt-4">
             <thead>
-              <tr className="bg-zinc-50/50 border-b border-zinc-200/60 text-zinc-400 text-[10px] font-bold uppercase tracking-wider">
-                <th className="px-6 py-3.5">Document</th>
-                <th className="px-6 py-3.5">Taille / Format</th>
-                <th className="px-6 py-3.5">Partagé par</th>
-                <th className="px-6 py-3.5">Téléchargements</th>
-                <th className="px-6 py-3.5">Date de Partage</th>
-                <th className="px-6 py-3.5">IA</th>
-                <th className="px-6 py-3.5 text-right">Actions</th>
+              <tr className="text-zinc-400 text-xs font-medium uppercase tracking-wider border-b border-zinc-200/60">
+                <th className="pb-4 font-medium">Fichier</th>
+                <th className="pb-4 font-medium hidden md:table-cell">Méta</th>
+                <th className="pb-4 font-medium hidden lg:table-cell">Statistiques</th>
+                <th className="pb-4 font-medium hidden xl:table-cell">Statut IA</th>
+                <th className="pb-4 font-medium text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100">
-              {loading ? (
+            
+            <tbody className="divide-y divide-zinc-200/50">
+              {loading && documents.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-zinc-400">
-                    <div className="flex justify-center items-center space-x-2">
-                      <Loader2 className="animate-spin text-orange-500" size={16} strokeWidth={2.5} />
-                      <span className="text-xs font-semibold">Chargement de la bibliothèque...</span>
-                    </div>
+                  <td colSpan={5} className="py-16 text-center">
+                     <Loader2 className="animate-spin mx-auto text-zinc-900" size={24} />
                   </td>
                 </tr>
               ) : documents.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-zinc-400 text-xs font-medium">
-                    Aucun document trouvé.
+                  <td colSpan={5} className="py-16 text-center">
+                    <div className="flex flex-col items-center gap-3 text-zinc-400">
+                      <div className="bg-white p-4 rounded-full">
+                        <FileWarning size={32} className="text-zinc-300" />
+                      </div>
+                      <p className="text-sm font-medium text-zinc-500">Aucun document trouvé.</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
                 documents.map((doc) => (
-                  <tr key={doc.id} className="hover:bg-white/40 transition-colors duration-150">
-                    <td className="px-6 py-4 max-w-sm">
-                      <div className="flex items-start space-x-3">
-                        <div className="mt-0.5 h-8 w-8 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-500 flex-shrink-0">
-                          <FileIcon size={14} strokeWidth={1.5} />
+                  <tr key={doc.id} className="group hover:bg-white transition-colors">
+                    
+                    {/* FICHIER */}
+                    <td className="py-4 pr-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-12 w-12 rounded-full bg-white flex items-center justify-center text-zinc-500 shrink-0">
+                          <FileIcon size={20} />
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold text-zinc-800 truncate" title={doc.title}>
+                        <div className="min-w-0 max-w-[200px] sm:max-w-xs">
+                          <p className="text-sm font-semibold truncate text-zinc-900" title={doc.title}>
                             {doc.title}
                           </p>
-                          <p className="text-[10px] font-medium text-zinc-400 truncate mt-0.5" title={doc.description || ""}>
+                          <p className="text-xs text-zinc-500 truncate mt-0.5">
                             {doc.description || "Aucune description"}
                           </p>
                         </div>
                       </div>
                     </td>
 
-                    <td className="px-6 py-4 text-xs font-medium">
-                      <div className="space-y-0.5">
-                        <p className="text-zinc-700 font-semibold">{formatFileSize(doc.fileSize)}</p>
-                        <p className="text-[10px] text-zinc-400 font-mono uppercase tracking-wider">{doc.mimeType.split("/")[1] || doc.mimeType}</p>
+                    {/* META (Taille, Format, Date) - Caché sur mobile */}
+                    <td className="py-4 pr-4 hidden md:table-cell">
+                      <div className="flex items-center gap-2 text-sm font-medium text-zinc-900">
+                        <span>{formatFileSize(doc.fileSize)}</span>
+                        <span className="text-zinc-300">•</span>
+                        <span className="text-xs uppercase bg-white px-2 py-0.5 rounded-full">{doc.mimeType.split("/")[1] || "FILE"}</span>
+                      </div>
+                      <p className="text-xs text-zinc-500 flex items-center gap-1 mt-1.5">
+                        <Calendar size={12} /> {formatDate(doc.createdAt)}
+                      </p>
+                    </td>
+
+                    {/* STATISTIQUES (Auteur, DLs) - Caché sur tablette */}
+                    <td className="py-4 pr-4 hidden lg:table-cell">
+                      <div className="space-y-1.5 text-sm text-zinc-600">
+                        <div className="flex items-center gap-2">
+                          <User size={14} className="text-zinc-400" />
+                          <span className="truncate max-w-[120px]">{doc.uploadedBy?.displayName || "Inconnu"}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                          <Download size={14} className="text-zinc-400" />
+                          <span>{doc.downloadCount} téléchargements</span>
+                        </div>
                       </div>
                     </td>
 
-                    <td className="px-6 py-4 text-xs font-medium text-zinc-600">
-                      <div className="flex items-center space-x-2">
-                        <User size={13} className="text-zinc-400" />
-                        <span className="truncate">{doc.uploadedBy?.displayName || "Inconnu"}</span>
-                      </div>
+                    {/* STATUT IA - Caché sur petits écrans */}
+                    <td className="py-4 pr-4 hidden xl:table-cell">
+                      {doc.isIngested ? (
+                        <span className="bg-zinc-900 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                          Ingéré
+                        </span>
+                      ) : doc.ingestionStatus === "PROCESSING" ? (
+                        <span className="bg-zinc-200 text-zinc-900 px-3 py-1 rounded-full text-xs font-semibold flex items-center w-max gap-1">
+                          <Loader2 size={10} className="animate-spin" /> En cours
+                        </span>
+                      ) : doc.ingestionStatus === "FAILED" ? (
+                        <span className="border-2 border-zinc-900 text-zinc-900 px-3 py-1 rounded-full text-xs font-semibold">
+                          Échec
+                        </span>
+                      ) : (
+                        <span className="border-2 border-zinc-200 text-zinc-500 px-3 py-1 rounded-full text-xs font-semibold">
+                          En attente
+                        </span>
+                      )}
                     </td>
 
-                    <td className="px-6 py-4 text-xs font-medium text-zinc-600">
-                      <div className="flex items-center space-x-1.5">
-                        <Download size={13} className="text-zinc-400" />
-                        <span>{doc.downloadCount}</span>
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-bold ${doc.isIngested ? "bg-emerald-50 text-emerald-700" : doc.ingestionStatus === "FAILED" ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700"}`}>
-                        {doc.isIngested ? "Ingéré" : doc.ingestionStatus === "PROCESSING" ? "En cours" : doc.ingestionStatus === "FAILED" ? "Échec" : "En attente"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-zinc-500 text-xs font-medium">
-                      <div className="flex items-center space-x-1.5">
-                        <Calendar size={13} className="text-zinc-400" />
-                        <span>{formatDate(doc.createdAt)}</span>
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4 text-right">
+                    {/* ACTIONS */}
+                    <td className="py-4 text-right">
                       <button
                         onClick={() => setDocToDelete(doc)}
-                        className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-bold text-orange-600 bg-orange-500/5 border border-orange-500/10 hover:bg-orange-500/10 hover:border-orange-500/20 transition-all duration-200 cursor-pointer active:scale-[0.97]"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold text-zinc-900 bg-zinc-200 hover:bg-zinc-300 transition-colors"
                       >
-                        <Trash2 size={13} />
-                        <span>Supprimer</span>
+                        <Trash2 size={14} /> <span className="hidden sm:inline">Supprimer</span>
                       </button>
                     </td>
                   </tr>
@@ -234,62 +233,48 @@ export function DocumentsFeat() {
 
         {/* PAGINATION */}
         {totalPages > 1 && (
-          <div className="px-6 py-3 border-t border-zinc-200/60 flex items-center justify-between bg-zinc-50/30 backdrop-blur-md">
-            <span className="text-xs font-medium text-zinc-400">
+          <div className="px-8 py-4 border-t border-zinc-200/60 flex items-center justify-between bg-zinc-50">
+            <span className="text-sm font-medium text-zinc-500">
               Page {page} sur {totalPages}
             </span>
-            <div className="flex items-center space-x-1.5">
+            <div className="flex gap-2">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="p-1.5 rounded-xl border border-zinc-200 bg-white text-zinc-500 hover:text-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-50 transition-all cursor-pointer shadow-sm"
+                className="h-10 w-10 flex items-center justify-center rounded-full bg-white text-zinc-900 hover:bg-zinc-200 disabled:opacity-30 transition-colors"
               >
-                <ChevronLeft size={14} />
+                <ChevronLeft size={18} />
               </button>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="p-1.5 rounded-xl border border-zinc-200 bg-white text-zinc-500 hover:text-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-50 transition-all cursor-pointer shadow-sm"
+                className="h-10 w-10 flex items-center justify-center rounded-full bg-white text-zinc-900 hover:bg-zinc-200 disabled:opacity-30 transition-colors"
               >
-                <ChevronRight size={14} />
+                <ChevronRight size={18} />
               </button>
             </div>
           </div>
         )}
       </div>
 
-      {/* CONFIRMATION MODAL */}
+      {/* MODAL DE SUPPRESSION */}
       {docToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/20 backdrop-blur-md">
-          <div className="w-full max-w-md bg-white/90 border border-white rounded-3xl p-6 shadow-2xl backdrop-blur-xl relative animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-600 mb-4 border border-orange-500/20">
-              <AlertTriangle size={20} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white rounded-[2rem] p-8 shadow-2xl">
+            <div className="h-12 w-12 rounded-full bg-zinc-100 flex items-center justify-center mb-6">
+              <Trash2 size={24} className="text-zinc-900" />
             </div>
-            
-            <h3 className="text-base font-bold text-zinc-800">Supprimer ce document ?</h3>
-            
-            <p className="mt-2 text-xs text-zinc-500 font-medium leading-relaxed">
-              Êtes-vous sûr de vouloir supprimer le document{" "}
-              <span className="font-bold text-zinc-800">"{docToDelete.title}"</span> ?
-              Cette action est irréversible, le fichier sera retiré de la bibliothèque et l'auteur recevra une notification explicative.
+            <h3 className="text-xl font-bold text-zinc-900 mb-2">Supprimer le document ?</h3>
+            <p className="text-sm text-zinc-500 mb-8 leading-relaxed">
+              Le document <span className="font-semibold text-zinc-900">"{docToDelete.title}"</span> sera supprimé de la base de données. L'auteur sera notifié. Cette action est irréversible.
             </p>
-
-            <div className="mt-6 flex items-center justify-end space-x-2">
-              <button
-                onClick={() => setDocToDelete(null)}
-                disabled={actionLoading}
-                className="px-4 py-2 text-xs font-bold text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 rounded-xl transition-all cursor-pointer"
-              >
+            <div className="flex gap-3">
+              <Button variant="secondary" fullWidth onClick={() => setDocToDelete(null)} disabled={actionLoading}>
                 Annuler
-              </button>
-              <button
-                onClick={executeDelete}
-                disabled={actionLoading}
-                className="flex items-center space-x-1.5 px-4 py-2 text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 rounded-xl shadow-md shadow-orange-500/10 transition-all cursor-pointer"
-              >
-                {actionLoading && <Loader2 size={13} className="animate-spin" />}
-                <span>Supprimer le document</span>
-              </button>
+              </Button>
+              <Button variant="primary" fullWidth onClick={executeDelete} isLoading={actionLoading}>
+                Supprimer
+              </Button>
             </div>
           </div>
         </div>

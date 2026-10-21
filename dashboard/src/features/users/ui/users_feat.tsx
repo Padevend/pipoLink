@@ -3,19 +3,22 @@ import { useUsers } from "../model/use_users";
 import { useAuth } from "@/providers/auth/authContext";
 import { useToast } from "@/providers/toast/toastContext";
 import type { User } from "@/share/lib/api";
+
 import {
-  Search,
-  UserX,
-  UserCheck,
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-  Calendar,
-  Key,
-  Mail,
-  AlertTriangle,
-  Shield,
+  Search, UserX, UserCheck, ChevronLeft, ChevronRight,
+  Loader2, Calendar, Key, Mail, Shield
 } from "lucide-react";
+import { Input } from "@/share/ui/Input";
+import { UsersSkeleton } from "./skeleton";
+import { Button } from "@/share/ui/Button";
+import { Select } from "@/share/ui/Select";
+
+// Les données pour le Select
+const roleOptions = [
+  { value: "student", label: "Étudiant", desc: "Accès de base à la plateforme" },
+  { value: "staff", label: "Staff", desc: "Peut gérer certains contenus" },
+  { value: "admin", label: "Admin", desc: "Accès total, zone dangereuse" },
+];
 
 export function UsersFeat() {
   const [page, setPage] = useState(1);
@@ -23,7 +26,7 @@ export function UsersFeat() {
   const [search, setSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   
-  // Confirmation Modals State
+  // États des modales
   const [userToBan, setUserToBan] = useState<User | null>(null);
   const [userToRestore, setUserToRestore] = useState<User | null>(null);
 
@@ -31,14 +34,8 @@ export function UsersFeat() {
   const { user: currentUser } = useAuth();
   
   const {
-    users,
-    total,
-    totalPages,
-    loading,
-    banUser,
-    restoreUser,
-    updateUserRole,
-    actionLoading,
+    users, total, totalPages, loading,
+    banUser, restoreUser, updateUserRole, actionLoading,
   } = useUsers({ page, limit, search: searchQuery });
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -47,217 +44,191 @@ export function UsersFeat() {
     setSearchQuery(search.trim());
   };
 
-  const handleRoleChange = async (userId: string, targetUser: User, newRole: string) => {
+  const handleRoleChange = async (userId: string, newRole: string) => {
     if (userId === currentUser?.id) {
-      showToast({
-        type: "error",
-        message: "Vous ne pouvez pas modifier votre propre rôle.",
-        duration: 4000,
-      });
+      showToast({ type: "error", message: "Impossible de modifier votre propre rôle.", duration: 4000 });
       return;
     }
     try {
       await updateUserRole({ userId, role: newRole });
-      showToast({
-        type: "success",
-        message: `Rôle de ${targetUser.displayName || targetUser.username} mis à jour en "${newRole}".`,
-        duration: 4000,
-      });
-    } catch {
-      // Error handled by query hook
-    }
+      showToast({ type: "success", message: `Rôle mis à jour avec succès.`, duration: 4000 });
+    } catch { /* Géré par le hook */ }
   };
 
   const executeBan = async () => {
     if (!userToBan) return;
     try {
       await banUser(userToBan.id);
-      showToast({
-        type: "success",
-        message: `L'utilisateur ${userToBan.displayName || userToBan.username} a été banni et notifié.`,
-        duration: 4000,
-      });
+      showToast({ type: "success", message: `Compte suspendu.`, duration: 4000 });
       setUserToBan(null);
-    } catch {
-      // Error handled by query hook
-    }
+    } catch { /* Géré par le hook */ }
   };
 
   const executeRestore = async () => {
     if (!userToRestore) return;
     try {
       await restoreUser(userToRestore.id);
-      showToast({
-        type: "success",
-        message: `L'utilisateur ${userToRestore.displayName || userToRestore.username} a été rétabli.`,
-        duration: 4000,
-      });
+      showToast({ type: "success", message: `Compte rétabli.`, duration: 4000 });
       setUserToRestore(null);
-    } catch {
-      // Error handled by query hook
-    }
+    } catch { /* Géré par le hook */ }
   };
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return "N/A";
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    return new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(dateStr));
   };
 
-  return (
-    <div className="space-y-8 select-none">
-      {/* HEADER */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-800">
-          Comptes Utilisateurs
-        </h1>
-        <p className="text-xs text-zinc-500 font-medium mt-1">
-          Recherchez et gérez les rôles, statuts et exclusions de vos membres
-        </p>
-      </div>
+  if (loading && users.length === 0 && !searchQuery) {
+    return <UsersSkeleton />;
+  }
 
-      {/* SEARCH BAR */}
-      <div className="bg-white/60 border border-white/80 rounded-2xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between shadow-sm shadow-zinc-200/40 backdrop-blur-xl">
-        <form onSubmit={handleSearchSubmit} className="w-full md:max-w-md relative group">
-          <input
+  return (
+    <div className="space-y-10 text-zinc-900 pb-10">
+      
+      {/* HEADER */}
+      <header>
+        <h1 className="text-3xl font-bold tracking-tight">Comptes Utilisateurs</h1>
+        <p className="text-sm font-medium text-zinc-500 mt-2">
+          Gérez les accès, les rôles et les exclusions de vos membres.
+        </p>
+      </header>
+
+      {/* SEARCH BAR (Flat Design) */}
+      <div className="bg-zinc-50 rounded-[2rem] p-6 flex flex-col md:flex-row gap-6 items-center justify-between">
+        <form onSubmit={handleSearchSubmit} className="w-full md:max-w-md">
+          <Input
             type="text"
-            placeholder="Rechercher par nom, email, matricule ou ID..."
+            placeholder="Rechercher (nom, email, matricule)..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-zinc-200 bg-white/50 py-2 pl-10 pr-4 text-sm text-zinc-800 placeholder-zinc-400 focus:border-orange-500/50 focus:bg-white focus:ring-1 focus:ring-orange-500/20 focus:outline-none transition-all duration-200"
+            leftIcon={<Search size={20} />}
           />
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-zinc-400 group-focus-within:text-orange-500 transition-colors">
-            <Search size={16} strokeWidth={1.5} />
-          </div>
           <button type="submit" className="hidden" />
         </form>
         
-        <div className="text-xs text-zinc-400 font-bold uppercase tracking-wider">
-          {total} utilisateur(s) trouvé(s)
+        <div className="text-sm font-semibold text-zinc-500 bg-white px-4 py-2 rounded-full">
+          {total} résultat(s)
         </div>
       </div>
 
-      {/* USERS TABLE CARD */}
-      <div className="bg-white/60 border border-white/80 rounded-2xl overflow-hidden shadow-sm shadow-zinc-200/40 backdrop-blur-xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+      {/* USERS TABLE */}
+      <div className="bg-zinc-50 rounded-[2rem]">
+        <div className="px-8 pb-8 pt-4">
+          <table className="w-full text-left border-collapse mt-4">
             <thead>
-              <tr className="bg-zinc-50/50 border-b border-zinc-200/60 text-zinc-400 text-[10px] font-bold uppercase tracking-wider">
-                <th className="px-6 py-3.5">Utilisateur</th>
-                <th className="px-6 py-3.5">Matricule / ID</th>
-                <th className="px-6 py-3.5">Rôle (Promotion / Rétrogradation)</th>
-                <th className="px-6 py-3.5">Statut</th>
-                <th className="px-6 py-3.5">Date de Création</th>
-                <th className="px-6 py-3.5 text-right">Actions</th>
+              <tr className="text-zinc-400 text-xs font-medium uppercase tracking-wider border-b border-zinc-200/60">
+                <th className="pb-4 font-medium">Utilisateur</th>
+                <th className="pb-4 font-medium hidden md:table-cell">Identification</th>
+                <th className="pb-4 font-medium hidden lg:table-cell">Rôle</th>
+                <th className="pb-4 font-medium">Statut</th>
+                <th className="pb-4 font-medium hidden xl:table-cell">Création</th>
+                <th className="pb-4 font-medium text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100">
-              {loading ? (
+            
+            <tbody className="divide-y divide-zinc-200/50">
+              {loading && users.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-zinc-400">
-                    <div className="flex justify-center items-center space-x-2">
-                      <Loader2 className="animate-spin text-orange-500" size={16} strokeWidth={2.5} />
-                      <span className="text-xs font-semibold">Chargement des comptes...</span>
-                    </div>
+                  <td colSpan={6} className="py-16 text-center">
+                     <Loader2 className="animate-spin mx-auto text-zinc-900" size={24} />
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-zinc-400 text-xs font-medium">
-                    Aucun utilisateur ne correspond à votre recherche.
+                  <td colSpan={6} className="py-16 text-center">
+                    <div className="flex flex-col items-center gap-3 text-zinc-400">
+                      <div className="bg-white p-4 rounded-full">
+                        <UserX size={32} className="text-zinc-300" />
+                      </div>
+                      <p className="text-sm font-medium text-zinc-500">Aucun utilisateur trouvé.</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
                 users.map((u) => (
-                  <tr key={u.id} className="hover:bg-white/40 transition-colors duration-150">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="h-8 w-8 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-[11px] font-bold text-zinc-600 overflow-hidden flex-shrink-0">
+                  <tr key={u.id} className="group hover:bg-white transition-colors">
+                    
+                    {/* UTILISATEUR */}
+                    <td className="py-4 pr-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center font-bold text-sm overflow-hidden shrink-0">
                           {u.displayName ? u.displayName.substring(0, 2).toUpperCase() : u.username.substring(0, 2).toUpperCase()}
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold text-zinc-800 truncate">{u.displayName || "Utilisateur"}</p>
-                          <p className="text-[10px] font-medium text-zinc-400 truncate flex items-center gap-1 mt-0.5">
-                            <Mail size={11} className="text-zinc-400" />
-                            {u.email}
+                        <div>
+                          <p className="text-sm font-semibold truncate max-w-[150px]">{u.displayName || "Utilisateur"}</p>
+                          <p className="text-xs text-zinc-500 flex items-center gap-1 mt-0.5 truncate max-w-[150px]">
+                            <Mail size={12} /> {u.email}
                           </p>
                         </div>
                       </div>
                     </td>
 
-                    <td className="px-6 py-4 text-xs font-medium">
-                      <div className="space-y-0.5">
-                        <div className="flex items-center space-x-1.5 text-zinc-600">
-                          <Key size={12} className="text-zinc-400" />
-                          <span>{u.matricule || "Aucun matricule"}</span>
-                        </div>
-                        <p className="text-[10px] text-zinc-400 font-mono select-all">ID: {u.id}</p>
+                    {/* IDENTIFICATION (Caché sur mobile) */}
+                    <td className="py-4 pr-4 hidden md:table-cell">
+                      <div className="flex items-center gap-2 text-sm font-medium text-zinc-900">
+                        <Key size={14} className="text-zinc-400" />
+                        <span>{u.matricule || "—"}</span>
+                      </div>
+                      <p className="text-[10px] text-zinc-400 font-mono mt-1">ID: {u.id.substring(0,8)}...</p>
+                    </td>
+
+                    {/* RÔLE (Caché sur tablette/mobile) */}
+                    <td className="py-4 pr-4 hidden lg:table-cell">
+                      <div className="flex items-center gap-2">
+                        <Select 
+                            data={roleOptions}
+                            value={u.role}
+                            disabled={actionLoading || u.id === currentUser?.id}
+                            onChange={(newRole) => handleRoleChange(u.id, newRole)}
+                            leftIcon={<Shield size={18} />}
+                          />
                       </div>
                     </td>
 
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-2">
-                        <Shield size={13} className="text-zinc-400" />
-                        <select
-                          value={u.role}
-                          disabled={actionLoading || u.id === currentUser?.id}
-                          onChange={(e) => handleRoleChange(u.id, u, e.target.value)}
-                          className="bg-white/80 border border-zinc-200/80 rounded-xl px-2.5 py-1.5 text-xs font-bold text-zinc-700 focus:outline-none focus:ring-1 focus:ring-orange-500/20 focus:border-orange-500 cursor-pointer disabled:opacity-50 transition-all"
-                        >
-                          <option value="student">Student (Étudiant)</option>
-                          <option value="staff">Staff (Personnel)</option>
-                          <option value="admin">Admin (Administrateur)</option>
-                        </select>
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4">
+                    {/* STATUT (Monochrome Flat Badges) */}
+                    <td className="py-4 pr-4">
                       {u.isExcluded ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border bg-orange-500/10 text-orange-600 border-orange-500/20">
-                          Banni / Exclu
+                        <span className="bg-zinc-900 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                          Banni
                         </span>
                       ) : u.isActive ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border bg-zinc-100 text-zinc-700 border-zinc-200">
+                        <span className="bg-zinc-200 text-zinc-900 px-3 py-1 rounded-full text-xs font-semibold">
                           Actif
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border bg-zinc-100 text-zinc-400 border-zinc-200 border-dashed">
-                          En attente OTP
+                        <span className="border-2 border-zinc-200 text-zinc-500 px-3 py-1 rounded-full text-xs font-semibold">
+                          En attente
                         </span>
                       )}
                     </td>
 
-                    <td className="px-6 py-4 text-zinc-500 text-xs font-medium">
-                      <div className="flex items-center space-x-1.5">
-                        <Calendar size={13} className="text-zinc-400" />
+                    {/* CRÉATION (Caché sur petits écrans) */}
+                    <td className="py-4 pr-4 hidden xl:table-cell text-sm text-zinc-500">
+                      <div className="flex items-center gap-2">
+                        <Calendar size={14} />
                         <span>{formatDate(u.createdAt)}</span>
                       </div>
                     </td>
 
-                    <td className="px-6 py-4 text-right">
+                    {/* ACTIONS */}
+                    <td className="py-4 text-right">
                       {u.role === "admin" ? (
-                        <span className="text-[11px] text-zinc-400 font-medium italic pr-2">Protégé</span>
+                        <span className="text-xs text-zinc-400 font-medium italic pr-4">Protégé</span>
                       ) : u.isExcluded ? (
                         <button
                           onClick={() => setUserToRestore(u)}
                           disabled={actionLoading}
-                          className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-bold text-zinc-700 bg-white border border-zinc-200 hover:border-zinc-300 shadow-sm transition-all duration-200 cursor-pointer active:scale-[0.97] disabled:opacity-50"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold text-white bg-zinc-900 hover:bg-black transition-colors disabled:opacity-50"
                         >
-                          <UserCheck size={13} className="text-zinc-500" />
-                          <span>Rétablir</span>
+                          <UserCheck size={14} /> <span className="hidden sm:inline">Rétablir</span>
                         </button>
                       ) : (
                         <button
                           onClick={() => setUserToBan(u)}
                           disabled={actionLoading}
-                          className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-bold text-orange-600 bg-orange-500/5 border border-orange-500/10 hover:bg-orange-500/10 hover:border-orange-500/20 transition-all duration-200 cursor-pointer active:scale-[0.97] disabled:opacity-50"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold text-zinc-900 bg-zinc-200 hover:bg-zinc-300 transition-colors disabled:opacity-50"
                         >
-                          <UserX size={13} />
-                          <span>Bannir</span>
+                          <UserX size={14} /> <span className="hidden sm:inline">Bannir</span>
                         </button>
                       )}
                     </td>
@@ -270,98 +241,71 @@ export function UsersFeat() {
 
         {/* PAGINATION */}
         {totalPages > 1 && (
-          <div className="px-6 py-3 border-t border-zinc-200/60 flex items-center justify-between bg-zinc-50/30 backdrop-blur-md">
-            <span className="text-xs font-medium text-zinc-400">
+          <div className="px-8 py-4 border-t border-zinc-200/60 flex items-center justify-between bg-zinc-50">
+            <span className="text-sm font-medium text-zinc-500">
               Page {page} sur {totalPages}
             </span>
-            <div className="flex items-center space-x-1.5">
+            <div className="flex gap-2">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="p-1.5 rounded-xl border border-zinc-200 bg-white text-zinc-500 hover:text-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-50 transition-all cursor-pointer shadow-sm"
+                className="h-10 w-10 flex items-center justify-center rounded-full bg-white text-zinc-900 hover:bg-zinc-200 disabled:opacity-30 transition-colors"
               >
-                <ChevronLeft size={14} />
+                <ChevronLeft size={18} />
               </button>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="p-1.5 rounded-xl border border-zinc-200 bg-white text-zinc-500 hover:text-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-50 transition-all cursor-pointer shadow-sm"
+                className="h-10 w-10 flex items-center justify-center rounded-full bg-white text-zinc-900 hover:bg-zinc-200 disabled:opacity-30 transition-colors"
               >
-                <ChevronRight size={14} />
+                <ChevronRight size={18} />
               </button>
             </div>
           </div>
         )}
       </div>
 
-      {/* CONFIRMATION MODALS */}
+      {/* MODAL : BANNISSEMENT */}
       {userToBan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/20 backdrop-blur-md animate-in fade-in duration-150">
-          <div className="w-full max-w-md bg-white/90 border border-white rounded-3xl p-6 shadow-2xl backdrop-blur-xl relative animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-600 mb-4 border border-orange-500/20">
-              <AlertTriangle size={20} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white rounded-[2rem] p-8 shadow-2xl">
+            <div className="h-12 w-12 rounded-full bg-zinc-100 flex items-center justify-center mb-6">
+              <UserX size={24} className="text-zinc-900" />
             </div>
-            
-            <h3 className="text-base font-bold text-zinc-800">Suspendre le compte ?</h3>
-            
-            <p className="mt-2 text-xs text-zinc-500 font-medium leading-relaxed">
-              Êtes-vous sûr de vouloir suspendre le compte de{" "}
-              <span className="font-bold text-zinc-800">{userToBan.displayName || userToBan.username}</span> ?
-              Cette action révoquera immédiatement tous ses accès en cours et lui enverra une notification de bannissement.
+            <h3 className="text-xl font-bold text-zinc-900 mb-2">Suspendre ce compte ?</h3>
+            <p className="text-sm text-zinc-500 mb-8 leading-relaxed">
+              Êtes-vous sûr de vouloir bloquer <span className="font-semibold text-zinc-900">{userToBan.displayName || userToBan.username}</span> ? Cette action coupera ses accès immédiatement.
             </p>
-
-            <div className="mt-6 flex items-center justify-end space-x-2">
-              <button
-                onClick={() => setUserToBan(null)}
-                disabled={actionLoading}
-                className="px-4 py-2 text-xs font-bold text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 rounded-xl transition-all cursor-pointer"
-              >
+            <div className="flex gap-3">
+              <Button variant="secondary" fullWidth onClick={() => setUserToBan(null)} disabled={actionLoading}>
                 Annuler
-              </button>
-              <button
-                onClick={executeBan}
-                disabled={actionLoading}
-                className="flex items-center space-x-1.5 px-4 py-2 text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 rounded-xl shadow-md shadow-orange-500/10 transition-all cursor-pointer"
-              >
-                {actionLoading && <Loader2 size={13} className="animate-spin" />}
-                <span>Bannir le compte</span>
-              </button>
+              </Button>
+              <Button variant="primary" fullWidth onClick={executeBan} isLoading={actionLoading}>
+                Confirmer
+              </Button>
             </div>
           </div>
         </div>
       )}
 
+      {/* MODAL : RÉTABLISSEMENT */}
       {userToRestore && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/20 backdrop-blur-md animate-in fade-in duration-150">
-          <div className="w-full max-w-md bg-white/90 border border-white rounded-3xl p-6 shadow-2xl backdrop-blur-xl relative animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-700 mb-4 border border-zinc-200">
-              <UserCheck size={20} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white rounded-[2rem] p-8 shadow-2xl">
+            <div className="h-12 w-12 rounded-full bg-zinc-100 flex items-center justify-center mb-6">
+              <UserCheck size={24} className="text-zinc-900" />
             </div>
-            
-            <h3 className="text-base font-bold text-zinc-800">Rétablir le compte ?</h3>
-            
-            <p className="mt-2 text-xs text-zinc-500 font-medium leading-relaxed">
-              Voulez-vous rétablir le compte de{" "}
-              <span className="font-bold text-zinc-800">{userToRestore.displayName || userToRestore.username}</span> ?
-              Il pourra à nouveau se connecter à l'application et recevra une notification de rétablissement.
+            <h3 className="text-xl font-bold text-zinc-900 mb-2">Rétablir ce compte ?</h3>
+            <p className="text-sm text-zinc-500 mb-8 leading-relaxed">
+              <span className="font-semibold text-zinc-900">{userToRestore.displayName || userToRestore.username}</span> retrouvera l'intégralité de ses accès à la plateforme.
             </p>
-
-            <div className="mt-6 flex items-center justify-end space-x-2">
-              <button
-                onClick={() => setUserToRestore(null)}
-                disabled={actionLoading}
-                className="px-4 py-2 text-xs font-bold text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 rounded-xl transition-all cursor-pointer"
-              >
+            <div className="flex gap-3">
+              <Button variant="secondary" fullWidth onClick={() => setUserToRestore(null)} disabled={actionLoading}>
                 Annuler
-              </button>
-              <button
-                onClick={executeRestore}
-                disabled={actionLoading}
-                className="flex items-center space-x-1.5 px-4 py-2 text-xs font-bold text-white bg-zinc-800 hover:bg-zinc-900 rounded-xl shadow-md transition-all cursor-pointer"
-              >
-                {actionLoading && <Loader2 size={13} className="animate-spin" />}
-                <span>Rétablir le compte</span>
-              </button>
+              </Button>
+              <Button variant="primary" fullWidth onClick={executeRestore} isLoading={actionLoading}>
+                Rétablir
+              </Button>
             </div>
           </div>
         </div>

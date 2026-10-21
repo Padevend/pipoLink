@@ -1,287 +1,162 @@
 import { useHome } from "../model/use_home";
 import {
-  FileText,
-  Megaphone,
-  Activity,
-  Clock,
-  Laptop,
-  MapPin,
-  RefreshCw,
-  UserCheck,
-  Loader2,
-  Wallet,
-  CalendarDays,
-  Sparkles,
-  TrendingUp
+  FileText, Megaphone, Activity, Clock, Laptop, MapPin, 
+  RefreshCw, UserCheck, Wallet, CalendarDays, Sparkles, TrendingUp
 } from "lucide-react";
 import { getStaticUrl } from "@/share/lib/helpers";
+import { HomeSkeleton } from "./skeleton";
 
 export function HomeFeat() {
   const { stats, events, loading, error, refresh } = useHome();
 
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return d.toLocaleString("fr-FR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
-  };
+  // Formateur de date natif plus performant
+  const formatDate = (dateStr: string) => 
+    new Intl.DateTimeFormat("fr-FR", {
+      day: "2-digit", month: "2-digit", year: "numeric",
+      hour: "2-digit", minute: "2-digit"
+    }).format(new Date(dateStr));
 
-  const getActionStyle = (action: string) => {
-    switch (action) {
-      case "BAN_USER":
-      case "DELETE_DOCUMENT":
-        return "bg-orange-500/10 text-orange-600 border-orange-500/20";
-      case "LOGIN":
-      case "DEVICE_LINKED":
-      case "RESTORE_USER":
-      default:
-        return "bg-zinc-100 text-zinc-700 border-zinc-200/80";
-    }
-  };
+  const statCards = stats ? [
+    { label: "Comptes Actifs", value: stats.activeAccounts, sub: `/ ${stats.totalAccounts}`, icon: UserCheck },
+    { label: "Documents", value: stats.totalDocuments, sub: "", icon: FileText },
+    { label: "Annonces", value: stats.totalAnnouncements, sub: "", icon: Megaphone },
+    { label: "Activités", value: events?.length || 0, sub: "récentes", icon: Activity },
+    { label: "Revenu Total", value: stats.revenue.totalRevenue.toLocaleString("fr-FR"), sub: "XAF", icon: Wallet },
+    { label: "Revenu ce mois", value: stats.revenue.revenueThisMonth.toLocaleString("fr-FR"), sub: "XAF", icon: CalendarDays },
+    { label: "Abonnés Premium", value: stats.revenue.activePremium, sub: "", icon: Sparkles },
+    { label: "MRR", value: stats.revenue.mrr.toLocaleString("fr-FR"), sub: "XAF", icon: TrendingUp },
+  ] : [];
+
+  if (loading && !stats) return <HomeSkeleton />;
 
   return (
-    <div className="space-y-8 select-none">
+    <div className="space-y-10 text-zinc-900 pb-10">
+      
       {/* HEADER */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-800">
-            Supervision du Système
-          </h1>
-          <p className="text-xs text-zinc-500 font-medium mt-1">
-            Suivi en temps réel de l'activité, des connexions et des statistiques globales
+          <h1 className="text-3xl font-bold tracking-tight">Supervision</h1>
+          <p className="text-sm font-medium text-zinc-500 mt-2">
+            Vue d'ensemble de l'activité et des revenus du système.
           </p>
         </div>
         <button
           onClick={() => refresh()}
           disabled={loading}
-          className="flex items-center space-x-2 px-4 py-2 rounded-xl border border-zinc-200 bg-white/80 hover:bg-white text-zinc-600 hover:text-zinc-900 transition-all duration-200 cursor-pointer disabled:opacity-50 shadow-sm backdrop-blur-md active:scale-[0.98]"
+          className="flex items-center gap-2 h-12 px-6 rounded-full bg-zinc-900 hover:bg-black text-white font-medium transition-transform active:scale-95 disabled:opacity-50"
         >
-          <RefreshCw size={14} className={loading ? "animate-spin text-orange-500" : "text-zinc-400"} />
-          <span className="text-xs font-semibold">Actualiser</span>
+          <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+          <span>Actualiser</span>
         </button>
-      </div>
+      </header>
 
+      {/* ERROR BANNER (Monochrome Flat) */}
       {error && (
-        <div className="bg-red-50 border border-red-100 text-red-700 text-xs font-semibold p-4 rounded-xl">
-          Erreur lors du chargement des statistiques: {(error as any).message || "Problème réseau."}
+        <div className="bg-zinc-900 text-white px-6 py-4 rounded-[2rem] font-medium flex items-center gap-3">
+          <Activity size={20} />
+          <span>Impossible de charger les données : {(error as any).message || "Erreur réseau."}</span>
         </div>
       )}
 
-      {/* STATS CARDS */}
+      {/* STATS GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Card 1: Comptes Actifs */}
-        <div className="bg-white/60 border border-white/80 rounded-2xl p-6 relative overflow-hidden group shadow-sm shadow-zinc-200/40 backdrop-blur-xl transition-all duration-300 hover:border-zinc-300">
-          <div className="flex justify-between items-start">
-            <div className="space-y-2">
-              <span className="text-zinc-400 text-[10px] font-bold uppercase tracking-wider">Comptes Actifs</span>
-              <h3 className="text-2xl font-bold tracking-tight text-zinc-800">
-                {stats.activeAccounts}
-                <span className="text-xs text-zinc-400 font-medium ml-1.5">/ {stats.totalAccounts}</span>
+        {statCards.map((card, idx) => (
+          <div key={idx} className="bg-zinc-50 rounded-[2rem] p-6 flex flex-col gap-6 hover:bg-zinc-100 transition-colors">
+            <div className="flex justify-between items-start">
+              <span className="text-zinc-500 text-sm font-medium">{card.label}</span>
+              <div className="bg-white p-3 rounded-full">
+                <card.icon size={20} className="text-zinc-900" />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-3xl font-semibold tracking-tight text-zinc-900">
+                {card.value} <span className="text-base text-zinc-500 font-medium ml-1">{card.sub}</span>
               </h3>
             </div>
-            <div className="h-9 w-9 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-500 group-hover:text-orange-500 transition-colors duration-200">
-              <UserCheck size={16} />
-            </div>
           </div>
-        </div>
-
-        {/* Card 2: Documents */}
-        <div className="bg-white/60 border border-white/80 rounded-2xl p-6 relative overflow-hidden group shadow-sm shadow-zinc-200/40 backdrop-blur-xl transition-all duration-300 hover:border-zinc-300">
-          <div className="flex justify-between items-start">
-            <div className="space-y-2">
-              <span className="text-zinc-400 text-[10px] font-bold uppercase tracking-wider">Documents</span>
-              <h3 className="text-2xl font-bold tracking-tight text-zinc-800">{stats.totalDocuments}</h3>
-            </div>
-            <div className="h-9 w-9 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-500 group-hover:text-orange-500 transition-colors duration-200">
-              <FileText size={16} />
-            </div>
-          </div>
-        </div>
-
-        {/* Card 3: Annonces */}
-        <div className="bg-white/60 border border-white/80 rounded-2xl p-6 relative overflow-hidden group shadow-sm shadow-zinc-200/40 backdrop-blur-xl transition-all duration-300 hover:border-zinc-300">
-          <div className="flex justify-between items-start">
-            <div className="space-y-2">
-              <span className="text-zinc-400 text-[10px] font-bold uppercase tracking-wider">Annonces Publiées</span>
-              <h3 className="text-2xl font-bold tracking-tight text-zinc-800">{stats.totalAnnouncements}</h3>
-            </div>
-            <div className="h-9 w-9 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-500 group-hover:text-orange-500 transition-colors duration-200">
-              <Megaphone size={16} />
-            </div>
-          </div>
-        </div>
-
-        {/* Card 4: Activités */}
-        <div className="bg-white/60 border border-white/80 rounded-2xl p-6 relative overflow-hidden group shadow-sm shadow-zinc-200/40 backdrop-blur-xl transition-all duration-300 hover:border-zinc-300">
-          <div className="flex justify-between items-start">
-            <div className="space-y-2">
-              <span className="text-zinc-400 text-[10px] font-bold uppercase tracking-wider">Activités Récentes</span>
-              <h3 className="text-2xl font-bold tracking-tight text-zinc-800">{events.length}</h3>
-            </div>
-            <div className="h-9 w-9 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-500 group-hover:text-orange-500 transition-colors duration-200">
-              <Activity size={16} />
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* REVENUE CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Card 5: Revenu Total */}
-        <div className="bg-white/60 border border-white/80 rounded-2xl p-6 relative overflow-hidden group shadow-sm shadow-zinc-200/40 backdrop-blur-xl transition-all duration-300 hover:border-zinc-300">
-          <div className="flex justify-between items-start">
-            <div className="space-y-2">
-              <span className="text-zinc-400 text-[10px] font-bold uppercase tracking-wider">Revenu Total</span>
-              <h3 className="text-2xl font-bold tracking-tight text-zinc-800">
-                {stats.revenue.totalRevenue.toLocaleString("fr-FR")}
-                <span className="text-xs text-zinc-400 font-medium ml-1.5">XAF</span>
-              </h3>
-            </div>
-            <div className="h-9 w-9 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-500 group-hover:text-orange-500 transition-colors duration-200">
-              <Wallet size={16} />
-            </div>
-          </div>
-        </div>
-
-        {/* Card 6: Revenu ce mois */}
-        <div className="bg-white/60 border border-white/80 rounded-2xl p-6 relative overflow-hidden group shadow-sm shadow-zinc-200/40 backdrop-blur-xl transition-all duration-300 hover:border-zinc-300">
-          <div className="flex justify-between items-start">
-            <div className="space-y-2">
-              <span className="text-zinc-400 text-[10px] font-bold uppercase tracking-wider">Revenu ce mois</span>
-              <h3 className="text-2xl font-bold tracking-tight text-zinc-800">
-                {stats.revenue.revenueThisMonth.toLocaleString("fr-FR")}
-                <span className="text-xs text-zinc-400 font-medium ml-1.5">XAF</span>
-              </h3>
-            </div>
-            <div className="h-9 w-9 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-500 group-hover:text-orange-500 transition-colors duration-200">
-              <CalendarDays size={16} />
-            </div>
-          </div>
-        </div>
-
-        {/* Card 7: Abonnés Premium */}
-        <div className="bg-white/60 border border-white/80 rounded-2xl p-6 relative overflow-hidden group shadow-sm shadow-zinc-200/40 backdrop-blur-xl transition-all duration-300 hover:border-zinc-300">
-          <div className="flex justify-between items-start">
-            <div className="space-y-2">
-              <span className="text-zinc-400 text-[10px] font-bold uppercase tracking-wider">Abonnés Premium</span>
-              <h3 className="text-2xl font-bold tracking-tight text-zinc-800">{stats.revenue.activePremium}</h3>
-            </div>
-            <div className="h-9 w-9 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-500 group-hover:text-orange-500 transition-colors duration-200">
-              <Sparkles size={16} />
-            </div>
-          </div>
-        </div>
-
-        {/* Card 8: MRR */}
-        <div className="bg-white/60 border border-white/80 rounded-2xl p-6 relative overflow-hidden group shadow-sm shadow-zinc-200/40 backdrop-blur-xl transition-all duration-300 hover:border-zinc-300">
-          <div className="flex justify-between items-start">
-            <div className="space-y-2">
-              <span className="text-zinc-400 text-[10px] font-bold uppercase tracking-wider">MRR</span>
-              <h3 className="text-2xl font-bold tracking-tight text-zinc-800">
-                {stats.revenue.mrr.toLocaleString("fr-FR")}
-                <span className="text-xs text-zinc-400 font-medium ml-1.5">XAF</span>
-              </h3>
-            </div>
-            <div className="h-9 w-9 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-500 group-hover:text-orange-500 transition-colors duration-200">
-              <TrendingUp size={16} />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* JOURNAL DES ÉVÉNEMENTS */}
-      <div className="bg-white/60 border border-white/80 rounded-2xl overflow-hidden shadow-sm shadow-zinc-200/40 backdrop-blur-xl">
-        <div className="px-6 py-4.5 border-b border-zinc-200/60 flex items-center justify-between">
-          <div className="flex items-center space-x-2.5">
-            <Activity size={16} className="text-orange-500" />
-            <h2 className="font-bold text-zinc-800 text-sm">Journal des événements</h2>
-          </div>
-          <span className="text-[10px] bg-zinc-100 border border-zinc-200 text-zinc-500 px-2.5 py-0.5 rounded-md font-bold uppercase tracking-wider">
-            Temps réel
+      {/* EVENTS TABLE (Flat Design) */}
+      <section className="bg-zinc-50 rounded-[2rem] overflow-hidden">
+        <div className="px-8 py-6 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Journal des événements</h2>
+          <span className="bg-zinc-200 text-zinc-900 px-3 py-1 rounded-full text-xs font-semibold tracking-wide">
+            TEMPS RÉEL
           </span>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto px-8 pb-8">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-zinc-50/50 border-b border-zinc-200/60 text-zinc-400 text-[10px] font-bold uppercase tracking-wider">
-                <th className="px-6 py-3.5">Utilisateur</th>
-                <th className="px-6 py-3.5">Action</th>
-                <th className="px-6 py-3.5">Adresse IP</th>
-                <th className="px-6 py-3.5">Localisation</th>
-                <th className="px-6 py-3.5">Appareil / Client</th>
-                <th className="px-6 py-3.5">Date et Heure</th>
+              <tr className="text-zinc-400 text-xs font-medium uppercase tracking-wider border-b border-zinc-200/60">
+                <th className="pb-4 font-medium">Utilisateur</th>
+                <th className="pb-4 font-medium">Action</th>
+                <th className="pb-4 font-medium">Adresse IP</th>
+                <th className="pb-4 font-medium hidden md:table-cell">Appareil</th>
+                <th className="pb-4 font-medium hidden sm:table-cell">Date</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100">
-              {loading && events.length === 0 ? (
+            
+            <tbody className="divide-y divide-zinc-200/50">
+              {events.length === 0 ? (
+                // EMPTY STATE AMÉLIORÉ
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-zinc-400">
-                    <div className="flex justify-center items-center space-x-2">
-                      <Loader2 className="animate-spin text-orange-500" size={16} strokeWidth={2.5} />
-                      <span className="text-xs font-semibold">Chargement du journal...</span>
+                  <td colSpan={5} className="py-16 text-center">
+                    <div className="flex flex-col items-center justify-center gap-3 text-zinc-400">
+                      <div className="bg-white p-4 rounded-full">
+                        <Activity size={32} className="text-zinc-300" />
+                      </div>
+                      <p className="text-sm font-medium text-zinc-500">Aucune activité récente enregistrée.</p>
                     </div>
-                  </td>
-                </tr>
-              ) : events.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-zinc-400 text-xs font-medium">
-                    Aucun événement récent enregistré.
                   </td>
                 </tr>
               ) : (
                 events.map((event) => (
-                  <tr key={event.id} className="hover:bg-white/40 transition-colors duration-150">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="h-8 w-8 rounded-xl bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-[11px] font-bold text-zinc-600 overflow-hidden flex-shrink-0">
+                  <tr key={event.id} className="group hover:bg-white transition-colors">
+                    <td className="py-4 pr-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center font-bold text-sm overflow-hidden shrink-0">
                           {event.avatarUrl ? (
                             <img src={getStaticUrl(event.avatarUrl)} alt="" className="h-full w-full object-cover" />
                           ) : (
                             event.displayName.substring(0, 2).toUpperCase()
                           )}
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold text-zinc-800 truncate">{event.displayName}</p>
-                          <p className="text-[10px] font-medium text-zinc-400 truncate">{event.userEmail}</p>
+                        <div>
+                          <p className="text-sm font-semibold">{event.displayName}</p>
+                          <p className="text-xs text-zinc-500">{event.userEmail}</p>
                         </div>
                       </div>
                     </td>
 
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border tracking-wide ${getActionStyle(event.action)}`}>
-                        {event.action}
+                    <td className="py-4 pr-4">
+                      {/* Bages d'actions monochromes */}
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
+                        ${["BAN_USER", "DELETE_DOCUMENT"].includes(event.action) 
+                          ? "bg-zinc-900 text-white" 
+                          : "bg-zinc-200 text-zinc-900"}`}>
+                        {event.action.replace('_', ' ')}
                       </span>
                     </td>
 
-                    <td className="px-6 py-4">
-                      <code className="text-[11px] text-zinc-600 font-mono bg-zinc-100/80 px-1.5 py-0.5 rounded border border-zinc-200/60">
-                        {event.ip}
-                      </code>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-1.5 text-zinc-600 text-xs font-medium">
-                        <MapPin size={13} className="text-zinc-400 flex-shrink-0" />
-                        <span className="truncate">{event.location}</span>
+                    <td className="py-4 pr-4">
+                      <div className="flex items-center gap-2 text-sm text-zinc-500">
+                        <MapPin size={14} />
+                        <span>{event.ip}</span>
                       </div>
                     </td>
 
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-1.5 text-zinc-400 text-[11px] max-w-[180px] truncate" title={event.userAgent}>
-                        <Laptop size={13} className="text-zinc-400 flex-shrink-0" />
-                        <span className="truncate font-medium">{event.userAgent}</span>
+                    <td className="py-4 pr-4 hidden md:table-cell">
+                      <div className="flex items-center gap-2 text-sm text-zinc-500 max-w-[150px] truncate" title={event.userAgent}>
+                        <Laptop size={14} />
+                        <span className="truncate">{event.userAgent}</span>
                       </div>
                     </td>
 
-                    <td className="px-6 py-4 text-zinc-500 text-xs font-medium">
-                      <div className="flex items-center space-x-1.5">
-                        <Clock size={13} className="text-zinc-400 flex-shrink-0" />
+                    <td className="py-4 hidden sm:table-cell">
+                      <div className="flex items-center gap-2 text-sm text-zinc-500">
+                        <Clock size={14} />
                         <span>{formatDate(event.createdAt)}</span>
                       </div>
                     </td>
@@ -291,7 +166,7 @@ export function HomeFeat() {
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
