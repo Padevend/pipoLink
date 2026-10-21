@@ -1,45 +1,71 @@
-import Sidebar from "@/components/sidebar";
+import { useState } from "react";
 import { useRouteError, Link } from "react-router-dom";
-import { Home } from "lucide-react";
+import Sidebar from "@/components/sidebar";
+import { Home, AlertCircle, Menu } from "lucide-react";
+import { AppLogo } from "@/share/ui/AppLogo";
 
 export default function ErrorLayout() {
   const error = useRouteError() as any;
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <main className="flex h-screen bg-zinc-50/50 select-none">
-      <Sidebar />
+    <main className="flex h-screen bg-white text-zinc-900 font-sans overflow-hidden">
       
-      <div className="flex-1 flex items-center justify-center p-8 overflow-y-auto">
-        <div className="w-full max-w-md bg-white/60 border border-white/80 rounded-3xl p-8 text-center shadow-sm shadow-zinc-200/40 backdrop-blur-xl">
+      {/* SIDEBAR (Responsive) */}
+      <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
+      
+      <div className="flex-1 flex flex-col h-screen overflow-hidden bg-zinc-50 md:rounded-l-[2rem] md:border-l md:border-zinc-200">
+        
+        {/* HEADER MOBILE */}
+        <header className="md:hidden flex items-center justify-between px-6 py-4 bg-white border-b border-zinc-200">
+          <AppLogo size={20} />
+          <button 
+            onClick={() => setIsSidebarOpen(true)}
+            className="p-2 -mr-2 text-zinc-900 hover:bg-zinc-100 rounded-full transition-colors"
+          >
+            <Menu size={24} strokeWidth={2} />
+          </button>
+        </header>
 
-          {/* Error Code & Title */}
-          <h1 className="text-3xl font-extrabold tracking-tight text-zinc-800">
-            {error?.status || "Erreur"}
-          </h1>
-          
-          <p className="text-sm font-semibold text-zinc-500 mt-2 capitalize">
-            {error?.statusText || "Une erreur inattendue est survenue."}
-          </p>
+        {/* CONTENU DE L'ERREUR */}
+        <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-8 overflow-y-auto">
+          <div className="w-full max-w-lg bg-white rounded-[2rem] p-8 md:p-12 text-center flex flex-col items-center">
+            
+            {/* Icône d'alerte */}
+            <div className="h-20 w-20 bg-zinc-100 rounded-full flex items-center justify-center mb-6">
+              <AlertCircle size={36} className="text-zinc-900" strokeWidth={2} />
+            </div>
 
-          {/* Optional internal/message log for developer context */}
-          {error?.data && (
-            <p className="mt-4 p-3 rounded-xl bg-zinc-100 font-mono text-[10px] text-zinc-400 border border-zinc-200/60 max-h-24 overflow-y-auto text-left select-text">
-              {typeof error.data === "string" ? error.data : JSON.stringify(error.data)}
+            {/* Titre et Status */}
+            <h1 className="text-5xl font-bold tracking-tight text-zinc-900 mb-4">
+              {error?.status || "Erreur"}
+            </h1>
+            
+            <p className="text-base font-medium text-zinc-500 mb-8 max-w-sm">
+              {error?.statusText || error?.message || "Une erreur inattendue s'est produite lors de l'accès à cette page."}
             </p>
-          )}
 
-          {/* Action Button */}
-          <div className="mt-8">
+            {/* Log développeur (Optionnel) */}
+            {error?.data && (
+              <div className="w-full bg-zinc-50 rounded-2xl p-4 mb-8 text-left border border-zinc-100 max-h-40 overflow-y-auto custom-scrollbar">
+                <p className="font-mono text-xs text-zinc-500 break-words whitespace-pre-wrap">
+                  {typeof error.data === "string" ? error.data : JSON.stringify(error.data, null, 2)}
+                </p>
+              </div>
+            )}
+
+            {/* Bouton de retour */}
             <Link
               to="/"
-              className="inline-flex items-center space-x-2 px-5 py-2.5 text-xs font-bold text-white bg-zinc-800 hover:bg-zinc-900 rounded-xl shadow-md shadow-zinc-800/10 transition-all duration-200 active:scale-[0.98]"
+              className="inline-flex items-center justify-center gap-2 h-14 px-8 rounded-full font-semibold text-base bg-zinc-900 text-white hover:bg-black transition-transform active:scale-[0.98] w-full sm:w-auto"
             >
-              <Home size={14} />
-              <span>Retour à l'accueil</span>
+              <Home size={20} />
+              <span>Retourner à l'accueil</span>
             </Link>
-          </div>
 
+          </div>
         </div>
+
       </div>
     </main>
   );

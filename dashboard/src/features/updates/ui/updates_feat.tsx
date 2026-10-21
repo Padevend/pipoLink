@@ -1,281 +1,188 @@
 import { useState } from "react";
 import { useUpdates } from "../model/use_updates";
 import { useToast } from "@/providers/toast/toastContext";
+
+// UI Components
+import { Input } from "@/share/ui/Input";
+import { Button } from "@/share/ui/Button";
+import { Select } from "@/share/ui/Select";
 import {
-  Plus,
-  Calendar,
-  Cpu,
-  Link as LinkIcon,
-  Loader2,
-  X,
-  PlusCircle,
-  Trash2,
-  Smartphone,
-  RefreshCw,
+  Plus, Calendar, Cpu, Link as LinkIcon, Loader2, X, PlusCircle, Trash2, Smartphone, RefreshCw, Activity
 } from "lucide-react";
 
+const TYPE_OPTIONS = [
+  { value: "auto", label: "Automatique (OTA)", desc: "Installation silencieuse" },
+  { value: "manual", label: "Manuelle (Store)", desc: "Redirection vers les stores" }
+];
+
+const SEVERITY_OPTIONS = [
+  { value: "low", label: "Faible" },
+  { value: "medium", label: "Moyenne" },
+  { value: "high", label: "Élevée" },
+  { value: "critical", label: "Critique" }
+];
+
 export function UpdatesFeat() {
-  const [modalOpen, setModalOpen] = useState(false);
-
-  // Form State
-  const [version, setVersion] = useState("");
-  const [type, setType] = useState<"auto" | "manual">("auto");
-  const [severity, setSeverity] = useState<"low" | "medium" | "high" | "critical">("low");
-  const [minSdkVersion, setMinSdkVersion] = useState("24");
-  const [isRequired, setIsRequired] = useState(false);
-  const [changelogs, setChangelogs] = useState<string[]>([""]);
-  
-  // Platform toggles and link inputs
-  const [enableAndroid, setEnableAndroid] = useState(false);
-  const [androidLink, setAndroidLink] = useState("");
-  const [enableIos, setEnableIos] = useState(false);
-  const [iosLink, setIosLink] = useState("");
-
   const { showToast } = useToast();
   const { updates, loading, error, createUpdate, actionLoading } = useUpdates();
+  const [modalOpen, setModalOpen] = useState(false);
+
+  // État du formulaire unifié
+  const [form, setForm] = useState({
+    version: "", type: "auto" as "auto" | "manual", severity: "low" as any,
+    minSdkVersion: "24", isRequired: false, changelogs: [""],
+    enableAndroid: false, androidLink: "", enableIos: false, iosLink: "",
+  });
+
+  const updateForm = (key: keyof typeof form, value: any) => setForm((f) => ({ ...f, [key]: value }));
 
   const handleOpenModal = () => {
-    setVersion("");
-    setType("auto");
-    setSeverity("low");
-    setMinSdkVersion("24");
-    setIsRequired(false);
-    setChangelogs([""]);
-    setEnableAndroid(false);
-    setAndroidLink("");
-    setEnableIos(false);
-    setIosLink("");
+    setForm({
+      version: "", type: "auto", severity: "low", minSdkVersion: "24",
+      isRequired: false, changelogs: [""], enableAndroid: false,
+      androidLink: "", enableIos: false, iosLink: "",
+    });
     setModalOpen(true);
   };
 
-  const handleAddChangelog = () => {
-    setChangelogs([...changelogs, ""]);
+  const handleChangelogChange = (idx: number, val: string) => {
+    const newLogs = [...form.changelogs];
+    newLogs[idx] = val;
+    updateForm("changelogs", newLogs);
   };
 
-  const handleUpdateChangelog = (index: number, val: string) => {
-    const updated = [...changelogs];
-    updated[index] = val;
-    setChangelogs(updated);
-  };
-
-  const handleRemoveChangelog = (index: number) => {
-    const updated = changelogs.filter((_, idx) => idx !== index);
-    setChangelogs(updated.length > 0 ? updated : [""]);
+  const handleRemoveChangelog = (idx: number) => {
+    const newLogs = form.changelogs.filter((_, i) => i !== idx);
+    updateForm("changelogs", newLogs.length ? newLogs : [""]);
   };
 
   const handleCreateUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!version.match(/^\d+\.\d+(\.\d+)?$/)) {
-      showToast({
-        type: "error",
-        message: "Format de version invalide. Exemple: 1.0.0",
-        duration: 4000,
-      });
-      return;
+    if (!form.version.match(/^\d+\.\d+(\.\d+)?$/)) {
+      return showToast({ type: "error", message: "Format invalide (ex: 1.0.0)" });
     }
 
-    const filteredChangelogs = changelogs
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0);
-
-    if (filteredChangelogs.length === 0) {
-      showToast({
-        type: "error",
-        message: "Veuillez entrer au moins un point de changelog.",
-        duration: 4000,
-      });
-      return;
+    const filteredLogs = form.changelogs.map(l => l.trim()).filter(l => l.length > 0);
+    if (filteredLogs.length === 0) {
+      return showToast({ type: "error", message: "Un point de changelog requis." });
     }
 
     const links = [];
-    if (enableAndroid) {
-      if (!androidLink.trim()) {
-        showToast({
-          type: "error",
-          message: "Veuillez renseigner le lien Android ou désactiver la plateforme.",
-          duration: 4000,
-        });
-        return;
+    for (const platform of ["Android", "Ios"] as const) {
+      const isEnabled = form[`enable${platform}`];
+      const linkVal = form[`${platform.toLowerCase()}Link` as keyof typeof form] as string;
+      
+      if (isEnabled) {
+        if (!linkVal.trim() || !linkVal.startsWith("http")) {
+          return showToast({ type: "error", message: `Lien ${platform} invalide.` });
+        }
+        links.push({ platform: platform.toLowerCase() as "android" | "ios", link: linkVal.trim() });
       }
-      if (!androidLink.trim().startsWith("http")) {
-        showToast({
-          type: "error",
-          message: "Lien Android invalide. Doit commencer par http:// ou https://",
-          duration: 4000,
-        });
-        return;
-      }
-      links.push({ platform: "android" as const, link: androidLink.trim() });
-    }
-
-    if (enableIos) {
-      if (!iosLink.trim()) {
-        showToast({
-          type: "error",
-          message: "Veuillez renseigner le lien iOS ou désactiver la plateforme.",
-          duration: 4000,
-        });
-        return;
-      }
-      if (!iosLink.trim().startsWith("http")) {
-        showToast({
-          type: "error",
-          message: "Lien iOS invalide. Doit commencer par http:// ou https://",
-          duration: 4000,
-        });
-        return;
-      }
-      links.push({ platform: "ios" as const, link: iosLink.trim() });
     }
 
     try {
       await createUpdate({
-        version,
-        type,
-        severity,
-        minSdkVersion,
-        isRequired,
-        changelog: filteredChangelogs,
-        links,
+        version: form.version, type: form.type, severity: form.severity,
+        minSdkVersion: form.minSdkVersion, isRequired: form.isRequired,
+        changelog: filteredLogs, links,
       });
       setModalOpen(false);
-    } catch {
-      // Toast notification is managed inside useUpdates mutate handler
-    }
+      showToast({ type: "success", message: "Mise à jour publiée." });
+    } catch { /* Handled by hook */ }
   };
 
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  const formatDate = (dateStr: string) => 
+    new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(dateStr));
 
   return (
-    <div className="space-y-8 select-none">
+    <div className="space-y-10 text-zinc-900 pb-10 h-full">
+      
       {/* HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-800">
-            Gestion des Mises à Jour
-          </h1>
-          <p className="text-xs text-zinc-500 font-medium mt-1">
-            Supervisez et déployez les versions de l'application client (OTA / Store)
+          <h1 className="text-3xl font-bold tracking-tight">Mises à Jour</h1>
+          <p className="text-sm font-medium text-zinc-500 mt-2">
+            Déployez et gérez les versions de l'application client (OTA / Store).
           </p>
         </div>
-        <button
-          onClick={handleOpenModal}
-          className="flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 transition-all duration-200 active:scale-[0.98] shadow-md shadow-orange-500/10 cursor-pointer w-full sm:w-auto"
-        >
-          <Plus size={16} />
-          <span>Nouvelle Version</span>
-        </button>
-      </div>
+        <Button variant="primary" onClick={handleOpenModal} leftIcon={<Plus size={18} />}>
+          Nouvelle Version
+        </Button>
+      </header>
 
-      {/* UPDATES LIST */}
-      <div className="space-y-4">
+      {/* ERROR BANNER */}
+      {error && (
+        <div className="bg-zinc-900 text-white px-6 py-4 rounded-[2rem] font-medium flex items-center gap-3">
+          <Activity size={20} />
+          <span>Erreur réseau : {(error as any).message}</span>
+        </div>
+      )}
+
+      {/* LISTE DES UPDATES */}
+      <div className="space-y-6">
         {loading ? (
-          <div className="bg-white/60 border border-white/80 rounded-2xl p-12 text-center text-zinc-400 shadow-sm shadow-zinc-200/40 backdrop-blur-xl">
-            <div className="flex justify-center items-center space-x-2">
-              <Loader2 className="animate-spin text-orange-500" size={18} strokeWidth={2.5} />
-              <span className="text-xs font-semibold">Chargement des versions...</span>
-            </div>
-          </div>
-        ) : error ? (
-          <div className="bg-red-50 border border-red-100 text-red-700 text-xs font-semibold p-4 rounded-xl">
-            Erreur lors de la récupération des mises à jour: {(error as any).message || "Problème réseau."}
+          <div className="py-20 text-center flex flex-col items-center">
+            <Loader2 className="animate-spin text-zinc-900 mb-4" size={32} />
+            <p className="text-sm font-medium text-zinc-500">Chargement des versions...</p>
           </div>
         ) : updates.length === 0 ? (
-          <div className="bg-white/60 border border-white/80 rounded-2xl p-12 text-center text-zinc-400 text-xs font-medium shadow-sm shadow-zinc-200/40 backdrop-blur-xl">
-            Aucune mise à jour publiée pour le moment.
+          <div className="bg-zinc-50 rounded-[2rem] py-24 flex flex-col items-center text-center">
+            <div className="bg-white p-6 rounded-full mb-4 border border-zinc-100"><RefreshCw size={40} className="text-zinc-300" /></div>
+            <h3 className="text-lg font-bold text-zinc-900 mb-2">Aucune version publiée</h3>
           </div>
         ) : (
           updates.map((update) => (
-            <div
-              key={update.id}
-              className="bg-white/60 border border-white/80 rounded-2xl p-6 shadow-sm shadow-zinc-200/40 backdrop-blur-xl flex flex-col md:flex-row md:items-start justify-between gap-6 hover:border-zinc-200 transition-all duration-200"
-            >
-              <div className="space-y-4 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="text-lg font-bold text-zinc-800">v{update.version}</h3>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border ${
-                    update.type === "auto"
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                      : "bg-blue-50 text-blue-700 border-blue-100"
-                  }`}>
-                    Type: {update.type === "auto" ? "Automatique (Silent)" : "Manuel (Store)"}
+            <div key={update.id} className="bg-zinc-50 rounded-[2rem] p-6 md:p-8 flex flex-col xl:flex-row gap-8 border border-transparent hover:border-zinc-200 transition-colors">
+              
+              <div className="flex-1 space-y-6">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h3 className="text-2xl font-bold text-zinc-900 tracking-tight">v{update.version}</h3>
+                  <span className="bg-zinc-900 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                    {update.type === "auto" ? "OTA" : "Store"}
                   </span>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border ${
-                    update.severity === "critical"
-                      ? "bg-red-50 text-red-700 border-red-100"
-                      : update.severity === "high"
-                      ? "bg-orange-50 text-orange-700 border-orange-100"
-                      : update.severity === "medium"
-                      ? "bg-yellow-50 text-yellow-700 border-yellow-100"
-                      : "bg-zinc-50 text-zinc-600 border-zinc-200"
-                  }`}>
+                  <span className="bg-white border border-zinc-200 text-zinc-600 px-3 py-1 rounded-full text-xs font-semibold uppercase">
                     Gravité: {update.severity}
                   </span>
                   {update.isRequired && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border bg-red-100/50 text-red-700 border-red-200">
+                    <span className="border border-zinc-900 text-zinc-900 px-3 py-1 rounded-full text-xs font-semibold">
                       Obligatoire
                     </span>
                   )}
                 </div>
 
-                <div className="bg-zinc-50/50 border border-zinc-200/40 rounded-xl p-4">
-                  <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">
-                    Nouveautés & Corrections
-                  </h4>
-                  <ul className="space-y-1">
+                <div className="bg-white rounded-2xl p-5 border border-zinc-100">
+                  <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-3">Nouveautés</h4>
+                  <ul className="space-y-2">
                     {update.changelog.map((item, idx) => (
-                      <li key={idx} className="text-xs text-zinc-600 font-medium flex items-start">
-                        <span className="text-orange-500 mr-2">•</span>
-                        {item}
+                      <li key={idx} className="text-sm text-zinc-700 font-medium flex items-start gap-2">
+                        <span className="text-zinc-300 mt-0.5">•</span> {item}
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-zinc-400 font-medium">
-                  <div className="flex items-center space-x-1.5">
-                    <Calendar size={13} className="text-zinc-400" />
-                    <span>Publié le: {formatDate(update.createdAt)}</span>
-                  </div>
-                  <div className="flex items-center space-x-1.5">
-                    <Cpu size={13} className="text-zinc-400" />
-                    <span>SDK Min: {update.minSdkVersion}</span>
-                  </div>
+                <div className="flex gap-6 text-sm text-zinc-500 font-medium">
+                  <span className="flex items-center gap-2"><Calendar size={16} /> {formatDate(update.createdAt)}</span>
+                  <span className="flex items-center gap-2"><Cpu size={16} /> SDK Min: {update.minSdkVersion}</span>
                 </div>
               </div>
 
-              <div className="md:w-64 flex-shrink-0 flex flex-col gap-2">
-                <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                  Liens de téléchargement
-                </h4>
+              {/* LINKS SECTION */}
+              <div className="xl:w-72 flex flex-col gap-3">
+                <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Téléchargement</h4>
                 {update.links && update.links.length > 0 ? (
                   update.links.map((lnk, idx) => (
-                    <a
-                      key={idx}
-                      href={lnk.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center space-x-2 px-3 py-2 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-50 hover:border-zinc-300 text-xs font-semibold text-zinc-600 transition-colors"
-                    >
-                      <LinkIcon size={12} className="text-zinc-400" />
-                      <span className="capitalize">{lnk.platform}:</span>
-                      <span className="truncate text-zinc-400 font-medium flex-1">{lnk.link}</span>
+                    <a key={idx} href={lnk.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-2xl bg-white hover:bg-zinc-100 border border-zinc-100 transition-colors">
+                      <div className="bg-zinc-100 p-2 rounded-full"><LinkIcon size={14} className="text-zinc-600" /></div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold capitalize text-zinc-900">{lnk.platform}</p>
+                        <p className="text-xs text-zinc-500 truncate">{lnk.link}</p>
+                      </div>
                     </a>
                   ))
                 ) : (
-                  <div className="text-[11px] text-zinc-400 italic">
-                    Aucun lien de redirection configuré.
-                  </div>
+                  <p className="text-sm text-zinc-400 italic">Aucun lien externe.</p>
                 )}
               </div>
             </div>
@@ -283,278 +190,106 @@ export function UpdatesFeat() {
         )}
       </div>
 
-      {/* CREATE UPDATE MODAL */}
+      {/* MODAL : CRÉER UNE MISE À JOUR */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/20 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="w-full max-w-xl bg-white/95 border border-white rounded-3xl p-6 shadow-2xl backdrop-blur-xl relative animate-in fade-in zoom-in-95 duration-150 overflow-y-auto max-h-[90vh] flex flex-col">
-            <button
-              onClick={() => setModalOpen(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors cursor-pointer"
-            >
-              <X size={16} />
-            </button>
-
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-600 mb-4 border border-orange-500/20">
-              <RefreshCw size={20} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl flex flex-col max-h-[90vh]">
+            
+            <div className="p-6 border-b border-zinc-100 flex items-center justify-between shrink-0">
+              <h2 className="text-xl font-bold flex items-center gap-3">
+                <div className="p-2 bg-zinc-50 rounded-full"><RefreshCw size={20} /></div>
+                Publier une mise à jour
+              </h2>
+              <button onClick={() => setModalOpen(false)} className="p-2 text-zinc-400 hover:bg-zinc-100 rounded-full">
+                <X size={20} />
+              </button>
             </div>
 
-            <h3 className="text-base font-bold text-zinc-800">Publier une mise à jour</h3>
-            <p className="text-xs text-zinc-500 font-medium mt-1 mb-6">
-              Déployez une nouvelle version avec un ciblage précis et des notes claires.
-            </p>
-
-            <form onSubmit={handleCreateUpdate} className="space-y-5 text-left flex-1">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">
-                    Numéro de version
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="ex: 1.0.2"
-                    value={version}
-                    onChange={(e) => setVersion(e.target.value)}
-                    className="w-full rounded-xl border border-zinc-200 bg-white/50 px-3 py-2.5 text-xs text-zinc-800 placeholder-zinc-400 focus:border-orange-500/50 focus:bg-white focus:ring-1 focus:ring-orange-500/20 focus:outline-none transition-all duration-200"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">
-                    SDK Minimum requis
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={minSdkVersion}
-                    onChange={(e) => setMinSdkVersion(e.target.value)}
-                    className="w-full rounded-xl border border-zinc-200 bg-white/50 px-3 py-2.5 text-xs text-zinc-800 focus:border-orange-500/50 focus:bg-white focus:ring-1 focus:ring-orange-500/20 focus:outline-none transition-all duration-200"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">
-                  Type de mise à jour
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setType("auto")}
-                    className={`p-3.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer ${
-                      type === "auto"
-                        ? "border-orange-500/80 bg-orange-500/5 ring-1 ring-orange-500/20"
-                        : "border-zinc-200 bg-white/50 hover:bg-white"
-                    }`}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <div className={`h-2 w-2 rounded-full ${type === "auto" ? "bg-orange-500" : "bg-zinc-300"}`} />
-                      <span className="text-xs font-bold text-zinc-800">Automatique (OTA)</span>
-                    </div>
-                    <p className="text-[10px] text-zinc-500 mt-1 leading-normal font-medium">
-                      Installation silencieuse en arrière-plan. Appliquée au prochain démarrage.
-                    </p>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setType("manual")}
-                    className={`p-3.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer ${
-                      type === "manual"
-                        ? "border-orange-500/80 bg-orange-500/5 ring-1 ring-orange-500/20"
-                        : "border-zinc-200 bg-white/50 hover:bg-white"
-                    }`}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <div className={`h-2 w-2 rounded-full ${type === "manual" ? "bg-orange-500" : "bg-zinc-300"}`} />
-                      <span className="text-xs font-bold text-zinc-800">Manuelle (Store)</span>
-                    </div>
-                    <p className="text-[10px] text-zinc-500 mt-1 leading-normal font-medium">
-                      Invite l'utilisateur à se rendre sur les stores d'applications officiels.
-                    </p>
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">
-                  Niveau de gravité
-                </label>
-                <div className="grid grid-cols-4 gap-2">
-                  {[
-                    { val: "low", label: "Faible", activeClass: "border-zinc-400 bg-zinc-50 text-zinc-800 ring-zinc-500/10" },
-                    { val: "medium", label: "Moyenne", activeClass: "border-yellow-400 bg-yellow-500/5 text-yellow-700 ring-yellow-500/10" },
-                    { val: "high", label: "Élevée", activeClass: "border-orange-400 bg-orange-500/5 text-orange-700 ring-orange-500/10" },
-                    { val: "critical", label: "Critique", activeClass: "border-red-400 bg-red-500/5 text-red-700 ring-red-500/10" }
-                  ].map((item) => {
-                    const isSelected = severity === item.val;
-                    return (
-                      <button
-                        key={item.val}
-                        type="button"
-                        onClick={() => setSeverity(item.val as any)}
-                        className={`py-2 rounded-xl border text-center transition-all duration-200 cursor-pointer text-xs font-bold ${
-                          isSelected ? item.activeClass + " ring-1" : "bg-white/50 border-zinc-200 hover:bg-white text-zinc-500"
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between bg-zinc-50/50 border border-zinc-200/40 rounded-xl p-3.5">
-                <div className="flex-1">
-                  <label htmlFor="isRequired" className="text-xs font-bold text-zinc-700 cursor-pointer block">
-                    Mise à jour obligatoire
-                  </label>
-                  <p className="text-[10px] text-zinc-400 font-medium">
-                    Restreint l'utilisation de l'application tant que la version n'est pas installée.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsRequired(!isRequired)}
-                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    isRequired ? "bg-orange-500" : "bg-zinc-200"
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                      isRequired ? "translate-x-4" : "translate-x-0"
-                    }`}
-                  />
-                </button>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
-                    Notes de mise à jour (Changelog)
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleAddChangelog}
-                    className="flex items-center space-x-1.5 text-xs font-bold text-orange-500 hover:text-orange-600 cursor-pointer transition-colors"
-                  >
-                    <PlusCircle size={14} />
-                    <span>Ajouter un point</span>
-                  </button>
-                </div>
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-6">
+              <form id="update-form" onSubmit={handleCreateUpdate} className="space-y-6">
                 
-                <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
-                  {changelogs.map((cl, idx) => (
-                    <div key={idx} className="flex items-center space-x-2 bg-white border border-zinc-200/80 rounded-xl p-2.5 shadow-sm transition-all duration-200 hover:border-zinc-300">
-                      <span className="text-[10px] font-bold text-zinc-400 select-none px-1">{idx + 1}</span>
-                      <input
-                        type="text"
-                        required
-                        placeholder="ex: Amélioration des performances du module de chat..."
-                        value={cl}
-                        onChange={(e) => handleUpdateChangelog(idx, e.target.value)}
-                        className="flex-1 bg-transparent text-xs text-zinc-800 placeholder-zinc-400 focus:outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveChangelog(idx)}
-                        className="p-1 rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-all cursor-pointer"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  ))}
+                {/* LIGNE 1 : VERSION & SDK */}
+                <div className="grid grid-cols-2 gap-4">
+                  <Input required label="Version (ex: 1.0.2)" placeholder="1.0.0" value={form.version} onChange={(e) => updateForm("version", e.target.value)} />
+                  <Input required label="SDK Minimum" value={form.minSdkVersion} onChange={(e) => updateForm("minSdkVersion", e.target.value)} />
                 </div>
-              </div>
 
-              <div className="space-y-4 bg-zinc-50/50 border border-zinc-200/40 rounded-2xl p-4">
-                <h4 className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-2">
-                  Liaison Plateformes (Facultatif)
-                </h4>
-                
-                <div className="space-y-2 border-b border-zinc-200/50 pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Smartphone size={14} className="text-zinc-500" />
-                      <span className="text-xs font-semibold text-zinc-700">Lien Android (APK / Google Play)</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setEnableAndroid(!enableAndroid)}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        enableAndroid ? "bg-orange-500" : "bg-zinc-200"
-                      }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          enableAndroid ? "translate-x-4" : "translate-x-0"
-                        }`}
-                      />
+                {/* LIGNE 2 : TYPE & GRAVITÉ */}
+                <div className="grid grid-cols-2 gap-4">
+                  <Select label="Type de MAJ" data={TYPE_OPTIONS} value={form.type} onChange={(v) => updateForm("type", v)} />
+                  <Select label="Gravité" data={SEVERITY_OPTIONS} value={form.severity} onChange={(v) => updateForm("severity", v)} />
+                </div>
+
+                {/* MAJ OBLIGATOIRE */}
+                <div className="flex items-center justify-between bg-zinc-50 rounded-[2rem] p-4">
+                  <div>
+                    <label className="text-sm font-semibold text-zinc-900">Mise à jour obligatoire</label>
+                    <p className="text-xs text-zinc-500">Bloque l'application tant qu'elle n'est pas installée.</p>
+                  </div>
+                  <button type="button" onClick={() => updateForm("isRequired", !form.isRequired)} className={`w-12 h-6 rounded-full transition-colors relative ${form.isRequired ? "bg-zinc-900" : "bg-zinc-200"}`}>
+                    <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${form.isRequired ? "translate-x-7" : "translate-x-1"}`} />
+                  </button>
+                </div>
+
+                {/* CHANGELOGS */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between px-2">
+                    <label className="text-sm font-semibold text-zinc-900">Notes de version</label>
+                    <button type="button" onClick={() => updateForm("changelogs", [...form.changelogs, ""])} className="text-xs font-bold text-zinc-500 hover:text-zinc-900 flex items-center gap-1">
+                      <PlusCircle size={14} /> Ajouter
                     </button>
                   </div>
-                  {enableAndroid && (
-                    <input
-                      type="url"
-                      required
-                      placeholder="https://play.google.com/store/apps/details?id=..."
-                      value={androidLink}
-                      onChange={(e) => setAndroidLink(e.target.value)}
-                      className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-800 placeholder-zinc-400 focus:border-orange-500/50 focus:outline-none transition-all duration-200"
-                    />
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Smartphone size={14} className="text-zinc-500" />
-                      <span className="text-xs font-semibold text-zinc-700">Lien iOS (TestFlight / App Store)</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setEnableIos(!enableIos)}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        enableIos ? "bg-orange-500" : "bg-zinc-200"
-                      }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          enableIos ? "translate-x-4" : "translate-x-0"
-                        }`}
+                  <div className="space-y-3">
+                    {form.changelogs.map((cl, idx) => (
+                      <Input
+                        key={idx} required placeholder="Ex: Correction de bugs..." value={cl}
+                        onChange={(e) => handleChangelogChange(idx, e.target.value)}
+                        rightIcon={
+                          <button type="button" onClick={() => handleRemoveChangelog(idx)} className="text-zinc-400 hover:text-zinc-900 transition-colors">
+                            <Trash2 size={18} />
+                          </button>
+                        }
                       />
-                    </button>
+                    ))}
                   </div>
-                  {enableIos && (
-                    <input
-                      type="url"
-                      required
-                      placeholder="https://apps.apple.com/app/..."
-                      value={iosLink}
-                      onChange={(e) => setIosLink(e.target.value)}
-                      className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-800 placeholder-zinc-400 focus:border-orange-500/50 focus:outline-none transition-all duration-200"
-                    />
-                  )}
                 </div>
-              </div>
 
-              <div className="pt-4 flex items-center justify-end space-x-2 border-t border-zinc-200/50">
-                <button
-                  type="button"
-                  onClick={() => setModalOpen(false)}
-                  disabled={actionLoading}
-                  className="px-4 py-2 text-xs font-bold text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 rounded-xl transition-all cursor-pointer"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  disabled={actionLoading}
-                  className="flex items-center space-x-1.5 px-4 py-2 text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 rounded-xl shadow-md shadow-orange-500/10 transition-all cursor-pointer"
-                >
-                  {actionLoading && <Loader2 size={13} className="animate-spin" />}
-                  <span>Créer la version</span>
-                </button>
-              </div>
-            </form>
+                {/* PLATEFORMES LINKS */}
+                <div className="space-y-4 pt-4 border-t border-zinc-100">
+                  <label className="text-sm font-semibold text-zinc-900 px-2">Liens plateformes (Optionnel)</label>
+                  
+                  {/* ANDROID */}
+                  <div className="bg-zinc-50 rounded-[2rem] p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium flex items-center gap-2"><Smartphone size={16}/> Android (APK / PlayStore)</span>
+                      <button type="button" onClick={() => updateForm("enableAndroid", !form.enableAndroid)} className={`w-12 h-6 rounded-full transition-colors relative ${form.enableAndroid ? "bg-zinc-900" : "bg-zinc-200"}`}>
+                        <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${form.enableAndroid ? "translate-x-7" : "translate-x-1"}`} />
+                      </button>
+                    </div>
+                    {form.enableAndroid && <Input type="url" required placeholder="https://..." value={form.androidLink} onChange={(e) => updateForm("androidLink", e.target.value)} />}
+                  </div>
+
+                  {/* IOS */}
+                  <div className="bg-zinc-50 rounded-[2rem] p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium flex items-center gap-2"><Smartphone size={16}/> iOS (TestFlight / AppStore)</span>
+                      <button type="button" onClick={() => updateForm("enableIos", !form.enableIos)} className={`w-12 h-6 rounded-full transition-colors relative ${form.enableIos ? "bg-zinc-900" : "bg-zinc-200"}`}>
+                        <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${form.enableIos ? "translate-x-7" : "translate-x-1"}`} />
+                      </button>
+                    </div>
+                    {form.enableIos && <Input type="url" required placeholder="https://..." value={form.iosLink} onChange={(e) => updateForm("iosLink", e.target.value)} />}
+                  </div>
+                </div>
+
+              </form>
+            </div>
+
+            <div className="p-6 border-t border-zinc-100 shrink-0 bg-white">
+              <Button type="submit" form="update-form" variant="primary" isLoading={actionLoading} fullWidth>
+                Déployer la version
+              </Button>
+            </div>
+
           </div>
         </div>
       )}

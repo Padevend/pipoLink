@@ -12,7 +12,7 @@ export default function ToastProvider({ children }: { children: React.ReactNode 
             showToast: ({ message, type, duration }: ToastProps) => {
                 const id = Math.random().toString(36).substring(2, 8);
                 
-                // Insertion en tête de pile (index 0) pour la cascade
+                // Insertion en tête de pile (max 3)
                 setToasts((prev) => [{ id, message, type, duration }, ...prev].slice(0, 3));
 
                 setTimeout(() => {
@@ -26,18 +26,18 @@ export default function ToastProvider({ children }: { children: React.ReactNode 
         };
     }, [toasts]);
 
-    // Métadonnées d'intonation adaptées au thème Android Sombre/Bleuté doux
+    // Charte monochrome claire : l'icône est noire par défaut, sauf pour les erreurs (rouge)
     const getMeta = (type: Toast["type"]) => {
         switch (type) {
-            case "success":
-                return { color: "text-emerald-400", icon: CheckCircle2 };
             case "error":
-                return { color: "text-red-400", icon: AlertCircle };
+                return { color: "text-red-500", icon: AlertCircle };
             case "warning":
-                return { color: "text-amber-400", icon: AlertCircle };
+                return { color: "text-amber-500", icon: AlertCircle };
+            case "success":
+                return { color: "text-zinc-900", icon: CheckCircle2 };
             case "info":
             default:
-                return { color: "text-sky-400", icon: Info };
+                return { color: "text-zinc-900", icon: Info };
         }
     };
 
@@ -45,49 +45,50 @@ export default function ToastProvider({ children }: { children: React.ReactNode 
         <ToastContext.Provider value={value}>
             {children}
 
-            {/* CONTENEUR FIXE (BAS CENTRE) */}
+            {/* CONTENEUR FIXE */}
             {toasts.length > 0 && (
-                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-none w-full max-w-[340px] h-12 select-none">
+                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] pointer-events-none w-full max-w-[320px] h-12 select-none">
                     {toasts.map((toast, index) => {
                         const meta = getMeta(toast.type);
                         const Icon = meta.icon;
 
-                        // Vos paramètres de cascade serrés et denses
-                        const scale = 1 - index * 0.02;
-                        const translateY = -index * 12;
-                        const opacity = index === 0 ? 1 : index === 1 ? 0.9 : 0.8;
+                        // Effet de pile 3D
+                        const scale = 1 - index * 0.05;
+                        const translateY = -index * 14;
+                        // Opacité ajustée pour le mode clair
+                        const opacity = index === 0 ? 1 : index === 1 ? 0.7 : 0.3;
 
                         return (
                             <div
                                 key={toast.id}
-                                className="absolute bottom-0 left-0 right-0 pointer-events-auto bg-[#2C3036] border border-[#383C44] px-4 py-2.5 rounded-full flex items-center justify-between gap-x-2.5 shadow-md"
+                                className="absolute bottom-0 left-0 right-0 pointer-events-auto bg-white border border-zinc-200 shadow-sm px-4 py-3 rounded-full flex items-center justify-between gap-x-3"
                                 style={{
                                     transform: `translateY(${translateY}px) scale(${scale})`,
                                     opacity: opacity,
                                     zIndex: toasts.length - index,
-                                    transition: "transform 0.22s cubic-bezier(0.2, 0, 0, 1), opacity 0.2s linear",
-                                    animation: index === 0 ? "androidToastIn 0.25s cubic-bezier(0.2, 0, 0, 1) forwards" : undefined
+                                    transition: "transform 0.3s cubic-bezier(0.2, 0, 0, 1), opacity 0.3s ease-out",
+                                    animation: index === 0 ? "toastSlideUp 0.3s cubic-bezier(0.2, 0, 0, 1) forwards" : undefined
                                 }}
                             >
-                                {/* Icône d'intonation lumineuse douce */}
+                                {/* Icône d'intonation */}
                                 <div className={`flex items-center justify-center shrink-0 ${meta.color}`}>
-                                    <Icon size={14} strokeWidth={2.5} />
+                                    <Icon size={18} strokeWidth={2.5} />
                                 </div>
 
-                                {/* Message textuel style Android (Gris très clair bleuté) */}
+                                {/* Message textuel */}
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-[12px] font-medium tracking-normal text-[#E2E8F0] truncate">
+                                    <p className="text-[13px] font-medium tracking-wide text-zinc-900 truncate">
                                         {toast.message}
                                     </p>
                                 </div>
 
-                                {/* Bouton de fermeture minimaliste intégré dans le pilule */}
+                                {/* Bouton de fermeture */}
                                 {index === 0 && (
                                     <button
                                         onClick={() => value.hideToast(toast.id)}
-                                        className="h-5 w-5 flex items-center justify-center rounded-full text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+                                        className="h-7 w-7 flex items-center justify-center rounded-full text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-colors shrink-0 cursor-pointer"
                                     >
-                                        <X size={13} strokeWidth={2.5} />
+                                        <X size={16} strokeWidth={2} />
                                     </button>
                                 )}
                             </div>
@@ -96,11 +97,11 @@ export default function ToastProvider({ children }: { children: React.ReactNode 
                 </div>
             )}
 
-            {/* Animation de transition Mat Android (Slide Up lent + Fade In franc) */}
+            {/* Animation d'apparition fluide */}
             <style>{`
-                @keyframes androidToastIn {
+                @keyframes toastSlideUp {
                     from {
-                        transform: translateY(16px) scale(0.95);
+                        transform: translateY(20px) scale(0.9);
                         opacity: 0;
                     }
                     to {
