@@ -99,11 +99,24 @@ export class AdminController {
       .toUpperCase();
     const discountPercent = Number(body.discountPercent || 0);
     const freePremiumDays = Number(body.freePremiumDays || 0);
-    const maxUses = body.maxUses == null || body.maxUses === "" ? null : Number(body.maxUses);
-    const startsAt = typeof body.startsAt === "string" && body.startsAt ? new Date(body.startsAt) : new Date();
-    const expiresAt = typeof body.expiresAt === "string" && body.expiresAt ? new Date(body.expiresAt) : null;
+    const maxUses =
+      body.maxUses == null || body.maxUses === "" ? null : Number(body.maxUses);
+    const startsAt =
+      typeof body.startsAt === "string" && body.startsAt
+        ? new Date(body.startsAt)
+        : new Date();
+    const expiresAt =
+      typeof body.expiresAt === "string" && body.expiresAt
+        ? new Date(body.expiresAt)
+        : null;
     const allowedEmails: string[] = Array.isArray(body.allowedEmails)
-      ? [...new Set<string>(body.allowedEmails.map((email) => String(email).toLowerCase().trim()))]
+      ? [
+          ...new Set<string>(
+            body.allowedEmails.map((email) =>
+              String(email).toLowerCase().trim(),
+            ),
+          ),
+        ]
       : [];
     if (
       !/^[A-Z0-9_-]{3,64}$/.test(code) ||
@@ -119,7 +132,8 @@ export class AdminController {
       !Number.isFinite(maxUses ?? 0) ||
       (maxUses !== null && (!Number.isInteger(maxUses) || maxUses < 1)) ||
       Number.isNaN(startsAt.getTime()) ||
-      (expiresAt !== null && (Number.isNaN(expiresAt.getTime()) || expiresAt <= startsAt)) ||
+      (expiresAt !== null &&
+        (Number.isNaN(expiresAt.getTime()) || expiresAt <= startsAt)) ||
       allowedEmails.some((email) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
     )
       return ApiResponse.error(
@@ -153,8 +167,8 @@ export class AdminController {
         expiresAt: body.expiresAt ? new Date(body.expiresAt) : undefined,
         allowedEmails: Array.isArray(body.allowedEmails)
           ? body.allowedEmails.map((email: string) =>
-            email.toLowerCase().trim(),
-          )
+              email.toLowerCase().trim(),
+            )
           : undefined,
       },
     });
