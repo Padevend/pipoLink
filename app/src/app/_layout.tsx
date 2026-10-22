@@ -19,12 +19,12 @@ import {
   QueryProvider,
   ThemeProvider,
   ToastProvider,
+  useAuth,
   WebSocketProvider,
 } from '@/providers';
 import { I18nProvider } from '@/providers/i18n-provider';
 import { useAiNotifications } from '@/entities/ai/use-ai-notifications';
 import { useKeyboardBehavior } from '@/shared/hooks/use-keyboardBehavior';
-import { ASYNC_STORAGE_KEYS, AsyncStorageService } from '@/shared/lib/storage';
 import { KeyboardAvoidingView, ActivityIndicator, View, LogBox } from 'react-native';
 
 LogBox.ignoreLogs([
@@ -73,28 +73,25 @@ const AppTreeWithKeyboardAvoiding = React.memo(({ children }: { children: React.
 
 // startApp
 function AppStartup() {
+  const { user } = useAuth();
+
   useEffect(() => {
     void runAppStartup();
-    void registerForPushNotifications().catch(() => undefined);
 
     const stopResponseListener = setupNotificationResponseListener();
-    let stopPush: () => void = () => { };
-
-    // Resolve the current user ID so push notifications skip the sender
-    AsyncStorageService.get<{ id: string }>(ASYNC_STORAGE_KEYS.USER_DATA)
-      .then((user) => {
-        try {
-          stopPush = setupPushFromWebSocket(user?.id ?? '');
-        } catch {
-        }
-      })
-      .catch(() => { });
-
     return () => {
-      stopPush();
       stopResponseListener();
     };
   }, []);
+
+  // This effect intentionally follows authentication changes. The former
+  // one-shot AsyncStorage lookup ran before login on a fresh install, leaving
+  // token registration and foreground in-app alerts disconnected forever.
+  useEffect(() => {
+    if (!user?.id) return;
+    void registerForPushNotifications().catch(() => undefined);
+    return setupPushFromWebSocket(user.id);
+  }, [user?.id]);
 
   return null;
 }

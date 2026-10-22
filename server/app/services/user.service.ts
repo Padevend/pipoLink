@@ -31,11 +31,34 @@ export class UserService {
   async getMe(userId: string) {
     let user = await prisma.user.findUnique({
       where: { id: userId },
-      include: {
+      // include: {
+      //   profile: true,
+      //   subscription: true,
+      //   devices: { where: { revokedAt: null } },
+      // },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        matricule: true,
+        role: true,
+        is_active: true,
+        is_excluded: true,
+        is_configured: true,
+        status: true,
+        isAnonymized: true,
+        deletedAt: true,
+        anonymizedAt: true,
+        aiTokens: true,
+        aiTokensMax: true,
+        lastTokenRestorationAt: true,
+        nextRestorationAt: true,
+        createdAt: true,
+        updatedAt: true,
         profile: true,
         subscription: true,
-        devices: { where: { revokedAt: null } },
-      },
+        devices: { where: { revokedAt: null } }
+      }
     });
 
     return user ? this.withPublicAvatar(user) : null;

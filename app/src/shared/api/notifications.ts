@@ -3,7 +3,9 @@ import { api } from './client';
 export interface Notification {
   id: string;
   title: string;
-  content: string;
+  body: string;
+  type: string;
+  data?: Record<string, unknown> | null;
   isRead: boolean;
   createdAt: string;
 }

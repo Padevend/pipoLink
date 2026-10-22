@@ -81,7 +81,7 @@ function markSeen(messageId: string): boolean {
   return true;
 }
 
-async function syncFcmTokenToBackend(token: string): Promise<void> {
+async function syncFcmTokenToBackend(token: string | null): Promise<void> {
   try {
     await fetchJson('/devices/fcm-token', {
       method: 'POST',
@@ -100,9 +100,12 @@ export async function registerForPushNotifications(): Promise<string | null> {
   if (!notifee || !msg || !(await isPushEnabled())) return null;
 
   try {
-    const settings = await notifee.default.requestPermission();
+    const [notifeeSettings, messagingPermission] = await Promise.all([
+      notifee.default.requestPermission(),
+      msg.default().requestPermission(),
+    ]);
     // 1 = AuthorizationStatus.AUTHORIZED, 2 = PROVISIONAL
-    if (settings.authorizationStatus < 1) return null;
+    if (notifeeSettings.authorizationStatus < 1 || messagingPermission < 1) return null;
 
     await ensureChannel();
 
@@ -296,5 +299,9 @@ export async function setPushEnabled(enabled: boolean): Promise<void> {
   await AsyncStorageService.set(ENABLED_KEY, enabled);
   if (enabled) {
     await registerForPushNotifications();
+  } else {
+    // Preference applies at the device level: do not keep delivering FCM
+    // payloads to a device whose owner explicitly disabled notifications.
+    await syncFcmTokenToBackend(null);
   }
 }

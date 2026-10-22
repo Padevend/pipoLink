@@ -9,10 +9,12 @@ import { useMessages, type DecryptedMessage } from '@/features/messaging/hooks/u
 import { useSendMessage } from '@/features/messaging/hooks/use-send-message';
 import { activeChat } from '@/features/messaging/lib/active-chat';
 import { groupMessagesByDate } from '@/features/messaging/lib/group-messages-by-date';
+import { conversationKeys } from '@/entities/conversation/hooks';
 import { queryClient, useAuth } from '@/providers';
 import { messagingApi, type Conversation } from '@/shared/api/messaging';
 import type { PaginatedResponse } from '@/shared/api/types';
 import { useDraft } from '@/shared/hooks/use-draft';
+import { localDb } from '@/shared/storage/local-db';
 import { cn } from '@/shared/utils/cn';
 import type { InfiniteData } from '@tanstack/react-query';
 import { MessageBubble } from './message-bubble';
@@ -37,9 +39,12 @@ export function ChatView({ conversation }: ChatViewProps) {
   const [responseTo, setResponseTo] = useState<DecryptedMessage | null>(null);
   const flatListRef = useRef<FlatList>(null);
   const [hasScrolledInitial, setHasScrolledInitial] = useState(false);
+  const hasMarkedReadForConversation = useRef<string | null>(null);
 
   useEffect(() => {
     activeChat.set(conversationId);
+    setHasScrolledInitial(false);
+    hasMarkedReadForConversation.current = null;
     return () => activeChat.set(null);
   }, [conversationId]);
 
@@ -68,8 +73,7 @@ export function ChatView({ conversation }: ChatViewProps) {
     }
   }, [listItems, hasScrolledInitial]);
 
-  const markAsReadAndScroll = useCallback(() => {
-    flatListRef.current?.scrollToEnd({ animated: true });
+  const markConversationAsRead = useCallback(() => {
     if (conversation?.isPending) return;
 
     queryClient.setQueryData<InfiniteData<PaginatedResponse<DecryptedMessage>>>(
@@ -86,11 +90,44 @@ export function ChatView({ conversation }: ChatViewProps) {
       }
     );
 
-    messagingApi.markAsRead(conversationId).catch(() => undefined);
-    import('@/shared/websocket/manager').then(({ wsManager }) => {
-      wsManager.send('message.read', { conversationId });
+    queryClient.setQueryData<Conversation[]>(conversationKeys.list(), (old) => {
+      if (!old) return old;
+      const updated = old.map((item) =>
+        item.id === conversationId ? { ...item, unreadCount: 0 } : item,
+      );
+      const conversationForDisk = updated.find((item) => item.id === conversationId);
+      if (conversationForDisk) localDb.upsertConversations([conversationForDisk]);
+      return updated;
+    });
+
+    // The REST endpoint is the source of truth for lastReadAt. Sending the
+    // WebSocket command as well caused two racing writes without updating the
+    // persisted TanStack/SQLite conversation cache.
+    void messagingApi.markAsRead(conversationId).catch(() => {
+      void queryClient.invalidateQueries({ queryKey: conversationKeys.list() });
     });
   }, [conversationId, conversation?.isPending, user?.id]);
+
+  const markAsReadAndScroll = useCallback(() => {
+    flatListRef.current?.scrollToEnd({ animated: true });
+    markConversationAsRead();
+  }, [markConversationAsRead]);
+
+  // A message is considered read when its conversation is opened. This also
+  // updates both layers of the offline cache immediately, so a later visit
+  // cannot revive the old unread badge while the list query is still fresh.
+  useEffect(() => {
+    if (
+      conversation?.isPending ||
+      !conversationId ||
+      !data?.pages.length ||
+      unreadCount === 0 ||
+      hasMarkedReadForConversation.current === conversationId
+    ) return;
+
+    hasMarkedReadForConversation.current = conversationId;
+    markConversationAsRead();
+  }, [conversation?.isPending, conversationId, data?.pages.length, unreadCount, markConversationAsRead]);
 
   const handleSendText = useCallback((content: string) => {
     sendMessage.mutate({

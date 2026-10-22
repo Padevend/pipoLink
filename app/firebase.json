@@ -1,0 +1,7 @@
+{
+  "react-native": {
+    "messaging_android_notification_channel_id": "pipolink-v2",
+    "messaging_android_notification_delegation_enabled": false,
+    "messaging_ios_foreground_presentation_options": ["badge", "sound", "list", "banner"]
+  }
+}

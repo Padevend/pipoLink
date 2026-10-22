@@ -138,7 +138,7 @@ export class DeviceService {
     });
   }
 
-  async updateFcmToken(deviceId: string, fcmToken: string) {
+  async updateFcmToken(deviceId: string, fcmToken: string | null) {
     await prisma.device.update({
       where: { id: deviceId },
       data: { fcm_token: fcmToken }

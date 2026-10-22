@@ -1,4 +1,4 @@
-const API_URL =
+const API_URL = 
   "https://pavel-fuhqefcmenhzg8gt.francecentral-01.azurewebsites.net";
 
 import type { User } from "@/entities/users";
@@ -104,6 +104,29 @@ export interface PromoCode {
   _count?: { redemptions: number };
 }
 
+export interface AcademicUnit {
+  id: string;
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface AcademicLevel {
+  id: string;
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
+  units: AcademicUnit[];
+}
+
+export interface AcademicFiliere {
+  id: string;
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
+  levels: AcademicLevel[];
+}
+
 export interface RevenueStats {
   totalRevenue: number;
   revenueThisMonth: number;
@@ -146,6 +169,7 @@ class APIServices {
     this.getUpdates = this.getUpdates.bind(this);
     this.createUpdate = this.createUpdate.bind(this);
     this.sendBroadcastNotification = this.sendBroadcastNotification.bind(this);
+    this.getAcademicPaths = this.getAcademicPaths.bind(this);
   }
 
   async sendRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -206,6 +230,7 @@ class APIServices {
   }
 
   async getPromoCodes(): Promise<PromoCode[]> {
+    console.log("get code")
     return this.sendRequest("/admin/promo-codes");
   }
 
@@ -349,6 +374,46 @@ class APIServices {
       method: "POST",
       body: JSON.stringify(data),
     });
+  }
+
+  async getAcademicPaths(): Promise<AcademicFiliere[]> {
+    return this.sendRequest('/admin/academic-paths');
+  }
+
+  async createAcademicFiliere(data: { name: string; sortOrder?: number }): Promise<AcademicFiliere> {
+    return this.sendRequest('/admin/academic-paths/filieres', { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async updateAcademicFiliere(id: string, data: Partial<Pick<AcademicFiliere, 'name' | 'sortOrder' | 'isActive'>>): Promise<AcademicFiliere> {
+    return this.sendRequest(`/admin/academic-paths/filieres/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+  }
+
+  async deleteAcademicFiliere(id: string): Promise<void> {
+    return this.sendRequest(`/admin/academic-paths/filieres/${id}`, { method: 'DELETE' });
+  }
+
+  async createAcademicLevel(data: { filiereId: string; name: string; sortOrder?: number }): Promise<AcademicLevel> {
+    return this.sendRequest('/admin/academic-paths/levels', { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async updateAcademicLevel(id: string, data: Partial<Pick<AcademicLevel, 'name' | 'sortOrder' | 'isActive'>>): Promise<AcademicLevel> {
+    return this.sendRequest(`/admin/academic-paths/levels/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+  }
+
+  async deleteAcademicLevel(id: string): Promise<void> {
+    return this.sendRequest(`/admin/academic-paths/levels/${id}`, { method: 'DELETE' });
+  }
+
+  async createAcademicUnit(data: { levelId: string; name: string; sortOrder?: number }): Promise<AcademicUnit> {
+    return this.sendRequest('/admin/academic-paths/units', { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async updateAcademicUnit(id: string, data: Partial<Pick<AcademicUnit, 'name' | 'sortOrder' | 'isActive'>>): Promise<AcademicUnit> {
+    return this.sendRequest(`/admin/academic-paths/units/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+  }
+
+  async deleteAcademicUnit(id: string): Promise<void> {
+    return this.sendRequest(`/admin/academic-paths/units/${id}`, { method: 'DELETE' });
   }
 }
 

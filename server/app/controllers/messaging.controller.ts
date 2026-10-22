@@ -188,6 +188,9 @@ export class MessagingController {
     const userId = c.get("userId") as string;
     const conversationId = c.req.param("id")!;
     await this.service.markAsRead(userId, conversationId);
+    // Keep every connected device of this user in sync with the persisted
+    // lastReadAt value; MessageRead alone only updates message bubbles.
+    RealtimeBus.emit(WsEventName.ConversationUpdated, { conversationId, unreadCount: 0 }, { userId });
     RealtimeBus.emit(WsEventName.MessageRead, { conversationId, userId }, { conversationId });
     return ApiResponse.success(c, null, "Messages marqués comme lus.");
   }

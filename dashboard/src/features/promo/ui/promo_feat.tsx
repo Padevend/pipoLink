@@ -73,12 +73,18 @@ export function PromoFeat() {
   // --- SOUMISSION DU FORMULAIRE ---
   async function submit(event: React.FormEvent) {
     event.preventDefault();
+    const discountPercent = Number(form.discountPercent || 0);
+    const freePremiumDays = Number(form.freePremiumDays || 0);
+    if ((discountPercent <= 0 && freePremiumDays <= 0) || (discountPercent > 0 && freePremiumDays > 0)) {
+      showToast({ type: "error", message: "Choisissez soit une remise, soit des jours Premium offerts." });
+      return;
+    }
     setIsSubmitting(true);
     try {
       await api.createPromoCode({
         code: form.code,
-        discountPercent: Number(form.discountPercent || 0),
-        freePremiumDays: Number(form.freePremiumDays || 0),
+        discountPercent,
+        freePremiumDays,
         maxUses: form.maxUses ? Number(form.maxUses) : null,
         expiresAt: form.expiresAt || null,
         allowedEmails: allowedEmails.length > 0 ? allowedEmails : undefined,
@@ -90,8 +96,8 @@ export function PromoFeat() {
       setForm({ code: "", discountPercent: "", freePremiumDays: "", maxUses: "", expiresAt: "" });
       setAllowedEmails([]);
       setIsCreateModalOpen(false);
-    } catch (e) {
-      showToast({ type: "error", message: "Erreur lors de la création du code." });
+    } catch (e: any) {
+      showToast({ type: "error", message: e.message || "Erreur lors de la création du code." });
     } finally {
       setIsSubmitting(false);
     }

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, Phone, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth, useToast } from '@/providers';
 import { useInitiatePayment } from '@/features/payment/hooks';
 import { paymentsApi } from '@/shared/api/payments';
@@ -22,6 +22,7 @@ export default function PaymentScreen(): JSX.Element {
   const insets = useSafeAreaInsets();
   const { showToast } = useToast();
   const { refreshUser } = useAuth();
+  const { promoCode: promoCodeParam } = useLocalSearchParams<{ promoCode?: string }>();
   const initiatePayment = useInitiatePayment();
 
   const [operator, setOperator] = useState<'MTN' | 'ORANGE'>('MTN');
@@ -159,6 +160,7 @@ export default function PaymentScreen(): JSX.Element {
       const res = await initiatePayment.mutateAsync({
         provider: operator,
         phone: formattedPhone,
+        promoCode: promoCodeParam?.trim().toUpperCase() || undefined,
       });
 
       if (res.status === "FAILED") {
@@ -244,6 +246,11 @@ export default function PaymentScreen(): JSX.Element {
               <Text className="text-xs font-black uppercase tracking-widest text-zinc-500">Montant total</Text>
               <Text className="text-lg font-black tracking-tight text-zinc-950 dark:text-white">2 500 XAF / mois</Text>
             </View>
+            {promoCodeParam ? (
+              <Text className="mt-3 text-[10px] font-black uppercase tracking-widest text-orange-500">
+                Code {promoCodeParam.toUpperCase()} appliqué — montant vérifié au paiement
+              </Text>
+            ) : null}
           </View>
 
           {/* OPERATOR SELECTION */}

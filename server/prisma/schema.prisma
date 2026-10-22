@@ -350,6 +350,53 @@ model Tag {
   @@map("tags")
 }
 
+/// Catalogue académique configurable depuis le dashboard. Les documents
+/// conservent leurs libellés historiques afin qu'une modification du catalogue
+/// n'altère jamais des métadonnées déjà publiées.
+model AcademicFiliere {
+  id        String          @id @default(uuid()) @db.Uuid
+  name      String          @unique
+  sortOrder Int             @default(0)
+  isActive  Boolean         @default(true)
+  createdAt DateTime        @default(now()) @db.Timestamptz
+  updatedAt DateTime        @updatedAt @db.Timestamptz
+  levels    AcademicLevel[]
+
+  @@index([isActive, sortOrder])
+  @@map("academic_filieres")
+}
+
+model AcademicLevel {
+  id        String          @id @default(uuid()) @db.Uuid
+  filiereId String          @db.Uuid
+  name      String
+  sortOrder Int             @default(0)
+  isActive  Boolean         @default(true)
+  createdAt DateTime        @default(now()) @db.Timestamptz
+  updatedAt DateTime        @updatedAt @db.Timestamptz
+  filiere   AcademicFiliere @relation(fields: [filiereId], references: [id], onDelete: Cascade)
+  units     AcademicUnit[]
+
+  @@unique([filiereId, name])
+  @@index([filiereId, isActive, sortOrder])
+  @@map("academic_levels")
+}
+
+model AcademicUnit {
+  id        String        @id @default(uuid()) @db.Uuid
+  levelId   String        @db.Uuid
+  name      String
+  sortOrder Int           @default(0)
+  isActive  Boolean       @default(true)
+  createdAt DateTime      @default(now()) @db.Timestamptz
+  updatedAt DateTime      @updatedAt @db.Timestamptz
+  level     AcademicLevel @relation(fields: [levelId], references: [id], onDelete: Cascade)
+
+  @@unique([levelId, name])
+  @@index([levelId, isActive, sortOrder])
+  @@map("academic_units")
+}
+
 model Download {
   id          String   @id @default(uuid()) @db.Uuid
   document_id String   @db.Uuid

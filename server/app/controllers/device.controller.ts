@@ -31,11 +31,11 @@ export class DeviceController {
   }
   async updateFcmToken(c: HttpContext) {
     const deviceId = c.get("deviceId") as string;
-    const body = await c.req.json();
-    if (!body.token || typeof body.token !== "string") {
-      return ApiResponse.error(c, "VALIDATION_ERROR", "Token FCM requis", 400);
+    const body = await c.req.json<{ token?: unknown }>();
+    if (body.token !== null && (typeof body.token !== "string" || !body.token.trim())) {
+      return ApiResponse.error(c, "VALIDATION_ERROR", "Token FCM invalide", 400);
     }
-    await this.service.updateFcmToken(deviceId, body.token);
+    await this.service.updateFcmToken(deviceId, body.token === null ? null : body.token.trim());
     return ApiResponse.success(c, null, "Token FCM mis à jour.");
   }
 }

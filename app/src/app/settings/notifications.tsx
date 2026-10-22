@@ -8,6 +8,7 @@ import {
   Volume2,
 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ActivityIndicator,
   Platform,
@@ -26,6 +27,8 @@ import {
   setPushEnabled,
 } from '@/features/notifications/push';
 import { cn } from '@/shared/utils/cn';
+import { notificationsApi } from '@/shared/api/notifications';
+import { refreshChannel } from '@/features/notifications/background-handler';
 
 const SOUND_OPTIONS: { value: 'default' | 'custom' | null; label: string }[] = [
   { value: 'default', label: 'Par défaut' },
@@ -90,7 +93,17 @@ function Separator() {
 
 export default function NotificationsScreen(): JSX.Element {
   const { settings, loading, updateSettings, resetSettings } = useNotificationSettings();
+  const client = useQueryClient();
   const [pushEnabled, setPushEnabledState] = useState(true);
+  const { data: notifications = [] } = useQuery({ queryKey: ['notifications'], queryFn: notificationsApi.getNotifications });
+  const markAllRead = useMutation({
+    mutationFn: notificationsApi.markAllAsRead,
+    onSuccess: () => void client.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+  const markRead = useMutation({
+    mutationFn: notificationsApi.markAsRead,
+    onSuccess: () => void client.invalidateQueries({ queryKey: ['notifications'] }),
+  });
 
   useEffect(() => {
     void isPushEnabled().then(setPushEnabledState);
@@ -105,8 +118,9 @@ export default function NotificationsScreen(): JSX.Element {
 
   const applyAndRegister = async () => {
     if (Platform.OS === 'android') {
-      await registerForPushNotifications();
+      await refreshChannel();
     }
+    await registerForPushNotifications();
   };
 
   const insets = useSafeAreaInsets();
@@ -222,6 +236,33 @@ export default function NotificationsScreen(): JSX.Element {
               await applyAndRegister();
             }}
           />
+        </View>
+
+        <View className="mt-7 flex-row items-center justify-between">
+          <SectionLabel>Dans l’application</SectionLabel>
+          {notifications.some((notification) => !notification.isRead) ? (
+            <Pressable onPress={() => markAllRead.mutate()} className="mt-6">
+              <Text className="text-[10px] font-black uppercase tracking-widest text-orange-500">Tout lire</Text>
+            </Pressable>
+          ) : null}
+        </View>
+        <View className="overflow-hidden rounded-2xl bg-zinc-100 dark:bg-[#1A1A1A]">
+          {notifications.slice(0, 20).map((notification, index) => (
+            <View key={notification.id}>
+              {index > 0 && <Separator />}
+              <Pressable onPress={() => !notification.isRead && markRead.mutate(notification.id)} className="p-4 active:opacity-80">
+                <View className="flex-row items-start gap-3">
+                  <View className={cn('mt-1 h-2 w-2 rounded-full', notification.isRead ? 'bg-zinc-300' : 'bg-orange-500')} />
+                  <View className="flex-1">
+                    <Text className="text-sm font-bold text-zinc-950 dark:text-white">{notification.title}</Text>
+                    <Text className="mt-1 text-xs font-medium leading-relaxed text-zinc-500 dark:text-zinc-400">{notification.body}</Text>
+                    <Text className="mt-2 text-[10px] font-black uppercase tracking-widest text-zinc-400">{new Date(notification.createdAt).toLocaleString('fr-FR')}</Text>
+                  </View>
+                </View>
+              </Pressable>
+            </View>
+          ))}
+          {!notifications.length && <Text className="p-5 text-center text-xs font-semibold text-zinc-500">Aucune notification pour le moment.</Text>}
         </View>
       </ScrollView>
     </SafeAreaView>

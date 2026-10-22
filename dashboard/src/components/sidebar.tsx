@@ -4,7 +4,7 @@ import { useToast } from "@/providers/toast/toastContext";
 import { useAuth } from "@/providers/auth/authContext";
 import {
   LayoutDashboard, Users, FileText, CreditCard, 
-  Layers, LogOut, BellRing, X,
+  Layers, LogOut, BellRing, X, GraduationCap,
   Tag
 } from "lucide-react";
 import { AppLogo } from "@/share/ui/AppLogo";
@@ -32,6 +32,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
       items: [
         { path: "/users", name: "Comptes Utilisateurs", icon: Users },
         { path: "/documents", name: "Modération Documents", icon: FileText },
+        { path: "/academic-paths", name: "Parcours académiques", icon: GraduationCap },
       ]
     },
     {

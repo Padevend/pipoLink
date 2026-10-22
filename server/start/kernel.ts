@@ -9,6 +9,8 @@ import { SubscriptionRouter } from "./routes/subscription.route.js";
 import { PaymentRouter } from "./routes/payment.route.js";
 import { NotificationRouter } from "./routes/notification.route.js";
 import { AnnouncementRouter } from "./routes/announcement.route.js";
+import { AcademicPathRouter } from "./routes/academic-path.route.js";
+import { AdminAcademicPathRouter } from "./routes/admin-academic-path.route.js";
 
 import { AdminRouter } from "./routes/admin.route.js";
 import { env } from "../config/envManager.js";
@@ -51,8 +53,10 @@ export function createRouter() {
   app.route("/payments", PaymentRouter);
   app.route("/notifications", NotificationRouter);
   app.route("/announcements", AnnouncementRouter);
+  app.route("/academic-paths", AcademicPathRouter);
 
   app.route("/admin", AdminRouter);
+  app.route("/admin/academic-paths", AdminAcademicPathRouter);
   app.route("/download", downloadRouter);
   app.route("/files", filesRouter);
 

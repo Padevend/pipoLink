@@ -1,18 +1,47 @@
-import { useAuth } from '@/providers';
+import { useAuth, useToast } from '@/providers';
+import { paymentsApi, type PromoOffer } from '@/shared/api/payments';
 import { Button } from '@/shared/ui/button';
 import { router } from 'expo-router';
 import { ArrowLeft, Check, Info, Sparkles } from 'lucide-react-native';
-import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, Text, TextInput, View } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function SubscriptionScreen(): JSX.Element {
-  const { t } = useTranslation('settings');
   const { user } = useAuth();
+  const { showToast } = useToast();
   const insets = useSafeAreaInsets();
+  const [promoCode, setPromoCode] = useState('');
+  const [promoOffer, setPromoOffer] = useState<PromoOffer | null>(null);
+  const [checkingPromo, setCheckingPromo] = useState(false);
 
   const isPremium = user?.subscription?.plan === 'PREMIUM' && user?.subscription?.status === 'ACTIVE';
+
+  const applyPromo = async () => {
+    const code = promoCode.trim().toUpperCase();
+    if (!code) {
+      setPromoOffer(null);
+      return;
+    }
+    setCheckingPromo(true);
+    try {
+      const offer = await paymentsApi.validatePromo(code);
+      setPromoCode(offer.code);
+      setPromoOffer(offer);
+      showToast({
+        type: 'success',
+        message: offer.freePremiumDays > 0
+          ? `${offer.freePremiumDays} jour(s) Premium seront activés.`
+          : `Réduction appliquée : ${offer.discountAmount.toLocaleString('fr-FR')} XAF.`,
+      });
+    } catch (error: any) {
+      setPromoOffer(null);
+      showToast({ type: 'error', message: error.message || 'Ce code promotionnel est invalide.' });
+    } finally {
+      setCheckingPromo(false);
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top', 'left', 'right']}>
@@ -155,6 +184,45 @@ export default function SubscriptionScreen(): JSX.Element {
               </View>
             </View>
 
+            {!isPremium && (
+              <View className="mb-6 rounded-2xl border border-orange-500/25 bg-white/70 p-4 dark:bg-[#15100d]">
+                <Text className="mb-2 text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                  Code promotionnel
+                </Text>
+                <View className="flex-row items-center gap-x-2">
+                  <TextInput
+                    value={promoCode}
+                    onChangeText={(value) => {
+                      setPromoCode(value.toUpperCase().replace(/\s+/g, ''));
+                      setPromoOffer(null);
+                    }}
+                    onSubmitEditing={() => void applyPromo()}
+                    autoCapitalize="characters"
+                    autoCorrect={false}
+                    placeholder="EX. RENTREE26"
+                    placeholderTextColor="#A1A1AA"
+                    className="h-11 flex-1 rounded-xl bg-zinc-100 px-3 text-xs font-black tracking-wider text-zinc-950 dark:bg-[#222222] dark:text-white"
+                  />
+                  <Pressable
+                    onPress={() => void applyPromo()}
+                    disabled={checkingPromo}
+                    className="h-11 items-center justify-center rounded-xl bg-zinc-950 px-3 dark:bg-orange-500 disabled:opacity-50"
+                  >
+                    <Text className="text-[10px] font-black uppercase tracking-wider text-white">
+                      {checkingPromo ? '...' : 'Appliquer'}
+                    </Text>
+                  </Pressable>
+                </View>
+                {promoOffer && (
+                  <Text className="mt-3 text-xs font-bold text-orange-600 dark:text-orange-400">
+                    {promoOffer.freePremiumDays > 0
+                      ? `${promoOffer.freePremiumDays} jour(s) Premium offerts — aucun débit.`
+                      : `Vous paierez ${promoOffer.amount.toLocaleString('fr-FR')} XAF au lieu de 2 500 XAF.`}
+                  </Text>
+                )}
+              </View>
+            )}
+
             {/* Bouton d'action (rounded-full) */}
             {isPremium ? (
               <Button
@@ -167,7 +235,10 @@ export default function SubscriptionScreen(): JSX.Element {
             ) : (
               <Button
                 label="S'abonner (2 500 XAF/mois)"
-                onPress={() => router.push('/settings/payment')}
+                onPress={() => router.push({
+                  pathname: '/settings/payment',
+                  params: promoOffer ? { promoCode: promoOffer.code } : undefined,
+                })}
                 size="lg"
                 className="rounded-full h-14 bg-orange-500 active:bg-orange-600"
               />

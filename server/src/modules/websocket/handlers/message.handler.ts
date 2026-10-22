@@ -103,6 +103,9 @@ export async function handleMessageRead(ctx: HandlerContext, payload: unknown, r
   const data = await validatePayload(messageReadValidator, payload);
   await messaging.markAsRead(state.userId, data.conversationId);
 
+  ctx.gateway.emit(WsEventName.ConversationUpdated, { conversationId: data.conversationId, unreadCount: 0 }, {
+    userId: state.userId,
+  });
   ctx.gateway.emit(WsEventName.MessageRead, { conversationId: data.conversationId, userId: state.userId }, {
     conversationId: data.conversationId,
   });

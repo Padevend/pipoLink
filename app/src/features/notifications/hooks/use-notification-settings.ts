@@ -35,14 +35,11 @@ export function useNotificationSettings() {
   // ── Update (partial merge) ──────────────────────────────────────────
   const updateSettings = useCallback(
     async (patch: Partial<NotificationChannelSettings>) => {
-      setSettings((prev) => {
-        const next = { ...prev, ...patch };
-        // Fire-and-forget persistence
-        void AsyncStorageService.set(KEY, next);
-        return next;
-      });
+      const next = { ...settings, ...patch };
+      setSettings(next);
+      await AsyncStorageService.set(KEY, next);
     },
-    [],
+    [settings],
   );
 
   // ── Reset to factory defaults ───────────────────────────────────────

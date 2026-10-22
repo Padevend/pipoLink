@@ -5,27 +5,33 @@ import {
   applicationDefault,
 } from "firebase-admin/app";
 import { getMessaging } from "firebase-admin/messaging";
-import { createRequire } from "node:module";
 import path from "node:path";
+import { readFileSync } from "node:fs";
+import { env } from "../../../config/envManager.js";
 
-const account_path = env.get("FIREBASE_SERVICE_ACCOUNT_PATH")
+const serviceAccountSource = env.get("FIREBASE_SERVICE_ACCOUNT_PATH");
+
+function loadServiceAccount(source: string): object {
+  const trimmed = source.trim();
+  // Azure and most CI providers store the entire JSON in an environment
+  // variable, while local deployments usually provide a path. Support both.
+  if (trimmed.startsWith("{")) return JSON.parse(trimmed);
+  return JSON.parse(readFileSync(path.resolve(process.cwd(), trimmed), "utf8"));
+}
 
 // Initialise Firebase Admin une seule fois au démarrage du module
 if (getApps().length === 0) {
   try {
-    if (account_path) {
-      // Chargement du fichier JSON du compte de service via require
-      const _require = createRequire(import.meta.url);
-      // const serviceAccount = _require(path.resolve(process.cwd(), account_path));
-      const serviceAccount = JSON.parse(account_path)
+    if (serviceAccountSource) {
+      const serviceAccount = loadServiceAccount(serviceAccountSource);
 
       initializeApp({ credential: cert(serviceAccount) });
-      console.log("✅ Firebase Admin initialisé via le fichier de compte de service.");
+      console.log("✅ Firebase Admin initialisé avec le compte de service configuré.");
     } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
       initializeApp({ credential: applicationDefault() });
       console.log("Firebase Admin initialisé via applicationDefault.");
     } else {
-      console.warn("Firebase Admin non configuré : FIREBASE_SERVICE_ACCOUNT_PATH ou GOOGLE_APPLICATION_CREDENTIALS est requis.");
+      console.warn("Firebase Admin non configuré : définissez FIREBASE_SERVICE_ACCOUNT_PATH (JSON ou chemin) ou GOOGLE_APPLICATION_CREDENTIALS.");
     }
   } catch (error) {
     console.error("Erreur lors de l'initialisation de Firebase Admin :", error);
@@ -33,7 +39,6 @@ if (getApps().length === 0) {
 }
 
 import { prisma } from "../../../config/database.js";
-import { env } from "../../../config/envManager.js";
 
 export class FCMService {
   /**

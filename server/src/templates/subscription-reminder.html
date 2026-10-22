@@ -3,193 +3,112 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expiration d'abonnement - PipoLink</title>
   <style>
-    /* Reset styles */
-    body, table, td, a { text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    /* Resets & Compatibilité Clients Mail */
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
     img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
     
     body {
-      margin: 0;
-      padding: 0;
+      margin: 0 !important;
+      padding: 0 !important;
       width: 100% !important;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      background-color: #ffffff;
-      color: #0f172a;
+      background-color: #fafafa;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: #09090b;
+      -webkit-font-smoothing: antialiased;
     }
 
-    .wrapper {
-      width: 100%;
-      table-layout: fixed;
-      background-color: #ffffff;
-      padding: 40px 0;
-    }
-
-    .main-content {
-      max-width: 540px;
-      margin: 0 auto;
-      background: #ffffff;
-      border-radius: 32px;
-      border: 1px solid #f1f5f9;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.03);
-      overflow: hidden;
-    }
-
-    .header {
-      padding: 50px 40px 20px;
-      text-align: center;
-    }
-
-    .logo-img {
-      width: 56px;
-      height: 56px;
-      border-radius: 14px;
-    }
-
-    .content-body {
-      padding: 0 50px 40px;
-      text-align: center;
-    }
-
-    .premium-badge {
-      display: inline-block;
-      background: #ea580c;
-      color: #ffffff;
-      font-size: 10px;
-      font-weight: 800;
-      padding: 4px 12px;
-      border-radius: 100px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      margin-bottom: 16px;
-    }
-
-    h2 {
-      font-size: 24px;
-      font-weight: 600;
-      color: #1e293b;
-      margin-bottom: 12px;
-      letter-spacing: -0.02em;
-    }
-
-    p {
-      font-size: 15px;
-      line-height: 1.6;
-      color: #64748b;
-      margin-bottom: 24px;
-    }
-
-    /* Bloc Expiration Minimaliste Glass */
-    .info-container {
-      margin: 32px 0;
-      padding: 32px;
-      background: rgba(255, 247, 237, 0.5);
-      border-radius: 24px;
-      border: 1px solid rgba(251, 146, 60, 0.1);
-      text-align: center;
-    }
-
-    .date-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: #94a3b8;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      display: block;
-      margin-bottom: 8px;
-    }
-
-    .expiry-date {
-      font-size: 20px;
-      font-weight: 700;
-      color: #ea580c;
-      margin: 0;
-    }
-
-    .features-list {
-      text-align: left;
-      background: #f8fafc;
-      border-radius: 20px;
-      padding: 20px;
-      margin-bottom: 24px;
-    }
-
-    .feature-item {
-      font-size: 13px;
-      color: #475569;
-      margin-bottom: 8px;
-      display: block;
-    }
-
-    .cta-button {
-      display: inline-block;
-      background-color: #ea580c;
-      color: #ffffff;
-      padding: 16px 32px;
-      border-radius: 16px;
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 15px;
-      margin-top: 10px;
-      box-shadow: 0 10px 20px rgba(234, 88, 12, 0.2);
-    }
-
-    .divider {
-      height: 1px;
-      background: radial-gradient(circle, #e2e8f0 0%, transparent 100%);
-      margin: 40px 0 30px;
-    }
-
-    .footer {
-      text-align: center;
-      padding-bottom: 40px;
-    }
-
-    .footer-text {
-      font-size: 12px;
-      color: #94a3b8;
-      line-height: 1.5;
-    }
-
-    @media screen and (max-width: 600px) {
-      .main-content { border-radius: 0; border: none; box-shadow: none; }
-      .content-body { padding: 0 25px 30px; }
+    @media screen and (max-width: 520px) {
+      .card-container { border-radius: 24px !important; padding: 32px 20px !important; }
+      .content-padding { padding: 0 20px 32px !important; }
     }
   </style>
 </head>
-<body>
-  <div class="wrapper">
-    <div class="main-content">
-      <div class="header">
-        <img src="https://ik.imagekit.io/lnjhwnjj6s/file.enc" alt="PipoLink" class="logo-img">
-      </div>
-
-      <div class="content-body">
-        <div class="premium-badge">Abonnement Premium</div>
-        <h2>Votre accès arrive à terme</h2>
-        <p>Bonjour,<br>Votre abonnement exclusif expire prochainement. Ne perdez pas vos avantages.</p>
+<body style="margin: 0; padding: 0; background-color: #fafafa;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #fafafa; padding: 48px 16px;">
+    <tr>
+      <td align="center">
         
-        <div class="info-container">
-          <span class="date-label">Date d'expiration</span>
-          <div class="expiry-date">{{expiresAt}}</div>
-        </div>
+        <!-- CARTE PRINCIPALE (STYLE FLAT NÉO-BANQUE) -->
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" class="card-container" style="max-width: 460px; background-color: #ffffff; border-radius: 32px; border: 1px solid #e4e4e7; text-align: center;">
+          
+          <!-- BRAND HEADER -->
+          <tr>
+            <td style="padding: 40px 32px 24px; text-align: center;">
+              <table role="presentation" border="0" cellspacing="0" cellpadding="0" align="center">
+                <tr>
+                  <td align="center">
+                    <!-- Logo Icône Cercle Noir -->
+                    <div style="width: 48px; height: 48px; background-color: #09090b; border-radius: 9999px; text-align: center; line-height: 48px;">
+                      <img src="https://ik.imagekit.io/lnjhwnjj6s/file.enc" width="22" height="22" alt="PipoLink" style="vertical-align: middle; filter: brightness(0) invert(1);" />
+                    </div>
+                  </td>
+                </tr>
+              </table>
+              <div style="font-size: 15px; font-weight: 700; color: #09090b; letter-spacing: -0.02em; margin-top: 12px;">
+                PipoLink
+              </div>
+            </td>
+          </tr>
 
-        <div class="features-list">
-          <span class="feature-item">IA illimitée & génération rapide</span>
-          <span class="feature-item">Téléchargements prioritaires</span>
-          <span class="feature-item">Sécurité avancée & stockage cloud</span>
-        </div>
-        
-        <p style="font-size: 13px; color: #94a3b8; margin-bottom: 0;">
-          Merci de faire partie de l'aventure <strong>PipoLink</strong>.
-        </p>
-      </div>
-    </div>
+          <!-- CONTENU PRINCIPAL -->
+          <tr>
+            <td class="content-padding" style="padding: 0 32px 40px;">
+              
+              <!-- BADGE SÉCURITÉ / STATUT MONOCHROME -->
+              <div style="margin-bottom: 20px;">
+                <span style="background-color: #09090b; color: #ffffff; font-size: 10px; font-weight: 700; padding: 6px 16px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.08em; display: inline-block;">
+                  Abonnement Premium
+                </span>
+              </div>
 
-    <div class="footer">
-      <p class="footer-text">
-        &copy; 2025 PipoLink. Tous droits réservés.<br>
-      </p>
-    </div>
-  </div>
+              <h1 style="font-size: 24px; font-weight: 700; color: #09090b; margin: 0 0 10px 0; letter-spacing: -0.03em; line-height: 1.2;">
+                Votre accès arrive à terme
+              </h1>
+              
+              <p style="font-size: 14px; line-height: 1.5; color: #71717a; margin: 0 0 28px 0; font-weight: 500;">
+                Bonjour,<br>
+                Votre abonnement exclusif expire prochainement. Ne perdez pas vos avantages prioritaires.
+              </p>
+
+              <!-- BLOC DATE D'EXPIRATION (FLAT CARD GRIS CLAIR) -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f4f4f5; border-radius: 24px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 24px; text-align: center;">
+                    <span style="font-size: 10px; font-weight: 700; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">
+                      Date d'expiration
+                    </span>
+                    <div style="font-family: 'SF Mono', Consolas, monospace; font-size: 20px; font-weight: 800; color: #09090b;">
+                      {{expiresAt}}
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- SÉPARATEUR MÉTALLIQUE DISCRET -->
+              <div style="height: 1px; background-color: #f4f4f5; margin-bottom: 24px;"></div>
+
+              <p style="font-size: 12px; line-height: 1.5; color: #a1a1aa; margin: 0; font-weight: 500;">
+                Merci de faire partie de l'aventure <strong style="color: #71717a;">PipoLink</strong>.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+
+        <!-- FOOTER DISCRET -->
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 460px; margin-top: 24px;">
+          <tr>
+            <td style="text-align: center; font-size: 12px; font-weight: 500; color: #a1a1aa; line-height: 1.5;">
+              PipoLink &copy; 2026. Tous droits réservés.
+            </td>
+          </tr>
+        </table>
+
+      </td>
+    </tr>
+  </table>
 </body>
 </html>

@@ -93,17 +93,34 @@ export class AdminController {
   }
 
   async createPromoCode(c: HttpContext) {
-    const body = await c.req.json();
+    const body = await c.req.json<Record<string, unknown>>();
     const code = String(body.code || "")
       .trim()
       .toUpperCase();
     const discountPercent = Number(body.discountPercent || 0);
     const freePremiumDays = Number(body.freePremiumDays || 0);
+    const maxUses = body.maxUses == null || body.maxUses === "" ? null : Number(body.maxUses);
+    const startsAt = typeof body.startsAt === "string" && body.startsAt ? new Date(body.startsAt) : new Date();
+    const expiresAt = typeof body.expiresAt === "string" && body.expiresAt ? new Date(body.expiresAt) : null;
+    const allowedEmails: string[] = Array.isArray(body.allowedEmails)
+      ? [...new Set<string>(body.allowedEmails.map((email) => String(email).toLowerCase().trim()))]
+      : [];
     if (
       !/^[A-Z0-9_-]{3,64}$/.test(code) ||
+      !Number.isFinite(discountPercent) ||
       discountPercent < 0 ||
       discountPercent > 100 ||
-      freePremiumDays < 0
+      !Number.isInteger(freePremiumDays) ||
+      freePremiumDays < 0 ||
+      // A code carries exactly one benefit: a percentage OR free Premium days.
+      // The payment service treats free days as a fully discounted payment.
+      (discountPercent === 0 && freePremiumDays === 0) ||
+      (discountPercent > 0 && freePremiumDays > 0) ||
+      !Number.isFinite(maxUses ?? 0) ||
+      (maxUses !== null && (!Number.isInteger(maxUses) || maxUses < 1)) ||
+      Number.isNaN(startsAt.getTime()) ||
+      (expiresAt !== null && (Number.isNaN(expiresAt.getTime()) || expiresAt <= startsAt)) ||
+      allowedEmails.some((email) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
     )
       return ApiResponse.error(
         c,
@@ -116,14 +133,10 @@ export class AdminController {
         code,
         discountPercent,
         freePremiumDays,
-        maxUses: body.maxUses == null ? null : Number(body.maxUses),
-        startsAt: body.startsAt ? new Date(body.startsAt) : new Date(),
-        expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
-        allowedEmails: Array.isArray(body.allowedEmails)
-          ? body.allowedEmails.map((email: string) =>
-            email.toLowerCase().trim(),
-          )
-          : [],
+        maxUses,
+        startsAt,
+        expiresAt,
+        allowedEmails,
       },
     });
     return ApiResponse.success(c, created, "Code promotion créé.", 201);

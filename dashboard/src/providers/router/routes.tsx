@@ -17,6 +17,7 @@ const PaymentsPage = lazy(() => import("@/pages/payments/ui/payments_page"));
 // const UpdatesPage = lazy(() => import("@/pages/updates/ui/updates_page"));
 const NotificationsPage = lazy(() => import("@/pages/notifications/ui/notifications_page"));
 const PromoPage = lazy(() => import("@/pages/promo/ui/promo_page"));
+const AcademicPathsPage = lazy(() => import("@/pages/academic-paths/ui/academic_paths_page"));
 
 const router = createBrowserRouter([
     {
@@ -55,6 +56,10 @@ const router = createBrowserRouter([
                     {
                         path: "promo",
                         element: <PromoPage />
+                    },
+                    {
+                        path: "academic-paths",
+                        element: <AcademicPathsPage />
                     },
                     // {
                     //     path: "updates",

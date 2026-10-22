@@ -6,6 +6,7 @@ import { authMiddleware } from "../../app/middlewares/auth.middleware.js";
 export const PaymentRouter = new Hono();
 
 PaymentRouter
+  .post("/validate-promo", authMiddleware, callAction(PaymentController, "validatePromo"))
   .post("/initiate", authMiddleware, callAction(PaymentController, "initiate"))
   .post("/webhook", callAction(PaymentController, "handleWebhook"))
   .get("/:id/status", authMiddleware, callAction(PaymentController, "getStatus"));

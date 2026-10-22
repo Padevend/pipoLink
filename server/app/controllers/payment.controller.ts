@@ -16,6 +16,16 @@ export class PaymentController {
     return ApiResponse.success(c, payment, "Paiement initié.", 201);
   }
 
+  async validatePromo(c: HttpContext) {
+    const userId = c.get("userId") as string;
+    const payload = await c.req.json<{ promoCode?: unknown }>();
+    if (typeof payload.promoCode !== "string") {
+      return ApiResponse.error(c, "VALIDATION_ERROR", "Code promotionnel requis.", 400);
+    }
+    const offer = await this.service.getPromoOffer(userId, payload.promoCode);
+    return ApiResponse.success(c, offer, "Code promotionnel valide.");
+  }
+
 
 
   async getStatus(c: HttpContext) {

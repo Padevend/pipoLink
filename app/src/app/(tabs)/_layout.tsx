@@ -1,6 +1,6 @@
 import { useTheme } from '@/shared/hooks/use-theme';
 import { Tabs } from 'expo-router';
-import { BrainCircuit, Library, MessageCircle, Settings } from 'lucide-react-native';
+import { AlarmCheck, AlarmClock, Bell, BrainCircuit, Clock, Library, MessageCircle, Settings } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabsLayout() {
@@ -13,6 +13,7 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: '#F97316',
+        // tabBarLabelVisibilityMode: "unlabeled",
         tabBarInactiveTintColor: isDark ? '#71717A' : '#A1A1AA',
         tabBarStyle: {
           backgroundColor: isDark ? '#0A0A0A' : '#FFFFFF',
@@ -26,10 +27,10 @@ export default function TabsLayout() {
         },
         tabBarLabelStyle: {
           fontSize: 10,
-          fontWeight: '900',
-          textTransform: 'uppercase',
+          fontWeight: '600',
+          textTransform: 'capitalize',
           letterSpacing: 1,
-          marginTop: 4,
+          marginTop: 4
         },
       }}
     >
@@ -60,6 +61,16 @@ export default function TabsLayout() {
           ),
         }}
       />
+      {/* <Tabs.Screen
+        name="notifications"
+        options={{
+          title: 'Notifications',
+          tabBarIcon: ({ color, focused }) => (
+            <Bell size={22} color={color} strokeWidth={focused ? 3 : 2} />
+          ),
+        }}
+      /> */}
+
       <Tabs.Screen
         name="settings"
         options={{

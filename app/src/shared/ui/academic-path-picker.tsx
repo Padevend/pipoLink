@@ -1,11 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { useQuery } from '@tanstack/react-query';
 
-import {
-  getFilieres,
-  getNiveauxForFiliere,
-  getUeForNiveau,
-} from '@/shared/data/level-data';
+import { academicPathsApi, type AcademicFiliere } from '@/shared/api/academic-paths';
+import { LEVEL_DATA } from '@/shared/data/level-data';
 import { cn } from '@/shared/utils/cn';
 
 export type AcademicPath = {
@@ -72,8 +70,44 @@ export function AcademicPathPicker({ value, onChange }: AcademicPathPickerProps)
   const [niveau, setNiveau] = useState(value.niveau ?? '');
   const [ue, setUe] = useState(value.ue ?? '');
 
-  const niveaux = filiere ? getNiveauxForFiliere(filiere).map((n) => n.label) : [];
-  const ues = filiere && niveau ? getUeForNiveau(filiere, niveau) : [];
+  const fallbackCatalog = useMemo<AcademicFiliere[]>(() => LEVEL_DATA.map((item, filiereIndex) => ({
+    id: `legacy-${filiereIndex}`,
+    name: item.filiere,
+    sortOrder: filiereIndex,
+    isActive: true,
+    levels: item.niveaux.map((level, levelIndex) => ({
+      id: `legacy-${filiereIndex}-${levelIndex}`,
+      name: level.label,
+      sortOrder: levelIndex,
+      isActive: true,
+      units: level.ue.map((unit, unitIndex) => ({
+        id: `legacy-${filiereIndex}-${levelIndex}-${unitIndex}`,
+        name: unit,
+        sortOrder: unitIndex,
+        isActive: true,
+      })),
+    })),
+  })), []);
+
+  const { data: catalog = fallbackCatalog, isFetching } = useQuery({
+    queryKey: ['academic-paths'],
+    queryFn: academicPathsApi.list,
+    // The old local dataset is only an offline/deployment fallback. Normal
+    // operation always renders the database catalogue administered on web.
+    placeholderData: fallbackCatalog,
+  });
+
+  const selectedFiliere = catalog.find((item) => item.name === filiere);
+  const selectedLevel = selectedFiliere?.levels.find((item) => item.name === niveau);
+  const filieres = catalog.map((item) => item.name);
+  const niveaux = selectedFiliere?.levels.map((item) => item.name) ?? [];
+  const ues = selectedLevel?.units.map((item) => item.name) ?? [];
+
+  useEffect(() => {
+    setFiliere(value.filiere ?? '');
+    setNiveau(value.niveau ?? '');
+    setUe(value.ue ?? '');
+  }, [value.filiere, value.niveau, value.ue]);
 
   useEffect(() => {
     if (filiere && niveau && ue) {
@@ -85,7 +119,7 @@ export function AcademicPathPicker({ value, onChange }: AcademicPathPickerProps)
     <View className="gap-y-6">
       <ChipRow
         label="Filière"
-        options={getFilieres()}
+        options={filieres}
         selected={filiere}
         onSelect={(f) => {
           setFiliere(f);
@@ -108,6 +142,11 @@ export function AcademicPathPicker({ value, onChange }: AcademicPathPickerProps)
         selected={ue} 
         onSelect={setUe} 
       />
+      {isFetching && (
+        <Text className="ml-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+          Synchronisation du catalogue…
+        </Text>
+      )}
     </View>
   );
 }

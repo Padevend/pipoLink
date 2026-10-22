@@ -3,182 +3,109 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code de vérification - PipoLink</title>
   <style>
-    /* Reset styles */
-    body, table, td, a { text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    /* Resets & Compatibilité Clients Mail */
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
     img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
     
     body {
-      margin: 0;
-      padding: 0;
+      margin: 0 !important;
+      padding: 0 !important;
       width: 100% !important;
-      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      background-color: #09090b; /* Fond sombre profond assorti au thème app */
+      background-color: #fafafa;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       color: #09090b;
-    }
-
-    .wrapper {
-      width: 100%;
-      table-layout: fixed;
-      background-color: #09090b;
-      padding: 40px 0;
-    }
-
-    .main-content {
-      max-width: 480px;
-      margin: 0 auto;
-      background: #ffffff;
-      border-radius: 40px; /* Style chunky / ultra arrondi cohérent avec l'app */
-      border: 2px solid #f4f4f5;
-      overflow: hidden;
-    }
-
-    .header {
-      padding: 48px 40px 24px;
-      text-align: center;
-    }
-
-    .logo-container {
-      display: inline-block;
-      margin-bottom: 8px;
-    }
-
-    .logo-img {
-      width: 56px;
-      height: 56px;
-      border-radius: 16px;
-    }
-
-    .brand-name {
-      font-size: 20px;
-      font-weight: 900;
-      color: #09090b;
-      letter-spacing: -0.5px;
-      margin: 12px 0 0;
-      text-transform: uppercase;
-    }
-
-    .content-body {
-      padding: 0 40px 48px;
-      text-align: center;
-    }
-
-    h2 {
-      font-size: 28px;
-      font-weight: 900;
-      color: #09090b;
-      margin: 0 0 12px;
-      letter-spacing: -0.03em;
-      line-height: 1.1;
-    }
-
-    p {
-      font-size: 14px;
-      line-height: 1.6;
-      color: #71717a;
-      margin: 0 0 24px;
-      font-weight: 600;
-    }
-
-    /* Bloc OTP Massif & Solide (Style Input Néo-Banque) */
-    .otp-container {
-      margin: 36px 0;
-      padding: 32px 24px;
-      background: #f4f4f5;
-      border-radius: 32px;
-      text-align: center;
-    }
-
-    .otp-code {
-      font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'Courier New', monospace;
-      font-size: 42px;
-      font-weight: 900;
-      color: #f97316; /* Orange PipoLink */
-      letter-spacing: 12px;
-      margin: 0;
-      padding-left: 12px; /* Compensation du letter-spacing final */
-    }
-
-    .timer-badge {
-      display: inline-block;
-      margin-top: 16px;
-      padding: 6px 14px;
-      background: #ffffff;
-      border-radius: 100px;
-      font-size: 10px;
-      font-weight: 900;
-      color: #71717a;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-    }
-
-    .divider {
-      height: 2px;
-      background: #f4f4f5;
-      margin: 32px 0;
-    }
-
-    .footer {
-      text-align: center;
-      padding-top: 24px;
-    }
-
-    .footer-text {
-      font-size: 11px;
-      font-weight: 700;
-      color: #71717a;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
     }
 
     @media screen and (max-width: 520px) {
-      .wrapper { padding: 0; }
-      .main-content { border-radius: 0; border: none; }
-      .content-body { padding: 0 24px 36px; }
-      .header { padding: 36px 24px 20px; }
-      .otp-code { font-size: 32px; letter-spacing: 8px; }
+      .card-container { border-radius: 24px !important; padding: 32px 20px !important; }
+      .otp-code { font-size: 32px !important; letter-spacing: 8px !important; }
     }
   </style>
 </head>
-<body>
-  <div class="wrapper">
-    <div class="main-content">
-      <div class="header">
-        <div class="logo-container">
-          <img src="https://ik.imagekit.io/lnjhwnjj6s/file.enc" alt="Logo PipoLink" class="logo-img">
-          <h1 class="brand-name">PipoLink</h1>
-        </div>
-      </div>
-
-      <div class="content-body">
-        <h2>Vérification<br>de l'identité</h2>
-        <p>Bonjour <strong>{{username}}</strong>,<br>Utilisez le code ci-dessous pour sécuriser l'accès à votre espace.</p>
+<body style="margin: 0; padding: 0; background-color: #fafafa;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #fafafa; padding: 48px 16px;">
+    <tr>
+      <td align="center">
         
-        <div class="otp-container">
-          <div class="otp-code">{{otp}}</div>
-          <div>
-            <span class="timer-badge">Expire dans 15 minutes</span>
-          </div>
-        </div>
+        <!-- CARTE PRINCIPALE (STYLE FLAT NÉO-BANQUE) -->
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" class="card-container" style="max-width: 440px; background-color: #ffffff; border-radius: 32px; border: 1px solid #e4e4e7; text-align: center;">
+          
+          <!-- BRAND HEADER -->
+          <tr>
+            <td style="padding: 40px 32px 24px; text-align: center;">
+              <table role="presentation" border="0" cellspacing="0" cellpadding="0" align="center">
+                <tr>
+                  <td align="center">
+                    <!-- Logo Icône Cercle Noir -->
+                    <div style="width: 48px; height: 48px; background-color: #09090b; border-radius: 9999px; text-align: center; line-height: 48px;">
+                      <img src="https://ik.imagekit.io/lnjhwnjj6s/file.enc" width="22" height="22" alt="PipoLink" style="vertical-align: middle; filter: brightness(0) invert(1);" />
+                    </div>
+                  </td>
+                </tr>
+              </table>
+              <div style="font-size: 15px; font-weight: 700; color: #09090b; letter-spacing: -0.02em; margin-top: 12px;">
+                PipoLink
+              </div>
+            </td>
+          </tr>
 
-        <p style="font-size: 12px; color: #a1a1aa; margin-bottom: 0; font-weight: 700;">
-          L'équipe <span style="color: #09090b;">PipoLink</span>
-        </p>
-        
-        <div class="divider"></div>
-        
-        <p style="font-size: 11px; color: #a1a1aa; margin-bottom: 0; line-height: 1.5;">
-          Si vous n'avez pas sollicité ce code, veuillez ignorer cet e-mail en toute sécurité.
-        </p>
-      </div>
-    </div>
+          <!-- CONTENU TEXTUEL -->
+          <tr>
+            <td style="padding: 0 32px 40px; text-align: center;">
+              <h1 style="font-size: 26px; font-weight: 700; color: #09090b; margin: 0 0 10px 0; letter-spacing: -0.03em; line-height: 1.2;">
+                Code de vérification
+              </h1>
+              <p style="font-size: 14px; line-height: 1.5; color: #71717a; margin: 0 0 28px 0; font-weight: 500;">
+                Bonjour <strong style="color: #09090b; font-weight: 600;">{{username}}</strong>,<br>
+                Saisissez ce code pour sécuriser l'accès à votre compte.
+              </p>
 
-    <div class="footer">
-      <p class="footer-text">
-        &copy; 2026 PipoLink. Tous droits réservés.
-      </p>
-    </div>
-  </div>
+              <!-- BLOC OTP MONOCHROME (FLAT INPUT) -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f4f4f5; border-radius: 24px; margin-bottom: 20px;">
+                <tr>
+                  <td style="padding: 28px 16px; text-align: center;">
+                    <div class="otp-code" style="font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace; font-size: 38px; font-weight: 800; color: #09090b; letter-spacing: 10px; margin-left: 10px;">
+                      {{otp}}
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- BADGE EXPIRATION (PILULE SANS BORDURE) -->
+              <table role="presentation" border="0" cellspacing="0" cellpadding="0" align="center" style="margin: 0 auto 32px auto;">
+                <tr>
+                  <td style="background-color: #ffffff; border: 1px solid #e4e4e7; border-radius: 9999px; padding: 6px 16px; font-size: 11px; font-weight: 600; color: #71717a; text-transform: uppercase; letter-spacing: 0.05em;">
+                    Expire dans 15 minutes
+                  </td>
+                </tr>
+              </table>
+
+              <!-- SÉPARATEUR MÉTALLIQUE DISCRET -->
+              <div style="height: 1px; background-color: #f4f4f5; margin-bottom: 24px;"></div>
+
+              <p style="font-size: 12px; line-height: 1.5; color: #a1a1aa; margin: 0; font-weight: 500;">
+                Si vous n'avez pas sollicité ce code, vous pouvez ignorer cet e-mail en toute sécurité.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+
+        <!-- FOOTER DISCRET -->
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 440px; margin-top: 24px;">
+          <tr>
+            <td style="text-align: center; font-size: 12px; font-weight: 500; color: #a1a1aa;">
+              PipoLink OS &copy; 2026
+            </td>
+          </tr>
+        </table>
+
+      </td>
+    </tr>
+  </table>
 </body>
 </html>

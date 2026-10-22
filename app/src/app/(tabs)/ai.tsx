@@ -4,7 +4,6 @@ import { AppLogo } from '@/shared/ui/app-logo';
 import { Loader } from '@/shared/ui/loader';
 import { router } from 'expo-router';
 import { BookOpen, Plus, Trash2 } from 'lucide-react-native';
-import React from 'react';
 import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';

@@ -76,7 +76,11 @@ export async function ensureChannel(): Promise<string> {
   await notifeeMod.default.createChannel({
     id: cfg.id,
     name: cfg.name ?? 'PipoLink',
-    importance: notifeeMod.AndroidImportance.HIGH,
+    // Android has no "MAX" channel value in Notifee; HIGH is the user-visible
+    // heads-up level and is the appropriate mapping for the app's MAX default.
+    importance: cfg.importance >= 6
+      ? notifeeMod.AndroidImportance.HIGH
+      : notifeeMod.AndroidImportance.DEFAULT,
     sound: cfg.sound === 'default' ? 'default' : undefined,
     vibration: cfg.enableVibrate,
     vibrationPattern:
@@ -89,6 +93,24 @@ export async function ensureChannel(): Promise<string> {
     badge: true,
   });
   return cfg.id;
+}
+
+/** Android channels keep sound/vibration settings after creation. Recreate the
+ * channel after an explicit user change so the settings screen has an effect. */
+export async function refreshChannel(): Promise<void> {
+  const notifeeMod = loadNotifee();
+  if (!notifeeMod) return;
+  let id = DEFAULT_CHANNEL_SETTINGS.id;
+  try {
+    const stored = await AsyncStorageService.get<NotificationChannelSettings>(
+      ASYNC_STORAGE_KEYS.NOTIFICATION_CHANNEL_SETTINGS,
+    );
+    id = stored?.id ?? id;
+  } catch {
+    // Default id is still safe to recreate.
+  }
+  await notifeeMod.default.deleteChannel(id);
+  await ensureChannel();
 }
 
 async function tryDecrypt(chatId: string, cipherText: string, iv: string): Promise<string | null> {

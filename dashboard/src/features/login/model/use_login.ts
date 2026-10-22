@@ -19,6 +19,7 @@ export function useLogin() {
       });
     },
     onError: (err: any) => {
+      debugger
       showToast({
         type: "error",
         message: err.message || "Erreur de connexion.",

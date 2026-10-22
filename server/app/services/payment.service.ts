@@ -10,8 +10,71 @@ import { AiTokenService } from "./ai-token.service.js";
 // Prix de l'abonnement Premium, fixé côté serveur (le montant client est ignoré)
 const PREMIUM_PRICE_XAF = 2500;
 
+export type PromoOffer = {
+  code: string;
+  discountPercent: number;
+  freePremiumDays: number;
+  discountAmount: number;
+  amount: number;
+};
+
 export class PaymentService {
   private aiTokenService = new AiTokenService();
+
+  /**
+   * Checks a promotion for the current user. This is deliberately kept on the
+   * server: the app may display the offer, but it never decides eligibility or
+   * the amount to charge.
+   */
+  async getPromoOffer(userId: string, rawCode: string): Promise<PromoOffer> {
+    const code = rawCode.trim().toUpperCase();
+    if (!/^[A-Z0-9_-]{3,64}$/.test(code)) {
+      throw { code: "INVALID_PROMO_CODE", status: 400, message: "Code promotion invalide ou expiré." };
+    }
+
+    const now = new Date();
+    const [promo, user] = await Promise.all([
+      prisma.promoCode.findFirst({
+        where: {
+          code,
+          isActive: true,
+          startsAt: { lte: now },
+          OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+        },
+      }),
+      prisma.user.findUnique({ where: { id: userId }, select: { email: true } }),
+    ]);
+
+    const email = user?.email?.trim().toLowerCase() ?? "";
+    if (
+      !promo ||
+      (promo.allowedEmails.length > 0 && !promo.allowedEmails.includes(email)) ||
+      (promo.maxUses !== null && promo.usedCount >= promo.maxUses)
+    ) {
+      throw { code: "INVALID_PROMO_CODE", status: 400, message: "Code promotion invalide ou expiré." };
+    }
+
+    const alreadyRedeemed = await prisma.promoCodeRedemption.findUnique({
+      where: { promoCodeId_user_id: { promoCodeId: promo.id, user_id: userId } },
+      select: { id: true },
+    });
+    if (alreadyRedeemed) {
+      throw { code: "PROMO_ALREADY_REDEEMED", status: 409, message: "Vous avez déjà utilisé ce code promotionnel." };
+    }
+
+    const discountAmount = promo.freePremiumDays > 0
+      ? PREMIUM_PRICE_XAF
+      : Math.min(PREMIUM_PRICE_XAF, Math.round(PREMIUM_PRICE_XAF * promo.discountPercent / 100));
+
+    return {
+      code: promo.code,
+      discountPercent: promo.discountPercent,
+      freePremiumDays: promo.freePremiumDays,
+      discountAmount,
+      amount: PREMIUM_PRICE_XAF - discountAmount,
+    };
+  }
+
   /**
    * Initiates a mobile money payment collection via MeSomb.
    * Le montant client (_amount) est ignoré : le prix est fixé côté serveur.
@@ -19,16 +82,12 @@ export class PaymentService {
   async initiatePayment(userId: string, _amount: number | undefined, provider: string, phone: string, promoCode?: string) {
     let chargedAmount = PREMIUM_PRICE_XAF;
     let discountAmount = 0;
-    let promoFreeDays = 0;
     let normalizedPromo: string | undefined;
     if (promoCode) {
-      normalizedPromo = promoCode.trim().toUpperCase();
-      const promo = await prisma.promoCode.findFirst({ where: { code: normalizedPromo, isActive: true, startsAt: { lte: new Date() }, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] } });
-      const billingUser = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
-      if (!promo || (promo.allowedEmails.length > 0 && !promo.allowedEmails.includes(billingUser?.email?.toLowerCase() || "")) || (promo.maxUses !== null && promo.usedCount >= promo.maxUses)) throw { code: "INVALID_PROMO_CODE", status: 400, message: "Code promotion invalide ou expiré." };
-      promoFreeDays = promo.freePremiumDays;
-      discountAmount = promo.freePremiumDays > 0 ? PREMIUM_PRICE_XAF : Math.min(PREMIUM_PRICE_XAF, Math.round(PREMIUM_PRICE_XAF * promo.discountPercent / 100));
-      chargedAmount = PREMIUM_PRICE_XAF - discountAmount;
+      const offer = await this.getPromoOffer(userId, promoCode);
+      normalizedPromo = offer.code;
+      discountAmount = offer.discountAmount;
+      chargedAmount = offer.amount;
     }
     let sub = await prisma.subscription.findUnique({ where: { user_id: userId } });
     if (!sub) {
@@ -77,7 +136,7 @@ export class PaymentService {
     });
 
     if (chargedAmount === 0) {
-      return await this.completePayment(payment.id, promoFreeDays);
+      return await this.completePayment(payment.id);
     }
 
     // Create Audit Log
@@ -156,7 +215,7 @@ export class PaymentService {
   /**
    * Completes a payment, activates the premium subscription plan, sends an invoice email, and broadcasts a WS event.
    */
-  async completePayment(paymentId: string, promoFreeDays = 0) {
+  async completePayment(paymentId: string) {
     const trxResult = await prisma.$transaction(async (trx) => {
       const payment = await trx.payment.findUnique({ where: { id: paymentId } });
       // Un paiement FAILED ne doit JAMAIS être complété (protège aussi le webhook)
@@ -169,6 +228,51 @@ export class PaymentService {
       });
 
       const oldSub = await trx.subscription.findUnique({ where: { id: payment.subscription_id } });
+      let promoFreeDays = 0;
+      if (payment.promoCode) {
+        const promo = await trx.promoCode.findUnique({ where: { code: payment.promoCode } });
+        const user = await trx.user.findUnique({ where: { id: payment.user_id }, select: { email: true } });
+        const alreadyRedeemed = promo
+          ? await trx.promoCodeRedemption.findUnique({ where: { promoCodeId_user_id: { promoCodeId: promo.id, user_id: payment.user_id } } })
+          : null;
+        const now = new Date();
+
+        if (
+          !promo ||
+          alreadyRedeemed ||
+          !promo.isActive ||
+          promo.startsAt > now ||
+          (promo.expiresAt !== null && promo.expiresAt <= now) ||
+          (promo.allowedEmails.length > 0 && !promo.allowedEmails.includes(user?.email?.toLowerCase() ?? "")) ||
+          (promo.maxUses !== null && promo.usedCount >= promo.maxUses)
+        ) {
+          throw { code: "PROMO_NO_LONGER_AVAILABLE", status: 409, message: "Ce code promotionnel n'est plus disponible." };
+        }
+
+        const usageClaim = await trx.promoCode.updateMany({
+          where: {
+            id: promo.id,
+            isActive: true,
+            startsAt: { lte: now },
+            OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+            ...(promo.maxUses !== null ? { usedCount: { lt: promo.maxUses } } : {}),
+          },
+          data: { usedCount: { increment: 1 } },
+        });
+        if (usageClaim.count !== 1) {
+          throw { code: "PROMO_NO_LONGER_AVAILABLE", status: 409, message: "Ce code promotionnel n'est plus disponible." };
+        }
+
+        promoFreeDays = promo.freePremiumDays;
+        await trx.promoCodeRedemption.create({
+          data: {
+            promoCodeId: promo.id,
+            user_id: payment.user_id,
+            email: user?.email?.toLowerCase() ?? "",
+            discountAmount: payment.discountAmount,
+          },
+        });
+      }
       let newPeriodEnd = promoFreeDays > 0 ? DateTime.now().plus({ days: promoFreeDays }).toJSDate() : DateTime.now().plus({ months: 1 }).toJSDate();
       
       if (oldSub && oldSub.status === "ACTIVE" && oldSub.plan === "PREMIUM" && oldSub.currentPeriodEnd) {
@@ -208,9 +312,6 @@ export class PaymentService {
     if (!trxResult.payment || !trxResult.subscription) return trxResult.payment;
 
     const { payment, subscription, user } = trxResult;
-    if (payment.promoCode) await prisma.promoCode.update({ where: { code: payment.promoCode }, data: { usedCount: { increment: 1 } } }).catch(() => {});
-    if (payment.promoCode && user?.email) await prisma.promoCodeRedemption.create({ data: { promoCodeId: (await prisma.promoCode.findUniqueOrThrow({ where: { code: payment.promoCode } })).id, user_id: payment.user_id, email: user.email, discountAmount: payment.discountAmount } }).catch(() => {});
-
     // Sync AI token plan limits (8000 tokens for PREMIUM)
     await this.aiTokenService.syncUserPlanTokens(payment.user_id, "PREMIUM");
 

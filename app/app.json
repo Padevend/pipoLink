@@ -10,9 +10,13 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.pipolink",
+      "entitlements": {
+        "aps-environment": "production"
+      },
       "infoPlist": {
         "UIFileSharingEnabled": true,
-        "LSSupportsOpeningDocumentsInPlace": true
+        "LSSupportsOpeningDocumentsInPlace": true,
+        "UIBackgroundModes": ["remote-notification"]
       }
     },
     "android": {
